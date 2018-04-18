@@ -598,10 +598,10 @@ the method name for further details such as parameter and return information.
 |---|---|
 |Method|debuglevel|
 |Parameters|1. `levelspec`: (string) the debug level specification.|
-|Description|Dynamically changes the debug logging level.<br />The levelspec can either a debug level or of the form `<subsystem>=<level>,<subsystem2>=<level2>,...`<br />The valid debug levels are `trace`, `debug`, `info`, `warn`, `error`, and `critical`.<br />The valid subsystems are `AMGR`, `ADXR`, `BCDB`, `BMGR`, `DCRD`, `CHAN`, `DISC`, `PEER`, `RPCS`, `SCRP`, `SRVR`, and `TXMP`.<br />Additionally, the special keyword `show` can be used to get a list of the available subsystems.|
+|Description|Dynamically changes the debug logging level.<br />The levelspec can either a debug level or of the form `<subsystem>=<level>,<subsystem2>=<level2>,...`<br />The valid debug levels are `trace`, `debug`, `info`, `warn`, `error`, and `critical`.<br />The valid subsystems are `AMGR`, `ADXR`, `BCDB`, `BMGR`, `EXCC`, `CHAN`, `DISC`, `PEER`, `RPCS`, `SCRP`, `SRVR`, and `TXMP`.<br />Additionally, the special keyword `show` can be used to get a list of the available subsystems.|
 |Returns|`string`|
 |Example Return|`Done.`|
-|Example `show` Return|`Supported subsystems [AMGR ADXR BCDB BMGR DCRD CHAN DISC PEER RPCS SCRP SRVR TXMP]`|
+|Example `show` Return|`Supported subsystems [AMGR ADXR BCDB BMGR EXCC CHAN DISC PEER RPCS SCRP SRVR TXMP]`|
 [Return to Overview](#ExtMethodOverview)<br />
 
 ***

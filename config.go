@@ -21,14 +21,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/btcsuite/btclog"
-	"github.com/btcsuite/go-socks/socks"
 	"github.com/EXCCoin/exccd/connmgr"
 	"github.com/EXCCoin/exccd/database"
 	_ "github.com/EXCCoin/exccd/database/ffldb"
 	"github.com/EXCCoin/exccd/dcrutil"
 	"github.com/EXCCoin/exccd/mempool"
 	"github.com/EXCCoin/exccd/sampleconfig"
+	"github.com/btcsuite/btclog"
+	"github.com/btcsuite/go-socks/socks"
 	flags "github.com/jessevdk/go-flags"
 )
 
@@ -1117,7 +1117,7 @@ func loadConfig() (*config, []string, error) {
 	// Warn if old testnet directory is present.
 	for _, oldDir := range oldTestNets {
 		if fileExists(oldDir) {
-			dcrdLog.Warnf("Block chain data from previous testnet"+
+			exccLog.Warnf("Block chain data from previous testnet"+
 				" found (%v) and can probably be removed.",
 				oldDir)
 		}
@@ -1127,7 +1127,7 @@ func loadConfig() (*config, []string, error) {
 	// done.  This prevents the warning on help messages and invalid
 	// options.  Note this should go directly before the return.
 	if configFileError != nil {
-		dcrdLog.Warnf("%v", configFileError)
+		exccLog.Warnf("%v", configFileError)
 	}
 
 	return &cfg, remainingArgs, nil
