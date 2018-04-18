@@ -8,8 +8,8 @@ package blockchain
 import (
 	"math"
 
-	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/dcrutil"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/dcrutil"
 )
 
 // nextPowerOfTwo returns the next highest power of two from a given number if

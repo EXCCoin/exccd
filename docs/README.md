@@ -51,7 +51,7 @@ details on how to install on the supported operating systems.
 
 **2.1.1 Windows Installation**<br />
 
-* Install the MSI available at: https://github.com/decred/dcrd/releases
+* Install the MSI available at: https://github.com/EXCCoin/exccd/releases
 * Launch dcrd from the Start Menu
 
 <a name="PosixInstallation" />
@@ -60,15 +60,15 @@ details on how to install on the supported operating systems.
 
 * Install Go according to the installation instructions here: http://golang.org/doc/install
 * Run the following command to ensure your Go version is at least version 1.2: `$ go version`
-* Run the following command to obtain dcrd, its dependencies, and install it: `$ go get github.com/decred/dcrd/...`<br />
-  * To upgrade, run the following command: `$ go get -u github.com/decred/dcrd/...`
+* Run the following command to obtain dcrd, its dependencies, and install it: `$ go get github.com/EXCCoin/exccd/...`<br />
+  * To upgrade, run the following command: `$ go get -u github.com/EXCCoin/exccd/...`
 * Run dcrd: `$ dcrd`
 
 <a name="Configuration" />
 
 **2.2 Configuration**<br />
 
-dcrd has a number of [configuration](http://godoc.org/github.com/decred/dcrd)
+dcrd has a number of [configuration](http://godoc.org/github.com/EXCCoin/exccd)
 options, which can be viewed by running: `$ dcrd --help`.
 
 <a name="DcrctlConfig" />
@@ -150,15 +150,15 @@ configuration necessary, however, there is an optional method to use a
 <a name="BootstrapDat" />
 
 **3.1.1 bootstrap.dat**<br />
-* [Using bootstrap.dat](https://github.com/decred/dcrd/tree/master/docs/using_bootstrap_dat.md)
+* [Using bootstrap.dat](https://github.com/EXCCoin/exccd/tree/master/docs/using_bootstrap_dat.md)
 
 <a name="NetworkConfig" />
 
 **3.1.2 Network Configuration**<br />
-* [What Ports Are Used by Default?](https://github.com/decred/dcrd/tree/master/docs/default_ports.md)
-* [How To Listen on Specific Interfaces](https://github.com/decred/dcrd/tree/master/docs/configure_peer_server_listen_interfaces.md)
-* [How To Configure RPC Server to Listen on Specific Interfaces](https://github.com/decred/dcrd/tree/master/docs/configure_rpc_server_listen_interfaces.md)
-* [Configuring dcrd with Tor](https://github.com/decred/dcrd/tree/master/docs/configuring_tor.md)
+* [What Ports Are Used by Default?](https://github.com/EXCCoin/exccd/tree/master/docs/default_ports.md)
+* [How To Listen on Specific Interfaces](https://github.com/EXCCoin/exccd/tree/master/docs/configure_peer_server_listen_interfaces.md)
+* [How To Configure RPC Server to Listen on Specific Interfaces](https://github.com/EXCCoin/exccd/tree/master/docs/configure_rpc_server_listen_interfaces.md)
+* [Configuring dcrd with Tor](https://github.com/EXCCoin/exccd/tree/master/docs/configuring_tor.md)
 
 <a name="Wallet" />
 
@@ -191,40 +191,40 @@ information.
 
 <a name="ContributionGuidelines" />
 
-* [Code Contribution Guidelines](https://github.com/decred/dcrd/tree/master/docs/code_contribution_guidelines.md)
+* [Code Contribution Guidelines](https://github.com/EXCCoin/exccd/tree/master/docs/code_contribution_guidelines.md)
 <a name="JSONRPCReference" />
 
-* [JSON-RPC Reference](https://github.com/decred/dcrd/tree/master/docs/json_rpc_api.md)
-    * [RPC Examples](https://github.com/decred/dcrd/tree/master/docs/json_rpc_api.md#ExampleCode)
+* [JSON-RPC Reference](https://github.com/EXCCoin/exccd/tree/master/docs/json_rpc_api.md)
+    * [RPC Examples](https://github.com/EXCCoin/exccd/tree/master/docs/json_rpc_api.md#ExampleCode)
 <a name="GoPackages" />
 
 * The Decred-related Go Packages:
-  * [rpcclient](https://github.com/decred/dcrd/tree/master/rpcclient) - Implements a
+  * [rpcclient](https://github.com/EXCCoin/exccd/tree/master/rpcclient) - Implements a
     robust and easy to use Websocket-enabled Decred JSON-RPC client
-  * [dcrjson](https://github.com/decred/dcrd/tree/master/dcrjson) - Provides an extensive API
+  * [dcrjson](https://github.com/EXCCoin/exccd/tree/master/dcrjson) - Provides an extensive API
     for the underlying JSON-RPC command and return values
-  * [wire](https://github.com/decred/dcrd/tree/master/wire) - Implements the
+  * [wire](https://github.com/EXCCoin/exccd/tree/master/wire) - Implements the
     Decred wire protocol
-  * [peer](https://github.com/decred/dcrd/tree/master/peer) -
+  * [peer](https://github.com/EXCCoin/exccd/tree/master/peer) -
     Provides a common base for creating and managing Decred network peers.
-  * [blockchain](https://github.com/decred/dcrd/tree/master/blockchain) -
+  * [blockchain](https://github.com/EXCCoin/exccd/tree/master/blockchain) -
     Implements Decred block handling and chain selection rules
-  * [blockchain/fullblocktests](https://github.com/decred/dcrd/tree/master/blockchain/fullblocktests) -
+  * [blockchain/fullblocktests](https://github.com/EXCCoin/exccd/tree/master/blockchain/fullblocktests) -
     Provides a set of block tests for testing the consensus validation rules
-  * [txscript](https://github.com/decred/dcrd/tree/master/txscript) -
+  * [txscript](https://github.com/EXCCoin/exccd/tree/master/txscript) -
     Implements the Decred transaction scripting language
-  * [dcrec](https://github.com/decred/dcrd/tree/master/dcrec) - Implements
+  * [dcrec](https://github.com/EXCCoin/exccd/tree/master/dcrec) - Implements
     support for the elliptic curve cryptographic functions needed for the
     Decred scripts
-  * [database](https://github.com/decred/dcrd/tree/master/database) -
+  * [database](https://github.com/EXCCoin/exccd/tree/master/database) -
     Provides a database interface for the Decred block chain
-  * [mempool](https://github.com/decred/dcrd/tree/master/mempool) -
+  * [mempool](https://github.com/EXCCoin/exccd/tree/master/mempool) -
     Package mempool provides a policy-enforced pool of unmined decred
     transactions.
-  * [dcrutil](https://github.com/decred/dcrd/tree/master/dcrutil) - Provides
+  * [dcrutil](https://github.com/EXCCoin/exccd/tree/master/dcrutil) - Provides
     Decred-specific convenience functions and types
-  * [chainhash](https://github.com/decred/dcrd/tree/master/chaincfg/chainhash) -
+  * [chainhash](https://github.com/EXCCoin/exccd/tree/master/chaincfg/chainhash) -
     Provides a generic hash type and associated functions that allows the
     specific hash algorithm to be abstracted.
-  * [connmgr](https://github.com/decred/dcrd/tree/master/connmgr) -
+  * [connmgr](https://github.com/EXCCoin/exccd/tree/master/connmgr) -
     Package connmgr implements a generic Decred network connection manager.

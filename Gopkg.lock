@@ -10,10 +10,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/agl/ed25519"
-  packages = [
-    ".",
-    "edwards25519"
-  ]
+  packages = [".","edwards25519"]
   revision = "5312a61534124124185d41f09206b9fef1d88403"
 
 [[projects]]
@@ -31,20 +28,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/btcsuite/goleveldb"
-  packages = [
-    "leveldb",
-    "leveldb/cache",
-    "leveldb/comparer",
-    "leveldb/errors",
-    "leveldb/filter",
-    "leveldb/iterator",
-    "leveldb/journal",
-    "leveldb/memdb",
-    "leveldb/opt",
-    "leveldb/storage",
-    "leveldb/table",
-    "leveldb/util"
-  ]
+  packages = ["leveldb","leveldb/cache","leveldb/comparer","leveldb/errors","leveldb/filter","leveldb/iterator","leveldb/journal","leveldb/memdb","leveldb/opt","leveldb/storage","leveldb/table","leveldb/util"]
   revision = "7834afc9e8cd15233b6c3d97e12674a31ca24602"
 
 [[projects]]
@@ -62,13 +46,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/btcsuite/winsvc"
-  packages = [
-    "eventlog",
-    "mgr",
-    "registry",
-    "svc",
-    "winapi"
-  ]
+  packages = ["eventlog","mgr","registry","svc","winapi"]
   revision = "f8fb11f83f7e860e3769a08e6811d1b399a43722"
 
 [[projects]]
@@ -110,19 +88,13 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = [
-    "ripemd160",
-    "ssh/terminal"
-  ]
+  packages = ["ripemd160","ssh/terminal"]
   revision = "88942b9c40a4c9d203b82b3731787b672d6e809b"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = [
-    "unix",
-    "windows"
-  ]
+  packages = ["unix","windows"]
   revision = "13d03a9a82fba647c21a0ef8fba44a795d0f0835"
 
 [solve-meta]

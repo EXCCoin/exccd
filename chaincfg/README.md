@@ -1,9 +1,9 @@
 chaincfg
 ========
 
-[![Build Status](http://img.shields.io/travis/decred/dcrd.svg)](https://travis-ci.org/decred/dcrd)
+[![Build Status](http://img.shields.io/travis/EXCCoin/exccd.svg)](https://travis-ci.org/EXCCoin/exccd)
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/decred/dcrd/chaincfg)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd/chaincfg)
 
 Package chaincfg defines chain configuration parameters for the three standard
 Decred networks and provides the ability for callers to define their own custom
@@ -24,8 +24,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/decred/dcrd/dcrutil"
-	"github.com/decred/dcrd/chaincfg"
+	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/chaincfg"
 )
 
 var testnet = flag.Bool("testnet", false, "operate on the testnet Decred network")
@@ -56,7 +56,7 @@ func main() {
 ## Installation and Updating
 
 ```bash
-$ go get -u github.com/decred/dcrd/chaincfg
+$ go get -u github.com/EXCCoin/exccd/chaincfg
 ```
 
 ## License

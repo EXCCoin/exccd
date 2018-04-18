@@ -6,8 +6,8 @@
 package mempool
 
 import (
-	"github.com/decred/dcrd/blockchain"
-	"github.com/decred/dcrd/wire"
+	"github.com/EXCCoin/exccd/blockchain"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 // RuleError identifies a rule violation.  It is used to indicate that

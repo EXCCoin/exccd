@@ -2,9 +2,9 @@ dcrutil
 =======
 
 
-[![Build Status](http://img.shields.io/travis/decred/dcrd.svg)](https://travis-ci.org/decred/dcrd)
+[![Build Status](http://img.shields.io/travis/EXCCoin/exccd.svg)](https://travis-ci.org/EXCCoin/exccd)
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![GoDoc](http://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/decred/dcrd/dcrutil)
+[![GoDoc](http://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd/dcrutil)
 
 Package dcrutil provides decred-specific convenience functions and types.
 A comprehensive suite of tests is provided to ensure proper functionality.
@@ -17,7 +17,7 @@ standalone package for any projects needing the functionality provided.
 ## Installation and Updating
 
 ```bash
-$ go get -u github.com/decred/dcrd/dcrutil
+$ go get -u github.com/EXCCoin/exccd/dcrutil
 ```
 
 ## License

@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/decred/dcrd/wire"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 var (

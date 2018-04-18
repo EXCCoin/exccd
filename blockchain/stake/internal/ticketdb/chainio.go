@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/decred/dcrd/blockchain/stake/internal/dbnamespace"
-	"github.com/decred/dcrd/blockchain/stake/internal/tickettreap"
-	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/database"
+	"github.com/EXCCoin/exccd/blockchain/stake/internal/dbnamespace"
+	"github.com/EXCCoin/exccd/blockchain/stake/internal/tickettreap"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/database"
 )
 
 const (

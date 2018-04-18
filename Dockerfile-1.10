@@ -28,7 +28,7 @@ RUN mkdir /release && \
 # create directory to get source from
 RUN mkdir /src && \
     chown $USER /src && \
-    mkdir -p /go/src/github.com/decred/dcrd && \
+    mkdir -p /go/src/github.com/EXCCoin/exccd && \
     mkdir -p /go/src/github.com/decred/dcrwallet && \
     mkdir -p /go/src/github.com/decred/dcrctl && \
     mkdir -p /go/src/github.com/decred/dcrrpcclient && \

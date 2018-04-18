@@ -25,7 +25,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/decred/dcrd/dcrjson"
+	"github.com/EXCCoin/exccd/dcrjson"
 
 	"github.com/btcsuite/go-socks/socks"
 	"github.com/btcsuite/websocket"

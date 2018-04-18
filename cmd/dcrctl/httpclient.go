@@ -10,7 +10,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/decred/dcrd/dcrjson"
+	"github.com/EXCCoin/exccd/dcrjson"
 
 	"github.com/btcsuite/go-socks/socks"
 )

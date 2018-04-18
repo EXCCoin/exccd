@@ -1,9 +1,9 @@
 dcrd
 ====
 
-[![Build Status](https://travis-ci.org/decred/dcrd.png?branch=master)](https://travis-ci.org/decred/dcrd)
+[![Build Status](https://travis-ci.org/EXCCoin/exccd.png?branch=master)](https://travis-ci.org/EXCCoin/exccd)
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/decred/dcrd)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd)
 
 dcrd is a Decred full node implementation written in Go (golang).
 
@@ -63,8 +63,8 @@ For a first time installation, the project and dependency sources can be
 obtained manually with `git` and `dep` (create directories as needed):
 
 ```
-git clone https://github.com/decred/dcrd $GOPATH/src/github.com/decred/dcrd
-cd $GOPATH/src/github.com/decred/dcrd
+git clone https://github.com/EXCCoin/exccd $GOPATH/src/github.com/EXCCoin/exccd
+cd $GOPATH/src/github.com/EXCCoin/exccd
 dep ensure
 go install . ./cmd/...
 ```
@@ -73,7 +73,7 @@ To update an existing source tree, pull the latest changes and install the
 matching dependencies:
 
 ```
-cd $GOPATH/src/github.com/decred/dcrd
+cd $GOPATH/src/github.com/EXCCoin/exccd
 git pull
 dep ensure
 go install . ./cmd/...
@@ -111,13 +111,13 @@ If you have any further questions you can find us at:
 
 ## Issue Tracker
 
-The [integrated github issue tracker](https://github.com/decred/dcrd/issues)
+The [integrated github issue tracker](https://github.com/EXCCoin/exccd/issues)
 is used for this project.
 
 ## Documentation
 
 The documentation is a work-in-progress.  It is located in the
-[docs](https://github.com/decred/dcrd/tree/master/docs) folder.
+[docs](https://github.com/EXCCoin/exccd/tree/master/docs) folder.
 
 ## License
 

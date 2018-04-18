@@ -1,9 +1,9 @@
 wire
 ====
 
-[![Build Status](http://img.shields.io/travis/decred/dcrd.svg)](https://travis-ci.org/decred/dcrd)
+[![Build Status](http://img.shields.io/travis/EXCCoin/exccd.svg)](https://travis-ci.org/EXCCoin/exccd)
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/decred/dcrd/wire)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd/wire)
 
 Package wire implements the Decred wire protocol.  A comprehensive suite of
 tests with 100% test coverage is provided to ensure proper functionality.
@@ -15,7 +15,7 @@ protocol level.
 ## Installation and Updating
 
 ```bash
-$ go get -u github.com/decred/dcrd/wire
+$ go get -u github.com/EXCCoin/exccd/wire
 ```
 
 ## Decred Message Overview

@@ -7,7 +7,7 @@ package chaincfg
 import (
 	"testing"
 
-	"github.com/decred/dcrd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 )
 
 func TestInvalidHashStr(t *testing.T) {

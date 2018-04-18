@@ -335,7 +335,7 @@ keep a clean commit history over a tangled weave of merge commits.  However,
 regardless of the specific merge method used, the code will be integrated with
 the master branch and the pull request will be closed.
 
-Rejoice as you will now be listed as a [contributor](https://github.com/decred/dcrd/graphs/contributors)!
+Rejoice as you will now be listed as a [contributor](https://github.com/EXCCoin/exccd/graphs/contributors)!
 
 <a name="Standards" />
 
@@ -365,5 +365,5 @@ Rejoice as you will now be listed as a [contributor](https://github.com/decred/d
 ### 6.2. Licensing of Contributions
 ****
 All contributions must be licensed with the
-[ISC license](https://github.com/decred/dcrd/blob/master/LICENSE).  This is
+[ISC license](https://github.com/EXCCoin/exccd/blob/master/LICENSE).  This is
 the same license as all of the code in the dcrd suite.
