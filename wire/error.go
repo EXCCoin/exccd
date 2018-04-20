@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2015 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -10,7 +11,7 @@ import (
 )
 
 // MessageError describes an issue with a message.
-// An example of some potential issues are messages from the wrong decred
+// An example of some potential issues are messages from the wrong excc
 // network, invalid commands, mismatched checksums, and exceeding max payloads.
 //
 // This provides a mechanism for the caller to type assert the error to

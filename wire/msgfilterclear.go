@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2014-2015 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -9,14 +10,14 @@ import (
 	"io"
 )
 
-// MsgFilterClear implements the Message interface and represents a decred
+// MsgFilterClear implements the Message interface and represents a excc
 // filterclear message which is used to reset a Bloom filter.
 //
 // This message was not added until protocol version BIP0037Version and has
 // no payload.
 type MsgFilterClear struct{}
 
-// BtcDecode decodes r using the Decred protocol encoding into the receiver.
+// BtcDecode decodes r using the Excc protocol encoding into the receiver.
 // This is part of the Message interface implementation.
 func (msg *MsgFilterClear) BtcDecode(r io.Reader, pver uint32) error {
 	return nil
