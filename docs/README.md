@@ -219,7 +219,7 @@ information.
   * [database](https://github.com/EXCCoin/exccd/tree/master/database) -
     Provides a database interface for the Decred block chain
   * [mempool](https://github.com/EXCCoin/exccd/tree/master/mempool) -
-    Package mempool provides a policy-enforced pool of unmined decred
+    Package mempool provides a policy-enforced pool of unmined excc
     transactions.
   * [dcrutil](https://github.com/EXCCoin/exccd/tree/master/dcrutil) - Provides
     Decred-specific convenience functions and types
