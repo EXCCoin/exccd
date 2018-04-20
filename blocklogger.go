@@ -1,11 +1,12 @@
+// Copyright (c) 2018 The ExchangeCoin team
 package main
 
 import (
 	"sync"
 	"time"
 
-	"github.com/btcsuite/btclog"
 	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/btcsuite/btclog"
 )
 
 // blockProgressLogger provides periodic logging for other services in order

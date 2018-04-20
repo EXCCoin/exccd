@@ -5,24 +5,24 @@ dcrd
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd)
 
-dcrd is a Decred full node implementation written in Go (golang).
+excd is a EXCC full node implementation written in Go (golang).
 
-This acts as a chain daemon for the [Decred](https://decred.org) cryptocurrency.
-dcrd maintains the entire past transactional ledger of Decred and allows
- relaying of transactions to other Decred nodes across the world.  To read more
-about Decred please see the
-[project documentation](https://docs.decred.org/#overview).
+This acts as a chain daemon for the [EXCC](https://cryptoxchanger.io/) cryptocurrency.
+excd maintains the entire past transactional ledger of EXCC and allows
+ relaying of transactions to other excc nodes across the world.  To read more
+about excc please see the
+[project documentation](https://cryptoxchanger.io/faq).
 
 Note: To send or receive funds and join Proof-of-Stake mining, you will also need
-[dcrwallet](https://github.com/decred/dcrwallet).
+[exccwallet](https://github.com/EXCCoin/exccwallet).
 
 This project is currently under active development and is in a Beta state.  It
 is extremely stable and has been in production use since February 2016.
 
-It is forked from [btcd](https://github.com/btcsuite/btcd) which is a bitcoin
-full node implementation written in Go.  btcd is a ongoing project under active
-development.  Because dcrd is constantly synced with btcd codebase, it will
-get the benefit of btcd's ongoing upgrades to peer and connection handling,
+It is forked from [dcrd](https://github.com/decred/dcrd) which is a bitcoin
+full node implementation written in Go.  decred is a ongoing project under active
+development.  Because excd is constantly synced with dcrd codebase, it will
+get the benefit of dcrd's ongoing upgrades to peer and connection handling,
 database optimization and other blockchain related technology improvements.
 
 ## Requirements
@@ -31,7 +31,7 @@ database optimization and other blockchain related technology improvements.
 
 ## Getting Started
 
-- dcrd (and utilities) will now be installed in either ```$GOROOT/bin``` or
+- excd (and utilities) will now be installed in either ```$GOROOT/bin``` or
   ```$GOPATH/bin``` depending on your configuration.  If you did not already
   add the bin directory to your system path during Go installation, we
   recommend you do so now.
@@ -79,9 +79,6 @@ dep ensure
 go install . ./cmd/...
 ```
 
-For more information about Decred and how to set up your software please go to
-our docs page at [docs.decred.org](https://docs.decred.org/getting-started/beginner-guide/).
-
 ## Docker
 
 All tests and linters may be run in a docker container using the script
@@ -97,17 +94,8 @@ supports the current version of Go and the previous one).
 To run the tests locally without docker:
 
 ```
-./run_tests.sh local
+go test ./...
 ```
-
-## Contact
-
-If you have any further questions you can find us at:
-
-- irc.freenode.net (channel #decred)
-- [webchat](https://webchat.freenode.net/?channels=decred)
-- forum.decred.org
-- decred.slack.com
 
 ## Issue Tracker
 
@@ -121,4 +109,4 @@ The documentation is a work-in-progress.  It is located in the
 
 ## License
 
-dcrd is licensed under the [copyfree](http://copyfree.org) ISC License.
+excd is licensed under the [copyfree](http://copyfree.org) ISC License.

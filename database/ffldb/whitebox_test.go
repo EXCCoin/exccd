@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2015-2016 The btcsuite developers
 // Copyright (c) 2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -19,11 +20,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/btcsuite/goleveldb/leveldb"
-	ldberrors "github.com/btcsuite/goleveldb/leveldb/errors"
 	"github.com/EXCCoin/exccd/database"
 	"github.com/EXCCoin/exccd/dcrutil"
 	"github.com/EXCCoin/exccd/wire"
+	"github.com/btcsuite/goleveldb/leveldb"
+	ldberrors "github.com/btcsuite/goleveldb/leveldb/errors"
 )
 
 var (

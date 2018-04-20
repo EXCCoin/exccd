@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 package main
 
 import (
