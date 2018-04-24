@@ -1,13 +1,12 @@
-language: go
-
 # Only the last two Go releases are supported by the Go team with security
 # updates. Any versions older than that should be considered deprecated.
 # Don't bother testing with them. tip builds your code with the latest
 # development version of Go. This can warn you that your code will break
 # in the next version of Go. Don't worry! Later we declare that test runs
 # are allowed to fail on Go tip.
+language: go
 go:
-  - 1.10 
+  - "1.10"
 
 # Skip the install step. Don't `go get` dependencies. Only build with the
 # code in vendor/
@@ -27,9 +26,9 @@ notifications:
 # set -e enabled in bash. 
 before_script:
   - GO_FILES=$(find . -iname '*.go' -type f | grep -v /vendor/) # All the .go files, excluding vendor/
-  - go get github.com/golang/lint/golint                        # Linter
-  - go get honnef.co/go/tools/cmd/megacheck                     # Badass static analyzer/linter
-  - go get github.com/fzipp/gocyclo
+  - go get -t github.com/golang/lint/golint                        # Linter
+  - go get -t honnef.co/go/tools/cmd/megacheck                     # Badass static analyzer/linter
+  - go get -t github.com/fzipp/gocyclo
 
 # script always run to completion (set +e). All of these code checks are must haves
 # in a modern Go project.
