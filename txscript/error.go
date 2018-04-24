@@ -149,7 +149,7 @@ var (
 	ErrInvalidIndex = errors.New("invalid input index")
 
 	// ErrUnsupportedAddress is returned when a concrete type that
-	// implements a dcrutil.Address is not a supported type.
+	// implements a excutil.Address is not a supported type.
 	ErrUnsupportedAddress = errors.New("unsupported address type")
 
 	// ErrBadNumRequired is returned from MultiSigScript when nrequired is

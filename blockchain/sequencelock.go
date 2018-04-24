@@ -9,7 +9,7 @@ import (
 	"fmt"
 
 	"github.com/EXCCoin/exccd/blockchain/stake"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/wire"
 )
 
@@ -42,7 +42,7 @@ func isStakeBaseTx(tx *wire.MsgTx) bool {
 // See the CalcSequenceLock comments for more details.
 //
 // This function MUST be called with the chain state lock held (for writes).
-func (b *BlockChain) calcSequenceLock(node *blockNode, tx *dcrutil.Tx, view *UtxoViewpoint, isActive bool) (*SequenceLock, error) {
+func (b *BlockChain) calcSequenceLock(node *blockNode, tx *excutil.Tx, view *UtxoViewpoint, isActive bool) (*SequenceLock, error) {
 	// A value of -1 for each lock type allows a transaction to be included
 	// in a block at any given height or time.
 	sequenceLock := &SequenceLock{MinHeight: -1, MinTime: -1}
@@ -160,7 +160,7 @@ func (b *BlockChain) calcSequenceLock(node *blockNode, tx *dcrutil.Tx, view *Utx
 // consensus checking must check the status of the agenda first.
 //
 // This function is safe for concurrent access.
-func (b *BlockChain) CalcSequenceLock(tx *dcrutil.Tx, view *UtxoViewpoint) (*SequenceLock, error) {
+func (b *BlockChain) CalcSequenceLock(tx *excutil.Tx, view *UtxoViewpoint) (*SequenceLock, error) {
 	b.chainLock.Lock()
 	seqLock, err := b.calcSequenceLock(b.bestNode, tx, view, true)
 	b.chainLock.Unlock()

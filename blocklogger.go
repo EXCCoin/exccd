@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/btcsuite/btclog"
 )
 
@@ -40,7 +40,7 @@ func newBlockProgressLogger(progressMessage string, logger btclog.Logger) *block
 // logBlockHeight logs a new block height as an information message to show
 // progress to the user. In order to prevent spam, it limits logging to one
 // message every 10 seconds with duration and totals included.
-func (b *blockProgressLogger) logBlockHeight(block *dcrutil.Block) {
+func (b *blockProgressLogger) logBlockHeight(block *excutil.Block) {
 	b.Lock()
 	defer b.Unlock()
 	b.receivedLogBlocks++

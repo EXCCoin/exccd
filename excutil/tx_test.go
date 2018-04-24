@@ -4,7 +4,7 @@
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
-package dcrutil_test
+package excutil_test
 
 import (
 	"bytes"
@@ -13,14 +13,14 @@ import (
 	"testing"
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/davecgh/go-spew/spew"
 )
 
 // TestTx tests the API for Tx.
 func TestTx(t *testing.T) {
 	testTx := Block100000.Transactions[0]
-	tx := dcrutil.NewTx(testTx)
+	tx := excutil.NewTx(testTx)
 
 	// Ensure we get the same data back out.
 	if msgTx := tx.MsgTx(); !reflect.DeepEqual(msgTx, testTx) {
@@ -90,7 +90,7 @@ func TestNewTxFromBytes(t *testing.T) {
 	testTxBytes := testTxBuf.Bytes()
 
 	// Create a new transaction from the serialized bytes.
-	tx, err := dcrutil.NewTxFromBytes(testTxBytes)
+	tx, err := excutil.NewTxFromBytes(testTxBytes)
 	if err != nil {
 		t.Errorf("NewTxFromBytes: %v", err)
 		return
@@ -117,7 +117,7 @@ func TestTxErrors(t *testing.T) {
 
 	// Truncate the transaction byte buffer to force errors.
 	shortBytes := testTxBytes[:4]
-	_, err = dcrutil.NewTxFromBytes(shortBytes)
+	_, err = excutil.NewTxFromBytes(shortBytes)
 	if err != io.EOF {
 		t.Errorf("NewTxFromBytes: did not get expected error - "+
 			"got %v, want %v", err, io.EOF)

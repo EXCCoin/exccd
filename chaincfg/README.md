@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/chaincfg"
 )
 

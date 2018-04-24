@@ -12,7 +12,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/database"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/txscript"
 )
 
@@ -104,7 +104,7 @@ func (b *BlockChain) verifyCheckpoint(height int64, hash *chainhash.Hash) bool {
 // really only happen for blocks before the first checkpoint).
 //
 // This function MUST be called with the chain lock held (for reads).
-func (b *BlockChain) findPreviousCheckpoint() (*dcrutil.Block, error) {
+func (b *BlockChain) findPreviousCheckpoint() (*excutil.Block, error) {
 	if b.noCheckpoints || len(b.chainParams.Checkpoints) == 0 {
 		return nil, nil
 	}
@@ -222,7 +222,7 @@ func (b *BlockChain) findPreviousCheckpoint() (*dcrutil.Block, error) {
 
 // isNonstandardTransaction determines whether a transaction contains any
 // scripts which are not one of the standard types.
-func isNonstandardTransaction(tx *dcrutil.Tx) bool {
+func isNonstandardTransaction(tx *excutil.Tx) bool {
 	// Check all of the output public key scripts for non-standard scripts.
 	for _, txOut := range tx.MsgTx().TxOut {
 		scriptClass := txscript.GetScriptClass(txOut.Version, txOut.PkScript)
@@ -250,7 +250,7 @@ func isNonstandardTransaction(tx *dcrutil.Tx) bool {
 // decision and then manually added to the list of checkpoints for a network.
 //
 // This function is safe for concurrent access.
-func (b *BlockChain) IsCheckpointCandidate(block *dcrutil.Block) (bool, error) {
+func (b *BlockChain) IsCheckpointCandidate(block *excutil.Block) (bool, error) {
 	b.chainLock.RLock()
 	defer b.chainLock.RUnlock()
 

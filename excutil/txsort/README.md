@@ -3,7 +3,7 @@ txsort
 
 [![Build Status](http://img.shields.io/travis/EXCCoin/exccd.svg)](https://travis-ci.org/EXCCoin/exccd)
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![GoDoc](http://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd/dcrutil/txsort)
+[![GoDoc](http://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd/excutil/txsort)
 
 Package txsort provides stable transaction sorting.
 
@@ -29,7 +29,7 @@ A comprehensive suite of tests is provided to ensure proper functionality.
 ## Installation and Updating
 
 ```bash
-$ go get -u github.com/EXCCoin/exccd/dcrutil/txsort
+$ go get -u github.com/EXCCoin/exccd/excutil/txsort
 ```
 
 ## License

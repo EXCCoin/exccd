@@ -13,7 +13,7 @@ import (
 
 	"github.com/EXCCoin/exccd/blockchain/chaingen"
 	"github.com/EXCCoin/exccd/chaincfg"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 )
 
 const (
@@ -159,7 +159,7 @@ func TestThresholdState(t *testing.T) {
 	accepted := func() {
 		msgBlock := g.Tip()
 		blockHeight := msgBlock.Header.Height
-		block := dcrutil.NewBlock(msgBlock)
+		block := excutil.NewBlock(msgBlock)
 		t.Logf("Testing block %s (hash %s, height %d)",
 			g.TipName(), block.Hash(), blockHeight)
 

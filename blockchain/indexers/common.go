@@ -15,7 +15,7 @@ import (
 
 	"github.com/EXCCoin/exccd/blockchain"
 	"github.com/EXCCoin/exccd/database"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 )
 
 var (
@@ -54,11 +54,11 @@ type Indexer interface {
 
 	// ConnectBlock is invoked when the index manager is notified that a new
 	// block has been connected to the main chain.
-	ConnectBlock(dbTx database.Tx, block, parent *dcrutil.Block, view *blockchain.UtxoViewpoint) error
+	ConnectBlock(dbTx database.Tx, block, parent *excutil.Block, view *blockchain.UtxoViewpoint) error
 
 	// DisconnectBlock is invoked when the index manager is notified that a
 	// block has been disconnected from the main chain.
-	DisconnectBlock(dbTx database.Tx, block, parent *dcrutil.Block, view *blockchain.UtxoViewpoint) error
+	DisconnectBlock(dbTx database.Tx, block, parent *excutil.Block, view *blockchain.UtxoViewpoint) error
 }
 
 // IndexDropper provides a method to remove an index from the database. Indexers
@@ -106,9 +106,9 @@ type internalBucket interface {
 // approvesParent returns whether or not the vote bits in the header of the
 // passed block indicate the regular transaction tree of the parent block should
 // be considered valid.
-func approvesParent(block *dcrutil.Block) bool {
-	return dcrutil.IsFlagSet16(block.MsgBlock().Header.VoteBits,
-		dcrutil.BlockValid)
+func approvesParent(block *excutil.Block) bool {
+	return excutil.IsFlagSet16(block.MsgBlock().Header.VoteBits,
+		excutil.BlockValid)
 }
 
 // interruptRequested returns true when the provided channel has been closed.

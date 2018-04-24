@@ -17,7 +17,7 @@ import (
 	"testing"
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	. "github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
 )
@@ -378,7 +378,7 @@ testloop:
 			continue
 		}
 
-		tx, err := dcrutil.NewTxFromBytes(serializedTx)
+		tx, err := excutil.NewTxFromBytes(serializedTx)
 		if err != nil {
 			t.Errorf("bad test (arg 2 not msgtx %v) %d: %v", err,
 				i, test)
@@ -521,7 +521,7 @@ testloop:
 			continue
 		}
 
-		tx, err := dcrutil.NewTxFromBytes(serializedTx)
+		tx, err := excutil.NewTxFromBytes(serializedTx)
 		if err != nil {
 			t.Errorf("bad test (arg 2 not msgtx %v) %d: %v", err,
 				i, test)

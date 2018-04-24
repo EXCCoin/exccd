@@ -14,7 +14,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/database"
 	_ "github.com/EXCCoin/exccd/database/ffldb"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/wire"
 	flags "github.com/jessevdk/go-flags"
 )
@@ -26,7 +26,7 @@ const (
 )
 
 var (
-	dcrdHomeDir     = dcrutil.AppDataDir("dcrd", false)
+	dcrdHomeDir     = excutil.AppDataDir("dcrd", false)
 	defaultDataDir  = filepath.Join(dcrdHomeDir, "data")
 	knownDbTypes    = database.SupportedDrivers()
 	activeNetParams = &chaincfg.MainNetParams

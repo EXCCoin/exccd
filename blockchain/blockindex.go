@@ -18,7 +18,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/database"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/wire"
 )
 
@@ -391,7 +391,7 @@ func (bi *blockIndex) loadBlockNode(dbTx database.Tx, hash *chainhash.Hash) (*bl
 // The returned node will be nil if the genesis block is passed.
 //
 // This function is safe for concurrent access.
-func (bi *blockIndex) PrevNodeFromBlock(block *dcrutil.Block) (*blockNode, error) {
+func (bi *blockIndex) PrevNodeFromBlock(block *excutil.Block) (*blockNode, error) {
 	// Genesis block.
 	prevHash := &block.MsgBlock().Header.PrevBlock
 	if prevHash.IsEqual(zeroHash) {

@@ -11,14 +11,14 @@ import (
 
 	"github.com/EXCCoin/exccd/blockchain/stake"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 )
 
 // TxDesc is a descriptor about a transaction in a transaction source along with
 // additional metadata.
 type TxDesc struct {
 	// Tx is the transaction associated with the entry.
-	Tx *dcrutil.Tx
+	Tx *excutil.Tx
 
 	// Type is the type of the transaction associated with the entry.
 	Type stake.TxType

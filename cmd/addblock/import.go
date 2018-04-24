@@ -17,7 +17,7 @@ import (
 	"github.com/EXCCoin/exccd/blockchain/indexers"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/database"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/wire"
 )
 
@@ -98,7 +98,7 @@ func (bi *blockImporter) readBlock() ([]byte, error) {
 // with any potential errors.
 func (bi *blockImporter) processBlock(serializedBlock []byte) (bool, error) {
 	// Deserialize the block which includes checks for malformed blocks.
-	block, err := dcrutil.NewBlockFromBytes(serializedBlock)
+	block, err := excutil.NewBlockFromBytes(serializedBlock)
 	if err != nil {
 		return false, err
 	}

@@ -9,7 +9,7 @@ package blockchain
 import (
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/database"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/txscript"
 )
 
@@ -111,7 +111,7 @@ func (b *BlockChain) MissedTickets() ([]chainhash.Hash, error) {
 // corresponding to the given address.
 //
 // This function is safe for concurrent access.
-func (b *BlockChain) TicketsWithAddress(address dcrutil.Address) ([]chainhash.Hash, error) {
+func (b *BlockChain) TicketsWithAddress(address excutil.Address) ([]chainhash.Hash, error) {
 	b.chainLock.RLock()
 	sn := b.bestNode.stakeNode
 	b.chainLock.RUnlock()
@@ -225,7 +225,7 @@ func (b *BlockChain) CheckExpiredTickets(hashes []chainhash.Hash) []bool {
 // This function is safe for concurrent access.  All live tickets are at least
 // 256 blocks deep on mainnet, so the UTXO set should generally always have
 // the asked for transactions.
-func (b *BlockChain) TicketPoolValue() (dcrutil.Amount, error) {
+func (b *BlockChain) TicketPoolValue() (excutil.Amount, error) {
 	b.chainLock.RLock()
 	sn := b.bestNode.stakeNode
 	b.chainLock.RUnlock()
@@ -245,5 +245,5 @@ func (b *BlockChain) TicketPoolValue() (dcrutil.Amount, error) {
 	if err != nil {
 		return 0, err
 	}
-	return dcrutil.Amount(amt), nil
+	return excutil.Amount(amt), nil
 }

@@ -221,7 +221,7 @@ information.
   * [mempool](https://github.com/EXCCoin/exccd/tree/master/mempool) -
     Package mempool provides a policy-enforced pool of unmined excc
     transactions.
-  * [dcrutil](https://github.com/EXCCoin/exccd/tree/master/dcrutil) - Provides
+  * [excutil](https://github.com/EXCCoin/exccd/tree/master/excutil) - Provides
     Decred-specific convenience functions and types
   * [chainhash](https://github.com/EXCCoin/exccd/tree/master/chaincfg/chainhash) -
     Provides a generic hash type and associated functions that allows the

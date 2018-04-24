@@ -16,7 +16,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
 )
@@ -26,7 +26,7 @@ func TestCalcMinRequiredTxRelayFee(t *testing.T) {
 	tests := []struct {
 		name     string         // test description.
 		size     int64          // Transaction size in bytes.
-		relayFee dcrutil.Amount // minimum relay transaction fee.
+		relayFee excutil.Amount // minimum relay transaction fee.
 		want     int64          // Expected fee.
 	}{
 		{
@@ -52,8 +52,8 @@ func TestCalcMinRequiredTxRelayFee(t *testing.T) {
 		{
 			"max standard tx size with max relay fee",
 			maxStandardTxSize,
-			dcrutil.MaxAmount,
-			dcrutil.MaxAmount,
+			excutil.MaxAmount,
+			excutil.MaxAmount,
 		},
 		{
 			"1500 bytes with 5000 relay fee",
@@ -212,7 +212,7 @@ func TestDust(t *testing.T) {
 	tests := []struct {
 		name     string // test description
 		txOut    wire.TxOut
-		relayFee dcrutil.Amount // minimum relay transaction fee.
+		relayFee excutil.Amount // minimum relay transaction fee.
 		isDust   bool
 	}{
 		{
@@ -256,8 +256,8 @@ func TestDust(t *testing.T) {
 		{
 			// Maximum allowed value is never dust.
 			"max amount is never dust",
-			wire.TxOut{Value: dcrutil.MaxAmount, Version: 0, PkScript: pkScript},
-			dcrutil.MaxAmount,
+			wire.TxOut{Value: excutil.MaxAmount, Version: 0, PkScript: pkScript},
+			excutil.MaxAmount,
 			false,
 		},
 		{
@@ -308,7 +308,7 @@ func TestCheckTransactionStandard(t *testing.T) {
 		SignatureScript:  dummySigScript,
 	}
 	addrHash := [20]byte{0x01}
-	addr, err := dcrutil.NewAddressPubKeyHash(addrHash[:],
+	addr, err := excutil.NewAddressPubKeyHash(addrHash[:],
 		&chaincfg.TestNet2Params, chainec.ECTypeSecp256k1)
 	if err != nil {
 		t.Fatalf("NewAddressPubKeyHash: unexpected error: %v", err)
@@ -518,7 +518,7 @@ func TestCheckTransactionStandard(t *testing.T) {
 	medianTime := time.Now()
 	for _, test := range tests {
 		// Ensure standardness is as expected.
-		tx := dcrutil.NewTx(&test.tx)
+		tx := excutil.NewTx(&test.tx)
 		err := checkTransactionStandard(tx, stake.DetermineTxType(&test.tx),
 			test.height, medianTime, DefaultMinRelayTxFee,
 			maxTxVersion)

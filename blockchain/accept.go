@@ -14,14 +14,14 @@ import (
 
 	"github.com/EXCCoin/exccd/blockchain/stake"
 	"github.com/EXCCoin/exccd/database"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/txscript"
 )
 
 // checkCoinbaseUniqueHeight checks to ensure that for all blocks height > 1
 // that the coinbase contains the height encoding to make coinbase hash collisions
 // impossible.
-func checkCoinbaseUniqueHeight(blockHeight int64, block *dcrutil.Block) error {
+func checkCoinbaseUniqueHeight(blockHeight int64, block *excutil.Block) error {
 	// Coinbase TxOut[0] is always tax, TxOut[1] is always
 	// height + extranonce, so at least two outputs must
 	// exist.
@@ -64,7 +64,7 @@ func checkCoinbaseUniqueHeight(blockHeight int64, block *dcrutil.Block) error {
 }
 
 // IsFinalizedTransaction determines whether or not a transaction is finalized.
-func IsFinalizedTransaction(tx *dcrutil.Tx, blockHeight int64, blockTime time.Time) bool {
+func IsFinalizedTransaction(tx *excutil.Tx, blockHeight int64, blockTime time.Time) bool {
 	// Lock time of zero means the transaction is finalized.
 	msgTx := tx.MsgTx()
 	lockTime := msgTx.LockTime
@@ -107,7 +107,7 @@ func IsFinalizedTransaction(tx *dcrutil.Tx, blockHeight int64, blockTime time.Ti
 // their documentation for how the flags modify their behavior.
 //
 // This function MUST be called with the chain state lock held (for writes).
-func (b *BlockChain) maybeAcceptBlock(block *dcrutil.Block, flags BehaviorFlags) (bool, error) {
+func (b *BlockChain) maybeAcceptBlock(block *excutil.Block, flags BehaviorFlags) (bool, error) {
 	// Get a block node for the block previous to this one.  Will be nil
 	// if this is the genesis block.
 	prevNode, err := b.index.PrevNodeFromBlock(block)

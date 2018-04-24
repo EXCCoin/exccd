@@ -18,7 +18,7 @@ import (
 	"strings"
 
 	"github.com/EXCCoin/exccd/dcrjson"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 
 	flags "github.com/jessevdk/go-flags"
 )
@@ -31,9 +31,9 @@ const (
 )
 
 var (
-	dcrdHomeDir            = dcrutil.AppDataDir("dcrd", false)
-	dcrctlHomeDir          = dcrutil.AppDataDir("dcrctl", false)
-	dcrwalletHomeDir       = dcrutil.AppDataDir("dcrwallet", false)
+	dcrdHomeDir            = excutil.AppDataDir("dcrd", false)
+	dcrctlHomeDir          = excutil.AppDataDir("dcrctl", false)
+	dcrwalletHomeDir       = excutil.AppDataDir("dcrwallet", false)
 	defaultConfigFile      = filepath.Join(dcrctlHomeDir, "dcrctl.conf")
 	defaultRPCServer       = "localhost"
 	defaultWalletRPCServer = "localhost"

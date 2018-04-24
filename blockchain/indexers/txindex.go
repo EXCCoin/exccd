@@ -13,7 +13,7 @@ import (
 	"github.com/EXCCoin/exccd/blockchain"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/database"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/wire"
 )
 
@@ -227,13 +227,13 @@ func dbFetchTxIndexEntry(dbTx database.Tx, txHash *chainhash.Hash) (*database.Bl
 // dbAddTxIndexEntries uses an existing database transaction to add a
 // transaction index entry for every transaction in the parent of the passed
 // block (if they were valid) and every stake transaction in the passed block.
-func dbAddTxIndexEntries(dbTx database.Tx, block, parent *dcrutil.Block, blockID uint32) error {
+func dbAddTxIndexEntries(dbTx database.Tx, block, parent *excutil.Block, blockID uint32) error {
 	// As an optimization, allocate a single slice big enough to hold all
 	// of the serialized transaction index entries for the block and
 	// serialize them directly into the slice.  Then, pass the appropriate
 	// subslice to the database to be written.  This approach significantly
 	// cuts down on the number of required allocations.
-	addEntries := func(txns []*dcrutil.Tx, txLocs []wire.TxLoc, blockID uint32) error {
+	addEntries := func(txns []*excutil.Tx, txLocs []wire.TxLoc, blockID uint32) error {
 		offset := 0
 		serializedValues := make([]byte, len(txns)*txEntrySize)
 		for i, tx := range txns {
@@ -297,8 +297,8 @@ func dbRemoveTxIndexEntry(dbTx database.Tx, txHash *chainhash.Hash) error {
 // dbRemoveTxIndexEntries uses an existing database transaction to remove the
 // latest transaction entry for every transaction in the parent of the passed
 // block (if they were valid) and every stake transaction in the passed block.
-func dbRemoveTxIndexEntries(dbTx database.Tx, block, parent *dcrutil.Block) error {
-	removeEntries := func(txns []*dcrutil.Tx) error {
+func dbRemoveTxIndexEntries(dbTx database.Tx, block, parent *excutil.Block) error {
+	removeEntries := func(txns []*excutil.Tx) error {
 		for _, tx := range txns {
 			err := dbRemoveTxIndexEntry(dbTx, tx.Hash())
 			if err != nil {
@@ -428,7 +428,7 @@ func (idx *TxIndex) Create(dbTx database.Tx) error {
 // for every transaction in the passed block.
 //
 // This is part of the Indexer interface.
-func (idx *TxIndex) ConnectBlock(dbTx database.Tx, block, parent *dcrutil.Block, view *blockchain.UtxoViewpoint) error {
+func (idx *TxIndex) ConnectBlock(dbTx database.Tx, block, parent *excutil.Block, view *blockchain.UtxoViewpoint) error {
 	// Increment the internal block ID to use for the block being connected
 	// and add all of the transactions in the block to the index.
 	newBlockID := idx.curBlockID + 1
@@ -451,7 +451,7 @@ func (idx *TxIndex) ConnectBlock(dbTx database.Tx, block, parent *dcrutil.Block,
 // hash-to-transaction mapping for every transaction in the block.
 //
 // This is part of the Indexer interface.
-func (idx *TxIndex) DisconnectBlock(dbTx database.Tx, block, parent *dcrutil.Block, view *blockchain.UtxoViewpoint) error {
+func (idx *TxIndex) DisconnectBlock(dbTx database.Tx, block, parent *excutil.Block, view *blockchain.UtxoViewpoint) error {
 	// Remove all of the transactions in the block from the index.
 	if err := dbRemoveTxIndexEntries(dbTx, block, parent); err != nil {
 		return err
