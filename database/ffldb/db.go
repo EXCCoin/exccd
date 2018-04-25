@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2015-2016 The btcsuite developers
 // Copyright (c) 2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -15,6 +16,11 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/database"
+	"github.com/EXCCoin/exccd/database/internal/treap"
+	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/wire"
 	"github.com/btcsuite/goleveldb/leveldb"
 	"github.com/btcsuite/goleveldb/leveldb/comparer"
 	ldberrors "github.com/btcsuite/goleveldb/leveldb/errors"
@@ -22,11 +28,6 @@ import (
 	"github.com/btcsuite/goleveldb/leveldb/iterator"
 	"github.com/btcsuite/goleveldb/leveldb/opt"
 	"github.com/btcsuite/goleveldb/leveldb/util"
-	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/database"
-	"github.com/EXCCoin/exccd/database/internal/treap"
-	"github.com/EXCCoin/exccd/dcrutil"
-	"github.com/EXCCoin/exccd/wire"
 )
 
 const (
@@ -1147,7 +1148,7 @@ func (tx *transaction) hasBlock(hash *chainhash.Hash) bool {
 //   - ErrTxClosed if the transaction has already been closed
 //
 // This function is part of the database.Tx interface implementation.
-func (tx *transaction) StoreBlock(block *dcrutil.Block) error {
+func (tx *transaction) StoreBlock(block *excutil.Block) error {
 	// Ensure transaction state is valid.
 	if err := tx.checkClosed(); err != nil {
 		return err

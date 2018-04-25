@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2014-2015 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -39,7 +40,7 @@ const (
 	MaxFilterLoadFilterSize = 36000
 )
 
-// MsgFilterLoad implements the Message interface and represents a decred
+// MsgFilterLoad implements the Message interface and represents a excc
 // filterload message which is used to reset a Bloom filter.
 //
 // This message was not added until protocol version BIP0037Version.
@@ -50,7 +51,7 @@ type MsgFilterLoad struct {
 	Flags     BloomUpdateType
 }
 
-// BtcDecode decodes r using the Decred protocol encoding into the receiver.
+// BtcDecode decodes r using the Excc protocol encoding into the receiver.
 // This is part of the Message interface implementation.
 func (msg *MsgFilterLoad) BtcDecode(r io.Reader, pver uint32) error {
 	var err error

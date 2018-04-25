@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2015-2017 The Decred developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -19,7 +20,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/database"
 	_ "github.com/EXCCoin/exccd/database/ffldb"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/wire"
 )
 
@@ -82,7 +83,7 @@ func copyNode(n *Node) *Node {
 }
 
 // ticketsInBlock finds all the new tickets in the block.
-func ticketsInBlock(bl *dcrutil.Block) []chainhash.Hash {
+func ticketsInBlock(bl *excutil.Block) []chainhash.Hash {
 	tickets := make([]chainhash.Hash, 0)
 	for _, stx := range bl.STransactions() {
 		if DetermineTxType(stx.MsgTx()) == TxTypeSStx {
@@ -95,7 +96,7 @@ func ticketsInBlock(bl *dcrutil.Block) []chainhash.Hash {
 }
 
 // ticketsSpentInBlock finds all the tickets spent in the block.
-func ticketsSpentInBlock(bl *dcrutil.Block) []chainhash.Hash {
+func ticketsSpentInBlock(bl *excutil.Block) []chainhash.Hash {
 	tickets := make([]chainhash.Hash, 0, bl.MsgBlock().Header.Voters)
 	for _, stx := range bl.STransactions() {
 		if DetermineTxType(stx.MsgTx()) == TxTypeSSGen {
@@ -107,7 +108,7 @@ func ticketsSpentInBlock(bl *dcrutil.Block) []chainhash.Hash {
 }
 
 // revokedTicketsInBlock finds all the revoked tickets in the block.
-func revokedTicketsInBlock(bl *dcrutil.Block) []chainhash.Hash {
+func revokedTicketsInBlock(bl *excutil.Block) []chainhash.Hash {
 	tickets := make([]chainhash.Hash, 0, bl.MsgBlock().Header.Revocations)
 	for _, stx := range bl.STransactions() {
 		if DetermineTxType(stx.MsgTx()) == TxTypeSSRtx {
@@ -228,9 +229,9 @@ func TestTicketDBLongChain(t *testing.T) {
 	if err := bcDecoder.Decode(&testBlockchainBytes); err != nil {
 		t.Errorf("error decoding test blockchain")
 	}
-	testBlockchain := make(map[int64]*dcrutil.Block, len(testBlockchainBytes))
+	testBlockchain := make(map[int64]*excutil.Block, len(testBlockchainBytes))
 	for k, v := range testBlockchainBytes {
-		bl, err := dcrutil.NewBlockFromBytes(v)
+		bl, err := excutil.NewBlockFromBytes(v)
 		if err != nil {
 			t.Fatalf("couldn't decode block")
 		}
@@ -558,9 +559,9 @@ func TestTicketDBGeneral(t *testing.T) {
 	if err := bcDecoder.Decode(&testBlockchainBytes); err != nil {
 		t.Errorf("error decoding test blockchain")
 	}
-	testBlockchain := make(map[int64]*dcrutil.Block, len(testBlockchainBytes))
+	testBlockchain := make(map[int64]*excutil.Block, len(testBlockchainBytes))
 	for k, v := range testBlockchainBytes {
-		bl, err := dcrutil.NewBlockFromBytes(v)
+		bl, err := excutil.NewBlockFromBytes(v)
 		if err != nil {
 			t.Fatalf("couldn't decode block")
 		}

@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2014-2016 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -21,7 +22,7 @@ func maxFlagsPerMerkleBlock(pver uint32) uint32 {
 	return uint32(MaxTxPerTxTree(ProtocolVersion)/8) + 1
 }
 
-// MsgMerkleBlock implements the Message interface and represents a decred
+// MsgMerkleBlock implements the Message interface and represents a excc
 // merkleblock message which is used to reset a Bloom filter.
 //
 // This message was not added until protocol version BIP0037Version.

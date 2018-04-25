@@ -1,9 +1,10 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2014 The btcsuite developers
 // Copyright (c) 2015 The Decred developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
-package dcrutil_test
+package excutil_test
 
 import (
 	"os"
@@ -13,7 +14,7 @@ import (
 	"testing"
 	"unicode"
 
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 )
 
 // TestAppDataDir tests the API for AppDataDir to ensure it gives expected
@@ -123,7 +124,7 @@ func TestAppDataDir(t *testing.T) {
 
 	t.Logf("Running %d tests", len(tests))
 	for i, test := range tests {
-		ret := dcrutil.TstAppDataDir(test.goos, test.appName, test.roaming)
+		ret := excutil.TstAppDataDir(test.goos, test.appName, test.roaming)
 		if ret != test.want {
 			t.Errorf("appDataDir #%d (%s) does not match - "+
 				"expected got %s, want %s", i, test.goos, ret,

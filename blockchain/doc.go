@@ -1,13 +1,14 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2014 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
 /*
-Package blockchain implements Decred block handling and chain selection rules.
+Package blockchain implements Excc block handling and chain selection rules.
 
-The Decred block handling and chain selection rules are an integral, and quite
-likely the most important, part of decred.  Unfortunately, at the time of
+The Excc block handling and chain selection rules are an integral, and quite
+likely the most important, part of excc.  Unfortunately, at the time of
 this writing, these rules are also largely undocumented and had to be
 ascertained from the bitcoind source code.  At its core, Decred is a
 distributed consensus of which blocks are valid and which ones will comprise the

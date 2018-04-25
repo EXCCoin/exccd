@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2015-2016 The btcsuite developers
 // Copyright (c) 2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -10,7 +11,7 @@ package database
 
 import (
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 )
 
 // Cursor represents a cursor over key/value pairs and nested buckets of a
@@ -228,7 +229,7 @@ type Tx interface {
 	//   - ErrTxClosed if the transaction has already been closed
 	//
 	// Other errors are possible depending on the implementation.
-	StoreBlock(block *dcrutil.Block) error
+	StoreBlock(block *excutil.Block) error
 
 	// HasBlock returns whether or not a block with the given hash exists
 	// in the database.

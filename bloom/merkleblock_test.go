@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2016 The btcsuite developers
 // Copyright (c) 2015-2017 The Decred developers
 // Use of this source code is governed by an ISC
@@ -12,7 +13,7 @@ import (
 
 	"github.com/EXCCoin/exccd/bloom"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/wire"
 )
 
@@ -24,7 +25,7 @@ func TestMerkleBlock3(t *testing.T) {
 		t.Errorf("TestMerkleBlock3 DecodeString failed: %v", err)
 		return
 	}
-	blk, err := dcrutil.NewBlockFromBytes(blockBytes)
+	blk, err := excutil.NewBlockFromBytes(blockBytes)
 	if err != nil {
 		t.Errorf("TestMerkleBlock3 NewBlockFromBytes failed: %v", err)
 		return

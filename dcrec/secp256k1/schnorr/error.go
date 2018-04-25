@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2014 Conformal Systems LLC.
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC

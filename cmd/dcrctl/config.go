@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2015 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -17,7 +18,7 @@ import (
 	"strings"
 
 	"github.com/EXCCoin/exccd/dcrjson"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 
 	flags "github.com/jessevdk/go-flags"
 )
@@ -30,9 +31,9 @@ const (
 )
 
 var (
-	dcrdHomeDir            = dcrutil.AppDataDir("dcrd", false)
-	dcrctlHomeDir          = dcrutil.AppDataDir("dcrctl", false)
-	dcrwalletHomeDir       = dcrutil.AppDataDir("dcrwallet", false)
+	dcrdHomeDir            = excutil.AppDataDir("dcrd", false)
+	dcrctlHomeDir          = excutil.AppDataDir("dcrctl", false)
+	dcrwalletHomeDir       = excutil.AppDataDir("dcrwallet", false)
 	defaultConfigFile      = filepath.Join(dcrctlHomeDir, "dcrctl.conf")
 	defaultRPCServer       = "localhost"
 	defaultWalletRPCServer = "localhost"

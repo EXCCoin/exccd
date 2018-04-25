@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2014-2016 The btcsuite developers
 // Copyright (c) 2016-2018 The Decred developers
 // Use of this source code is governed by an ISC
@@ -7,7 +8,7 @@ package mining
 
 import (
 	"github.com/EXCCoin/exccd/blockchain"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/wire"
 )
 
@@ -37,7 +38,7 @@ type Policy struct {
 	// TxMinFreeFee is the minimum fee in Atoms/1000 bytes that is
 	// required for a transaction to be treated as free for mining purposes
 	// (block template generation).
-	TxMinFreeFee dcrutil.Amount
+	TxMinFreeFee excutil.Amount
 }
 
 // minInt is a helper function to return the minimum of two ints.  This avoids

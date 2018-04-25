@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2016 The btcsuite developers
 // Copyright (c) 2015-2017 The Decred developers
 // Use of this source code is governed by an ISC
@@ -16,7 +17,7 @@ import (
 
 	"github.com/EXCCoin/exccd/blockchain/chaingen"
 	"github.com/EXCCoin/exccd/chaincfg"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 )
 
 // cloneParams returns a deep copy of the provided parameters so the caller is
@@ -76,7 +77,7 @@ func TestBlockchainFunctions(t *testing.T) {
 
 	// Insert blocks 1 to 168 and perform various tests.
 	for i := 1; i <= 168; i++ {
-		bl, err := dcrutil.NewBlockFromBytes(blockChain[int64(i)])
+		bl, err := excutil.NewBlockFromBytes(blockChain[int64(i)])
 		if err != nil {
 			t.Errorf("NewBlockFromBytes error: %v", err.Error())
 		}
@@ -91,13 +92,13 @@ func TestBlockchainFunctions(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to get ticket pool value: %v", err)
 	}
-	expectedVal := dcrutil.Amount(3495091704)
+	expectedVal := excutil.Amount(3495091704)
 	if val != expectedVal {
 		t.Errorf("Failed to get correct result for ticket pool value; "+
 			"want %v, got %v", expectedVal, val)
 	}
 
-	a, _ := dcrutil.DecodeAddress("SsbKpMkPnadDcZFFZqRPY8nvdFagrktKuzB")
+	a, _ := excutil.DecodeAddress("SsbKpMkPnadDcZFFZqRPY8nvdFagrktKuzB")
 	hs, err := chain.TicketsWithAddress(a)
 	if err != nil {
 		t.Errorf("Failed to do TicketsWithAddress: %v", err)
@@ -154,7 +155,7 @@ func TestForceHeadReorg(t *testing.T) {
 	accepted := func() {
 		msgBlock := g.Tip()
 		blockHeight := msgBlock.Header.Height
-		block := dcrutil.NewBlock(msgBlock)
+		block := excutil.NewBlock(msgBlock)
 		t.Logf("Testing block %s (hash %s, height %d)",
 			g.TipName(), block.Hash(), blockHeight)
 
@@ -193,7 +194,7 @@ func TestForceHeadReorg(t *testing.T) {
 	acceptedToSideChainWithExpectedTip := func(tipName string) {
 		msgBlock := g.Tip()
 		blockHeight := msgBlock.Header.Height
-		block := dcrutil.NewBlock(msgBlock)
+		block := excutil.NewBlock(msgBlock)
 		t.Logf("Testing block %s (hash %s, height %d)",
 			g.TipName(), block.Hash(), blockHeight)
 

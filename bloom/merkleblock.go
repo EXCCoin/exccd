@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2016 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -8,7 +9,7 @@ package bloom
 import (
 	"github.com/EXCCoin/exccd/blockchain"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/wire"
 )
 
@@ -80,7 +81,7 @@ func (m *merkleBlock) traverseAndBuild(height, pos uint32) {
 
 // NewMerkleBlock returns a new *wire.MsgMerkleBlock and an array of the matched
 // transaction index numbers based on the passed block and filter.
-func NewMerkleBlock(block *dcrutil.Block, filter *Filter) (*wire.MsgMerkleBlock, []uint32) {
+func NewMerkleBlock(block *excutil.Block, filter *Filter) (*wire.MsgMerkleBlock, []uint32) {
 	numTx := uint32(len(block.Transactions()))
 	mBlock := merkleBlock{
 		numTx:       numTx,

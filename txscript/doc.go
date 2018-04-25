@@ -1,13 +1,14 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2015 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
 /*
-Package txscript implements the Decred transaction script language.
+Package txscript implements the Excc transaction script language.
 
 This package provides data structures and functions to parse and execute
-decred transaction scripts.
+excc transaction scripts.
 
 Script Overview
 
@@ -25,7 +26,7 @@ which proves the spender owns the associated private key.  This information
 is used to prove the the spender is authorized to perform the transaction.
 
 One benefit of using a scripting language is added flexibility in specifying
-what conditions must be met in order to spend decreds.
+what conditions must be met in order to spend exccs.
 
 Errors
 

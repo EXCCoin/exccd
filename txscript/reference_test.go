@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2016 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -16,7 +17,7 @@ import (
 	"testing"
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	. "github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
 )
@@ -377,7 +378,7 @@ testloop:
 			continue
 		}
 
-		tx, err := dcrutil.NewTxFromBytes(serializedTx)
+		tx, err := excutil.NewTxFromBytes(serializedTx)
 		if err != nil {
 			t.Errorf("bad test (arg 2 not msgtx %v) %d: %v", err,
 				i, test)
@@ -520,7 +521,7 @@ testloop:
 			continue
 		}
 
-		tx, err := dcrutil.NewTxFromBytes(serializedTx)
+		tx, err := excutil.NewTxFromBytes(serializedTx)
 		if err != nil {
 			t.Errorf("bad test (arg 2 not msgtx %v) %d: %v", err,
 				i, test)

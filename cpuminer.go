@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2014-2016 The btcsuite developers
 // Copyright (c) 2015-2018 The Decred developers
 // Use of this source code is governed by an ISC
@@ -16,7 +17,7 @@ import (
 	"github.com/EXCCoin/exccd/blockchain"
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/mining"
 	"github.com/EXCCoin/exccd/wire"
 )
@@ -134,7 +135,7 @@ out:
 
 // submitBlock submits the passed block to network after ensuring it passes all
 // of the consensus validation rules.
-func (m *CPUMiner) submitBlock(block *dcrutil.Block) bool {
+func (m *CPUMiner) submitBlock(block *excutil.Block) bool {
 	m.submitBlockLock.Lock()
 	defer m.submitBlockLock.Unlock()
 
@@ -179,7 +180,7 @@ func (m *CPUMiner) submitBlock(block *dcrutil.Block) bool {
 	}
 	minrLog.Infof("Block submitted via CPU miner accepted (hash %s, "+
 		"height %v, amount %v)", block.Hash(), block.Height(),
-		dcrutil.Amount(coinbaseTxGenerated))
+		excutil.Amount(coinbaseTxGenerated))
 	return true
 }
 
@@ -355,7 +356,7 @@ out:
 		// a new block template can be generated.  When the return is
 		// true a solution was found, so submit the solved block.
 		if m.solveBlock(template.Block, ticker, quit) {
-			block := dcrutil.NewBlock(template.Block)
+			block := excutil.NewBlock(template.Block)
 			m.submitBlock(block)
 			m.minedOnParents[template.Block.Header.PrevBlock]++
 		}
@@ -623,7 +624,7 @@ func (m *CPUMiner) GenerateNBlocks(n uint32) ([]*chainhash.Hash, error) {
 		// a new block template can be generated.  When the return is
 		// true a solution was found, so submit the solved block.
 		if m.solveBlock(template.Block, ticker, nil) {
-			block := dcrutil.NewBlock(template.Block)
+			block := excutil.NewBlock(template.Block)
 			m.submitBlock(block)
 			blockHashes[i] = block.Hash()
 			i++

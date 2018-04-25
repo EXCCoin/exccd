@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2016 The btcsuite developers
 // Copyright (c) 2016-2018 The Decred developers
 // Use of this source code is governed by an ISC
@@ -18,12 +19,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/btcsuite/go-socks/socks"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/EXCCoin/exccd/blockchain"
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/wire"
+	"github.com/btcsuite/go-socks/socks"
+	"github.com/davecgh/go-spew/spew"
 )
 
 const (
@@ -389,7 +390,7 @@ type HostToNetAddrFunc func(host string, port uint16,
 // It acts as the traffic cop between the external world and the actual
 // goroutine which writes to the network socket.
 
-// Peer provides a basic concurrent safe Decred peer for handling decred
+// Peer provides a basic concurrent safe Decred peer for handling excc
 // communications via the peer-to-peer protocol.  It provides full duplex
 // reading and writing, automatic handling of the initial handshake process,
 // querying of usage statistics and other information about the remote peer such

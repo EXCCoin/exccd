@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2016 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -9,7 +10,7 @@ import (
 	"math"
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 )
 
 // nextPowerOfTwo returns the next highest power of two from a given number if
@@ -67,7 +68,7 @@ func HashMerkleBranches(left *chainhash.Hash, right *chainhash.Hash) *chainhash.
 // are calculated by concatenating the left node with itself before hashing.
 // Since this function uses nodes that are pointers to the hashes, empty nodes
 // will be nil.
-func BuildMerkleTreeStore(transactions []*dcrutil.Tx) []*chainhash.Hash {
+func BuildMerkleTreeStore(transactions []*excutil.Tx) []*chainhash.Hash {
 	// If there's an empty stake tree, return totally zeroed out merkle tree root
 	// only.
 	if len(transactions) == 0 {

@@ -1,3 +1,5 @@
+// Copyright (c) 2018 The ExchangeCoin team
+
 // Package dbnamespace contains constants that define the database namespaces
 // for the purpose of the blockchain, so that external callers may easily access
 // this data.

@@ -1,9 +1,10 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013, 2014 The btcsuite developers
 // Copyright (c) 2015 The Decred developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
-package dcrutil
+package excutil
 
 import (
 	"errors"
@@ -73,7 +74,7 @@ func round(f float64) Amount {
 // NewAmount is for specifically for converting DCR to Atoms (atomic units).
 // For creating a new Amount with an int64 value which denotes a quantity of
 // Atoms, do a simple type conversion from type int64 to Amount.
-// See GoDoc for example: http://godoc.org/github.com/EXCCoin/exccd/dcrutil#example-Amount
+// See GoDoc for example: http://godoc.org/github.com/EXCCoin/exccd/excutil#example-Amount
 func NewAmount(f float64) (Amount, error) {
 	// The amount is only considered invalid if it cannot be represented
 	// as an integer type.  This may happen if f is NaN or +-Infinity.

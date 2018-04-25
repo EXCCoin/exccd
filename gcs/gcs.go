@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2016-2017 The btcsuite developers
 // Copyright (c) 2016-2017 The Lightning Network Developers
 // Copyright (c) 2018 The Decred developers
@@ -12,9 +13,9 @@ import (
 	"math"
 	"sort"
 
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/aead/siphash"
 	"github.com/dchest/blake256"
-	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 )
 
 // Inspired by https://github.com/rasky/gcs

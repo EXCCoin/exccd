@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2015-2016 The btcsuite developers
 // Copyright (c) 2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -11,8 +12,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/btcsuite/btclog"
 	"github.com/EXCCoin/exccd/database"
+	"github.com/btcsuite/btclog"
 	flags "github.com/jessevdk/go-flags"
 )
 

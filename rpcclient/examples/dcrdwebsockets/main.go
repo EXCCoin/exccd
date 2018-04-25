@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2014-2015 The btcsuite developers
 // Copyright (c) 2015-2017 The Decred developers
 // Use of this source code is governed by an ISC
@@ -11,7 +12,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/rpcclient"
 )
 
@@ -30,7 +31,7 @@ func main() {
 	}
 
 	// Connect to local dcrd RPC server using websockets.
-	dcrdHomeDir := dcrutil.AppDataDir("dcrd", false)
+	dcrdHomeDir := excutil.AppDataDir("dcrd", false)
 	certs, err := ioutil.ReadFile(filepath.Join(dcrdHomeDir, "rpc.cert"))
 	if err != nil {
 		log.Fatal(err)

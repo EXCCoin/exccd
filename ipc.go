@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2016 The Decred developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -49,7 +50,7 @@ func serviceControlPipeRx(fd uintptr) {
 			break
 		}
 		if err != nil {
-			dcrdLog.Errorf("Failed to read from pipe: %v", err)
+			exccLog.Errorf("Failed to read from pipe: %v", err)
 			break
 		}
 	}
@@ -105,7 +106,7 @@ func serviceControlPipeTx(fd uintptr) {
 		headerBuffer = headerBuffer[:0]
 	}
 
-	dcrdLog.Errorf("Failed to write to pipe: %v", err)
+	exccLog.Errorf("Failed to write to pipe: %v", err)
 }
 
 func drainOutgoingPipeMessages() {

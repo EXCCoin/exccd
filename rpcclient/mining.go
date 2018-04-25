@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2014-2016 The btcsuite developers
 // Copyright (c) 2015-2017 The Decred developers
 // Use of this source code is governed by an ISC
@@ -12,7 +13,7 @@ import (
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/dcrjson"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 )
 
 // FutureGenerateResult is a future promise to deliver the result of a
@@ -434,7 +435,7 @@ func (r FutureSubmitBlockResult) Receive() error {
 // returned instance.
 //
 // See SubmitBlock for the blocking version and more details.
-func (c *Client) SubmitBlockAsync(block *dcrutil.Block, options *dcrjson.SubmitBlockOptions) FutureSubmitBlockResult {
+func (c *Client) SubmitBlockAsync(block *excutil.Block, options *dcrjson.SubmitBlockOptions) FutureSubmitBlockResult {
 	blockHex := ""
 	if block != nil {
 		blockBytes, err := block.Bytes()
@@ -450,6 +451,6 @@ func (c *Client) SubmitBlockAsync(block *dcrutil.Block, options *dcrjson.SubmitB
 }
 
 // SubmitBlock attempts to submit a new block into the Decred network.
-func (c *Client) SubmitBlock(block *dcrutil.Block, options *dcrjson.SubmitBlockOptions) error {
+func (c *Client) SubmitBlock(block *excutil.Block, options *dcrjson.SubmitBlockOptions) error {
 	return c.SubmitBlockAsync(block, options).Receive()
 }

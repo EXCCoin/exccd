@@ -5,7 +5,7 @@ blockchain
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd/blockchain)
 
-Package blockchain implements Decred block handling and chain selection rules.
+Package blockchain implements Excc block handling and chain selection rules.
 The test coverage is currently only around 60%, but will be increasing over
 time. See `test_coverage.txt` for the gocov coverage report.  Alternatively, if
 you are running a POSIX OS, you can run the `cov_report.sh` script for a
@@ -15,7 +15,7 @@ There is an associated blog post about the release of this package
 [here](https://blog.conformal.com/btcchain-the-bitcoin-chain-package-from-bctd/).
 
 This package has intentionally been designed so it can be used as a standalone
-package for any projects needing to handle processing of blocks into the decred
+package for any projects needing to handle processing of blocks into the excc
 block chain.
 
 ## Installation and Updating

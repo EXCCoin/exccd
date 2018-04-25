@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2016-2018 The Decred developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
@@ -10,7 +11,7 @@ import (
 
 	"github.com/EXCCoin/exccd/blockchain/chaingen"
 	"github.com/EXCCoin/exccd/chaincfg"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 )
 
 // TestStakeVersion ensures that the stake version field in the block header is
@@ -42,7 +43,7 @@ func TestStakeVersion(t *testing.T) {
 	accepted := func() {
 		msgBlock := g.Tip()
 		blockHeight := msgBlock.Header.Height
-		block := dcrutil.NewBlock(msgBlock)
+		block := excutil.NewBlock(msgBlock)
 		t.Logf("Testing block %s (hash %s, height %d)",
 			g.TipName(), block.Hash(), blockHeight)
 
@@ -69,7 +70,7 @@ func TestStakeVersion(t *testing.T) {
 	rejected := func(code ErrorCode) {
 		msgBlock := g.Tip()
 		blockHeight := msgBlock.Header.Height
-		block := dcrutil.NewBlock(msgBlock)
+		block := excutil.NewBlock(msgBlock)
 		t.Logf("Testing block %s (hash %s, height %d)", g.TipName(),
 			block.Hash(), blockHeight)
 

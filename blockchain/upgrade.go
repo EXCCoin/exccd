@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2016 The btcsuite developers
 // Copyright (c) 2015-2018 The Decred developers
 // Use of this source code is governed by an ISC
@@ -17,7 +18,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/database"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/wire"
 )
 
@@ -83,7 +84,7 @@ func deserializeDatabaseInfoV2(dbInfoBytes []byte) (*databaseInfo, error) {
 
 // ticketsVotedInBlock fetches a list of tickets that were voted in the
 // block.
-func ticketsVotedInBlock(bl *dcrutil.Block) []chainhash.Hash {
+func ticketsVotedInBlock(bl *excutil.Block) []chainhash.Hash {
 	var tickets []chainhash.Hash
 	for _, stx := range bl.MsgBlock().STransactions {
 		if stake.IsSSGen(stx) {
@@ -96,7 +97,7 @@ func ticketsVotedInBlock(bl *dcrutil.Block) []chainhash.Hash {
 
 // ticketsRevokedInBlock fetches a list of tickets that were revoked in the
 // block.
-func ticketsRevokedInBlock(bl *dcrutil.Block) []chainhash.Hash {
+func ticketsRevokedInBlock(bl *excutil.Block) []chainhash.Hash {
 	var tickets []chainhash.Hash
 	for _, stx := range bl.MsgBlock().STransactions {
 		if stake.DetermineTxType(stx) == stake.TxTypeSSRtx {

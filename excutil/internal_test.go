@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2014 The btcsuite developers
 // Copyright (c) 2015 The Decred developers
 // Use of this source code is governed by an ISC
@@ -10,11 +11,11 @@ cases which are either not possible or can't reliably be tested via the public
 interface. The functions are only exported while the tests are being run.
 */
 
-package dcrutil
+package excutil
 
 import (
-	"github.com/decred/base58"
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
+	"github.com/decred/base58"
 
 	"golang.org/x/crypto/ripemd160"
 )

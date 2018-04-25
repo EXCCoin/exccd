@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2016 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -10,11 +11,11 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/btcsuite/btclog"
 	"github.com/EXCCoin/exccd/blockchain"
 	"github.com/EXCCoin/exccd/blockchain/indexers"
 	"github.com/EXCCoin/exccd/database"
 	"github.com/EXCCoin/exccd/limits"
+	"github.com/btcsuite/btclog"
 )
 
 const (

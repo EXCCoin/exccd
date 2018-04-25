@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2016 The btcsuite developers
 // Copyright (c) 2016-2018 The Decred developers
 // Use of this source code is governed by an ISC
@@ -17,7 +18,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/database"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
 )
@@ -150,7 +151,7 @@ func TestFullBlocks(t *testing.T) {
 	// specified in the test.
 	testAcceptedBlock := func(item fullblocktests.AcceptedBlock) {
 		blockHeight := item.Block.Header.Height
-		block := dcrutil.NewBlock(item.Block)
+		block := excutil.NewBlock(item.Block)
 		t.Logf("Testing block %s (hash %s, height %d)",
 			item.Name, block.Hash(), blockHeight)
 
@@ -183,7 +184,7 @@ func TestFullBlocks(t *testing.T) {
 	// specified in the test.
 	testRejectedBlock := func(item fullblocktests.RejectedBlock) {
 		blockHeight := item.Block.Header.Height
-		block := dcrutil.NewBlock(item.Block)
+		block := excutil.NewBlock(item.Block)
 		t.Logf("Testing block %s (hash %s, height %d)",
 			item.Name, block.Hash(), blockHeight)
 
@@ -240,7 +241,7 @@ func TestFullBlocks(t *testing.T) {
 	// orphan or rejected with a rule violation.
 	testOrphanOrRejectedBlock := func(item fullblocktests.OrphanOrRejectedBlock) {
 		blockHeight := item.Block.Header.Height
-		block := dcrutil.NewBlock(item.Block)
+		block := excutil.NewBlock(item.Block)
 		t.Logf("Testing block %s (hash %s, height %d)",
 			item.Name, block.Hash(), blockHeight)
 
@@ -267,7 +268,7 @@ func TestFullBlocks(t *testing.T) {
 	// block specified in the provided test instance.
 	testExpectedTip := func(item fullblocktests.ExpectedTip) {
 		blockHeight := item.Block.Header.Height
-		block := dcrutil.NewBlock(item.Block)
+		block := excutil.NewBlock(item.Block)
 		t.Logf("Testing tip for block %s (hash %s, height %d)",
 			item.Name, block.Hash(), blockHeight)
 

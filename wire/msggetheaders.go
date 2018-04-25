@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2016 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -12,7 +13,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 )
 
-// MsgGetHeaders implements the Message interface and represents a decred
+// MsgGetHeaders implements the Message interface and represents a excc
 // getheaders message.  It is used to request a list of block headers for
 // blocks starting after the last known hash in the slice of block locator
 // hashes.  The list is returned via a headers message (MsgHeaders) and is

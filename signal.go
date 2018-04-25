@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2016 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -31,11 +32,11 @@ func interruptListener() <-chan struct{} {
 		// channel to notify the caller.
 		select {
 		case sig := <-interruptChannel:
-			dcrdLog.Infof("Received signal (%s).  Shutting down...",
+			exccLog.Infof("Received signal (%s).  Shutting down...",
 				sig)
 
 		case <-shutdownRequestChannel:
-			dcrdLog.Infof("Shutdown requested.  Shutting down...")
+			exccLog.Infof("Shutdown requested.  Shutting down...")
 		}
 		close(c)
 
@@ -45,11 +46,11 @@ func interruptListener() <-chan struct{} {
 		for {
 			select {
 			case sig := <-interruptChannel:
-				dcrdLog.Infof("Received signal (%s).  Already "+
+				exccLog.Infof("Received signal (%s).  Already "+
 					"shutting down...", sig)
 
 			case <-shutdownRequestChannel:
-				dcrdLog.Info("Shutdown requested.  Already " +
+				exccLog.Info("Shutdown requested.  Already " +
 					"shutting down...")
 			}
 		}

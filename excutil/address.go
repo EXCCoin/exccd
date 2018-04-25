@@ -1,9 +1,10 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013, 2014 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
-package dcrutil
+package excutil
 
 import (
 	"errors"
@@ -11,9 +12,9 @@ import (
 
 	"golang.org/x/crypto/ripemd160"
 
-	"github.com/decred/base58"
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
+	"github.com/decred/base58"
 )
 
 var (

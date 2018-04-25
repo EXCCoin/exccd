@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2014-2015 The btcsuite developers
 // Copyright (c) 2015-2017 The Decred developers
 // Use of this source code is governed by an ISC
@@ -11,9 +12,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/rpcclient"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func main() {
@@ -22,14 +23,14 @@ func main() {
 	// for notifications.  See the documentation of the rpcclient
 	// NotificationHandlers type for more details about each handler.
 	ntfnHandlers := rpcclient.NotificationHandlers{
-		OnAccountBalance: func(account string, balance dcrutil.Amount, confirmed bool) {
+		OnAccountBalance: func(account string, balance excutil.Amount, confirmed bool) {
 			log.Printf("New balance for account %s: %v", account,
 				balance)
 		},
 	}
 
 	// Connect to local dcrwallet RPC server using websockets.
-	certHomeDir := dcrutil.AppDataDir("dcrwallet", false)
+	certHomeDir := excutil.AppDataDir("dcrwallet", false)
 	certs, err := ioutil.ReadFile(filepath.Join(certHomeDir, "rpc.cert"))
 	if err != nil {
 		log.Fatal(err)

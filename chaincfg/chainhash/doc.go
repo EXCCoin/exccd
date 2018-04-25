@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Package chainhash provides abstracted hash functionality.
 //
 // This package provides a generic hash type and associated functions that

@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2016 The btcsuite developers
 // Copyright (c) 2017 The Decred developers
 // Use of this source code is governed by an ISC
@@ -17,7 +18,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/dcrjson"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
 )
@@ -27,7 +28,7 @@ const (
 )
 
 func testSendOutputs(r *Harness, t *testing.T) {
-	genSpend := func(amt dcrutil.Amount) *chainhash.Hash {
+	genSpend := func(amt excutil.Amount) *chainhash.Hash {
 		// Grab a fresh address from the wallet.
 		addr, err := r.NewAddress()
 		if err != nil {
@@ -69,7 +70,7 @@ func testSendOutputs(r *Harness, t *testing.T) {
 
 	// First, generate a small spend which will require only a single
 	// input.
-	txid := genSpend(dcrutil.Amount(5 * dcrutil.AtomsPerCoin))
+	txid := genSpend(excutil.Amount(5 * excutil.AtomsPerCoin))
 
 	// Generate a single block, the transaction the wallet created should
 	// be found in this block.
@@ -81,7 +82,7 @@ func testSendOutputs(r *Harness, t *testing.T) {
 
 	// Next, generate a spend much greater than the block reward. This
 	// transaction should also have been mined properly.
-	txid = genSpend(dcrutil.Amount(5000 * dcrutil.AtomsPerCoin))
+	txid = genSpend(excutil.Amount(5000 * excutil.AtomsPerCoin))
 	blockHashes, err = r.Node.Generate(1)
 	if err != nil {
 		t.Fatalf("unable to generate single block: %v", err)
@@ -353,7 +354,7 @@ func testMemWalletReorg(r *Harness, t *testing.T) {
 	defer harness.TearDown()
 
 	// Ensure the internal wallet has the expected balance.
-	expectedBalance := dcrutil.Amount(5 * 300 * dcrutil.AtomsPerCoin)
+	expectedBalance := excutil.Amount(5 * 300 * excutil.AtomsPerCoin)
 	walletBalance := harness.ConfirmedBalance()
 	if expectedBalance != walletBalance {
 		t.Fatalf("wallet balance incorrect: expected %v, got %v",
@@ -373,7 +374,7 @@ func testMemWalletReorg(r *Harness, t *testing.T) {
 	// The original wallet should now have a balance of 0 Coin as its entire
 	// chain should have been decimated in favor of the main harness'
 	// chain.
-	expectedBalance = dcrutil.Amount(0)
+	expectedBalance = excutil.Amount(0)
 	walletBalance = harness.ConfirmedBalance()
 	if expectedBalance != walletBalance {
 		t.Fatalf("wallet balance incorrect: expected %v, got %v",
@@ -394,7 +395,7 @@ func testMemWalletLockedOutputs(r *Harness, t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to create script: %v", err)
 	}
-	outputAmt := dcrutil.Amount(50 * dcrutil.AtomsPerCoin)
+	outputAmt := excutil.Amount(50 * excutil.AtomsPerCoin)
 	output := wire.NewTxOut(int64(outputAmt), pkScript)
 	tx, err := r.CreateTransaction([]*wire.TxOut{output}, 10)
 	if err != nil {
@@ -469,7 +470,7 @@ func TestMain(m *testing.M) {
 
 func TestHarness(t *testing.T) {
 	// We should have the expected amount of mature unspent outputs.
-	expectedBalance := dcrutil.Amount(numMatureOutputs * 300 * dcrutil.AtomsPerCoin)
+	expectedBalance := excutil.Amount(numMatureOutputs * 300 * excutil.AtomsPerCoin)
 	harnessBalance := mainHarness.ConfirmedBalance()
 	if harnessBalance != expectedBalance {
 		t.Fatalf("expected wallet balance of %v instead have %v",

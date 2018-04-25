@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2016 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -10,7 +11,7 @@ import (
 	"math"
 	"runtime"
 
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
 )
@@ -19,7 +20,7 @@ import (
 type txValidateItem struct {
 	txInIndex int
 	txIn      *wire.TxIn
-	tx        *dcrutil.Tx
+	tx        *excutil.Tx
 }
 
 // txValidator provides a type which asynchronously validates transaction
@@ -195,7 +196,7 @@ func newTxValidator(utxoView *UtxoViewpoint, flags txscript.ScriptFlags, sigCach
 
 // ValidateTransactionScripts validates the scripts for the passed transaction
 // using multiple goroutines.
-func ValidateTransactionScripts(tx *dcrutil.Tx, utxoView *UtxoViewpoint, flags txscript.ScriptFlags, sigCache *txscript.SigCache) error {
+func ValidateTransactionScripts(tx *excutil.Tx, utxoView *UtxoViewpoint, flags txscript.ScriptFlags, sigCache *txscript.SigCache) error {
 	// Collect all of the transaction inputs and required information for
 	// validation.
 	txIns := tx.MsgTx().TxIn
@@ -222,13 +223,13 @@ func ValidateTransactionScripts(tx *dcrutil.Tx, utxoView *UtxoViewpoint, flags t
 // checkBlockScripts executes and validates the scripts for all transactions in
 // the passed block using multiple goroutines.
 // txTree = true is TxTreeRegular, txTree = false is TxTreeStake.
-func checkBlockScripts(block *dcrutil.Block, utxoView *UtxoViewpoint, txTree bool,
+func checkBlockScripts(block *excutil.Block, utxoView *UtxoViewpoint, txTree bool,
 	scriptFlags txscript.ScriptFlags, sigCache *txscript.SigCache) error {
 
 	// Collect all of the transaction inputs and required information for
 	// validation for all transactions in the block into a single slice.
 	numInputs := 0
-	var txs []*dcrutil.Tx
+	var txs []*excutil.Tx
 
 	// TxTreeRegular handling.
 	if txTree {

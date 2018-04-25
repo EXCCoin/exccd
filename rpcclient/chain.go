@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2014-2016 The btcsuite developers
 // Copyright (c) 2015-2017 The Decred developers
 // Use of this source code is governed by an ISC
@@ -13,7 +14,7 @@ import (
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/dcrjson"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/gcs"
 	"github.com/EXCCoin/exccd/gcs/blockcf"
 	"github.com/EXCCoin/exccd/wire"
@@ -400,7 +401,7 @@ type FutureGetCoinSupplyResult chan *response
 
 // Receive waits for the response promised by the future and returns the
 // current coin supply
-func (r FutureGetCoinSupplyResult) Receive() (dcrutil.Amount, error) {
+func (r FutureGetCoinSupplyResult) Receive() (excutil.Amount, error) {
 	res, err := receiveFuture(r)
 	if err != nil {
 		return 0, err
@@ -412,7 +413,7 @@ func (r FutureGetCoinSupplyResult) Receive() (dcrutil.Amount, error) {
 	if err != nil {
 		return 0, err
 	}
-	return dcrutil.Amount(cs), nil
+	return excutil.Amount(cs), nil
 }
 
 // GetCoinSupplyAsync returns an instance of a type that can be used to
@@ -426,7 +427,7 @@ func (c *Client) GetCoinSupplyAsync() FutureGetCoinSupplyResult {
 }
 
 // GetCoinSupply returns the current coin supply
-func (c *Client) GetCoinSupply() (dcrutil.Amount, error) {
+func (c *Client) GetCoinSupply() (excutil.Amount, error) {
 	return c.GetCoinSupplyAsync().Receive()
 }
 

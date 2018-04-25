@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2016 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -9,7 +10,7 @@ import (
 	"fmt"
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 )
 
 // NotificationType represents the type of a notification message.
@@ -70,7 +71,7 @@ func (n NotificationType) String() string {
 // about a block being accepted.
 type BlockAcceptedNtfnsData struct {
 	OnMainChain bool
-	Block       *dcrutil.Block
+	Block       *excutil.Block
 }
 
 // ReorganizationNtfnsData is the structure for data indicating information
@@ -97,8 +98,8 @@ type TicketNotificationsData struct {
 // function provided during the call to New and consists of a notification type
 // as well as associated data that depends on the type as follows:
 // 	- NTBlockAccepted:         *BlockAcceptedNtfnsData
-// 	- NTBlockConnected:        []*dcrutil.Block of len 2
-// 	- NTBlockDisconnected:     []*dcrutil.Block of len 2
+// 	- NTBlockConnected:        []*excutil.Block of len 2
+// 	- NTBlockDisconnected:     []*excutil.Block of len 2
 //  - NTReorganization:        *ReorganizationNtfnsData
 //  - NTSpentAndMissedTickets: *TicketNotificationsData
 //  - NTNewTickets:            *TicketNotificationsData

@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2016 The btcsuite developers
 // Copyright (c) 2015-2017 The Decred developers
 // Use of this source code is governed by an ISC
@@ -12,7 +13,7 @@ import (
 
 	"github.com/EXCCoin/exccd/bloom"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/wire"
 )
 
@@ -215,7 +216,7 @@ func TestFilterInsertWithTweak(t *testing.T) {
 func TestFilterInsertKey(t *testing.T) {
 	secret := "PtWU93QdrNBasyWA7GDJ3ycEN5aQRF69EynXJfmnyWDS4G7pzpEvN"
 
-	wif, err := dcrutil.DecodeWIF(secret)
+	wif, err := excutil.DecodeWIF(secret)
 	if err != nil {
 		t.Errorf("TestFilterInsertKey DecodeWIF failed: %v", err)
 		return
@@ -223,7 +224,7 @@ func TestFilterInsertKey(t *testing.T) {
 
 	f := bloom.NewFilter(2, 0, 0.001, wire.BloomUpdateAll)
 	f.Add(wif.SerializePubKey())
-	f.Add(dcrutil.Hash160(wif.SerializePubKey()))
+	f.Add(excutil.Hash160(wif.SerializePubKey()))
 
 	want, err := hex.DecodeString("03323f6e080000000000000001")
 	if err != nil {
@@ -260,7 +261,7 @@ func TestFilterBloomMatch(t *testing.T) {
 		t.Errorf("TestFilterBloomMatch DecodeString failure: %v", err)
 		return
 	}
-	tx, err := dcrutil.NewTxFromBytes(strBytes)
+	tx, err := excutil.NewTxFromBytes(strBytes)
 	if err != nil {
 		t.Errorf("TestFilterBloomMatch NewTxFromBytes failure: %v", err)
 		return
@@ -279,7 +280,7 @@ func TestFilterBloomMatch(t *testing.T) {
 		t.Errorf("TestFilterBloomMatch DecodeString failure: %v", err)
 		return
 	}
-	spendingTx, err := dcrutil.NewTxFromBytes(spendingTxBytes)
+	spendingTx, err := excutil.NewTxFromBytes(spendingTxBytes)
 	if err != nil {
 		t.Errorf("TestFilterBloomMatch NewTxFromBytes failure: %v", err)
 		return
@@ -569,7 +570,7 @@ func TestFilterInsertP2PubKeyOnly(t *testing.T) {
 		t.Errorf("TestFilterInsertP2PubKeyOnly DecodeString failed: %v", err)
 		return
 	}
-	block, err := dcrutil.NewBlockFromBytes(blockBytes)
+	block, err := excutil.NewBlockFromBytes(blockBytes)
 	if err != nil {
 		t.Errorf("TestFilterInsertP2PubKeyOnly NewBlockFromBytes failed: %v", err)
 		return

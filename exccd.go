@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2016 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -48,20 +49,20 @@ func dcrdMain(serverChan chan<- *server) error {
 	// triggered either from an OS signal such as SIGINT (Ctrl+C) or from
 	// another subsystem such as the RPC server.
 	interrupt := interruptListener()
-	defer dcrdLog.Info("Shutdown complete")
+	defer exccLog.Info("Shutdown complete")
 
 	// Show version and home dir at startup.
-	dcrdLog.Infof("Version %s (Go version %s)", version(), runtime.Version())
-	dcrdLog.Infof("Home dir: %s", cfg.HomeDir)
+	exccLog.Infof("Version %s (Go version %s)", version(), runtime.Version())
+	exccLog.Infof("Home dir: %s", cfg.HomeDir)
 	if cfg.NoFileLogging {
-		dcrdLog.Info("File logging disabled")
+		exccLog.Info("File logging disabled")
 	}
 
 	// Enable http profiling server if requested.
 	if cfg.Profile != "" {
 		go func() {
 			listenAddr := cfg.Profile
-			dcrdLog.Infof("Creating profiling server "+
+			exccLog.Infof("Creating profiling server "+
 				"listening on %s", listenAddr)
 			profileRedirect := http.RedirectHandler("/debug/pprof",
 				http.StatusSeeOther)
@@ -77,7 +78,7 @@ func dcrdMain(serverChan chan<- *server) error {
 	if cfg.CPUProfile != "" {
 		f, err := os.Create(cfg.CPUProfile)
 		if err != nil {
-			dcrdLog.Errorf("Unable to create cpu profile: %v", err.Error())
+			exccLog.Errorf("Unable to create cpu profile: %v", err.Error())
 			return err
 		}
 		pprof.StartCPUProfile(f)
@@ -89,7 +90,7 @@ func dcrdMain(serverChan chan<- *server) error {
 	if cfg.MemProfile != "" {
 		f, err := os.Create(cfg.MemProfile)
 		if err != nil {
-			dcrdLog.Errorf("Unable to create cpu profile: %v", err)
+			exccLog.Errorf("Unable to create cpu profile: %v", err)
 			return err
 		}
 		timer := time.NewTimer(time.Minute * 20) // 20 minutes
@@ -123,13 +124,13 @@ func dcrdMain(serverChan chan<- *server) error {
 	lifetimeNotifier.notifyStartupEvent(lifetimeEventDBOpen)
 	db, err := loadBlockDB()
 	if err != nil {
-		dcrdLog.Errorf("%v", err)
+		exccLog.Errorf("%v", err)
 		return err
 	}
 	defer func() {
 		// Ensure the database is sync'd and closed on shutdown.
 		lifetimeNotifier.notifyShutdownEvent(lifetimeEventDBOpen)
-		dcrdLog.Infof("Gracefully shutting down the database...")
+		exccLog.Infof("Gracefully shutting down the database...")
 		db.Close()
 	}()
 
@@ -144,7 +145,7 @@ func dcrdMain(serverChan chan<- *server) error {
 	// drops the address index since it relies on it.
 	if cfg.DropAddrIndex {
 		if err := indexers.DropAddrIndex(db, interrupt); err != nil {
-			dcrdLog.Errorf("%v", err)
+			exccLog.Errorf("%v", err)
 			return err
 		}
 
@@ -152,7 +153,7 @@ func dcrdMain(serverChan chan<- *server) error {
 	}
 	if cfg.DropTxIndex {
 		if err := indexers.DropTxIndex(db, interrupt); err != nil {
-			dcrdLog.Errorf("%v", err)
+			exccLog.Errorf("%v", err)
 			return err
 		}
 
@@ -160,7 +161,7 @@ func dcrdMain(serverChan chan<- *server) error {
 	}
 	if cfg.DropExistsAddrIndex {
 		if err := indexers.DropExistsAddrIndex(db, interrupt); err != nil {
-			dcrdLog.Errorf("%v", err)
+			exccLog.Errorf("%v", err)
 			return err
 		}
 
@@ -168,7 +169,7 @@ func dcrdMain(serverChan chan<- *server) error {
 	}
 	if cfg.DropCFIndex {
 		if err := indexers.DropCfIndex(db, interrupt); err != nil {
-			dcrdLog.Errorf("%v", err)
+			exccLog.Errorf("%v", err)
 			return err
 		}
 
@@ -181,13 +182,13 @@ func dcrdMain(serverChan chan<- *server) error {
 		interrupt)
 	if err != nil {
 		// TODO(oga) this logging could do with some beautifying.
-		dcrdLog.Errorf("Unable to start server on %v: %v",
+		exccLog.Errorf("Unable to start server on %v: %v",
 			cfg.Listeners, err)
 		return err
 	}
 	defer func() {
 		lifetimeNotifier.notifyShutdownEvent(lifetimeEventP2PServer)
-		dcrdLog.Infof("Gracefully shutting down the server...")
+		exccLog.Infof("Gracefully shutting down the server...")
 		server.Stop()
 		server.WaitForShutdown()
 		srvrLog.Infof("Server shutdown complete")

@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2016 The btcsuite developers
 // Copyright (c) 2015-2018 The Decred developers
 // Use of this source code is governed by an ISC
@@ -21,7 +22,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/database"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/mempool"
 	"github.com/EXCCoin/exccd/wire"
 )
@@ -74,7 +75,7 @@ type newPeerMsg struct {
 // blockMsg packages a Decred block message and the peer it came from together
 // so the block handler has access to that information.
 type blockMsg struct {
-	block *dcrutil.Block
+	block *excutil.Block
 	peer  *serverPeer
 }
 
@@ -100,7 +101,7 @@ type donePeerMsg struct {
 // txMsg packages a Decred tx message and the peer it came from together
 // so the block handler has access to that information.
 type txMsg struct {
-	tx   *dcrutil.Tx
+	tx   *excutil.Tx
 	peer *serverPeer
 }
 
@@ -206,7 +207,7 @@ type processBlockResponse struct {
 // extra handling whereas this message essentially is just a concurrent safe
 // way to call ProcessBlock on the internal block chain instance.
 type processBlockMsg struct {
-	block *dcrutil.Block
+	block *excutil.Block
 	flags blockchain.BehaviorFlags
 	reply chan processBlockResponse
 }
@@ -214,7 +215,7 @@ type processBlockMsg struct {
 // processTransactionResponse is a response sent to the reply channel of a
 // processTransactionMsg.
 type processTransactionResponse struct {
-	acceptedTxs []*dcrutil.Tx
+	acceptedTxs []*excutil.Tx
 	err         error
 }
 
@@ -222,7 +223,7 @@ type processTransactionResponse struct {
 // channel for requesting a transaction to be processed through the block
 // manager.
 type processTransactionMsg struct {
-	tx            *dcrutil.Tx
+	tx            *excutil.Tx
 	allowOrphans  bool
 	rateLimit     bool
 	allowHighFees bool
@@ -773,8 +774,8 @@ func (b *blockManager) current() bool {
 // This is UNSAFE for concurrent access. It must be called in single threaded
 // access through the block mananger. All template access must also be routed
 // through the block manager.
-func (b *blockManager) checkBlockForHiddenVotes(block *dcrutil.Block) {
-	var votesFromBlock []*dcrutil.Tx
+func (b *blockManager) checkBlockForHiddenVotes(block *excutil.Block) {
+	var votesFromBlock []*excutil.Tx
 	for _, stx := range block.STransactions() {
 		if stake.IsSSGen(stx.MsgTx()) {
 			votesFromBlock = append(votesFromBlock, stx)
@@ -819,13 +820,13 @@ func (b *blockManager) checkBlockForHiddenVotes(block *dcrutil.Block) {
 	// the votes, they will need to be added to our block template.
 	// Here we map the vote by their ticket hashes, since the vote
 	// hash itself varies with the settings of voteBits.
-	var newVotes []*dcrutil.Tx
-	var oldTickets []*dcrutil.Tx
-	var oldRevocations []*dcrutil.Tx
+	var newVotes []*excutil.Tx
+	var oldTickets []*excutil.Tx
+	var oldRevocations []*excutil.Tx
 	oldVoteMap := make(map[chainhash.Hash]struct{},
 		int(b.server.chainParams.TicketsPerBlock))
 	if template != nil {
-		templateBlock := dcrutil.NewBlock(template.Block)
+		templateBlock := excutil.NewBlock(template.Block)
 
 		// Add all the votes found in our template. Keep their
 		// hashes in a map for easy lookup in the next loop.
@@ -876,7 +877,7 @@ func (b *blockManager) checkBlockForHiddenVotes(block *dcrutil.Block) {
 	// of transaction pointers so that a new merkle root can be
 	// calculated.
 	template.Block.ClearSTransactions()
-	updatedTxTreeStake := make([]*dcrutil.Tx, 0,
+	updatedTxTreeStake := make([]*excutil.Tx, 0,
 		votesTotal+len(oldTickets)+len(oldRevocations))
 	for _, vote := range newVotes {
 		updatedTxTreeStake = append(updatedTxTreeStake, vote)
@@ -923,14 +924,14 @@ func (b *blockManager) checkBlockForHiddenVotes(block *dcrutil.Block) {
 
 	// Patch the header. First, reconstruct the merkle trees, then
 	// correct the number of voters, and finally recalculate the size.
-	var updatedTxTreeRegular []*dcrutil.Tx
+	var updatedTxTreeRegular []*excutil.Tx
 	updatedTxTreeRegular = append(updatedTxTreeRegular, coinbase)
 	for i, mtx := range template.Block.Transactions {
 		// Coinbase
 		if i == 0 {
 			continue
 		}
-		tx := dcrutil.NewTx(mtx)
+		tx := excutil.NewTx(mtx)
 		updatedTxTreeRegular = append(updatedTxTreeRegular, tx)
 	}
 	merkles := blockchain.BuildMerkleTreeStore(updatedTxTreeRegular)
@@ -2002,7 +2003,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 	// A block has been connected to the main block chain.
 	case blockchain.NTBlockConnected:
-		blockSlice, ok := notification.Data.([]*dcrutil.Block)
+		blockSlice, ok := notification.Data.([]*excutil.Block)
 		if !ok {
 			bmgrLog.Warnf("Chain connected notification is not a block slice.")
 			break
@@ -2021,8 +2022,8 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 		// from this block into the mempool. They may end up being spent in
 		// the regular tx tree of the current block, for which there is code
 		// below.
-		txTreeRegularValid := dcrutil.IsFlagSet16(block.MsgBlock().Header.VoteBits,
-			dcrutil.BlockValid)
+		txTreeRegularValid := excutil.IsFlagSet16(block.MsgBlock().Header.VoteBits,
+			excutil.BlockValid)
 
 		if !txTreeRegularValid {
 			for _, tx := range parentBlock.Transactions()[1:] {
@@ -2111,7 +2112,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 
 	// A block has been disconnected from the main block chain.
 	case blockchain.NTBlockDisconnected:
-		blockSlice, ok := notification.Data.([]*dcrutil.Block)
+		blockSlice, ok := notification.Data.([]*excutil.Block)
 		if !ok {
 			bmgrLog.Warnf("Chain disconnected notification is not a block slice.")
 			break
@@ -2128,8 +2129,8 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 		// If the parent tx tree was invalidated, we need to remove these
 		// tx from the mempool as the next incoming block may alternatively
 		// validate them.
-		txTreeRegularValid := dcrutil.IsFlagSet16(block.MsgBlock().Header.VoteBits,
-			dcrutil.BlockValid)
+		txTreeRegularValid := excutil.IsFlagSet16(block.MsgBlock().Header.VoteBits,
+			excutil.BlockValid)
 
 		if !txTreeRegularValid {
 			for _, tx := range parentBlock.Transactions()[1:] {
@@ -2197,7 +2198,7 @@ func (b *blockManager) NewPeer(sp *serverPeer) {
 
 // QueueTx adds the passed transaction message and peer to the block handling
 // queue.
-func (b *blockManager) QueueTx(tx *dcrutil.Tx, sp *serverPeer) {
+func (b *blockManager) QueueTx(tx *excutil.Tx, sp *serverPeer) {
 	// Don't accept more transactions if we're shutting down.
 	if atomic.LoadInt32(&b.shutdown) != 0 {
 		sp.txProcessed <- struct{}{}
@@ -2208,7 +2209,7 @@ func (b *blockManager) QueueTx(tx *dcrutil.Tx, sp *serverPeer) {
 }
 
 // QueueBlock adds the passed block message and peer to the block handling queue.
-func (b *blockManager) QueueBlock(block *dcrutil.Block, sp *serverPeer) {
+func (b *blockManager) QueueBlock(block *excutil.Block, sp *serverPeer) {
 	// Don't accept more blocks if we're shutting down.
 	if atomic.LoadInt32(&b.shutdown) != 0 {
 		sp.blockProcessed <- struct{}{}
@@ -2443,7 +2444,7 @@ func (b *blockManager) TipGeneration() ([]chainhash.Hash, error) {
 // ProcessBlock makes use of ProcessBlock on an internal instance of a block
 // chain.  It is funneled through the block manager since blockchain is not safe
 // for concurrent access.
-func (b *blockManager) ProcessBlock(block *dcrutil.Block, flags blockchain.BehaviorFlags) (bool, error) {
+func (b *blockManager) ProcessBlock(block *excutil.Block, flags blockchain.BehaviorFlags) (bool, error) {
 	reply := make(chan processBlockResponse, 1)
 	b.msgChan <- processBlockMsg{block: block, flags: flags, reply: reply}
 	response := <-reply
@@ -2453,8 +2454,8 @@ func (b *blockManager) ProcessBlock(block *dcrutil.Block, flags blockchain.Behav
 // ProcessTransaction makes use of ProcessTransaction on an internal instance of
 // a block chain.  It is funneled through the block manager since blockchain is
 // not safe for concurrent access.
-func (b *blockManager) ProcessTransaction(tx *dcrutil.Tx, allowOrphans bool,
-	rateLimit bool, allowHighFees bool) ([]*dcrutil.Tx, error) {
+func (b *blockManager) ProcessTransaction(tx *excutil.Tx, allowOrphans bool,
+	rateLimit bool, allowHighFees bool) ([]*excutil.Tx, error) {
 	reply := make(chan processTransactionResponse, 1)
 	b.msgChan <- processTransactionMsg{tx, allowOrphans, rateLimit,
 		allowHighFees, reply}
@@ -2482,7 +2483,7 @@ func (b *blockManager) Pause() chan<- struct{} {
 
 // TicketPoolValue returns the current value of the total stake in the ticket
 // pool.
-func (b *blockManager) TicketPoolValue() (dcrutil.Amount, error) {
+func (b *blockManager) TicketPoolValue() (excutil.Amount, error) {
 	return b.chain.TicketPoolValue()
 }
 
@@ -2637,7 +2638,7 @@ func warnMultipleDBs() {
 	// Warn if there are extra databases.
 	if len(duplicateDbPaths) > 0 {
 		selectedDbPath := blockDbPath(cfg.DbType)
-		dcrdLog.Warnf("WARNING: There are multiple block chain databases "+
+		exccLog.Warnf("WARNING: There are multiple block chain databases "+
 			"using different database types.\nYou probably don't "+
 			"want to waste disk space by having more than one.\n"+
 			"Your current database is located at [%v].\nThe "+
@@ -2656,7 +2657,7 @@ func loadBlockDB() (database.DB, error) {
 	// handle it uniquely.  We also don't want to worry about the multiple
 	// database type warnings when running with the memory database.
 	if cfg.DbType == "memdb" {
-		dcrdLog.Infof("Creating block database in memory.")
+		exccLog.Infof("Creating block database in memory.")
 		db, err := database.Create(cfg.DbType)
 		if err != nil {
 			return nil, err
@@ -2669,7 +2670,7 @@ func loadBlockDB() (database.DB, error) {
 	// The database name is based on the database type.
 	dbPath := blockDbPath(cfg.DbType)
 
-	dcrdLog.Infof("Loading block database from '%s'", dbPath)
+	exccLog.Infof("Loading block database from '%s'", dbPath)
 	db, err := database.Open(cfg.DbType, dbPath, activeNetParams.Net)
 	if err != nil {
 		// Return the error if it's not because the database doesn't
@@ -2691,7 +2692,7 @@ func loadBlockDB() (database.DB, error) {
 		}
 	}
 
-	dcrdLog.Info("Block database loaded")
+	exccLog.Info("Block database loaded")
 	return db, nil
 }
 

@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright 2010 The Go Authors. All rights reserved.
 // Copyright (c) 2015-2016 The Decred developers
 // Copyright 2011 ThePiachu. All rights reserved.

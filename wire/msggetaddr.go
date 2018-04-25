@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2015 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -9,7 +10,7 @@ import (
 	"io"
 )
 
-// MsgGetAddr implements the Message interface and represents a decred
+// MsgGetAddr implements the Message interface and represents a excc
 // getaddr message.  It is used to request a list of known active peers on the
 // network from a peer to help identify potential nodes.  The list is returned
 // via one or more addr messages (MsgAddr).

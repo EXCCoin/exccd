@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013-2016 The btcsuite developers
 // Copyright (c) 2015-2017 The Decred developers
 // Use of this source code is governed by an ISC
@@ -21,14 +22,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/btcsuite/btclog"
-	"github.com/btcsuite/go-socks/socks"
 	"github.com/EXCCoin/exccd/connmgr"
 	"github.com/EXCCoin/exccd/database"
 	_ "github.com/EXCCoin/exccd/database/ffldb"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/mempool"
 	"github.com/EXCCoin/exccd/sampleconfig"
+	"github.com/btcsuite/btclog"
+	"github.com/btcsuite/go-socks/socks"
 	flags "github.com/jessevdk/go-flags"
 )
 
@@ -62,7 +63,7 @@ const (
 )
 
 var (
-	defaultHomeDir     = dcrutil.AppDataDir("dcrd", false)
+	defaultHomeDir     = excutil.AppDataDir("dcrd", false)
 	defaultConfigFile  = filepath.Join(defaultHomeDir, defaultConfigFilename)
 	defaultDataDir     = filepath.Join(defaultHomeDir, defaultDataDirname)
 	knownDbTypes       = database.SupportedDrivers()
@@ -169,8 +170,8 @@ type config struct {
 	lookup               func(string) ([]net.IP, error)
 	oniondial            func(string, string) (net.Conn, error)
 	dial                 func(string, string) (net.Conn, error)
-	miningAddrs          []dcrutil.Address
-	minRelayTxFee        dcrutil.Amount
+	miningAddrs          []excutil.Address
+	minRelayTxFee        excutil.Amount
 	whitelists           []*net.IPNet
 }
 
@@ -826,7 +827,7 @@ func loadConfig() (*config, []string, error) {
 	}
 
 	// Validate the the minrelaytxfee.
-	cfg.minRelayTxFee, err = dcrutil.NewAmount(cfg.MinRelayTxFee)
+	cfg.minRelayTxFee, err = excutil.NewAmount(cfg.MinRelayTxFee)
 	if err != nil {
 		str := "%s: invalid minrelaytxfee: %v"
 		err := fmt.Errorf(str, funcName, err)
@@ -914,10 +915,10 @@ func loadConfig() (*config, []string, error) {
 	}
 
 	// Check getwork keys are valid and saved parsed versions.
-	cfg.miningAddrs = make([]dcrutil.Address, 0, len(cfg.GetWorkKeys)+
+	cfg.miningAddrs = make([]excutil.Address, 0, len(cfg.GetWorkKeys)+
 		len(cfg.MiningAddrs))
 	for _, strAddr := range cfg.GetWorkKeys {
-		addr, err := dcrutil.DecodeAddress(strAddr)
+		addr, err := excutil.DecodeAddress(strAddr)
 		if err != nil {
 			str := "%s: getworkkey '%s' failed to decode: %v"
 			err := fmt.Errorf(str, funcName, strAddr, err)
@@ -937,7 +938,7 @@ func loadConfig() (*config, []string, error) {
 
 	// Check mining addresses are valid and saved parsed versions.
 	for _, strAddr := range cfg.MiningAddrs {
-		addr, err := dcrutil.DecodeAddress(strAddr)
+		addr, err := excutil.DecodeAddress(strAddr)
 		if err != nil {
 			str := "%s: mining address '%s' failed to decode: %v"
 			err := fmt.Errorf(str, funcName, strAddr, err)
@@ -1117,7 +1118,7 @@ func loadConfig() (*config, []string, error) {
 	// Warn if old testnet directory is present.
 	for _, oldDir := range oldTestNets {
 		if fileExists(oldDir) {
-			dcrdLog.Warnf("Block chain data from previous testnet"+
+			exccLog.Warnf("Block chain data from previous testnet"+
 				" found (%v) and can probably be removed.",
 				oldDir)
 		}
@@ -1127,7 +1128,7 @@ func loadConfig() (*config, []string, error) {
 	// done.  This prevents the warning on help messages and invalid
 	// options.  Note this should go directly before the return.
 	if configFileError != nil {
-		dcrdLog.Warnf("%v", configFileError)
+		exccLog.Warnf("%v", configFileError)
 	}
 
 	return &cfg, remainingArgs, nil

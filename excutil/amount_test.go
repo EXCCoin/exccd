@@ -1,9 +1,10 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2013, 2014 The btcsuite developers
 // Copyright (c) 2015 The Decred developers
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
-package dcrutil_test
+package excutil_test
 
 import (
 	"math"
@@ -11,7 +12,7 @@ import (
 	"sort"
 	"testing"
 
-	. "github.com/EXCCoin/exccd/dcrutil"
+	. "github.com/EXCCoin/exccd/excutil"
 )
 
 func TestAmountCreation(t *testing.T) {

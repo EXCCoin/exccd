@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2015-2016 The btcsuite developers
 // Copyright (c) 2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -19,11 +20,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/EXCCoin/exccd/database"
+	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/wire"
 	"github.com/btcsuite/goleveldb/leveldb"
 	ldberrors "github.com/btcsuite/goleveldb/leveldb/errors"
-	"github.com/EXCCoin/exccd/database"
-	"github.com/EXCCoin/exccd/dcrutil"
-	"github.com/EXCCoin/exccd/wire"
 )
 
 var (
@@ -40,7 +41,7 @@ var (
 
 // loadBlocks loads the blocks contained in the testdata directory and returns
 // a slice of them.
-func loadBlocks(t *testing.T, dataFile string, network wire.CurrencyNet) ([]*dcrutil.Block, error) {
+func loadBlocks(t *testing.T, dataFile string, network wire.CurrencyNet) ([]*excutil.Block, error) {
 	// Open the file that contains the blocks for reading.
 	fi, err := os.Open(dataFile)
 	if err != nil {
@@ -70,9 +71,9 @@ func loadBlocks(t *testing.T, dataFile string, network wire.CurrencyNet) ([]*dcr
 	}
 
 	// Fetch blocks 1 to 168 and perform various tests.
-	blocks := make([]*dcrutil.Block, 169)
+	blocks := make([]*excutil.Block, 169)
 	for i := 0; i <= 168; i++ {
-		bl, err := dcrutil.NewBlockFromBytes(blockChain[int64(i)])
+		bl, err := excutil.NewBlockFromBytes(blockChain[int64(i)])
 		if err != nil {
 			t.Errorf("NewBlockFromBytes error: %v", err.Error())
 		}
@@ -109,7 +110,7 @@ type testContext struct {
 	db           database.DB
 	files        map[uint32]*lockableFile
 	maxFileSizes map[uint32]int64
-	blocks       []*dcrutil.Block
+	blocks       []*excutil.Block
 }
 
 // TestConvertErr ensures the leveldb error to database error conversion works

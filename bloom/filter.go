@@ -1,3 +1,4 @@
+// Copyright (c) 2018 The ExchangeCoin team
 // Copyright (c) 2014-2016 The btcsuite developers
 // Copyright (c) 2015-2016 The Decred developers
 // Use of this source code is governed by an ISC
@@ -11,7 +12,7 @@ import (
 	"sync"
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/dcrutil"
+	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
 )
@@ -271,7 +272,7 @@ func (bf *Filter) maybeAddOutpoint(pkScrVer uint16, pkScript []byte, outHash *ch
 // update flags set via the loaded filter if needed.
 //
 // This function MUST be called with the filter lock held.
-func (bf *Filter) matchTxAndUpdate(tx *dcrutil.Tx) bool {
+func (bf *Filter) matchTxAndUpdate(tx *excutil.Tx) bool {
 	// Check if the filter matches the hash of the transaction.
 	// This is useful for finding transactions when they appear in a block.
 	matched := bf.matches(tx.Hash()[:])
@@ -337,7 +338,7 @@ func (bf *Filter) matchTxAndUpdate(tx *dcrutil.Tx) bool {
 // update flags set via the loaded filter if needed.
 //
 // This function is safe for concurrent access.
-func (bf *Filter) MatchTxAndUpdate(tx *dcrutil.Tx) bool {
+func (bf *Filter) MatchTxAndUpdate(tx *excutil.Tx) bool {
 	bf.mtx.Lock()
 	match := bf.matchTxAndUpdate(tx)
 	bf.mtx.Unlock()
