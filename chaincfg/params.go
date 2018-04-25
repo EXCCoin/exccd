@@ -475,7 +475,7 @@ var MainNetParams = Params{
 	DefaultPort: "9666",
 	DNSSeeds: []DNSSeed{
 		{"188.166.147.21", false},
-		{ "139.59.147.139", false},
+		{"139.59.147.139", false},
 		{"174.138.47.202" , false},
 	},
 
