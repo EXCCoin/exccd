@@ -474,9 +474,9 @@ var MainNetParams = Params{
 	Net:         wire.MainNet,
 	DefaultPort: "9108",
 	DNSSeeds: []DNSSeed{
-		{"mainnet-seed.decred.mindcry.org", true},
-		{"mainnet-seed.decred.netpurgatory.com", true},
-		{"mainnet-seed.decred.org", true},
+		{"188.166.147.21", false},
+		{ "139.59.147.139", false},
+		{"174.138.47.202" , false},
 	},
 
 	// Chain parameters
@@ -493,7 +493,7 @@ var MainNetParams = Params{
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       144,
 	WorkDiffWindows:          20,
-	TargetTimespan:           time.Minute * 5 * 144, // TimePerBlock * WindowSize
+	TargetTimespan:           time.Minute * (2.5 * 144), // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
@@ -507,23 +507,6 @@ var MainNetParams = Params{
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: []Checkpoint{
-		{440, newHashFromStr("0000000000002203eb2c95ee96906730bb56b2985e174518f90eb4db29232d93")},
-		{24480, newHashFromStr("0000000000000c9d4239c4ef7ef3fb5aaeed940244bc69c57c8c5e1f071b28a6")},
-		{48590, newHashFromStr("0000000000000d5e0de21a96d3c965f5f2db2c82612acd7389c140c9afe92ba7")},
-		{54770, newHashFromStr("00000000000009293d067b1126b7de07fc9b2b94ee50dfe0d48c239a7adb072c")},
-		{60720, newHashFromStr("0000000000000a64475d68ffb9ad89a3d147c0f5138db26b40da9d19d0004117")},
-		{65270, newHashFromStr("0000000000000021f107601962789b201f0a0cbb98ac5f8c12b93d94e795b441")},
-		{75380, newHashFromStr("0000000000000e7d13cfc85806aa720fe3670980f5b7d33253e4f41985558372")},
-		{85410, newHashFromStr("00000000000013ec928074bea6eac9754aa614c7acb20edf300f18b0cd122692")},
-		{99880, newHashFromStr("0000000000000cb2a9a9ded647b9f78aae51ace32dd8913701d420ead272913c")},
-		{123080, newHashFromStr("000000000000009ea6e02d0f0424f445ed50686f9ae4aecdf3b268e981114477")},
-		{135960, newHashFromStr("00000000000001d2f9bbca9177972c0ba45acb40836b72945a75d73b99079498")},
-		{139740, newHashFromStr("00000000000001397179ae1aff156fb1aea228938d06b83e43b78b1c44527b5b")},
-		{155900, newHashFromStr("000000000000008557e37fb05177fc5a54e693de20689753639135f85a2dcb2e")},
-		{164300, newHashFromStr("000000000000009ed067ff51cd5e15f3c786222a5183b20a991a80ce535907a9")},
-		{181020, newHashFromStr("00000000000000b77d832cb2cbed02908d69323862a53e56345400ad81a6fb8f")},
-		{189950, newHashFromStr("000000000000007341d8ae2ea7e41f25cee00e1a70a4a3dc1cb055d14ecb2e11")},
-		{214672, newHashFromStr("0000000000000021d5cbeead55cb7fd659f07e8127358929ffc34cd362209758")},
 	},
 
 	// The miner confirmation window is defined as:
@@ -560,33 +543,6 @@ var MainNetParams = Params{
 			},
 			StartTime:  1493164800, // Apr 26th, 2017
 			ExpireTime: 1524700800, // Apr 26th, 2018
-		}, {
-			Vote: Vote{
-				Id:          VoteIDLNSupport,
-				Description: "Request developers begin work on Lightning Network (LN) integration",
-				Mask:        0x0018, // Bits 3 and 4
-				Choices: []Choice{{
-					Id:          "abstain",
-					Description: "abstain from voting",
-					Bits:        0x0000,
-					IsAbstain:   true,
-					IsNo:        false,
-				}, {
-					Id:          "no",
-					Description: "no, do not work on integrating LN support",
-					Bits:        0x0008, // Bit 3
-					IsAbstain:   false,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "yes, begin work on integrating LN support",
-					Bits:        0x0010, // Bit 4
-					IsAbstain:   false,
-					IsNo:        false,
-				}},
-			},
-			StartTime:  1493164800, // Apr 26th, 2017
-			ExpireTime: 1508976000, // Oct 26th, 2017
 		}},
 		5: {{
 			Vote: Vote{
@@ -633,17 +589,23 @@ var MainNetParams = Params{
 	AcceptNonStdTxs: false,
 
 	// Address encoding magics
-	NetworkAddressPrefix: "D",
-	PubKeyAddrID:         [2]byte{0x13, 0x86}, // starts with Dk
-	PubKeyHashAddrID:     [2]byte{0x07, 0x3f}, // starts with Ds
-	PKHEdwardsAddrID:     [2]byte{0x07, 0x1f}, // starts with De
-	PKHSchnorrAddrID:     [2]byte{0x07, 0x01}, // starts with DS
-	ScriptHashAddrID:     [2]byte{0x07, 0x1a}, // starts with Dc
-	PrivateKeyID:         [2]byte{0x22, 0xde}, // starts with Pm
+	NetworkAddressPrefix: "E",
+	// In order to see actual prefixes, encoded string must consist of prefix mentioned below
+	// followed by zeros up to 26 bytes total length.
+	PubKeyAddrID:         [2]byte{0x21, 0xB9}, // starts with 22
+
+	PubKeyHashAddrID:     [2]byte{0x3d, 0x21}, // starts with 2s
+	PKHEdwardsAddrID:     [2]byte{0x35, 0xcf}, // starts with 2e
+	PKHSchnorrAddrID:     [2]byte{0x2f, 0x0d}, // starts with 2S
+
+	ScriptHashAddrID:     [2]byte{0xA3, 0xDA}, // starts with 62
+	PrivateKeyID:         [2]byte{0x80}, // starts with 4
 
 	// BIP32 hierarchical deterministic extended key magics
-	HDPrivateKeyID: [4]byte{0x02, 0xfd, 0xa4, 0xe8}, // starts with dprv
-	HDPublicKeyID:  [4]byte{0x02, 0xfd, 0xa9, 0x26}, // starts with dpub
+	// In order to see actual prefixes, encoded string must consist of prefix mentioned below
+	// followed by zeros up to 82 bytes total length.
+	HDPrivateKeyID: [4]byte{0x04, 0x88, 0xAD, 0xE4}, // starts with xprv
+	HDPublicKeyID:  [4]byte{0x04, 0x88, 0xB2, 0x1E}, // starts with xpub
 
 	// BIP44 coin type used in the hierarchical deterministic path for
 	// address generation.
@@ -684,9 +646,7 @@ var TestNet2Params = Params{
 	Net:         wire.TestNet2,
 	DefaultPort: "19108",
 	DNSSeeds: []DNSSeed{
-		{"testnet-seed.decred.mindcry.org", true},
-		{"testnet-seed.decred.netpurgatory.com", true},
-		{"testnet-seed.decred.org", true},
+		{"188.166.147.21", false},
 	},
 
 	// Chain parameters
@@ -717,19 +677,6 @@ var TestNet2Params = Params{
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: []Checkpoint{
-		{12500, newHashFromStr("000000000046db2b18647632bac76577e418a5cdd8508a2f1cd82a6b30c3e854")},
-		{25000, newHashFromStr("0000000000970b7f74178ba6bc3426cd2a65ab854c04e92f542567843f5612a2")},
-		{37500, newHashFromStr("0000000000e5f9b3eb57259439694d3f12cd3b485cca54089fe3d4cc5c7c3e51")},
-		{50000, newHashFromStr("0000000005bcc5dd36ba08523d32a3a581f1ef7376929f5b89757d1c9ced4154")},
-		{62500, newHashFromStr("0000000003c0223971c732c49f019f449b494fdb822b67eb178fa4cf5d3b16ef")},
-		{80000, newHashFromStr("0000000004239806fb02243757c0cd04f2103ad2c20d2afbdf21fafbd114ef60")},
-		{97500, newHashFromStr("0000000003e41de65086786c253d2bf5259419cc15d1c1382b3d7bd69dcf7d45")},
-		{110000, newHashFromStr("0000000003913d67af849f3dded4dd17038d366ff5c418be56f193ea574acf63")},
-		{122500, newHashFromStr("0000000005db46602bc7146c87cd396db74696819c6685f0c61e9194e6278b07")},
-		{140000, newHashFromStr("00000000015736a13fb25ef414947a8a7a4359ef5a00e3a03d6089f38f16f2de")},
-		{157500, newHashFromStr("00000000052684525a3fedd619247b148eaa3ac38ab45781a1571099fd6036cf")},
-		{175000, newHashFromStr("0000000000320a623fcc6453986ef13423f455ddf0f788ad1f2bda43858ccb8d")},
-		{249802, newHashFromStr("0000000000153386623d86ce70cc9372fa000ac3b999eff11b9fc7a3ca0d072a")},
 	},
 
 	// Consensus rule change deployments.
