@@ -60,7 +60,5 @@ func ExpandArray(in, out []byte, bitLen, bytePad uint32) error {
 
 func ParseHex(s string) ([]byte, error) {
 	out := []byte{}
-	for i, c := range s {
-		if
-	}
+	return out, nil
 }
