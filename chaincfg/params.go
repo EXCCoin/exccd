@@ -472,7 +472,7 @@ type Params struct {
 var MainNetParams = Params{
 	Name:        "mainnet",
 	Net:         wire.MainNet,
-	DefaultPort: "9108",
+	DefaultPort: "9666",
 	DNSSeeds: []DNSSeed{
 		{"188.166.147.21", false},
 		{ "139.59.147.139", false},
@@ -589,16 +589,14 @@ var MainNetParams = Params{
 	AcceptNonStdTxs: false,
 
 	// Address encoding magics
-	NetworkAddressPrefix: "E",
+	NetworkAddressPrefix: "2",
 	// In order to see actual prefixes, encoded string must consist of prefix mentioned below
 	// followed by zeros up to 26 bytes total length.
 	PubKeyAddrID:         [2]byte{0x21, 0xB9}, // starts with 22
-
 	PubKeyHashAddrID:     [2]byte{0x3d, 0x21}, // starts with 2s
 	PKHEdwardsAddrID:     [2]byte{0x35, 0xcf}, // starts with 2e
 	PKHSchnorrAddrID:     [2]byte{0x2f, 0x0d}, // starts with 2S
-
-	ScriptHashAddrID:     [2]byte{0xA3, 0xDA}, // starts with 62
+	ScriptHashAddrID:     [2]byte{0x34, 0xAF}, // starts with 2c
 	PrivateKeyID:         [2]byte{0x80}, // starts with 4
 
 	// BIP32 hierarchical deterministic extended key magics
@@ -609,7 +607,7 @@ var MainNetParams = Params{
 
 	// BIP44 coin type used in the hierarchical deterministic path for
 	// address generation.
-	HDCoinType: 20,
+	HDCoinType: 30,
 
 	// Decred PoS parameters
 	MinimumStakeDiff:        2 * 1e8, // 2 Coin
@@ -644,7 +642,7 @@ var MainNetParams = Params{
 var TestNet2Params = Params{
 	Name:        "testnet2",
 	Net:         wire.TestNet2,
-	DefaultPort: "19108",
+	DefaultPort: "11999",
 	DNSSeeds: []DNSSeed{
 		{"188.166.147.21", false},
 	},
@@ -814,7 +812,7 @@ var TestNet2Params = Params{
 var SimNetParams = Params{
 	Name:        "simnet",
 	Net:         wire.SimNet,
-	DefaultPort: "18555",
+	DefaultPort: "11998",
 	DNSSeeds:    []DNSSeed{}, // NOTE: There must NOT be any seeds.
 
 	// Chain parameters

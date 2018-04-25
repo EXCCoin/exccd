@@ -41,48 +41,48 @@ func TestBIP0032Vectors(t *testing.T) {
 			name:     "test vector 1 chain m",
 			master:   testVec1MasterHex,
 			path:     []uint32{},
-			wantPub:  "dpubZ9169KDAEUnyoBhjjmT2VaEodr6pUTDoqCEAeqgbfr2JfkB88BbK77jbTYbcYXb2FVz7DKBdW4P618yd51MwF8DjKVopSbS7Lkgi6bowX5w",
-			wantPriv: "dprv3hCznBesA6jBtmoyVFPfyMSZ1qYZ3WdjdebquvkEfmRfxC9VFEFi2YDaJqHnx7uGe75eGSa3Mn3oHK11hBW7KZUrPxwbCPBmuCi1nwm182s",
+			wantPub:  "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EHxoeTG",
+			wantPriv: "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGByB3yWc",
 			net:      &chaincfg.MainNetParams,
 		},
 		{
 			name:     "test vector 1 chain m/0H",
 			master:   testVec1MasterHex,
 			path:     []uint32{hkStart},
-			wantPub:  "dpubZCGVaKZBiMo7pMgLaZm1qmchjWenTeVcUdFQkTNsFGFEA6xs4EW8PKiqYqP7HBAitt9Hw16VQkQ1tjsZQSHNWFc6bEK6bLqrbco24FzBTY4",
-			wantPriv: "dprv3kUQDBztdyjKuwnaL3hfKYpT7W6X2huYH5d61YSWFBebSYwEBHAXJkCpQ7rvMAxPzKqxVCGLvBqWvGxXjAyMJsV1XwKkfnQCM9KctC8k8bk",
+			wantPub:  "xpub69GmQNHCKJbkH4WHGtBXeMZjvvhWKxTs3SSsgRqx1eMJLFjiXKcTfk1veJvjAuKXxBN5j7pgeL9Umsjoz68TMCqiwrR9cxfP4xcKBtxkb9d",
+			wantPriv: "xprv9vHQzrkJUw3T4aRpAreXHDd1Nts1vVk1gDXGt3SLTJpKTTQZynJD7whSo354KRNtjV5GjEayekZxiicFPQqcTMTS2PZon5xTVvWsH8qAior",
 			net:      &chaincfg.MainNetParams,
 		},
 		{
 			name:     "test vector 1 chain m/0H/1",
 			master:   testVec1MasterHex,
 			path:     []uint32{hkStart, 1},
-			wantPub:  "dpubZEDyZgdnFBMHxqNhfCUwBfAg1UmXHiTmB5jKtzbAZhF8PTzy2PwAicNdkg1CmW6TARxQeUbgC7nAQenJts4YoG3KMiqcjsjgeMvwLc43w6C",
-			wantPriv: "dprv3nRtCZ5VAoHW4RUwQgRafSNRPUDFrmsgyY71A5eoZceVfuyL9SbZe2rcbwDW2UwpkEniE4urffgbypegscNchPajWzy9QS4cRxF8QYXsZtq",
+			wantPub:  "xpub6BEFPjMnr89vRYCeMWuSzF7iCtpFA2S1jtvnpy4FL5MCZcmpVV3W12fir9YpfEFGDjBCSbKsRhXdHneZUWudeDGwiLwfmVZD7hkEUDrELiV",
+			wantPriv: "xprv9xEtzDpu1kbdD48BFVNSd7AyerykkZiANg1C2aedmjpDgpSfwwjFTEMEzrRdzjNKVQ22U7EVQER3nGJQXrEsqsZA1TDCWjcsajSNoPsNrd2",
 			net:      &chaincfg.MainNetParams,
 		},
 		{
 			name:     "test vector 1 chain m/0H/1/2H",
 			master:   testVec1MasterHex,
 			path:     []uint32{hkStart, 1, hkStart + 2},
-			wantPub:  "dpubZGLz7gsJAWzUksvtw3opxx5eeLq5fRaUMDABA3bdUVfnGUk5fiS5Cc3kZGTjWtYr3jrEavQQnAF6jv2WCpZtFX4uFgifXqev6ED1TM9rTCB",
-			wantPriv: "dprv3pYtkZK168vgrU38gXkUSjHQ2LGpEUzQ9fXrR8fGUR59YviSnm6U82XjQYhpJEUPnVcC9bguJBQU5xVM4VFcDHu9BgScGPA6mQMH4bn5Cth",
+			wantPub:  "xpub6DMFwjbJmTo7DakqdNELmY2gqksoXjYiv2Me624iEsmrSdWw8oYQV2Lqek1MQchf7352P38c1jzZd3tknUQy6UJXcJpiZTUSZa2JawRdUpx",
+			wantPriv: "xprv9zMuYE4Qw6Ep16gNXLhLQQ5xHj3K8GpsYoS3Hdf6gYEsZqBnbGE9wE2MoTuxGUttXeqWPe1Y2k8utQ94ij7sMmsZg8gfNgiMvBYXTVu9ha6",
 			net:      &chaincfg.MainNetParams,
 		},
 		{
 			name:     "test vector 1 chain m/0H/1/2H/2",
 			master:   testVec1MasterHex,
 			path:     []uint32{hkStart, 1, hkStart + 2, 2},
-			wantPub:  "dpubZHv6Cfp2XRSWHQXZBo1dLmVM421Zdkc4MePkyBXCLFttVkCmwZkxth4ZV9PzkFP3DtD5xcVq2CPSYpJMWMaoxu1ixz4GNZFVcE2xnHP6chJ",
-			wantPriv: "dprv3r7zqYFjT3NiNzdnwGxGpYh6S1TJCp1zA6mSEGaqLBJFnCB94cRMp7YYLR49aTZHZ7ya1CXwQJ6rodKeU9NgQTxkPSK7pzgZRgjYkQ7rgJh",
+			wantPub:  "xpub6EvN2iY38NF8k7MVt7S99MSPFS4HW4aJvTbDu9zH6dzxftydQesJB7MeacwcdyXrHBRskjE2Fn8uRxAc61RtorFMKcAKQB525ZrFuySrjqh",
+			wantPriv: "xprvA1w1dD19HzgqXdH2n5u8nDVehQDo6brTZEfd6mafYJTyo6eUs7Z3dK3AjLGHYhynJHCtFEra8rqJc4yN8PEwYwwAstZAwJEpaTvo9N9XNkk",
 			net:      &chaincfg.MainNetParams,
 		},
 		{
 			name:     "test vector 1 chain m/0H/1/2H/2/1000000000",
 			master:   testVec1MasterHex,
 			path:     []uint32{hkStart, 1, hkStart + 2, 2, 1000000000},
-			wantPub:  "dpubZL6d9amjfRy1zeoZM2zHDU7uoMvwPqtxHRQAiJjeEtQQWjP3retQV1qKJyzUd6ZJNgbJGXjtc5pdoBcTTYTLoxQzvV9JJCzCjB2eCWpRf8T",
-			wantPriv: "dprv3tJXnTDSb3uE6Euo6WvvhFKfBMNfxuJt5smqyPoHEoomoBMQyhYoQSKJAHWtWxmuqdUVb8q9J2NaTkF6rYm6XDrSotkJ55bM21fffa7VV97",
+			wantPub:  "xpub6H6tydVkGNmeTMdW3MQo244wzmyfG9sCrEbdeHCj1GWUgt9uKjzjmS8QQTY6Wpi7Ryp64eU5qfa6gKUi3CJReuedH7FMKpojCWqwLCC4cL7",
+			wantPriv: "xprvA47Ya7xrS1DMEsZ2wKsnev8DSk9Arh9MV1g2qto7SvyVp5pknCgVDdovZCj2VDCQanhoqB9n2b72GBtpWndMfhpsJLzMBP9cAnrv4XJFtGG",
 			net:      &chaincfg.MainNetParams,
 		},
 
@@ -91,48 +91,48 @@ func TestBIP0032Vectors(t *testing.T) {
 			name:     "test vector 2 chain m",
 			master:   testVec2MasterHex,
 			path:     []uint32{},
-			wantPub:  "dpubZ9169KDAEUnynoD4qvXJwmxZt3FFA5UdWn1twnRReE9AxjCKJLNFY1uBoegbFmwzA4Du7yqnu8tLivhrCCH6P3DgBS1HH5vmf8MpNXvvYT9",
-			wantPriv: "dprv3hCznBesA6jBtPKJbQTxRZAKG2gyj8tZKEPaCsV4e9YYFBAgRP2eTSPAeu4r8dTMt9q51j2Vdt5zNqj7jbtovvocrP1qLj6WUTLF9xYQt4y",
+			wantPub:  "xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WCzUQn6",
+			wantPriv: "xprv9s21ZrQH143K31xYSDQpPDxsXRTUcvj2iNHm5NUtrGiGG5e2DtALGdso3pGz6ssrdK4PFmM8NSpSBHNqPqm55Qn3LqFtT2emdEXVYsu94ep",
 			net:      &chaincfg.MainNetParams,
 		},
 		{
 			name:     "test vector 2 chain m/0",
 			master:   testVec2MasterHex,
 			path:     []uint32{0},
-			wantPub:  "dpubZBA4RCkCybJFaNbqPuBiyfXY1rvmG1XTdCy1AY1U96dxkFqWc2i5KREMh7NYPpy7ZPMhdpFMAesex3JdFDfX4J5FEW3HjSacqEYPfwb9Cj7",
-			wantPriv: "dprv3jMy45BuuDETfxi59P8NTSjHPrNVq4wPRfLgRd57923L2hosj5NUEqiLYQ4i7fJtUpiXZLr2wUeToJY2Tm5sCpAJdajEHDmieVJiPQNXwu9",
+			wantPub:  "xpub68ALFFUDaY6t35Rn6DcEnFUaDGyV8KViC2AU6WUYuUk2vQcN57pQbqXSnavAHZ7vcgaVRvyYQEd7qBAspsWbuFJsb89Lm4Q9JaMgoZG3wAa",
+			wantPriv: "xprv9uAyqjwKkAYapbMJzC5ER7XqfF8zirmrpoEsJ84wM9D43cHDXaWA43CxwKGr5ujPDywqoPAfg3NubkBk7zx8MJ8j82yHPXKyoGVxnL9V1XT",
 			net:      &chaincfg.MainNetParams,
 		},
 		{
 			name:     "test vector 2 chain m/0/2147483647H",
 			master:   testVec2MasterHex,
 			path:     []uint32{0, hkStart + 2147483647},
-			wantPub:  "dpubZDUNkZEcCRCZEizDGL9sAQbZRKSnaxQLeqN9zpueeqCyq2VY7NUGMXASacsK96S8XzNjq3YgFgwLtj8MJBToW6To9U5zxuazEyh89bjR1xA",
-			wantPriv: "dprv3mgHPRgK838mLK6T1p6WeBoJoJtXA1pGTHjqFuyHekcM7UTuER8fGweRRsoLqSuHa98uskVPnJnfWZEBUC1AVmXnSCPDvUFKydXNnnPHTuQ",
+			wantPub:  "xpub6AUeabxcoN1BhRp9xeaNxzYbcjVWTGNbDeZcvoNjRDK41BGPaTabdwTXg6Qw2pawbHbXdAGsVGgomrzbsqJtM3hRW6C3zXQWiKWRHKCVCVN",
+			wantPriv: "xprv9wVJB6RixzStUwjgrd3Nbrbs4hf23oejrRe28Qy7rsn58NwF2vGM6993po1UohKnKJNE7np2WsX7Jzsu8RsReFWCvedH2mob8QidBdqPvsH",
 			net:      &chaincfg.MainNetParams,
 		},
 		{
 			name:     "test vector 2 chain m/0/2147483647H/1",
 			master:   testVec2MasterHex,
 			path:     []uint32{0, hkStart + 2147483647, 1},
-			wantPub:  "dpubZF3wJh7SfggGg74QZW3EE9ei8uQSJEFgd62uyuK5iMgQzUNjpSnprgTpYz3d6Q3fXXtEEXQqpzWcP4LUVuXFsgA8JKt1Hot5kyUk4pPRhDz",
-			wantPriv: "dprv3oFqwZZ9bJcUmhAeJyyshvrTWtrAsHfcRYQbEzNiiH5nGvM6wVTDn6woQEz92b2EHTYZBtLi82jKEnxSouA3cVaW8YWBsw5c3f4mwAhA3d2",
+			wantPub:  "xpub6C4D8jqTGdUu8otMFpTk2jbkLKTAAYDwBuENusnAUjnVAd9bHXuA96kueTbEz8CUaq722e934aG5GCCj5ZNLidPkewz4KRhcEKJ3CYW2A1v",
+			wantPriv: "xprv9y4rjEJZSFvbvKot9nvjfbf1nHcfm5W5pgJn7VNYvQFWHppSjzaubJSRoACGzqSj2cmsRvfLrbTm3EcAU92JkyYvczkEzEdsCSG2L4b3xcD",
 			net:      &chaincfg.MainNetParams,
 		},
 		{
 			name:     "test vector 2 chain m/0/2147483647H/1/2147483646H",
 			master:   testVec2MasterHex,
 			path:     []uint32{0, hkStart + 2147483647, 1, hkStart + 2147483646},
-			wantPub:  "dpubZH38NEg1CW19dGZs8NdaT4hDkz7wXPstio1mGpHSAXHpSGW3UnTrn25ERT1Mp8ae5GMoQHMbgQiPrChMXQMdx3UqS8YqFkT1pqait8fY92u",
-			wantPriv: "dprv3qF3177i87wMirg6sraDvqty8yZg6THpXFPSXuM5AShBiiUQbq8FhSZDGkYmBNR3RKfBrxzkKDBpsRFJfTnQfLsvpPPqRnakat6hHQA43X9",
+			wantPub:  "xpub6E3QCHQ1oSon5yPoph46FeeFxQAfPhr9HcDECnkWvuPtcRGtwsaC4SNKWvYyhrjT8ZabCQ5nuzTrjLZc74CinziTnketHNGYJBQ21pct3pJ",
+			wantPriv: "xprvA143nms7y5FUsVKLifX5tWhXQNLAzF8HvPHdQQLuNZrujcwkQLFwWe3qffku9cqYAUtW71KP3mvGfru2KhefoprMJqdtY691jfHwgHRtbb8",
 			net:      &chaincfg.MainNetParams,
 		},
 		{
 			name:     "test vector 2 chain m/0/2147483647H/1/2147483646H/2",
 			master:   testVec2MasterHex,
 			path:     []uint32{0, hkStart + 2147483647, 1, hkStart + 2147483646, 2},
-			wantPub:  "dpubZJoBFoQJ35zvEBgsfhJBssnAp8TY5gvruzQFLmyxcqRb7enVtGfSkLo2CkAZJMpa6T2fx6fUtvTgXtUvSVgAZ56bEwGxQsToeZfFV8VadE1",
-			wantPriv: "dprv3s15tfqzxhw8Kmo7RBEqMeyvC7uGekLniSmvbs3bckpxQ6ks1KKqfmH144Jgh3PLxkyZRcS367kp7DrtUmnG16NpnsoNhxSXRgKbJJ7MUQR",
+			wantPub:  "xpub6FoT5r8Je2oYgtWpN1ihgTjD1YWFwzu7UobiGkT3PDXfHoZMMMmn2m67JDiBC5yP9kFTkDPg8WD9R2MB29XFQ2LDbZP1SVHL7uUYct483Bc",
+			wantPriv: "xprvA2p6gLbQofFFUQSMFzBhKKnUTWfmYYBG7ag7UN3RpszgR1ECopTXUxmdSyWpfHoqhvCsfekfpgVFufWc91eX9aMFHL3RpFznaTWqhB9amxp",
 			net:      &chaincfg.MainNetParams,
 		},
 
@@ -545,12 +545,12 @@ func TestExtendedKeyAPI(t *testing.T) {
 	}{
 		{
 			name:      "test vector 1 master node private",
-			extKey:    "dprv3hCznBesA6jBteCheVrorP4Nix6oEWFwtk79FaLy1rPzedNGg9Jhy9y596C9uCPMeeKJMvtEGZRaxPKxGuCFgR4uo2EySsA29GsnXcrsby8",
+			extKey:    "xprv9s21ZrQH143K3GqwVJofp3rvzLsJ8J6RHt1L85LoDyZifXqcUeSPnMThY1QHsSorPoYcbyCs18A2kpyfw94Wpu3LHUV2ZAiHJ452vYkjjAt",
 			isPrivate: true,
 			parentFP:  0,
 			privKey:   "33a63922ea4e6686c9fc31daf136888297537f66c1aabe3363df06af0b8274c7",
 			pubKey:    "039f2e1d7b50b8451911c64cf745f9ba16193b319212a64096e5679555449d8f37",
-			address:   "Dsk8SfRLF2hssYuLcb6Gu4zh19rg2QBEDGs",
+			address:   "2saAJkfGvLsBmkXkZaCAo84XCvv8bnx6nGkq",
 		},
 		{
 			name:       "test vector 2 chain m/0/2147483647/1/2147483646/2",
@@ -559,7 +559,7 @@ func TestExtendedKeyAPI(t *testing.T) {
 			parentFP:   4220580796,
 			privKeyErr: hdkeychain.ErrNotPrivExtKey,
 			pubKey:     "03dceb0b07698ec3d6ac08ae7297e7f5e63d7fda99d3fce1ded31d36badcdd4d36",
-			address:    "DsZcjfdSKUrEQxoyjkWEo7dM4YZKhma8wCa",
+			address:    "2sZyo3fV2RKL8HwfChMam279rzJqFURtpCT4",
 		},
 	}
 
@@ -653,7 +653,7 @@ func TestNet(t *testing.T) {
 		// Private extended keys.
 		{
 			name:      "mainnet -> simnet",
-			key:       "dprv3hCznBesA6jBu46PsJ9vNJoiCj9ouxtfwCBNjUYuXwbbAS4oEkF6Bnp5G3QbBAjRXy4uWWZYmC5Y71s3ovCyPLrCjEkYGPErrueuPPjvNWh",
+			key:       "xprv9s21ZrQH143K3gjdi76nKycGU7vJokj9LL5ZbyYjk4mKBLY93FNmzzJhexcj9R9vH8JDkYtBVkoyuTWmUA5EXppdDgzbNgo81gr9nNNw4dw",
 			origNet:   &chaincfg.MainNetParams,
 			newNet:    &chaincfg.SimNetParams,
 			newPriv:   "sprvZ9xkGEZkBei2p9e1uBZRQMGtfGEQNGApP1W19PyNRqg9nuEs2X4ynkvAXWaBiGb5WKiaqcbiKgmyB1HYgcX3mnxiUs7UWeWEfe4tnSpbXLv",
@@ -665,15 +665,15 @@ func TestNet(t *testing.T) {
 			key:       "sprvZ9xkGEZkBei2p9e1uBZRQMGtfGEQNGApP1W19PyNRqg9nuEs2X4ynkvAXWaBiGb5WKiaqcbiKgmyB1HYgcX3mnxiUs7UWeWEfe4tnSpbXLv",
 			origNet:   &chaincfg.SimNetParams,
 			newNet:    &chaincfg.MainNetParams,
-			newPriv:   "dprv3hCznBesA6jBu46PsJ9vNJoiCj9ouxtfwCBNjUYuXwbbAS4oEkF6Bnp5G3QbBAjRXy4uWWZYmC5Y71s3ovCyPLrCjEkYGPErrueuPPjvNWh",
-			newPub:    "dpubZ9169KDAEUnyoTzA7pDGtXbxpji5LuUk8johUPVGY2CDsz6S7hahGNL6QmyavE5fgonsepiACAa7FQPsCDeLFnoSSAGiQEQhimBGGK84nye",
+			newPriv:   "xprv9s21ZrQH143K3gjdi76nKycGU7vJokj9LL5ZbyYjk4mKBLY93FNmzzJhexcj9R9vH8JDkYtBVkoyuTWmUA5EXppdDgzbNgo81gr9nNNw4dw",
+			newPub:    "xpub661MyMwAqRbcGAp6p8dnh7Z129koDDSzhZ1AQMxMJQJJ48sHanh2YndBWFXCoxEUk71fSwSMRkKa8YG7msVR6k34nnNmRrEEC6zZQ4x1ZYo",
 			isPrivate: true,
 		},
 
 		// Public extended keys.
 		{
 			name:      "mainnet -> simnet",
-			key:       "dpubZ9169KDAEUnyoTzA7pDGtXbxpji5LuUk8johUPVGY2CDsz6S7hahGNL6QmyavE5fgonsepiACAa7FQPsCDeLFnoSSAGiQEQhimBGGK84nye",
+			key:       "xpub661MyMwAqRbcGAp6p8dnh7Z129koDDSzhZ1AQMxMJQJJ48sHanh2YndBWFXCoxEUk71fSwSMRkKa8YG7msVR6k34nnNmRrEEC6zZQ4x1ZYo",
 			origNet:   &chaincfg.MainNetParams,
 			newNet:    &chaincfg.SimNetParams,
 			newPub:    "spubVNx6fk6e22GL2diV1D6RmVDdDJ4tmitfkERbwnNyzBD8fha1a4PELZEeNoUfNofdyJS2Y19tFgHZQ62tzKwELiBA3xVeZowLr4DJQ7xGuao",
@@ -684,7 +684,7 @@ func TestNet(t *testing.T) {
 			key:       "spubVNx6fk6e22GL2diV1D6RmVDdDJ4tmitfkERbwnNyzBD8fha1a4PELZEeNoUfNofdyJS2Y19tFgHZQ62tzKwELiBA3xVeZowLr4DJQ7xGuao",
 			origNet:   &chaincfg.SimNetParams,
 			newNet:    &chaincfg.MainNetParams,
-			newPub:    "dpubZ9169KDAEUnyoTzA7pDGtXbxpji5LuUk8johUPVGY2CDsz6S7hahGNL6QmyavE5fgonsepiACAa7FQPsCDeLFnoSSAGiQEQhimBGGK84nye",
+			newPub:    "xpub661MyMwAqRbcGAp6p8dnh7Z129koDDSzhZ1AQMxMJQJJ48sHanh2YndBWFXCoxEUk71fSwSMRkKa8YG7msVR6k34nnNmRrEEC6zZQ4x1ZYo",
 			isPrivate: false,
 		},
 	}
@@ -846,7 +846,7 @@ func TestZero(t *testing.T) {
 		{
 			name:   "test vector 1 chain m",
 			master: "000102030405060708090a0b0c0d0e0f",
-			extKey: "dprv3hCznBesA6jBtmoyVFPfyMSZ1qYZ3WdjdebquvkEfmRfxC9VFEFi2YDaJqHnx7uGe75eGSa3Mn3oHK11hBW7KZUrPxwbCPBmuCi1nwm182s",
+			extKey: "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGByB3yWc",
 			net:    &chaincfg.MainNetParams,
 		},
 
@@ -854,7 +854,7 @@ func TestZero(t *testing.T) {
 		{
 			name:   "test vector 2 chain m",
 			master: "fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542",
-			extKey: "dprv3hCznBesA6jBtPKJbQTxRZAKG2gyj8tZKEPaCsV4e9YYFBAgRP2eTSPAeu4r8dTMt9q51j2Vdt5zNqj7jbtovvocrP1qLj6WUTLF9xYQt4y",
+			extKey: "xprv9s21ZrQH143K31xYSDQpPDxsXRTUcvj2iNHm5NUtrGiGG5e2DtALGdso3pGz6ssrdK4PFmM8NSpSBHNqPqm55Qn3LqFtT2emdEXVYsu94ep",
 			net:    &chaincfg.MainNetParams,
 		},
 	}
@@ -904,7 +904,7 @@ func TestZero(t *testing.T) {
 			return false
 		}
 
-		wantAddr := "DsWuefL3Rgj6NXoMFqqBzxY2nmh87RZyPkv"
+		wantAddr := "2sZw5xfBdXXCzFWeaDSuiDx4YiXy3t8xSu2m"
 		addr, err := key.Address(&chaincfg.MainNetParams)
 		if err != nil {
 			t.Errorf("Address #%d (%s): unexpected error: %v", i,
