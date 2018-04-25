@@ -59,8 +59,7 @@ func Example_defaultWalletLayout() {
 	// and be decrypted or generated as the NewMaster example shows, but
 	// for the purposes of this example, the private exteded key for the
 	// master node is being hard coded here.
-	master := "dprv3hCznBesA6jBushjx7y9NrfheE4ZshnaKYtsoLXefmLPzrXgEiXkd" +
-		"RMD6UngnmBYZzgNhdEd4K3PidxcaCiR6HC9hmpj8FcrP4Cv7zBwELA"
+	master := "xprv9s21ZrQH143K4WLynvv1LXUFucq4mVd3igo4fqXUstW81m123DfSScqqVPzpm1c3K9ugwfZFnsmqX5cLESagEmAaCE4nEZB7XqQAWynsvUE"
 
 	// Start by getting an extended key instance for the master node.
 	// This gives the path:
@@ -134,8 +133,8 @@ func Example_defaultWalletLayout() {
 	fmt.Println("Account 0 Internal Address 0:", acct0IntAddr)
 
 	// Output:
-	// Account 0 External Address 10: DshMmJ3bfvMDdk1mkXRD3x5xDuPwSxoYGfi
-	// Account 0 Internal Address 0: DsoTyktAyEDkYpgKSex6zx5rrkFDi2gAsHr
+	// Account 0 External Address 10: 2sa7Y5HuBmkq7Wirzi8VjGwcU9ffsDbveYvi
+	// Account 0 Internal Address 0: 2saDeHkjm54heRoXYQG2dDwcNnWX9Uftgwsg
 }
 
 // This example demonstrates the audits use case in BIP0032.
@@ -155,8 +154,8 @@ func Example_audits() {
 	// and be decrypted or generated as the NewMaster example shows, but
 	// for the purposes of this example, the private exteded key for the
 	// master node is being hard coded here.
-	master := "dprv3hCznBesA6jBushjx7y9NrfheE4ZshnaKYtsoLXefmLPzrXgEiXkd" +
-		"RMD6UngnmBYZzgNhdEd4K3PidxcaCiR6HC9hmpj8FcrP4Cv7zBwELA"
+
+	master := "xprv9s21ZrQH143K4WLynvv1LXUFucq4mVd3igo4fqXUstW81m123DfSScqqVPzpm1c3K9ugwfZFnsmqX5cLESagEmAaCE4nEZB7XqQAWynsvUE"
 
 	// Start by getting an extended key instance for the master node.
 	// This gives the path:
@@ -184,5 +183,5 @@ func Example_audits() {
 	fmt.Println("Audit key N(m/*):", mpks)
 
 	// Output:
-	// Audit key N(m/*): dpubZ9169KDAEUnypHbWCe2Vu5TxGEcqJeNeX6XCYFU1fqw2iQZK7fsMhzsEFArbLmyUdprUw9aXHneUNd92bjc31TqC6sUduMY6PK2z4JXDS8j
+	// Audit key N(m/*): xpub661MyMwAqRbcGzRStxT1hfQzTefZAxLu5uifUDw6SE36tZLAakygzRAKLeQDEW8Hh85GjGJiXNPwFm1HBPT7rR4pTVagvyMcrerHC2KhSU2
 }

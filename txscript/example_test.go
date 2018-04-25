@@ -30,7 +30,7 @@ func ExamplePayToAddrScript() {
 	// which is useful to ensure the accuracy of the address and determine
 	// the address type.  It is also required for the upcoming call to
 	// PayToAddrScript.
-	addressStr := "DsSej1qR3Fyc8kV176DCh9n9cY9nqf9Quxk"
+	addressStr := "2sZrq31h196TW1jLE4hHiv9JfYJRicEwNNoQ"
 	address, err := excutil.DecodeAddress(addressStr)
 	if err != nil {
 		fmt.Println(err)
@@ -81,7 +81,7 @@ func ExampleExtractPkScriptAddrs() {
 
 	// Output:
 	// Script Class: pubkeyhash
-	// Addresses: [DsSej1qR3Fyc8kV176DCh9n9cY9nqf9Quxk]
+	// Addresses: [2sZrq31h196TW1jLE4hHiv9JfYJRicEwNNoQ]
 	// Required Signatures: 1
 }
 
