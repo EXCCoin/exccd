@@ -2,7 +2,7 @@ package equihash
 
 import (
 	"errors"
-	"unicode"
+	"fmt"
 )
 
 var (
@@ -38,24 +38,6 @@ func hexDigit(r rune) int8 {
 	return -hexDigits[int(r)]
 }
 
-func parseHex(s string) []byte {
-	out := []byte{}
-	for _, r := range s {
-		if unicode.IsSpace(r) {
-			continue
-		}
-
-		c := hexDigit(r)
-		n := c << 4
-		if c == -1 {
-			break
-		}
-		n = n | c
-		out = append(out, byte(n))
-	}
-	return out
-}
-
 func xor(a, b []byte) ([]byte, error) {
 	if len(a) != len(b) {
 		return nil, errLen
@@ -79,18 +61,21 @@ func expandArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 		return nil, errOutWidth
 	}
 	bitLenMask := (1 << uint(bitLen)) - 1
-	accBits, accVal, j := 0, 0, 0
+	accBits, accVal, j := 0, uint(0), 0
 	out := make([]byte, outLen)
 	for i := 0; i < len(in); i++ {
-		accVal = ((accVal << 8) & wordMask) | int(in[i])
+		accVal = ((accVal << 8) & wordMask) | uint(in[i])
 		accBits += 8
+		fmt.Printf("i = %v\nin[%v] = %v\naccVal = %v\n accBits = %v\n", i, i, in[i], accVal, accBits)
 
 		if accBits >= bitLen {
 			accBits -= bitLen
 			for x := bytePad; x < outWidth; x++ {
 				a := accVal >> (uint(accBits + (8 * (outWidth - x - 1))))
 				b := (bitLenMask >> uint((8 * (outWidth - x - 1)))) & 0xFF
-				out[j+x] = byte(a) & byte(b)
+				v := byte(a) & byte(b)
+				fmt.Printf("a = %v\nb = %v\nv = %v\n", a, b, v)
+				out[j+x] = v
 			}
 			j += outWidth
 		}
@@ -115,16 +100,16 @@ func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 	accBits, accVal, j := 0, 0, 0
 	out := make([]byte, outLen)
 	for i := 0; i < outLen; i++ {
+		accBits -= bitLen
 		if accBits < 8 {
 			accVal = accVal << uint(bitLen)
 			for x := bytePad; x < inWidth; x++ {
 				a := in[j+x]
 				b := (bitLenMask >> uint(8*(inWidth-x-1))) & 0xFF
-				mask := a & byte(b)
-				accVal = accVal | int(mask)
+				v := a & byte(b)
+				out[j+x] = v
 			}
 			j += inWidth
-			accBits += bitLen
 		}
 
 		accBits -= 8
