@@ -1,5 +1,10 @@
 package equihash
 
+import (
+	"encoding/hex"
+	"testing"
+)
+
 func byteSliceEq(a, b []byte) bool {
 	if len(a) != len(b) {
 		return false
@@ -12,10 +17,17 @@ func byteSliceEq(a, b []byte) bool {
 	return true
 }
 
-/*
+func decodeHex(s string) []byte {
+	decoded, err := hex.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return decoded
+}
+
 func TestExpandArray(t *testing.T) {
-	in := parseHex("ffffffffffffffffffffff")
-	exp := parseHex("07ff07ff07ff07ff07ff07ff07ff07ff")
+	in := decodeHex("ffffffffffffffffffffff")
+	exp := decodeHex("07ff07ff07ff07ff07ff07ff07ff07ff")
 	bitLen, outLen, bytePad := 11, len(exp), 0
 	out, err := expandArray(in, outLen, bitLen, bytePad)
 	if err != nil {
@@ -25,4 +37,3 @@ func TestExpandArray(t *testing.T) {
 		t.FailNow()
 	}
 }
-*/
