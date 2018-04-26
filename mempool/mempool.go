@@ -19,7 +19,7 @@ import (
 	"github.com/EXCCoin/exccd/blockchain/stake"
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/dcrjson"
+	"github.com/EXCCoin/exccd/exccjson"
 	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/mining"
 	"github.com/EXCCoin/exccd/txscript"
@@ -1495,11 +1495,11 @@ func (mp *TxPool) MiningDescs() []*mining.TxDesc {
 // nil in which case all transactions will be returned.
 //
 // This function is safe for concurrent access.
-func (mp *TxPool) RawMempoolVerbose(filterType *stake.TxType) map[string]*dcrjson.GetRawMempoolVerboseResult {
+func (mp *TxPool) RawMempoolVerbose(filterType *stake.TxType) map[string]*exccjson.GetRawMempoolVerboseResult {
 	mp.mtx.RLock()
 	defer mp.mtx.RUnlock()
 
-	result := make(map[string]*dcrjson.GetRawMempoolVerboseResult,
+	result := make(map[string]*exccjson.GetRawMempoolVerboseResult,
 		len(mp.pool))
 	bestHeight := mp.cfg.BestHeight()
 
@@ -1521,7 +1521,7 @@ func (mp *TxPool) RawMempoolVerbose(filterType *stake.TxType) map[string]*dcrjso
 				bestHeight+1)
 		}
 
-		mpd := &dcrjson.GetRawMempoolVerboseResult{
+		mpd := &exccjson.GetRawMempoolVerboseResult{
 			Size:             int32(tx.MsgTx().SerializeSize()),
 			Fee:              excutil.Amount(desc.Fee).ToCoin(),
 			Time:             desc.Added.Unix(),

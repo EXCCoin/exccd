@@ -19,15 +19,15 @@ import (
 
 const (
 	// svcName is the name of dcrd service.
-	svcName = "dcrdsvc"
+	svcName = "exccdsvc"
 
 	// svcDisplayName is the service name that will be shown in the windows
 	// services list.  Not the svcName is the "real" name which is used
 	// to control the service.  This is only for display purposes.
-	svcDisplayName = "Dcrd Service"
+	svcDisplayName = "Exccd Service"
 
 	// svcDesc is the description of the service.
-	svcDesc = "Downloads and stays synchronized with the Decred block " +
+	svcDesc = "Downloads and stays synchronized with the Exchangecoin block " +
 		"chain and provides chain services to applications."
 )
 
@@ -46,27 +46,27 @@ func logServiceStartOfDay(srvr *server) {
 	elog.Info(1, message)
 }
 
-// dcrdService houses the main service handler which handles all service
-// updates and launching dcrdMain.
-type dcrdService struct{}
+// exccdService houses the main service handler which handles all service
+// updates and launching exccdMain.
+type exccdService struct{}
 
 // Execute is the main entry point the winsvc package calls when receiving
 // information from the Windows service control manager.  It launches the
-// long-running dcrdMain (which is the real meat of dcrd), handles service
+// long-running exccdMain (which is the real meat of dcrd), handles service
 // change requests, and notifies the service control manager of changes.
-func (s *dcrdService) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (bool, uint32) {
+func (s *exccdService) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (bool, uint32) {
 	// Service start is pending.
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown
 	changes <- svc.Status{State: svc.StartPending}
 
-	// Start dcrdMain in a separate goroutine so the service can start
+	// Start exccdMain in a separate goroutine so the service can start
 	// quickly.  Shutdown (along with a potential error) is reported via
 	// doneChan.  serverChan is notified with the main server instance once
 	// it is started so it can be gracefully stopped.
 	doneChan := make(chan error)
 	serverChan := make(chan *server)
 	go func() {
-		err := dcrdMain(serverChan)
+		err := exccdMain(serverChan)
 		doneChan <- err
 	}()
 
@@ -293,7 +293,7 @@ func serviceMain() (bool, error) {
 	}
 	defer elog.Close()
 
-	err = svc.Run(svcName, &dcrdService{})
+	err = svc.Run(svcName, &exccdService{})
 	if err != nil {
 		elog.Error(1, fmt.Sprintf("Service start failed: %v", err))
 		return true, err

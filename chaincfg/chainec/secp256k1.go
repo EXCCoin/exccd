@@ -11,7 +11,7 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/EXCCoin/exccd/dcrec/secp256k1"
+	"github.com/EXCCoin/exccd/exccec/secp256k1"
 )
 
 type secp256k1DSA struct {

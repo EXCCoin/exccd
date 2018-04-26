@@ -12,7 +12,7 @@ import (
 	"encoding/json"
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/dcrjson"
+	"github.com/EXCCoin/exccd/exccjson"
 	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/wire"
 )
@@ -104,7 +104,7 @@ func (c *Client) GetRawTransactionAsync(txHash *chainhash.Hash) FutureGetRawTran
 		hash = txHash.String()
 	}
 
-	cmd := dcrjson.NewGetRawTransactionCmd(hash, dcrjson.Int(0))
+	cmd := exccjson.NewGetRawTransactionCmd(hash, exccjson.Int(0))
 	return c.sendCmd(cmd)
 }
 
@@ -123,14 +123,14 @@ type FutureGetRawTransactionVerboseResult chan *response
 
 // Receive waits for the response promised by the future and returns information
 // about a transaction given its hash.
-func (r FutureGetRawTransactionVerboseResult) Receive() (*dcrjson.TxRawResult, error) {
+func (r FutureGetRawTransactionVerboseResult) Receive() (*exccjson.TxRawResult, error) {
 	res, err := receiveFuture(r)
 	if err != nil {
 		return nil, err
 	}
 
 	// Unmarshal result as a gettrawtransaction result object.
-	var rawTxResult dcrjson.TxRawResult
+	var rawTxResult exccjson.TxRawResult
 	err = json.Unmarshal(res, &rawTxResult)
 	if err != nil {
 		return nil, err
@@ -150,7 +150,7 @@ func (c *Client) GetRawTransactionVerboseAsync(txHash *chainhash.Hash) FutureGet
 		hash = txHash.String()
 	}
 
-	cmd := dcrjson.NewGetRawTransactionCmd(hash, dcrjson.Int(1))
+	cmd := exccjson.NewGetRawTransactionCmd(hash, exccjson.Int(1))
 	return c.sendCmd(cmd)
 }
 
@@ -158,7 +158,7 @@ func (c *Client) GetRawTransactionVerboseAsync(txHash *chainhash.Hash) FutureGet
 // its hash.
 //
 // See GetRawTransaction to obtain only the transaction already deserialized.
-func (c *Client) GetRawTransactionVerbose(txHash *chainhash.Hash) (*dcrjson.TxRawResult, error) {
+func (c *Client) GetRawTransactionVerbose(txHash *chainhash.Hash) (*exccjson.TxRawResult, error) {
 	return c.GetRawTransactionVerboseAsync(txHash).Receive()
 }
 
@@ -168,14 +168,14 @@ type FutureDecodeRawTransactionResult chan *response
 
 // Receive waits for the response promised by the future and returns information
 // about a transaction given its serialized bytes.
-func (r FutureDecodeRawTransactionResult) Receive() (*dcrjson.TxRawResult, error) {
+func (r FutureDecodeRawTransactionResult) Receive() (*exccjson.TxRawResult, error) {
 	res, err := receiveFuture(r)
 	if err != nil {
 		return nil, err
 	}
 
 	// Unmarshal result as a decoderawtransaction result object.
-	var rawTxResult dcrjson.TxRawResult
+	var rawTxResult exccjson.TxRawResult
 	err = json.Unmarshal(res, &rawTxResult)
 	if err != nil {
 		return nil, err
@@ -191,13 +191,13 @@ func (r FutureDecodeRawTransactionResult) Receive() (*dcrjson.TxRawResult, error
 // See DecodeRawTransaction for the blocking version and more details.
 func (c *Client) DecodeRawTransactionAsync(serializedTx []byte) FutureDecodeRawTransactionResult {
 	txHex := hex.EncodeToString(serializedTx)
-	cmd := dcrjson.NewDecodeRawTransactionCmd(txHex)
+	cmd := exccjson.NewDecodeRawTransactionCmd(txHex)
 	return c.sendCmd(cmd)
 }
 
 // DecodeRawTransaction returns information about a transaction given its
 // serialized bytes.
-func (c *Client) DecodeRawTransaction(serializedTx []byte) (*dcrjson.TxRawResult, error) {
+func (c *Client) DecodeRawTransaction(serializedTx []byte) (*exccjson.TxRawResult, error) {
 	return c.DecodeRawTransactionAsync(serializedTx).Receive()
 }
 
@@ -240,20 +240,20 @@ func (r FutureCreateRawTransactionResult) Receive() (*wire.MsgTx, error) {
 // function on the returned instance.
 //
 // See CreateRawTransaction for the blocking version and more details.
-func (c *Client) CreateRawTransactionAsync(inputs []dcrjson.TransactionInput,
+func (c *Client) CreateRawTransactionAsync(inputs []exccjson.TransactionInput,
 	amounts map[excutil.Address]excutil.Amount, lockTime *int64) FutureCreateRawTransactionResult {
 
 	convertedAmts := make(map[string]float64, len(amounts))
 	for addr, amount := range amounts {
 		convertedAmts[addr.String()] = amount.ToCoin()
 	}
-	cmd := dcrjson.NewCreateRawTransactionCmd(inputs, convertedAmts, lockTime)
+	cmd := exccjson.NewCreateRawTransactionCmd(inputs, convertedAmts, lockTime)
 	return c.sendCmd(cmd)
 }
 
 // CreateRawTransaction returns a new transaction spending the provided inputs
 // and sending to the provided addresses.
-func (c *Client) CreateRawTransaction(inputs []dcrjson.TransactionInput,
+func (c *Client) CreateRawTransaction(inputs []exccjson.TransactionInput,
 	amounts map[excutil.Address]excutil.Amount, lockTime *int64) (*wire.MsgTx, error) {
 
 	return c.CreateRawTransactionAsync(inputs, amounts, lockTime).Receive()
@@ -308,7 +308,7 @@ type SStxCommitOut struct {
 // function on the returned instance.
 //
 // See CreateRawSStx for the blocking version and more details.
-func (c *Client) CreateRawSStxAsync(inputs []dcrjson.SStxInput,
+func (c *Client) CreateRawSStxAsync(inputs []exccjson.SStxInput,
 	amount map[excutil.Address]excutil.Amount,
 	couts []SStxCommitOut) FutureCreateRawSStxResult {
 
@@ -316,7 +316,7 @@ func (c *Client) CreateRawSStxAsync(inputs []dcrjson.SStxInput,
 	for addr, amt := range amount {
 		convertedAmt[addr.String()] = int64(amt)
 	}
-	convertedCouts := make([]dcrjson.SStxCommitOut, len(couts))
+	convertedCouts := make([]exccjson.SStxCommitOut, len(couts))
 	for i, cout := range couts {
 		convertedCouts[i].Addr = cout.Addr.String()
 		convertedCouts[i].CommitAmt = int64(cout.CommitAmt)
@@ -324,7 +324,7 @@ func (c *Client) CreateRawSStxAsync(inputs []dcrjson.SStxInput,
 		convertedCouts[i].ChangeAmt = int64(cout.ChangeAmt)
 	}
 
-	cmd := dcrjson.NewCreateRawSStxCmd(inputs,
+	cmd := exccjson.NewCreateRawSStxCmd(inputs,
 		convertedAmt,
 		convertedCouts)
 
@@ -333,7 +333,7 @@ func (c *Client) CreateRawSStxAsync(inputs []dcrjson.SStxInput,
 
 // CreateRawSStx returns a new transaction spending the provided inputs
 // and sending to the provided addresses.
-func (c *Client) CreateRawSStx(inputs []dcrjson.SStxInput,
+func (c *Client) CreateRawSStx(inputs []exccjson.SStxInput,
 	amount map[excutil.Address]excutil.Amount,
 	couts []SStxCommitOut) (*wire.MsgTx, error) {
 
@@ -379,16 +379,16 @@ func (r FutureCreateRawSSGenTxResult) Receive() (*wire.MsgTx, error) {
 // function on the returned instance.
 //
 // See CreateRawSSGenTx for the blocking version and more details.
-func (c *Client) CreateRawSSGenTxAsync(inputs []dcrjson.TransactionInput,
+func (c *Client) CreateRawSSGenTxAsync(inputs []exccjson.TransactionInput,
 	votebits uint16) FutureCreateRawSSGenTxResult {
 
-	cmd := dcrjson.NewCreateRawSSGenTxCmd(inputs, votebits)
+	cmd := exccjson.NewCreateRawSSGenTxCmd(inputs, votebits)
 	return c.sendCmd(cmd)
 }
 
 // CreateRawSSGenTx returns a new transaction spending the provided inputs
 // and sending to the provided addresses.
-func (c *Client) CreateRawSSGenTx(inputs []dcrjson.TransactionInput,
+func (c *Client) CreateRawSSGenTx(inputs []exccjson.TransactionInput,
 	votebits uint16) (*wire.MsgTx, error) {
 
 	return c.CreateRawSSGenTxAsync(inputs, votebits).Receive()
@@ -433,14 +433,14 @@ func (r FutureCreateRawSSRtxResult) Receive() (*wire.MsgTx, error) {
 // function on the returned instance.
 //
 // See CreateRawSSRtx for the blocking version and more details.
-func (c *Client) CreateRawSSRtxAsync(inputs []dcrjson.TransactionInput, fee excutil.Amount) FutureCreateRawSSRtxResult {
+func (c *Client) CreateRawSSRtxAsync(inputs []exccjson.TransactionInput, fee excutil.Amount) FutureCreateRawSSRtxResult {
 	feeF64 := fee.ToCoin()
-	cmd := dcrjson.NewCreateRawSSRtxCmd(inputs, &feeF64)
+	cmd := exccjson.NewCreateRawSSRtxCmd(inputs, &feeF64)
 	return c.sendCmd(cmd)
 }
 
 // CreateRawSSRtx returns a new SSR transactionm (revoking an sstx).
-func (c *Client) CreateRawSSRtx(inputs []dcrjson.TransactionInput, fee excutil.Amount) (*wire.MsgTx, error) {
+func (c *Client) CreateRawSSRtx(inputs []exccjson.TransactionInput, fee excutil.Amount) (*wire.MsgTx, error) {
 	return c.CreateRawSSRtxAsync(inputs, fee).Receive()
 }
 
@@ -483,7 +483,7 @@ func (c *Client) SendRawTransactionAsync(tx *wire.MsgTx, allowHighFees bool) Fut
 		txHex = hex.EncodeToString(buf.Bytes())
 	}
 
-	cmd := dcrjson.NewSendRawTransactionCmd(txHex, &allowHighFees)
+	cmd := exccjson.NewSendRawTransactionCmd(txHex, &allowHighFees)
 	return c.sendCmd(cmd)
 }
 
@@ -507,7 +507,7 @@ func (r FutureSignRawTransactionResult) Receive() (*wire.MsgTx, bool, error) {
 	}
 
 	// Unmarshal as a signrawtransaction result.
-	var signRawTxResult dcrjson.SignRawTransactionResult
+	var signRawTxResult exccjson.SignRawTransactionResult
 	err = json.Unmarshal(res, &signRawTxResult)
 	if err != nil {
 		return nil, false, err
@@ -544,7 +544,7 @@ func (c *Client) SignRawTransactionAsync(tx *wire.MsgTx) FutureSignRawTransactio
 		txHex = hex.EncodeToString(buf.Bytes())
 	}
 
-	cmd := dcrjson.NewSignRawTransactionCmd(txHex, nil, nil, nil)
+	cmd := exccjson.NewSignRawTransactionCmd(txHex, nil, nil, nil)
 	return c.sendCmd(cmd)
 }
 
@@ -564,7 +564,7 @@ func (c *Client) SignRawTransaction(tx *wire.MsgTx) (*wire.MsgTx, bool, error) {
 // function on the returned instance.
 //
 // See SignRawTransaction2 for the blocking version and more details.
-func (c *Client) SignRawTransaction2Async(tx *wire.MsgTx, inputs []dcrjson.RawTxInput) FutureSignRawTransactionResult {
+func (c *Client) SignRawTransaction2Async(tx *wire.MsgTx, inputs []exccjson.RawTxInput) FutureSignRawTransactionResult {
 	txHex := ""
 	if tx != nil {
 		// Serialize the transaction and convert to hex string.
@@ -575,7 +575,7 @@ func (c *Client) SignRawTransaction2Async(tx *wire.MsgTx, inputs []dcrjson.RawTx
 		txHex = hex.EncodeToString(buf.Bytes())
 	}
 
-	cmd := dcrjson.NewSignRawTransactionCmd(txHex, &inputs, nil, nil)
+	cmd := exccjson.NewSignRawTransactionCmd(txHex, &inputs, nil, nil)
 	return c.sendCmd(cmd)
 }
 
@@ -589,7 +589,7 @@ func (c *Client) SignRawTransaction2Async(tx *wire.MsgTx, inputs []dcrjson.RawTx
 //
 // See SignRawTransaction if the RPC server already knows the input
 // transactions.
-func (c *Client) SignRawTransaction2(tx *wire.MsgTx, inputs []dcrjson.RawTxInput) (*wire.MsgTx, bool, error) {
+func (c *Client) SignRawTransaction2(tx *wire.MsgTx, inputs []exccjson.RawTxInput) (*wire.MsgTx, bool, error) {
 	return c.SignRawTransaction2Async(tx, inputs).Receive()
 }
 
@@ -599,7 +599,7 @@ func (c *Client) SignRawTransaction2(tx *wire.MsgTx, inputs []dcrjson.RawTxInput
 //
 // See SignRawTransaction3 for the blocking version and more details.
 func (c *Client) SignRawTransaction3Async(tx *wire.MsgTx,
-	inputs []dcrjson.RawTxInput,
+	inputs []exccjson.RawTxInput,
 	privKeysWIF []string) FutureSignRawTransactionResult {
 
 	txHex := ""
@@ -612,7 +612,7 @@ func (c *Client) SignRawTransaction3Async(tx *wire.MsgTx,
 		txHex = hex.EncodeToString(buf.Bytes())
 	}
 
-	cmd := dcrjson.NewSignRawTransactionCmd(txHex, &inputs, &privKeysWIF,
+	cmd := exccjson.NewSignRawTransactionCmd(txHex, &inputs, &privKeysWIF,
 		nil)
 	return c.sendCmd(cmd)
 }
@@ -635,7 +635,7 @@ func (c *Client) SignRawTransaction3Async(tx *wire.MsgTx,
 // transactions and private keys or SignRawTransaction2 if it already knows the
 // private keys.
 func (c *Client) SignRawTransaction3(tx *wire.MsgTx,
-	inputs []dcrjson.RawTxInput,
+	inputs []exccjson.RawTxInput,
 	privKeysWIF []string) (*wire.MsgTx, bool, error) {
 
 	return c.SignRawTransaction3Async(tx, inputs, privKeysWIF).Receive()
@@ -647,7 +647,7 @@ func (c *Client) SignRawTransaction3(tx *wire.MsgTx,
 //
 // See SignRawTransaction4 for the blocking version and more details.
 func (c *Client) SignRawTransaction4Async(tx *wire.MsgTx,
-	inputs []dcrjson.RawTxInput, privKeysWIF []string,
+	inputs []exccjson.RawTxInput, privKeysWIF []string,
 	hashType SigHashType) FutureSignRawTransactionResult {
 
 	txHex := ""
@@ -660,8 +660,8 @@ func (c *Client) SignRawTransaction4Async(tx *wire.MsgTx,
 		txHex = hex.EncodeToString(buf.Bytes())
 	}
 
-	cmd := dcrjson.NewSignRawTransactionCmd(txHex, &inputs, &privKeysWIF,
-		dcrjson.String(string(hashType)))
+	cmd := exccjson.NewSignRawTransactionCmd(txHex, &inputs, &privKeysWIF,
+		exccjson.String(string(hashType)))
 	return c.sendCmd(cmd)
 }
 
@@ -685,7 +685,7 @@ func (c *Client) SignRawTransaction4Async(tx *wire.MsgTx,
 // the input transactions and private keys, SignRawTransaction2 if it already
 // knows the private keys, or SignRawTransaction3 if it does not know both.
 func (c *Client) SignRawTransaction4(tx *wire.MsgTx,
-	inputs []dcrjson.RawTxInput, privKeysWIF []string,
+	inputs []exccjson.RawTxInput, privKeysWIF []string,
 	hashType SigHashType) (*wire.MsgTx, bool, error) {
 
 	return c.SignRawTransaction4Async(tx, inputs, privKeysWIF,
@@ -709,8 +709,8 @@ func (c *Client) SignRawSSGenTxAsync(tx *wire.MsgTx) FutureSignRawTransactionRes
 		txHex = hex.EncodeToString(buf.Bytes())
 	}
 
-	cmd := dcrjson.NewSignRawTransactionCmd(txHex, &[]dcrjson.RawTxInput{},
-		nil, dcrjson.String("ssgen"))
+	cmd := exccjson.NewSignRawTransactionCmd(txHex, &[]exccjson.RawTxInput{},
+		nil, exccjson.String("ssgen"))
 	return c.sendCmd(cmd)
 }
 
@@ -778,9 +778,9 @@ func (c *Client) SearchRawTransactionsAsync(address excutil.Address, skip,
 	filterAddrs []string) FutureSearchRawTransactionsResult {
 
 	addr := address.EncodeAddress()
-	verbose := dcrjson.Int(0)
-	prevOut := dcrjson.Int(0)
-	cmd := dcrjson.NewSearchRawTransactionsCmd(addr, verbose, &skip, &count,
+	verbose := exccjson.Int(0)
+	prevOut := exccjson.Int(0)
+	cmd := exccjson.NewSearchRawTransactionsCmd(addr, verbose, &skip, &count,
 		prevOut, &reverse, &filterAddrs)
 	return c.sendCmd(cmd)
 }
@@ -806,14 +806,14 @@ type FutureSearchRawTransactionsVerboseResult chan *response
 
 // Receive waits for the response promised by the future and returns the
 // found raw transactions.
-func (r FutureSearchRawTransactionsVerboseResult) Receive() ([]*dcrjson.SearchRawTransactionsResult, error) {
+func (r FutureSearchRawTransactionsVerboseResult) Receive() ([]*exccjson.SearchRawTransactionsResult, error) {
 	res, err := receiveFuture(r)
 	if err != nil {
 		return nil, err
 	}
 
 	// Unmarshal as an array of raw transaction results.
-	var result []*dcrjson.SearchRawTransactionsResult
+	var result []*exccjson.SearchRawTransactionsResult
 	err = json.Unmarshal(res, &result)
 	if err != nil {
 		return nil, err
@@ -832,12 +832,12 @@ func (c *Client) SearchRawTransactionsVerboseAsync(address excutil.Address, skip
 	filterAddrs *[]string) FutureSearchRawTransactionsVerboseResult {
 
 	addr := address.EncodeAddress()
-	verbose := dcrjson.Int(1)
-	prevOut := dcrjson.Int(0)
+	verbose := exccjson.Int(1)
+	prevOut := exccjson.Int(0)
 	if includePrevOut {
-		prevOut = dcrjson.Int(1)
+		prevOut = exccjson.Int(1)
 	}
-	cmd := dcrjson.NewSearchRawTransactionsCmd(addr, verbose, &skip, &count,
+	cmd := exccjson.NewSearchRawTransactionsCmd(addr, verbose, &skip, &count,
 		prevOut, &reverse, filterAddrs)
 	return c.sendCmd(cmd)
 }
@@ -851,7 +851,7 @@ func (c *Client) SearchRawTransactionsVerboseAsync(address excutil.Address, skip
 // See SearchRawTransactions to retrieve a list of raw transactions instead.
 func (c *Client) SearchRawTransactionsVerbose(address excutil.Address, skip,
 	count int, includePrevOut bool, reverse bool,
-	filterAddrs []string) ([]*dcrjson.SearchRawTransactionsResult, error) {
+	filterAddrs []string) ([]*exccjson.SearchRawTransactionsResult, error) {
 
 	return c.SearchRawTransactionsVerboseAsync(address, skip, count,
 		includePrevOut, reverse, &filterAddrs).Receive()

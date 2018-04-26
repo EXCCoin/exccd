@@ -1,8 +1,8 @@
 ============================================================================
-User visible changes for dcrd
-  A full-node Decred implementation written in Go
+User visible changes for exccd
+  A full-node Exchangecoin implementation written in Go
 ============================================================================
-
+## Pre-Exchangecoin changes
 Changes in 0.11.1 (Wed May 27 2015)
   - Protocol and network related changes:
     - Use correct sub-command in reject message for rejected transactions

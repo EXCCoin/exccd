@@ -5,6 +5,7 @@
 *~
 
 # Databases
+exccd.db
 dcrd.db
 *-shm
 *-wal
@@ -39,7 +40,7 @@ _testmain.go
 exccd
 cmd/addblock/addblock
 cmd/checkdevpremine/checkdevpremine
-cmd/dcrctl/dcrctl
+cmd/exccctl/exccctl
 cmd/findcheckpoint/findcheckpoint
 cmd/gencerts/gencerts
 cmd/promptsecret/promptsecret

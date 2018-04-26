@@ -5,7 +5,7 @@
         1. [Windows](#WindowsInstallation)
         2. [Linux/BSD/MacOSX/POSIX](#PosixInstallation)
     2. [Configuration](#Configuration)
-    3. [Controlling and Querying dcrd via dcrctl](#DcrctlConfig)
+    3. [Controlling and Querying exccd via exccctl](#ExccctlConfig)
     4. [Mining](#Mining)
 3. [Help](#Help)
     1. [Startup](#Startup)
@@ -23,7 +23,7 @@
 <a name="About" />
 
 ### 1. About
-dcrd is a full node Decred implementation written in [Go](http://golang.org),
+exccd is a full node Decred implementation written in [Go](http://golang.org),
 licensed under the [copyfree](http://www.copyfree.org) ISC License.
 
 This project is currently under active development and is in a Beta state. It is
@@ -44,7 +44,7 @@ transactions).
 
 **2.1 Installation**<br />
 
-The first step is to install dcrd.  See one of the following sections for
+The first step is to install exccd.  See one of the following sections for
 details on how to install on the supported operating systems.
 
 <a name="WindowsInstallation" />
@@ -52,7 +52,7 @@ details on how to install on the supported operating systems.
 **2.1.1 Windows Installation**<br />
 
 * Install the MSI available at: https://github.com/EXCCoin/exccd/releases
-* Launch dcrd from the Start Menu
+* Launch exccd from the Start Menu
 
 <a name="PosixInstallation" />
 
@@ -60,27 +60,27 @@ details on how to install on the supported operating systems.
 
 * Install Go according to the installation instructions here: http://golang.org/doc/install
 * Run the following command to ensure your Go version is at least version 1.2: `$ go version`
-* Run the following command to obtain dcrd, its dependencies, and install it: `$ go get github.com/EXCCoin/exccd/...`<br />
+* Run the following command to obtain exccd, its dependencies, and install it: `$ go get github.com/EXCCoin/exccd/...`<br />
   * To upgrade, run the following command: `$ go get -u github.com/EXCCoin/exccd/...`
-* Run dcrd: `$ dcrd`
+* Run exccd: `$ exccd`
 
 <a name="Configuration" />
 
 **2.2 Configuration**<br />
 
-dcrd has a number of [configuration](http://godoc.org/github.com/EXCCoin/exccd)
-options, which can be viewed by running: `$ dcrd --help`.
+exccd has a number of [configuration](http://godoc.org/github.com/EXCCoin/exccd)
+options, which can be viewed by running: `$ exccd --help`.
 
-<a name="DcrctlConfig" />
+<a name="ExccctlConfig" />
 
-**2.3 Controlling and Querying dcrd via dcrctl**<br />
+**2.3 Controlling and Querying exccd via exccctl**<br />
 
-dcrctl is a command line utility that can be used to both control and query dcrd
-via [RPC](http://www.wikipedia.org/wiki/Remote_procedure_call).  dcrd does
+exccctl is a command line utility that can be used to both control and query exccd
+via [RPC](http://www.wikipedia.org/wiki/Remote_procedure_call).  exccd does
 **not** enable its RPC server by default;  You must configure at minimum both an
 RPC username and password or both an RPC limited username and password:
 
-* dcrd.conf configuration file
+* exccd.conf configuration file
 ```
 [Application Options]
 rpcuser=myuser
@@ -88,7 +88,7 @@ rpcpass=SomeDecentp4ssw0rd
 rpclimituser=mylimituser
 rpclimitpass=Limitedp4ssw0rd
 ```
-* dcrctl.conf configuration file
+* exccctl.conf configuration file
 ```
 [Application Options]
 rpcuser=myuser
@@ -100,12 +100,12 @@ OR
 rpclimituser=mylimituser
 rpclimitpass=Limitedp4ssw0rd
 ```
-For a list of available options, run: `$ dcrctl --help`
+For a list of available options, run: `$ exccctl --help`
 
 <a name="Mining" />
 
 **2.4 Mining**<br />
-dcrd supports both the `getwork` and `getblocktemplate` RPCs although the
+exccd supports both the `getwork` and `getblocktemplate` RPCs although the
 `getwork` RPC is deprecated and will likely be removed in a future release.
 The limited user cannot access these RPCs.<br />
 
@@ -119,16 +119,16 @@ miningaddr=12c6DSiU4Rq3P4ZxziKxzrL5LmMBrzjrJX
 miningaddr=1M83ju3EChKYyysmM2FXtLNftbacagd8FR
 ```
 
-**2. Add dcrd's RPC TLS certificate to system Certificate Authority list.**<br />
+**2. Add exccd's RPC TLS certificate to system Certificate Authority list.**<br />
 
 `cgminer` uses [curl](http://curl.haxx.se/) to fetch data from the RPC server.
-Since curl validates the certificate by default, we must install the `dcrd` RPC
+Since curl validates the certificate by default, we must install the `exccd` RPC
 certificate into the default system Certificate Authority list.
 
 **Ubuntu**<br />
 
-1. Copy rpc.cert to /usr/share/ca-certificates: `# cp /home/user/.dcrd/rpc.cert /usr/share/ca-certificates/dcrd.crt`<br />
-2. Add dcrd.crt to /etc/ca-certificates.conf: `# echo dcrd.crt >> /etc/ca-certificates.conf`<br />
+1. Copy rpc.cert to /usr/share/ca-certificates: `# cp /home/user/.exccd/rpc.cert /usr/share/ca-certificates/exccd.crt`<br />
+2. Add exccd.crt to /etc/ca-certificates.conf: `# echo exccd.crt >> /etc/ca-certificates.conf`<br />
 3. Update the CA certificate list: `# update-ca-certificates`<br />
 
 **3. Set your mining software url to use https.**<br />
@@ -143,7 +143,7 @@ certificate into the default system Certificate Authority list.
 
 **3.1 Startup**<br />
 
-Typically dcrd will run and start downloading the block chain with no extra
+Typically exccd will run and start downloading the block chain with no extra
 configuration necessary, however, there is an optional method to use a
 `bootstrap.dat` file that may speed up the initial block chain download process.
 
@@ -158,13 +158,13 @@ configuration necessary, however, there is an optional method to use a
 * [What Ports Are Used by Default?](https://github.com/EXCCoin/exccd/tree/master/docs/default_ports.md)
 * [How To Listen on Specific Interfaces](https://github.com/EXCCoin/exccd/tree/master/docs/configure_peer_server_listen_interfaces.md)
 * [How To Configure RPC Server to Listen on Specific Interfaces](https://github.com/EXCCoin/exccd/tree/master/docs/configure_rpc_server_listen_interfaces.md)
-* [Configuring dcrd with Tor](https://github.com/EXCCoin/exccd/tree/master/docs/configuring_tor.md)
+* [Configuring exccd with Tor](https://github.com/EXCCoin/exccd/tree/master/docs/configuring_tor.md)
 
 <a name="Wallet" />
 
 **3.1 Wallet**<br />
 
-dcrd was intentionally developed without an integrated wallet for security
+exccd was intentionally developed without an integrated wallet for security
 reasons.  Please see [dcrwallet](https://github.com/decred/dcrwallet) for more
 information.
 

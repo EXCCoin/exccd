@@ -1,6 +1,6 @@
 FROM golang:1.10
 
-LABEL description="Decred golang builder image"
+LABEL description="Exchangecoin golang builder image"
 LABEL version="1.0"
 LABEL maintainer "dhill@mindcry.org"
 
@@ -21,6 +21,7 @@ RUN mkdir /release && \
     chown $USER /release
 
 # create directory to get source from
+# TODO: finish porting these utilities
 RUN mkdir /src && \
     chown $USER /src && \
     mkdir -p /go/src/github.com/EXCCoin/exccd && \

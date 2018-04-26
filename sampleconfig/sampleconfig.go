@@ -14,14 +14,14 @@ const FileContents = `[Application Options]
 
 ; The directory to store data such as the block chain and peer addresses.  The
 ; block chain takes several GB, so this location must have a lot of free space.
-; The default is ~/.dcrd/data on POSIX OSes, $LOCALAPPDATA/Dcrd/data on Windows,
-; ~/Library/Application Support/Dcrd/data on macOS, and $homed/dcrd/data on
+; The default is ~/.exccd/data on POSIX OSes, $LOCALAPPDATA/Exccd/data on Windows,
+; ~/Library/Application Support/exccd/data on macOS, and $homed/exccd/data on
 ; Plan9.  Environment variables are expanded so they may be used.  NOTE: Windows
 ; environment variables are typically %VARIABLE%, but they must be accessed with
 ; $VARIABLE here.
-; datadir=~/.dcrd/data                            ; Unix
-; datadir=$LOCALAPPDATA/Dcrd/data                 ; Windows
-; datadir=~/Library/Application Support/Dcrd/data ; macOS
+; datadir=~/.exccd/data                           ; Unix
+; datadir=$LOCALAPPDATA/Exccd/data                 ; Windows
+; datadir=~/Library/Application Support/Exccd/data ; macOS
 
 
 ; ------------------------------------------------------------------------------
@@ -65,7 +65,7 @@ const FileContents = `[Application Options]
 ; upnp=1
 
 ; Specify the external IP addresses your node is listening on.  One address per
-; line.  dcrd will not contact 3rd-party sites to obtain external ip addresses.
+; line.  exccd will not contact 3rd-party sites to obtain external ip addresses.
 ; This means if you are behind NAT, your node will not be able to advertise a
 ; reachable address unless you specify it here or enable the 'upnp' option (and
 ; have a supported device).
@@ -77,7 +77,7 @@ const FileContents = `[Application Options]
 ;
 ; Only one of the following two options, 'addpeer' and 'connect', may be
 ; specified.  Both allow you to specify peers that you want to stay connected
-; with, but the behavior is slightly different.  By default, dcrd will query DNS
+; with, but the behavior is slightly different.  By default, exccd will query DNS
 ; to find peers to connect to, so unless you have a specific reason such as
 ; those described below, you probably won't need to modify anything here.
 ;
@@ -134,7 +134,7 @@ const FileContents = `[Application Options]
 ; whitelist=192.168.0.0/24
 ; whitelist=fd00::/16
 
-; Disable DNS seeding for peers.  By default, when dcrd starts, it will use
+; Disable DNS seeding for peers.  By default, when exccd starts, it will use
 ; DNS to query for available peers to connect with.
 ; nodnsseed=1
 
@@ -176,7 +176,7 @@ const FileContents = `[Application Options]
 
 ; ------------------------------------------------------------------------------
 ; RPC server options - The following options control the built-in RPC server
-; which is used to control and query information from a running dcrd process.
+; which is used to control and query information from a running exccd process.
 ;
 ; NOTE: The RPC server is disabled by default if no rpcuser or rpcpass is
 ; specified.
@@ -333,7 +333,7 @@ const FileContents = `[Application Options]
 ; Debug logging level.
 ; Valid levels are {trace, debug, info, warn, error, critical}
 ; You may also specify <subsystem>=<level>,<subsystem2>=<level>,... to set
-; log level for individual subsystems.  Use dcrd --debuglevel=show to list
+; log level for individual subsystems.  Use exccd --debuglevel=show to list
 ; available subsystems.
 ; debuglevel=info
 

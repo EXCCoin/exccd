@@ -1,27 +1,26 @@
-dcrd
+exccd
 ====
 
 [![Build Status](https://travis-ci.org/EXCCoin/exccd.png?branch=master)](https://travis-ci.org/EXCCoin/exccd)
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd)
 
-excd is a EXCC full node implementation written in Go (golang).
+exccd is a EXCC full node implementation written in Go (golang).
 
 This acts as a chain daemon for the [EXCC](https://cryptoxchanger.io/) cryptocurrency.
-excd maintains the entire past transactional ledger of EXCC and allows
- relaying of transactions to other excc nodes across the world.  To read more
+The exccd maintains the entire past transactional ledger of EXCC and allows
+relaying of transactions to other excc nodes across the world. To read more
 about excc please see the
 [project documentation](https://cryptoxchanger.io/faq).
 
 Note: To send or receive funds and join Proof-of-Stake mining, you will also need
 [exccwallet](https://github.com/EXCCoin/exccwallet).
 
-This project is currently under active development and is in a Beta state.  It
-is extremely stable and has been in production use since February 2016.
+This project is currently under active development and is in a Beta state.
 
 It is forked from [dcrd](https://github.com/decred/dcrd) which is a bitcoin
-full node implementation written in Go.  decred is a ongoing project under active
-development.  Because excd is constantly synced with dcrd codebase, it will
+full node implementation written in Go.  Decred is a ongoing project under active
+development.  Because exccd is constantly synced with dcrd codebase, it will
 get the benefit of dcrd's ongoing upgrades to peer and connection handling,
 database optimization and other blockchain related technology improvements.
 
@@ -31,7 +30,7 @@ database optimization and other blockchain related technology improvements.
 
 ## Getting Started
 
-- excd (and utilities) will now be installed in either ```$GOROOT/bin``` or
+- exccd (and utilities) will now be installed in either ```$GOROOT/bin``` or
   ```$GOPATH/bin``` depending on your configuration.  If you did not already
   add the bin directory to your system path during Go installation, we
   recommend you do so now.
@@ -84,7 +83,7 @@ go install . ./cmd/...
 All tests and linters may be run in a docker container using the script
 `run_tests.sh`.  This script defaults to using the current supported version of
 go.  You can run it with the major version of Go you would like to use as the
-only arguement to test a previous on a previous version of Go (generally Decred
+only arguement to test a previous on a previous version of Go (generally Exchangecoin
 supports the current version of Go and the previous one).
 
 ```
@@ -109,4 +108,4 @@ The documentation is a work-in-progress.  It is located in the
 
 ## License
 
-excd is licensed under the [copyfree](http://copyfree.org) ISC License.
+exccd is licensed under the [copyfree](http://copyfree.org) ISC License.

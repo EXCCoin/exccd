@@ -34,11 +34,11 @@ import (
 )
 
 const (
-	defaultConfigFilename        = "dcrd.conf"
+	defaultConfigFilename        = "exccd.conf"
 	defaultDataDirname           = "data"
 	defaultLogLevel              = "info"
 	defaultLogDirname            = "logs"
-	defaultLogFilename           = "dcrd.log"
+	defaultLogFilename           = "exccd.log"
 	defaultMaxPeers              = 125
 	defaultBanDuration           = time.Hour * 24
 	defaultBanThreshold          = 100
@@ -63,7 +63,7 @@ const (
 )
 
 var (
-	defaultHomeDir     = excutil.AppDataDir("dcrd", false)
+	defaultHomeDir     = excutil.AppDataDir("exccd", false)
 	defaultConfigFile  = filepath.Join(defaultHomeDir, defaultConfigFilename)
 	defaultDataDir     = filepath.Join(defaultHomeDir, defaultDataDirname)
 	knownDbTypes       = database.SupportedDrivers()
@@ -1134,26 +1134,26 @@ func loadConfig() (*config, []string, error) {
 	return &cfg, remainingArgs, nil
 }
 
-// dcrdDial connects to the address on the named network using the appropriate
+// exccdDial connects to the address on the named network using the appropriate
 // dial function depending on the address and configuration options.  For
 // example, .onion addresses will be dialed using the onion specific proxy if
 // one was specified, but will otherwise use the normal dial function (which
 // could itself use a proxy or not).
-func dcrdDial(network, addr string) (net.Conn, error) {
+func exccdDial(network, addr string) (net.Conn, error) {
 	if strings.Contains(addr, ".onion:") {
 		return cfg.oniondial(network, addr)
 	}
 	return cfg.dial(network, addr)
 }
 
-// dcrdLookup returns the correct DNS lookup function to use depending on the
+// exccdLookup returns the correct DNS lookup function to use depending on the
 // passed host and configuration options.  For example, .onion addresses will be
 // resolved using the onion specific proxy if one was specified, but will
 // otherwise treat the normal proxy as tor unless --noonion was specified in
 // which case the lookup will fail.  Meanwhile, normal IP addresses will be
 // resolved using tor if a proxy was specified unless --noonion was also
 // specified in which case the normal system DNS resolver will be used.
-func dcrdLookup(host string) ([]net.IP, error) {
+func exccdLookup(host string) ([]net.IP, error) {
 	if strings.HasSuffix(host, ".onion") {
 		return cfg.onionlookup(host)
 	}

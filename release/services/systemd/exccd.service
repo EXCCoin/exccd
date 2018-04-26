@@ -1,0 +1,13 @@
+[Unit]
+Description=Exchangecoin Full Node
+
+[Service]
+Type=simple
+User=exccd
+Group=exccd
+WorkingDirectory=/var/exccd
+ExecStart=/opt/exchangecoin/bin/exccd --appdata=/var/exccd
+Restart=on-abnormal
+
+[Install]
+WantedBy=multi-user.target

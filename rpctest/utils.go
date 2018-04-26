@@ -10,7 +10,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/EXCCoin/exccd/dcrjson"
+	"github.com/EXCCoin/exccd/exccjson"
 	"github.com/EXCCoin/exccd/rpcclient"
 )
 
@@ -51,7 +51,7 @@ func syncMempools(nodes []*Harness) error {
 
 	for !poolsMatch {
 	retry:
-		firstPool, err := nodes[0].Node.GetRawMempool(dcrjson.GRMAll)
+		firstPool, err := nodes[0].Node.GetRawMempool(exccjson.GRMAll)
 		if err != nil {
 			return err
 		}
@@ -60,7 +60,7 @@ func syncMempools(nodes []*Harness) error {
 		// first node, then we're done. Otherwise, drop back to the top
 		// of the loop and retry after a short wait period.
 		for _, node := range nodes[1:] {
-			nodePool, err := node.Node.GetRawMempool(dcrjson.GRMAll)
+			nodePool, err := node.Node.GetRawMempool(exccjson.GRMAll)
 			if err != nil {
 				return err
 			}

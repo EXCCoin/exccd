@@ -24,7 +24,7 @@ block chain.
 $ go get -u github.com/EXCCoin/exccd/blockchain
 ```
 
-## Decred Chain Processing Overview
+## Exchangecoin Chain Processing Overview
 
 Before a block is allowed into the block chain, it must go through an intensive
 series of validation rules.  The following list serves as a general outline of

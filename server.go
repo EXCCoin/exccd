@@ -62,8 +62,8 @@ const (
 
 var (
 	// userAgentName is the user agent name and is used to help identify
-	// ourselves to other Decred peers.
-	userAgentName = "dcrd"
+	// ourselves to other Exchangecoin peers.
+	userAgentName = "exccd"
 
 	// userAgentVersion is the user agent version and is used to help
 	// identify ourselves to other peers.
@@ -1974,7 +1974,7 @@ func (s *server) peerHandler() {
 
 	if !cfg.DisableDNSSeed {
 		// Add peers discovered through DNS to the address manager.
-		connmgr.SeedFromDNS(activeNetParams.Params, defaultRequiredServices, dcrdLookup, func(addrs []*wire.NetAddress) {
+		connmgr.SeedFromDNS(activeNetParams.Params, defaultRequiredServices, exccdLookup, func(addrs []*wire.NetAddress) {
 			// Bitcoind uses a lookup of the dns seeder here. This
 			// is rather strange since the values looked up by the
 			// DNS seed lookups will vary quite a lot.
@@ -2091,7 +2091,7 @@ func (s *server) OutboundGroupCount(key string) int {
 	return <-replyChan
 }
 
-// AddedNodeInfo returns an array of dcrjson.GetAddedNodeInfoResult structures
+// AddedNodeInfo returns an array of exccjson.GetAddedNodeInfoResult structures
 // describing the persistent (added) nodes.
 func (s *server) AddedNodeInfo() []*serverPeer {
 	replyChan := make(chan []*serverPeer)
@@ -2434,7 +2434,7 @@ out:
 			// listen port?
 			// XXX this assumes timeout is in seconds.
 			listenPort, err := s.nat.AddPortMapping("tcp", int(lport), int(lport),
-				"dcrd listen port", 20*60)
+				"exccd listen port", 20*60)
 			if err != nil {
 				srvrLog.Warnf("can't add UPnP port mapping: %v", err)
 			}
@@ -2506,7 +2506,7 @@ func newServer(listenAddrs []string, db database.DB, chainParams *chaincfg.Param
 		services &^= wire.SFNodeCF
 	}
 
-	amgr := addrmgr.New(cfg.DataDir, dcrdLookup)
+	amgr := addrmgr.New(cfg.DataDir, exccdLookup)
 
 	var listeners []net.Listener
 	var nat NAT
@@ -2804,7 +2804,7 @@ func newServer(listenAddrs []string, db database.DB, chainParams *chaincfg.Param
 		OnAccept:       s.inboundPeerConnected,
 		RetryDuration:  connectionRetryInterval,
 		TargetOutbound: uint32(targetOutbound),
-		Dial:           dcrdDial,
+		Dial:           exccdDial,
 		OnConnection:   s.outboundPeerConnected,
 		GetNewAddress:  newAddressFunc,
 	})
@@ -2856,9 +2856,9 @@ func addrStringToNetAddr(addr string) (net.Addr, error) {
 	}
 
 	// Attempt to look up an IP address associated with the parsed host.
-	// The dcrdLookup function will transparently handle performing the
+	// The exccdLookup function will transparently handle performing the
 	// lookup over Tor if necessary.
-	ips, err := dcrdLookup(host)
+	ips, err := exccdLookup(host)
 	if err != nil {
 		return nil, err
 	}

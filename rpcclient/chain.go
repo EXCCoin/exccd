@@ -13,7 +13,7 @@ import (
 	"errors"
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/dcrjson"
+	"github.com/EXCCoin/exccd/exccjson"
 	"github.com/EXCCoin/exccd/excutil"
 	"github.com/EXCCoin/exccd/gcs"
 	"github.com/EXCCoin/exccd/gcs/blockcf"
@@ -47,7 +47,7 @@ func (r FutureGetBestBlockHashResult) Receive() (*chainhash.Hash, error) {
 //
 // See GetBestBlockHash for the blocking version and more details.
 func (c *Client) GetBestBlockHashAsync() FutureGetBestBlockHashResult {
-	cmd := dcrjson.NewGetBestBlockHashCmd()
+	cmd := exccjson.NewGetBestBlockHashCmd()
 	return c.sendCmd(cmd)
 }
 
@@ -102,7 +102,7 @@ func (c *Client) GetBlockAsync(blockHash *chainhash.Hash) FutureGetBlockResult {
 		hash = blockHash.String()
 	}
 
-	cmd := dcrjson.NewGetBlockCmd(hash, dcrjson.Bool(false), nil)
+	cmd := exccjson.NewGetBlockCmd(hash, exccjson.Bool(false), nil)
 	return c.sendCmd(cmd)
 }
 
@@ -120,14 +120,14 @@ type FutureGetBlockVerboseResult chan *response
 
 // Receive waits for the response promised by the future and returns the data
 // structure from the server with information about the requested block.
-func (r FutureGetBlockVerboseResult) Receive() (*dcrjson.GetBlockVerboseResult, error) {
+func (r FutureGetBlockVerboseResult) Receive() (*exccjson.GetBlockVerboseResult, error) {
 	res, err := receiveFuture(r)
 	if err != nil {
 		return nil, err
 	}
 
 	// Unmarshal the raw result into a BlockResult.
-	var blockResult dcrjson.GetBlockVerboseResult
+	var blockResult exccjson.GetBlockVerboseResult
 	err = json.Unmarshal(res, &blockResult)
 	if err != nil {
 		return nil, err
@@ -146,7 +146,7 @@ func (c *Client) GetBlockVerboseAsync(blockHash *chainhash.Hash, verboseTx bool)
 		hash = blockHash.String()
 	}
 
-	cmd := dcrjson.NewGetBlockCmd(hash, dcrjson.Bool(true), &verboseTx)
+	cmd := exccjson.NewGetBlockCmd(hash, exccjson.Bool(true), &verboseTx)
 	return c.sendCmd(cmd)
 }
 
@@ -154,7 +154,7 @@ func (c *Client) GetBlockVerboseAsync(blockHash *chainhash.Hash, verboseTx bool)
 // about a block given its hash.
 //
 // See GetBlock to retrieve a raw block instead.
-func (c *Client) GetBlockVerbose(blockHash *chainhash.Hash, verboseTx bool) (*dcrjson.GetBlockVerboseResult, error) {
+func (c *Client) GetBlockVerbose(blockHash *chainhash.Hash, verboseTx bool) (*exccjson.GetBlockVerboseResult, error) {
 	return c.GetBlockVerboseAsync(blockHash, verboseTx).Receive()
 }
 
@@ -185,7 +185,7 @@ func (r FutureGetBlockCountResult) Receive() (int64, error) {
 //
 // See GetBlockCount for the blocking version and more details.
 func (c *Client) GetBlockCountAsync() FutureGetBlockCountResult {
-	cmd := dcrjson.NewGetBlockCountCmd()
+	cmd := exccjson.NewGetBlockCountCmd()
 	return c.sendCmd(cmd)
 }
 
@@ -221,7 +221,7 @@ func (r FutureGetDifficultyResult) Receive() (float64, error) {
 //
 // See GetDifficulty for the blocking version and more details.
 func (c *Client) GetDifficultyAsync() FutureGetDifficultyResult {
-	cmd := dcrjson.NewGetDifficultyCmd()
+	cmd := exccjson.NewGetDifficultyCmd()
 	return c.sendCmd(cmd)
 }
 
@@ -258,7 +258,7 @@ func (r FutureGetBlockHashResult) Receive() (*chainhash.Hash, error) {
 //
 // See GetBlockHash for the blocking version and more details.
 func (c *Client) GetBlockHashAsync(blockHeight int64) FutureGetBlockHashResult {
-	cmd := dcrjson.NewGetBlockHashCmd(blockHeight)
+	cmd := exccjson.NewGetBlockHashCmd(blockHeight)
 	return c.sendCmd(cmd)
 }
 
@@ -308,7 +308,7 @@ func (r FutureGetBlockHeaderResult) Receive() (*wire.BlockHeader, error) {
 //
 // See GetBlockHeader for the blocking version and more details.
 func (c *Client) GetBlockHeaderAsync(hash *chainhash.Hash) FutureGetBlockHeaderResult {
-	cmd := dcrjson.NewGetBlockHeaderCmd(hash.String(), dcrjson.Bool(false))
+	cmd := exccjson.NewGetBlockHeaderCmd(hash.String(), exccjson.Bool(false))
 	return c.sendCmd(cmd)
 }
 
@@ -324,14 +324,14 @@ type FutureGetBlockHeaderVerboseResult chan *response
 
 // Receive waits for the response promised by the future and returns a data
 // structure of the block header requested from the server given its hash.
-func (r FutureGetBlockHeaderVerboseResult) Receive() (*dcrjson.GetBlockHeaderVerboseResult, error) {
+func (r FutureGetBlockHeaderVerboseResult) Receive() (*exccjson.GetBlockHeaderVerboseResult, error) {
 	res, err := receiveFuture(r)
 	if err != nil {
 		return nil, err
 	}
 
 	// Unmarshal the result
-	var bh dcrjson.GetBlockHeaderVerboseResult
+	var bh exccjson.GetBlockHeaderVerboseResult
 	err = json.Unmarshal(res, &bh)
 	if err != nil {
 		return nil, err
@@ -345,7 +345,7 @@ func (r FutureGetBlockHeaderVerboseResult) Receive() (*dcrjson.GetBlockHeaderVer
 //
 // See GetBlockHeaderVerbose for the blocking version and more details.
 func (c *Client) GetBlockHeaderVerboseAsync(hash *chainhash.Hash) FutureGetBlockHeaderVerboseResult {
-	cmd := dcrjson.NewGetBlockHeaderCmd(hash.String(), dcrjson.Bool(true))
+	cmd := exccjson.NewGetBlockHeaderCmd(hash.String(), exccjson.Bool(true))
 	return c.sendCmd(cmd)
 }
 
@@ -353,7 +353,7 @@ func (c *Client) GetBlockHeaderVerboseAsync(hash *chainhash.Hash) FutureGetBlock
 // server given its hash.
 //
 // See GetBlockHeader to retrieve a raw block header instead.
-func (c *Client) GetBlockHeaderVerbose(hash *chainhash.Hash) (*dcrjson.GetBlockHeaderVerboseResult, error) {
+func (c *Client) GetBlockHeaderVerbose(hash *chainhash.Hash) (*exccjson.GetBlockHeaderVerboseResult, error) {
 	return c.GetBlockHeaderVerboseAsync(hash).Receive()
 }
 
@@ -364,14 +364,14 @@ type FutureGetBlockSubsidyResult chan *response
 // Receive waits for the response promised by the future and returns a data
 // structure of the block subsidy requested from the server given its height
 // and number of voters.
-func (r FutureGetBlockSubsidyResult) Receive() (*dcrjson.GetBlockSubsidyResult, error) {
+func (r FutureGetBlockSubsidyResult) Receive() (*exccjson.GetBlockSubsidyResult, error) {
 	res, err := receiveFuture(r)
 	if err != nil {
 		return nil, err
 	}
 
 	// Unmarshal the result
-	var bs dcrjson.GetBlockSubsidyResult
+	var bs exccjson.GetBlockSubsidyResult
 	err = json.Unmarshal(res, &bs)
 	if err != nil {
 		return nil, err
@@ -385,13 +385,13 @@ func (r FutureGetBlockSubsidyResult) Receive() (*dcrjson.GetBlockSubsidyResult, 
 //
 // See GetBlockSubsidy for the blocking version and more details.
 func (c *Client) GetBlockSubsidyAsync(height int64, voters uint16) FutureGetBlockSubsidyResult {
-	cmd := dcrjson.NewGetBlockSubsidyCmd(height, voters)
+	cmd := exccjson.NewGetBlockSubsidyCmd(height, voters)
 	return c.sendCmd(cmd)
 }
 
 // GetBlockSubsidy returns a data structure of the block subsidy
 // from the server given its height and number of voters.
-func (c *Client) GetBlockSubsidy(height int64, voters uint16) (*dcrjson.GetBlockSubsidyResult, error) {
+func (c *Client) GetBlockSubsidy(height int64, voters uint16) (*exccjson.GetBlockSubsidyResult, error) {
 	return c.GetBlockSubsidyAsync(height, voters).Receive()
 }
 
@@ -422,7 +422,7 @@ func (r FutureGetCoinSupplyResult) Receive() (excutil.Amount, error) {
 //
 // See GetCoinSupply for the blocking version and more details.
 func (c *Client) GetCoinSupplyAsync() FutureGetCoinSupplyResult {
-	cmd := dcrjson.NewGetCoinSupplyCmd()
+	cmd := exccjson.NewGetCoinSupplyCmd()
 	return c.sendCmd(cmd)
 }
 
@@ -468,9 +468,9 @@ func (r FutureGetRawMempoolResult) Receive() ([]*chainhash.Hash, error) {
 // returned instance.
 //
 // See GetRawMempool for the blocking version and more details.
-func (c *Client) GetRawMempoolAsync(txType dcrjson.GetRawMempoolTxTypeCmd) FutureGetRawMempoolResult {
-	cmd := dcrjson.NewGetRawMempoolCmd(dcrjson.Bool(false),
-		dcrjson.String(string(txType)))
+func (c *Client) GetRawMempoolAsync(txType exccjson.GetRawMempoolTxTypeCmd) FutureGetRawMempoolResult {
+	cmd := exccjson.NewGetRawMempoolCmd(exccjson.Bool(false),
+		exccjson.String(string(txType)))
 	return c.sendCmd(cmd)
 }
 
@@ -479,7 +479,7 @@ func (c *Client) GetRawMempoolAsync(txType dcrjson.GetRawMempoolTxTypeCmd) Futur
 //
 // See GetRawMempoolVerbose to retrieve data structures with information about
 // the transactions instead.
-func (c *Client) GetRawMempool(txType dcrjson.GetRawMempoolTxTypeCmd) ([]*chainhash.Hash, error) {
+func (c *Client) GetRawMempool(txType exccjson.GetRawMempoolTxTypeCmd) ([]*chainhash.Hash, error) {
 	return c.GetRawMempoolAsync(txType).Receive()
 }
 
@@ -490,7 +490,7 @@ type FutureGetRawMempoolVerboseResult chan *response
 // Receive waits for the response promised by the future and returns a map of
 // transaction hashes to an associated data structure with information about the
 // transaction for all transactions in the memory pool.
-func (r FutureGetRawMempoolVerboseResult) Receive() (map[string]dcrjson.GetRawMempoolVerboseResult, error) {
+func (r FutureGetRawMempoolVerboseResult) Receive() (map[string]exccjson.GetRawMempoolVerboseResult, error) {
 	res, err := receiveFuture(r)
 	if err != nil {
 		return nil, err
@@ -498,7 +498,7 @@ func (r FutureGetRawMempoolVerboseResult) Receive() (map[string]dcrjson.GetRawMe
 
 	// Unmarshal the result as a map of strings (tx shas) to their detailed
 	// results.
-	var mempoolItems map[string]dcrjson.GetRawMempoolVerboseResult
+	var mempoolItems map[string]exccjson.GetRawMempoolVerboseResult
 	err = json.Unmarshal(res, &mempoolItems)
 	if err != nil {
 		return nil, err
@@ -511,9 +511,9 @@ func (r FutureGetRawMempoolVerboseResult) Receive() (map[string]dcrjson.GetRawMe
 // function on the returned instance.
 //
 // See GetRawMempoolVerbose for the blocking version and more details.
-func (c *Client) GetRawMempoolVerboseAsync(txType dcrjson.GetRawMempoolTxTypeCmd) FutureGetRawMempoolVerboseResult {
-	cmd := dcrjson.NewGetRawMempoolCmd(dcrjson.Bool(true),
-		dcrjson.String(string(txType)))
+func (c *Client) GetRawMempoolVerboseAsync(txType exccjson.GetRawMempoolTxTypeCmd) FutureGetRawMempoolVerboseResult {
+	cmd := exccjson.NewGetRawMempoolCmd(exccjson.Bool(true),
+		exccjson.String(string(txType)))
 	return c.sendCmd(cmd)
 }
 
@@ -522,7 +522,7 @@ func (c *Client) GetRawMempoolVerboseAsync(txType dcrjson.GetRawMempoolTxTypeCmd
 // the memory pool.
 //
 // See GetRawMempool to retrieve only the transaction hashes instead.
-func (c *Client) GetRawMempoolVerbose(txType dcrjson.GetRawMempoolTxTypeCmd) (map[string]dcrjson.GetRawMempoolVerboseResult, error) {
+func (c *Client) GetRawMempoolVerbose(txType exccjson.GetRawMempoolTxTypeCmd) (map[string]exccjson.GetRawMempoolVerboseResult, error) {
 	return c.GetRawMempoolVerboseAsync(txType).Receive()
 }
 
@@ -555,7 +555,7 @@ func (r FutureVerifyChainResult) Receive() (bool, error) {
 //
 // See VerifyChain for the blocking version and more details.
 func (c *Client) VerifyChainAsync() FutureVerifyChainResult {
-	cmd := dcrjson.NewVerifyChainCmd(nil, nil)
+	cmd := exccjson.NewVerifyChainCmd(nil, nil)
 	return c.sendCmd(cmd)
 }
 
@@ -573,7 +573,7 @@ func (c *Client) VerifyChain() (bool, error) {
 //
 // See VerifyChainLevel for the blocking version and more details.
 func (c *Client) VerifyChainLevelAsync(checkLevel int64) FutureVerifyChainResult {
-	cmd := dcrjson.NewVerifyChainCmd(&checkLevel, nil)
+	cmd := exccjson.NewVerifyChainCmd(&checkLevel, nil)
 	return c.sendCmd(cmd)
 }
 
@@ -596,7 +596,7 @@ func (c *Client) VerifyChainLevel(checkLevel int64) (bool, error) {
 //
 // See VerifyChainBlocks for the blocking version and more details.
 func (c *Client) VerifyChainBlocksAsync(checkLevel, numBlocks int64) FutureVerifyChainResult {
-	cmd := dcrjson.NewVerifyChainCmd(&checkLevel, &numBlocks)
+	cmd := exccjson.NewVerifyChainCmd(&checkLevel, &numBlocks)
 	return c.sendCmd(cmd)
 }
 
@@ -621,7 +621,7 @@ type FutureGetTxOutResult chan *response
 
 // Receive waits for the response promised by the future and returns a
 // transaction given its hash.
-func (r FutureGetTxOutResult) Receive() (*dcrjson.GetTxOutResult, error) {
+func (r FutureGetTxOutResult) Receive() (*exccjson.GetTxOutResult, error) {
 	res, err := receiveFuture(r)
 	if err != nil {
 		return nil, err
@@ -634,7 +634,7 @@ func (r FutureGetTxOutResult) Receive() (*dcrjson.GetTxOutResult, error) {
 	}
 
 	// Unmarshal result as an gettxout result object.
-	var txOutInfo *dcrjson.GetTxOutResult
+	var txOutInfo *exccjson.GetTxOutResult
 	err = json.Unmarshal(res, &txOutInfo)
 	if err != nil {
 		return nil, err
@@ -654,13 +654,13 @@ func (c *Client) GetTxOutAsync(txHash *chainhash.Hash, index uint32, mempool boo
 		hash = txHash.String()
 	}
 
-	cmd := dcrjson.NewGetTxOutCmd(hash, index, &mempool)
+	cmd := exccjson.NewGetTxOutCmd(hash, index, &mempool)
 	return c.sendCmd(cmd)
 }
 
 // GetTxOut returns the transaction output info if it's unspent and
 // nil, otherwise.
-func (c *Client) GetTxOut(txHash *chainhash.Hash, index uint32, mempool bool) (*dcrjson.GetTxOutResult, error) {
+func (c *Client) GetTxOut(txHash *chainhash.Hash, index uint32, mempool bool) (*exccjson.GetTxOutResult, error) {
 	return c.GetTxOutAsync(txHash, index, mempool).Receive()
 }
 
@@ -670,13 +670,13 @@ type FutureRescanResult chan *response
 
 // Receive waits for the response promised by the future and returns the
 // discovered rescan data.
-func (r FutureRescanResult) Receive() (*dcrjson.RescanResult, error) {
+func (r FutureRescanResult) Receive() (*exccjson.RescanResult, error) {
 	res, err := receiveFuture(r)
 	if err != nil {
 		return nil, err
 	}
 
-	var rescanResult *dcrjson.RescanResult
+	var rescanResult *exccjson.RescanResult
 	err = json.Unmarshal(res, &rescanResult)
 	if err != nil {
 		return nil, err
@@ -696,14 +696,14 @@ func (c *Client) RescanAsync(blockHashes []chainhash.Hash) FutureRescanResult {
 		copy(concatenatedBlockHashes[i*chainhash.HashSize:], blockHashes[i][:])
 	}
 
-	cmd := dcrjson.NewRescanCmd(hex.EncodeToString(concatenatedBlockHashes))
+	cmd := exccjson.NewRescanCmd(hex.EncodeToString(concatenatedBlockHashes))
 	return c.sendCmd(cmd)
 }
 
 // Rescan rescans the blocks identified by blockHashes, in order, using the
 // client's loaded transaction filter.  The blocks do not need to be on the main
 // chain, but they do need to be adjacent to each other.
-func (c *Client) Rescan(blockHashes []chainhash.Hash) (*dcrjson.RescanResult, error) {
+func (c *Client) Rescan(blockHashes []chainhash.Hash) (*exccjson.RescanResult, error) {
 	return c.RescanAsync(blockHashes).Receive()
 }
 
@@ -748,7 +748,7 @@ func (c *Client) GetCFilterAsync(blockHash *chainhash.Hash, filterType wire.Filt
 		return futureError(errors.New("unknown filter type"))
 	}
 
-	cmd := dcrjson.NewGetCFilterCmd(blockHash.String(), ft)
+	cmd := exccjson.NewGetCFilterCmd(blockHash.String(), ft)
 	return c.sendCmd(cmd)
 }
 
@@ -794,7 +794,7 @@ func (c *Client) GetCFilterHeaderAsync(blockHash *chainhash.Hash, filterType wir
 		return futureError(errors.New("unknown filter type"))
 	}
 
-	cmd := dcrjson.NewGetCFilterHeaderCmd(blockHash.String(), ft)
+	cmd := exccjson.NewGetCFilterHeaderCmd(blockHash.String(), ft)
 	return c.sendCmd(cmd)
 }
 

@@ -7,10 +7,10 @@ database
 
 Package database provides a block and metadata storage database.
 
-Please note that this package is intended to enable dcrd to support different
+Please note that this package is intended to enable exccd to support different
 database backends and is not something that a client can directly access as only
 one entity can have the database open at a time (for most database backends),
-and that entity will be dcrd.
+and that entity will be exccd.
 
 
 The default backend, ffldb, has a strong focus on speed, efficiency, and
@@ -20,7 +20,7 @@ storage, and strict checksums in key areas to ensure data integrity.
 ## Feature Overview
 
 - Key/value metadata store
-- Decred block storage
+- Exchangecoin block storage
 - Efficient retrieval of block headers and regions (transactions, scripts, etc)
 - Read-only and read-write transactions with both manual and managed modes
 - Nested buckets

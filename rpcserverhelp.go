@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/EXCCoin/exccd/dcrjson"
+	"github.com/EXCCoin/exccd/exccjson"
 )
 
 // helpDescsEnUS defines the English descriptions used for the help strings.
@@ -132,7 +132,7 @@ var helpDescsEnUS = map[string]string{
 	"scriptpubkeyresult-hex":       "Hex-encoded bytes of the script",
 	"scriptpubkeyresult-reqSigs":   "The number of required signatures",
 	"scriptpubkeyresult-type":      "The type of the script (e.g. 'pubkeyhash')",
-	"scriptpubkeyresult-addresses": "The Decred addresses associated with this script",
+	"scriptpubkeyresult-addresses": "The Exhcangecoin addresses associated with this script",
 	"scriptpubkeyresult-commitamt": "The ticket commitment value if the script is for a staking commitment",
 
 	// Vout help.
@@ -157,7 +157,7 @@ var helpDescsEnUS = map[string]string{
 	"decodescriptresult-asm":       "Disassembly of the script",
 	"decodescriptresult-reqSigs":   "The number of required signatures",
 	"decodescriptresult-type":      "The type of the script (e.g. 'pubkeyhash')",
-	"decodescriptresult-addresses": "The Decred addresses associated with this script",
+	"decodescriptresult-addresses": "The Exchangecoin addresses associated with this script",
 	"decodescriptresult-p2sh":      "The script hash for use in pay-to-script-hash transactions (only present if the provided redeem script is not already a pay-to-script-hash script)",
 
 	// DecodeScriptCmd help.
@@ -238,7 +238,7 @@ var helpDescsEnUS = map[string]string{
 	"getblock--synopsis":   "Returns information about a block given its hash.",
 	"getblock-hash":        "The hash of the block",
 	"getblock-verbose":     "Specifies the block is returned as a JSON object instead of hex-encoded string",
-	"getblock-verbosetx":   "Specifies that each transaction is returned as a JSON object and only applies if the verbose flag is true (dcrd extension)",
+	"getblock-verbosetx":   "Specifies that each transaction is returned as a JSON object and only applies if the verbose flag is true (exccd extension)",
 	"getblock--condition0": "verbose=false",
 	"getblock--condition1": "verbose=true",
 	"getblock--result0":    "Hex-encoded bytes of the serialized block",
@@ -443,7 +443,7 @@ var helpDescsEnUS = map[string]string{
 	"getconnectioncount--result0":  "The number of connections",
 
 	// GetCurrentNetCmd help.
-	"getcurrentnet--synopsis": "Get Decred network the server is running on.",
+	"getcurrentnet--synopsis": "Get Exchangecoin network the server is running on.",
 	"getcurrentnet--result0":  "The network identifer",
 
 	// GetDifficultyCmd help.
@@ -532,7 +532,7 @@ var helpDescsEnUS = map[string]string{
 	"infowalletresult-version":         "The version of the server",
 	"infowalletresult-protocolversion": "The latest supported protocol version",
 	"infowalletresult-walletversion":   "The version of the wallet server",
-	"infowalletresult-balance":         "The total Decred balance of the wallet",
+	"infowalletresult-balance":         "The total Exchangecoin balance of the wallet",
 	"infowalletresult-blocks":          "The number of blocks processed",
 	"infowalletresult-timeoffset":      "The time offset",
 	"infowalletresult-connections":     "The number of connected peers",
@@ -698,7 +698,7 @@ var helpDescsEnUS = map[string]string{
 		"Transactions pulled from the mempool will have the 'confirmations' field set to 0.\n" +
 		"Usage of this RPC requires the optional --addrindex flag to be activated, otherwise all responses will simply return with an error stating the address index has not yet been built.\n" +
 		"Similarly, until the address index has caught up with the current best height, all requests will return an error response in order to avoid serving stale data.",
-	"searchrawtransactions-address":     "The Decred address to search for",
+	"searchrawtransactions-address":     "The Exchangecoin address to search for",
 	"searchrawtransactions-verbose":     "Specifies the transaction is returned as a JSON object instead of hex-encoded string",
 	"searchrawtransactions--condition0": "verbose=0",
 	"searchrawtransactions--condition1": "verbose=1",
@@ -712,7 +712,7 @@ var helpDescsEnUS = map[string]string{
 	// SendRawTransactionCmd help.
 	"sendrawtransaction--synopsis":     "Submits the serialized, hex-encoded transaction to the local peer and relays it to the network.",
 	"sendrawtransaction-hextx":         "Serialized, hex-encoded signed transaction",
-	"sendrawtransaction-allowhighfees": "Whether or not to allow insanely high fees (dcrd does not yet implement this parameter, so it has no effect)",
+	"sendrawtransaction-allowhighfees": "Whether or not to allow insanely high fees (exccd does not yet implement this parameter, so it has no effect)",
 	"sendrawtransaction--result0":      "The hash of the transaction",
 
 	// SetGenerateCmd help.
@@ -721,8 +721,8 @@ var helpDescsEnUS = map[string]string{
 	"setgenerate-genproclimit": "The number of processors (cores) to limit generation to or -1 for default",
 
 	// StopCmd help.
-	"stop--synopsis": "Shutdown dcrd.",
-	"stop--result0":  "The string 'dcrd stopping.'",
+	"stop--synopsis": "Shutdown exccd.",
+	"stop--result0":  "The string 'exccd stopping.'",
 
 	// SubmitBlockOptions help.
 	"submitblockoptions-workid": "This parameter is currently ignored",
@@ -737,16 +737,16 @@ var helpDescsEnUS = map[string]string{
 
 	// ValidateAddressResult help.
 	"validateaddresschainresult-isvalid": "Whether or not the address is valid",
-	"validateaddresschainresult-address": "The Decred address (only when isvalid is true)",
+	"validateaddresschainresult-address": "The Exchangecoin address (only when isvalid is true)",
 
 	// ValidateAddressCmd help.
 	"validateaddress--synopsis": "Verify an address is valid.",
-	"validateaddress-address":   "Decred address to validate",
+	"validateaddress-address":   "Exchangecoin address to validate",
 
 	// VerifyChainCmd help.
 	"verifychain--synopsis": "Verifies the block chain database.\n" +
 		"The actual checks performed by the checklevel parameter are implementation specific.\n" +
-		"For dcrd this is:\n" +
+		"For exccd this is:\n" +
 		"checklevel=0 - Look up each block and ensure it can be loaded from the database.\n" +
 		"checklevel=1 - Perform basic context-free sanity checks on each block.",
 	"verifychain-checklevel": "How thorough the block verification is",
@@ -755,7 +755,7 @@ var helpDescsEnUS = map[string]string{
 
 	// VerifyMessageCmd help.
 	"verifymessage--synopsis": "Verify a signed message.",
-	"verifymessage-address":   "The Decred address to use for the signature",
+	"verifymessage-address":   "The Exchangecoin address to use for the signature",
 	"verifymessage-signature": "The base-64 encoded signature provided by the signer",
 	"verifymessage-message":   "The signed message",
 	"verifymessage--result0":  "Whether or not the signature verified",
@@ -921,10 +921,10 @@ var rpcResultTypes = map[string][]interface{}{
 	"createrawssrtx":        {(*string)(nil)},
 	"createrawtransaction":  {(*string)(nil)},
 	"debuglevel":            {(*string)(nil), (*string)(nil)},
-	"decoderawtransaction":  {(*dcrjson.TxRawDecodeResult)(nil)},
-	"decodescript":          {(*dcrjson.DecodeScriptResult)(nil)},
+	"decoderawtransaction":  {(*exccjson.TxRawDecodeResult)(nil)},
+	"decodescript":          {(*exccjson.DecodeScriptResult)(nil)},
 	"estimatefee":           {(*float64)(nil)},
-	"estimatestakediff":     {(*dcrjson.EstimateStakeDiffResult)(nil)},
+	"estimatestakediff":     {(*exccjson.EstimateStakeDiffResult)(nil)},
 	"existsaddress":         {(*bool)(nil)},
 	"existsaddresses":       {(*string)(nil)},
 	"existsmissedtickets":   {(*string)(nil)},
@@ -932,65 +932,65 @@ var rpcResultTypes = map[string][]interface{}{
 	"existsliveticket":      {(*bool)(nil)},
 	"existslivetickets":     {(*string)(nil)},
 	"existsmempooltxs":      {(*string)(nil)},
-	"getaddednodeinfo":      {(*[]string)(nil), (*[]dcrjson.GetAddedNodeInfoResult)(nil)},
-	"getbestblock":          {(*dcrjson.GetBestBlockResult)(nil)},
+	"getaddednodeinfo":      {(*[]string)(nil), (*[]exccjson.GetAddedNodeInfoResult)(nil)},
+	"getbestblock":          {(*exccjson.GetBestBlockResult)(nil)},
 	"generate":              {(*[]string)(nil)},
 	"getbestblockhash":      {(*string)(nil)},
-	"getblock":              {(*string)(nil), (*dcrjson.GetBlockVerboseResult)(nil)},
+	"getblock":              {(*string)(nil), (*exccjson.GetBlockVerboseResult)(nil)},
 	"getblockcount":         {(*int64)(nil)},
 	"getblockhash":          {(*string)(nil)},
-	"getblockheader":        {(*string)(nil), (*dcrjson.GetBlockHeaderVerboseResult)(nil)},
-	"getblocksubsidy":       {(*dcrjson.GetBlockSubsidyResult)(nil)},
-	"getblocktemplate":      {(*dcrjson.GetBlockTemplateResult)(nil), (*string)(nil), nil},
+	"getblockheader":        {(*string)(nil), (*exccjson.GetBlockHeaderVerboseResult)(nil)},
+	"getblocksubsidy":       {(*exccjson.GetBlockSubsidyResult)(nil)},
+	"getblocktemplate":      {(*exccjson.GetBlockTemplateResult)(nil), (*string)(nil), nil},
 	"getcfilter":            {(*string)(nil)},
 	"getcfilterheader":      {(*string)(nil)},
-	"getchaintips":          {(*[]dcrjson.GetChainTipsResult)(nil)},
+	"getchaintips":          {(*[]exccjson.GetChainTipsResult)(nil)},
 	"getconnectioncount":    {(*int32)(nil)},
 	"getcurrentnet":         {(*uint32)(nil)},
 	"getdifficulty":         {(*float64)(nil)},
-	"getstakedifficulty":    {(*dcrjson.GetStakeDifficultyResult)(nil)},
-	"getstakeversioninfo":   {(*dcrjson.GetStakeVersionInfoResult)(nil)},
-	"getstakeversions":      {(*dcrjson.GetStakeVersionsResult)(nil)},
+	"getstakedifficulty":    {(*exccjson.GetStakeDifficultyResult)(nil)},
+	"getstakeversioninfo":   {(*exccjson.GetStakeVersionInfoResult)(nil)},
+	"getstakeversions":      {(*exccjson.GetStakeVersionsResult)(nil)},
 	"getgenerate":           {(*bool)(nil)},
 	"gethashespersec":       {(*float64)(nil)},
-	"getheaders":            {(*dcrjson.GetHeadersResult)(nil)},
-	"getinfo":               {(*dcrjson.InfoChainResult)(nil)},
-	"getmempoolinfo":        {(*dcrjson.GetMempoolInfoResult)(nil)},
-	"getmininginfo":         {(*dcrjson.GetMiningInfoResult)(nil)},
-	"getnettotals":          {(*dcrjson.GetNetTotalsResult)(nil)},
+	"getheaders":            {(*exccjson.GetHeadersResult)(nil)},
+	"getinfo":               {(*exccjson.InfoChainResult)(nil)},
+	"getmempoolinfo":        {(*exccjson.GetMempoolInfoResult)(nil)},
+	"getmininginfo":         {(*exccjson.GetMiningInfoResult)(nil)},
+	"getnettotals":          {(*exccjson.GetNetTotalsResult)(nil)},
 	"getnetworkhashps":      {(*int64)(nil)},
-	"getpeerinfo":           {(*[]dcrjson.GetPeerInfoResult)(nil)},
-	"getrawmempool":         {(*[]string)(nil), (*dcrjson.GetRawMempoolVerboseResult)(nil)},
-	"getrawtransaction":     {(*string)(nil), (*dcrjson.TxRawResult)(nil)},
+	"getpeerinfo":           {(*[]exccjson.GetPeerInfoResult)(nil)},
+	"getrawmempool":         {(*[]string)(nil), (*exccjson.GetRawMempoolVerboseResult)(nil)},
+	"getrawtransaction":     {(*string)(nil), (*exccjson.TxRawResult)(nil)},
 	"getticketpoolvalue":    {(*float64)(nil)},
-	"gettxout":              {(*dcrjson.GetTxOutResult)(nil)},
-	"getvoteinfo":           {(*dcrjson.GetVoteInfoResult)(nil)},
-	"getwork":               {(*dcrjson.GetWorkResult)(nil), (*bool)(nil)},
+	"gettxout":              {(*exccjson.GetTxOutResult)(nil)},
+	"getvoteinfo":           {(*exccjson.GetVoteInfoResult)(nil)},
+	"getwork":               {(*exccjson.GetWorkResult)(nil), (*bool)(nil)},
 	"getcoinsupply":         {(*int64)(nil)},
 	"help":                  {(*string)(nil), (*string)(nil)},
-	"livetickets":           {(*dcrjson.LiveTicketsResult)(nil)},
-	"missedtickets":         {(*dcrjson.MissedTicketsResult)(nil)},
+	"livetickets":           {(*exccjson.LiveTicketsResult)(nil)},
+	"missedtickets":         {(*exccjson.MissedTicketsResult)(nil)},
 	"node":                  nil,
 	"ping":                  nil,
 	"rebroadcastmissed":     nil,
 	"rebroadcastwinners":    nil,
-	"searchrawtransactions": {(*string)(nil), (*[]dcrjson.SearchRawTransactionsResult)(nil)},
+	"searchrawtransactions": {(*string)(nil), (*[]exccjson.SearchRawTransactionsResult)(nil)},
 	"sendrawtransaction":    {(*string)(nil)},
 	"setgenerate":           nil,
 	"stop":                  {(*string)(nil)},
 	"submitblock":           {nil, (*string)(nil)},
-	"ticketfeeinfo":         {(*dcrjson.TicketFeeInfoResult)(nil)},
-	"ticketsforaddress":     {(*dcrjson.TicketsForAddressResult)(nil)},
+	"ticketfeeinfo":         {(*exccjson.TicketFeeInfoResult)(nil)},
+	"ticketsforaddress":     {(*exccjson.TicketsForAddressResult)(nil)},
 	"ticketvwap":            {(*float64)(nil)},
-	"txfeeinfo":             {(*dcrjson.TxFeeInfoResult)(nil)},
-	"validateaddress":       {(*dcrjson.ValidateAddressChainResult)(nil)},
+	"txfeeinfo":             {(*exccjson.TxFeeInfoResult)(nil)},
+	"validateaddress":       {(*exccjson.ValidateAddressChainResult)(nil)},
 	"verifychain":           {(*bool)(nil)},
 	"verifymessage":         {(*bool)(nil)},
-	"version":               {(*map[string]dcrjson.VersionResult)(nil)},
+	"version":               {(*map[string]exccjson.VersionResult)(nil)},
 
 	// Websocket commands.
 	"loadtxfilter":                nil,
-	"session":                     {(*dcrjson.SessionResult)(nil)},
+	"session":                     {(*exccjson.SessionResult)(nil)},
 	"notifywinningtickets":        nil,
 	"notifyspentandmissedtickets": nil,
 	"notifynewtickets":            nil,
@@ -1034,7 +1034,7 @@ func (c *helpCacher) rpcMethodHelp(method string) (string, error) {
 	}
 
 	// Generate, cache, and return the help.
-	help, err := dcrjson.GenerateHelp(method, helpDescsEnUS, resultTypes...)
+	help, err := exccjson.GenerateHelp(method, helpDescsEnUS, resultTypes...)
 	if err != nil {
 		return "", err
 	}
@@ -1057,7 +1057,7 @@ func (c *helpCacher) rpcUsage(includeWebsockets bool) (string, error) {
 	// Generate a list of one-line usage for every command.
 	usageTexts := make([]string, 0, len(rpcHandlers))
 	for k := range rpcHandlers {
-		usage, err := dcrjson.MethodUsageText(k)
+		usage, err := exccjson.MethodUsageText(k)
 		if err != nil {
 			return "", err
 		}
@@ -1067,7 +1067,7 @@ func (c *helpCacher) rpcUsage(includeWebsockets bool) (string, error) {
 	// Include websockets commands if requested.
 	if includeWebsockets {
 		for k := range wsHandlers {
-			usage, err := dcrjson.MethodUsageText(k)
+			usage, err := exccjson.MethodUsageText(k)
 			if err != nil {
 				return "", err
 			}
