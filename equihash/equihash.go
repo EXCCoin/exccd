@@ -52,17 +52,6 @@ func hasCollision(ha, hb []byte, i, l int) bool {
 	return gate
 }
 
-func xor(a, b []byte) ([]byte, error) {
-	if len(a) != len(b) {
-		return nil, errLen
-	}
-	out := make([]byte, len(a))
-	for i, val := range a {
-		out[i] = val ^ b[i]
-	}
-	return out, nil
-}
-
 func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 	if bitLen < 8 {
 		return nil, errBitLen
