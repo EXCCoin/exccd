@@ -21,7 +21,7 @@ const (
 func countZeros(h []byte) int {
 	for i, val := range h {
 		if val == 1 {
-			return i + 1
+			return i
 		}
 	}
 	return len(h)
