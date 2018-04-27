@@ -2,19 +2,24 @@ package equihash
 
 import (
 	"encoding/hex"
+	"errors"
+	"strconv"
 	"testing"
 )
 
-func byteSliceEq(a, b []byte) bool {
+func byteSliceEq(a, b []byte) error {
 	if len(a) != len(b) {
-		return false
+		return errors.New("a and b not same len")
 	}
 	for i, val := range a {
 		if val != b[i] {
-			return false
+			av, bv := strconv.Itoa(int(val)), strconv.Itoa(int(b[i]))
+			is := strconv.Itoa(i)
+			msg := av + " != " + bv + " at " + is
+			return errors.New(msg)
 		}
 	}
-	return true
+	return nil
 }
 
 func decodeHex(s string) []byte {
@@ -25,19 +30,49 @@ func decodeHex(s string) []byte {
 	return decoded
 }
 
-func TestExpandArray(t *testing.T) {
-	in := decodeHex("ffffffffffffffffffffff")
-	exp := decodeHex("07ff07ff07ff07ff07ff07ff07ff07ff")
-	bitLen, outLen, bytePad := 11, len(exp), 0
-	out, err := expandArray(in, outLen, bitLen, bytePad)
+func testExpandCompressArray(t *testing.T, p expandCompressParams) {
+	inHex, outHex := decodeHex(p.in), decodeHex(p.out)
+	outLen := len(outHex)
+	expanded, err := expandArray(inHex, outLen, p.bitLen, p.bytePad)
 	if err != nil {
 		t.Error(err)
 	}
-	if !byteSliceEq(out, exp) {
-		t.FailNow()
+	err = byteSliceEq(outHex, expanded)
+	if err != nil {
+		t.Error(err)
+	}
+	compact, err := compressArray(expanded, len(inHex), p.bitLen, p.bytePad)
+	if err != nil {
+		t.Error(err)
+	}
+	err = byteSliceEq(inHex, compact)
+	if err != nil {
+		t.Error(err)
 	}
 }
 
+type expandCompressParams struct {
+	in      string
+	out     string
+	bitLen  int
+	bytePad int
+}
+
+var expandCompressTests = []expandCompressParams{
+	{"ffffffffffffffffffffff", "07ff07ff07ff07ff07ff07ff07ff07ff", 11, 0},
+	{"aaaaad55556aaaab55555aaaaad55556aaaab55555", "155555155555155555155555155555155555155555155555", 21, 0},
+	{"000220000a7ffffe00123022b38226ac19bdf23456", "0000440000291fffff0001230045670089ab00cdef123456", 21, 0},
+	{"cccf333cccf333cccf333cccf333cccf333cccf333cccf333cccf333", "3333333333333333333333333333333333333333333333333333333333333333", 14, 0},
+	{"ffffffffffffffffffffff", "000007ff000007ff000007ff000007ff000007ff000007ff000007ff000007ff", 11, 2},
+}
+
+func TestExpandCompressArrays(t *testing.T) {
+	for _, params := range expandCompressTests {
+		testExpandCompressArray(t, params)
+	}
+}
+
+/*
 func TestEquihashSolver(t *testing.T) {
 	n := 96
 	k := 5
@@ -50,4 +85,28 @@ func TestEquihashSolver(t *testing.T) {
 		{3976, 108868, 80426, 109742, 33354, 55962, 68338, 80112, 26648, 28006, 64679, 130709, 41182, 126811, 56563, 129040, 4013, 80357, 38063, 91241, 30768, 72264, 97338, 124455, 5607, 36901, 67672, 87377, 17841, 66985, 77087, 85291},
 		{5970, 21862, 34861, 102517, 11849, 104563, 91620, 110653, 7619, 52100, 21162, 112513, 74964, 79553, 105558, 127256, 21905, 112672, 81803, 92086, 43695, 97911, 66587, 104119, 29017, 61613, 97690, 106345, 47428, 98460, 53655, 109002},
 	}
+}
+*/
+
+func TestDistinctIndices(t *testing.T) {
+	a := []byte{0, 1, 2, 3, 4, 5}
+	b := []byte{0, 1, 2, 3, 4, 5}
+	r := distinctIndices(a, b)
+	if r {
+		t.Error()
+	}
+	b = []byte{6, 7, 8, 9, 10}
+	r = distinctIndices(a, b)
+	if !r {
+		t.Error()
+	}
+	a = []byte{7, 8, 9, 10, 11}
+	r = distinctIndices(a, b)
+	if r {
+		t.Error()
+	}
+}
+
+func TestCountZeros(t *testing.T) {
+
 }
