@@ -1,7 +1,6 @@
 package equihash
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"hash"
@@ -17,6 +16,41 @@ const (
 	wordSize = 32
 	wordMask = (1 << wordSize) - 1
 )
+
+// countZeros counts leading zeros in byte array
+func countZeros(h []byte) int {
+	for i, val := range h {
+		if val == 1 {
+			return i + 1
+		}
+	}
+	return len(h)
+}
+
+func minSlices(a, b []byte) ([]byte, []byte) {
+	if len(a) <= len(b) {
+		return a, b
+	}
+	return b, a
+}
+
+func xor(a, b []byte) []byte {
+	small, large := minSlices(a, b)
+	out := make([]byte, len(small))
+	for i, val := range small {
+		out[i] = val ^ large[i]
+	}
+	return out
+}
+
+func hasCollision(ha, hb []byte, i, l int) bool {
+	start, end := (i-1)*l/8, i*l/8
+	gate := true
+	for j := start; j < end; j++ {
+		gate = gate && (ha[j] == hb[j])
+	}
+	return gate
+}
 
 func xor(a, b []byte) ([]byte, error) {
 	if len(a) != len(b) {
@@ -48,8 +82,9 @@ func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 		if accBits < 8 {
 			accVal = ((accVal << uint(bitLen)) & wordMask) | int(in[j])
 			for x := bytePad; x < inWidth; x++ {
-				b := int(in[j+x]) & ((bitLenMask >> uint(8*(inWidth-x-1))) & 0xFF)
-				accVal = accVal | b
+				g := int(in[j+x]) & ((bitLenMask >> uint(8*(inWidth-x-1))) & 0xFF)
+				g = g << uint(8*(inWidth-x-1))
+				accVal = accVal | g
 			}
 			j += inWidth
 			accBits += bitLen
@@ -107,15 +142,17 @@ func binPowInt(k int) int {
 	return val
 }
 
+/*
 func hashXi(digest hash.Hash, xi int) (hash.Hash, error) {
 	b := make([]byte, 4)
-	binary.LittleEndian.PutUint32(b, xi)
+	//binary.LittleEndian.PutUint32(b, xi)
 	n, err := digest.Write(b)
 	if err != nil {
 		return nil, err
 	}
 	return digest, nil
 }
+*/
 
 func distinctIndices(a, b []byte) bool {
 	for _, l := range a {
@@ -132,6 +169,7 @@ func newBlakeHash() (hash.Hash, error) {
 	return nil, errors.New("nyi")
 }
 
+/*
 func EquihashSolver(digest hash.Hash, n, k int) ([][]byte, error) {
 	collisionLen := n / (k + 1)
 	hashLen := (k + 1) * int((collisionLen+7)/8)
@@ -143,70 +181,35 @@ func EquihashSolver(digest hash.Hash, n, k int) ([][]byte, error) {
 	for i := 0; i < spaceLen; i++ {
 		r := i % indicesPerHashOutput
 		if r == 0 {
-
-			tmpHash := digest.Copy()
-			hashXi(currDigest, i/indicesPerHashOutput)
-			tmpHash := digest.digest()
-			slice := []byte(tmpHash[r*n/8 : (r+1)*n/8])
-			x = append(x, expandArray(slice, hashLen, collisionLen))
+				tmpHash := digest.Copy()
+				hashXi(currDigest, i/indicesPerHashOutput)
+				tmpHash := digest.digest()
+				slice := []byte(tmpHash[r*n/8 : (r+1)*n/8])
+				x = append(x, expandArray(slice, hashLen, collisionLen))
 		}
 	}
-
-	for i := 1; i < k; i++ {
-		sortX(x)
-		// finding collisions
-		xc = []byte{}
-		for len(X) > 0 {
-			j := 1
-			for j < len(X) {
-				if !hasCollision(X[len(X)-1][0], X[len(X)-1-j][0], i, collisionLen) {
-					break
+		for i := 1; i < k; i++ {
+			sortX(x)
+			// finding collisions
+			xc = []byte{}
+			for len(X) > 0 {
+				j := 1
+				for j < len(X) {
+					if !hasCollision(X[len(X)-1][0], X[len(X)-1-j][0], i, collisionLen) {
+						break
+					}
+					j++
 				}
-				j++
-			}
 
-			for l := 0; l < j-1; l++ {
-				for m := l + 1; m < j; m++ {
-					if distinctindices(X[len(X)-1-l][1], X[len(X)-1-m][1]) {
+				for l := 0; l < j-1; l++ {
+					for m := l + 1; m < j; m++ {
+						if distinctindices(X[len(X)-1-l][1], X[len(X)-1-m][1]) {
 
+						}
 					}
 				}
 			}
 		}
-	}
 	return nil, errors.New("nyi")
 }
-
-func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
-	if bitLen < 8 {
-		return nil, errBitLen
-	}
-	if wordSize < 7+bitLen {
-		return nil, errBitLen
-	}
-
-	inWidth := (bitLen+7)/8 + bytePad
-	if outLen != 8*inWidth*len(in)/bitLen {
-		return nil, errOutWidth
-	}
-	bitLenMask := (1 << uint(bitLen)) - 1
-	accBits, accVal, j := 0, 0, 0
-	out := make([]byte, outLen)
-	for i := 0; i < outLen; i++ {
-		accBits -= bitLen
-		if accBits < 8 {
-			accVal = accVal << uint(bitLen)
-			for x := bytePad; x < inWidth; x++ {
-				a := in[j+x]
-				b := (bitLenMask >> uint(8*(inWidth-x-1))) & 0xFF
-				v := a & byte(b)
-				out[j+x] = v
-			}
-			j += inWidth
-		}
-
-		accBits -= 8
-		out[i] = byte((accVal >> uint(accBits)) & 0xFF)
-	}
-	return out, nil
-}
+*/
