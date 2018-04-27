@@ -1030,7 +1030,7 @@ var (
 	// ErrDuplicateNet describes an error where the parameters for a Decred
 	// network could not be set due to the network already being a standard
 	// network or previously-registered into this package.
-	ErrDuplicateNet = errors.New("duplicate Decred network")
+	ErrDuplicateNet = errors.New("duplicate Exchangecoin network")
 
 	// ErrUnknownHDKeyID describes an error where the provided id which
 	// is intended to identify the network for a hierarchical deterministic

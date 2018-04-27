@@ -26,12 +26,12 @@ var cfg *config
 // as a service and reacts accordingly.
 var winServiceMain func() (bool, error)
 
-// dcrdMain is the real main function for dcrd.  It is necessary to work around
+// exccdMain is the real main function for dcrd.  It is necessary to work around
 // the fact that deferred functions do not run when os.Exit() is called.  The
 // optional serverChan parameter is mainly used by the service code to be
 // notified with the server once it is setup so it can gracefully stop it when
 // requested from the service control manager.
-func dcrdMain(serverChan chan<- *server) error {
+func exccdMain(serverChan chan<- *server) error {
 	// Load configuration and parse command line.  This function also
 	// initializes logging and configures it accordingly.
 	tcfg, _, err := loadConfig()
@@ -243,7 +243,7 @@ func main() {
 	}
 
 	// Work around defer not working after os.Exit()
-	if err := dcrdMain(nil); err != nil {
+	if err := exccdMain(nil); err != nil {
 		os.Exit(1)
 	}
 }

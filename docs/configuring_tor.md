@@ -21,10 +21,10 @@
 
 ### 1. Overview
 
-dcrd provides full support for anonymous networking via the
+exccd provides full support for anonymous networking via the
 [Tor Project](https://www.torproject.org/), including [client-only](#Client)
 and [hidden service](#HiddenService) configurations along with
-[stream isolation](#TorStreamIsolation).  In addition, dcrd supports a hybrid,
+[stream isolation](#TorStreamIsolation).  In addition, exccd supports a hybrid,
 [bridge mode](#Bridge) which is not anonymous, but allows it to operate as a
 bridge between regular nodes and hidden service nodes without routing the
 regular connections through Tor.
@@ -42,15 +42,15 @@ hidden service for this reason.
 
 **2.1 Description**<br />
 
-Configuring dcrd as a Tor client is straightforward.  The first step is
+Configuring exccd as a Tor client is straightforward.  The first step is
 obviously to install Tor and ensure it is working. Once that is done, all that
-typically needs to be done is to specify the `--proxy` flag via the dcrd command
-line or in the dcrd configuration file.  Typically the Tor proxy address will be
+typically needs to be done is to specify the `--proxy` flag via the exccd command
+line or in the exccd configuration file.  Typically the Tor proxy address will be
 127.0.0.1:9050 (if using standalone Tor) or 127.0.0.1:9150 (if using the Tor
 Browser Bundle).  If you have Tor configured to require a username and password,
 you may specify them with the `--proxyuser` and `--proxypass` flags.
 
-By default, dcrd assumes the proxy specified with `--proxy` is a Tor proxy and
+By default, exccd assumes the proxy specified with `--proxy` is a Tor proxy and
 hence will send all traffic, including DNS resolution requests, via the
 specified proxy.
 
@@ -88,7 +88,7 @@ The first step is to configure Tor to provide a hidden service.  Documentation
 for this can be found on the Tor project website
 [here](https://www.torproject.org/docs/tor-hidden-service.html.en).  However,
 there is no need to install a web server locally as the linked instructions
-discuss since dcrd will act as the server.
+discuss since exccd will act as the server.
 
 In short, the instructions linked above entail modifying your `torrc` file to
 add something similar to the following, restarting Tor, and opening the
@@ -101,7 +101,7 @@ HiddenServicePort 9108 127.0.0.1:9108
 ```
 
 Once Tor is configured to provide the hidden service and you have obtained your
-generated .onion address, configuring dcrd as a Tor hidden service requires
+generated .onion address, configuring exccd as a Tor hidden service requires
 three flags:
 * `--proxy` to identify the Tor (SOCKS 5) proxy to use for outgoing traffic.
   This is typically 127.0.0.1:9050.
@@ -137,13 +137,13 @@ externalip=fooanon.onion
 
 **4.1 Description**<br />
 
-dcrd provides support for operating as a bridge between regular nodes and hidden
+exccd provides support for operating as a bridge between regular nodes and hidden
 service nodes.  In particular this means only traffic which is directed to or
 from a .onion address is sent through Tor while other traffic is sent normally.
 _As a result, this mode is **NOT** anonymous._
 
 This mode works by specifying an onion-specific proxy, which is pointed at Tor,
-by using the `--onion` flag via the dcrd command line or in the dcrd
+by using the `--onion` flag via the exccd command line or in the exccd
 configuration file.  If you have Tor configured to require a username and
 password, you may specify them with the `--onionuser` and `--onionpass` flags.
 
@@ -184,7 +184,7 @@ externalip=fooanon.onion
 Tor stream isolation forces Tor to build a new circuit for each connection
 making it harder to correlate connections.
 
-dcrd provides support for Tor stream isolation by using the `--torisolation`
+exccd provides support for Tor stream isolation by using the `--torisolation`
 flag.  This option requires --proxy or --onionproxy to be set.
 
 <a name="TorStreamIsolationCLIExample" />

@@ -26,7 +26,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/EXCCoin/exccd/dcrjson"
+	"github.com/EXCCoin/exccd/exccjson"
 
 	"github.com/btcsuite/go-socks/socks"
 	"github.com/btcsuite/websocket"
@@ -242,22 +242,22 @@ func (c *Client) trackRegisteredNtfns(cmd interface{}) {
 	defer c.ntfnStateLock.Unlock()
 
 	switch bcmd := cmd.(type) {
-	case *dcrjson.NotifyWinningTicketsCmd:
+	case *exccjson.NotifyWinningTicketsCmd:
 		c.ntfnState.notifyWinningTickets = true
 
-	case *dcrjson.NotifySpentAndMissedTicketsCmd:
+	case *exccjson.NotifySpentAndMissedTicketsCmd:
 		c.ntfnState.notifySpentAndMissedTickets = true
 
-	case *dcrjson.NotifyNewTicketsCmd:
+	case *exccjson.NotifyNewTicketsCmd:
 		c.ntfnState.notifyNewTickets = true
 
-	case *dcrjson.NotifyStakeDifficultyCmd:
+	case *exccjson.NotifyStakeDifficultyCmd:
 		c.ntfnState.notifyStakeDifficulty = true
 
-	case *dcrjson.NotifyBlocksCmd:
+	case *exccjson.NotifyBlocksCmd:
 		c.ntfnState.notifyBlocks = true
 
-	case *dcrjson.NotifyNewTransactionsCmd:
+	case *exccjson.NotifyNewTransactionsCmd:
 		if bcmd.Verbose != nil && *bcmd.Verbose {
 			c.ntfnState.notifyNewTxVerbose = true
 		} else {
@@ -287,8 +287,8 @@ type (
 	// rawResponse is a partially-unmarshaled JSON-RPC response.  For this
 	// to be valid (according to JSON-RPC 1.0 spec), ID may not be nil.
 	rawResponse struct {
-		Result json.RawMessage   `json:"result"`
-		Error  *dcrjson.RPCError `json:"error"`
+		Result json.RawMessage    `json:"result"`
+		Error  *exccjson.RPCError `json:"error"`
 	}
 )
 
@@ -882,14 +882,14 @@ func (c *Client) sendRequest(jReq *jsonRequest) {
 // configuration of the client.
 func (c *Client) sendCmd(cmd interface{}) chan *response {
 	// Get the method associated with the command.
-	method, err := dcrjson.CmdMethod(cmd)
+	method, err := exccjson.CmdMethod(cmd)
 	if err != nil {
 		return newFutureError(err)
 	}
 
 	// Marshal the command.
 	id := c.NextID()
-	marshalledJSON, err := dcrjson.MarshalCmd("1.0", id, cmd)
+	marshalledJSON, err := exccjson.MarshalCmd("1.0", id, cmd)
 	if err != nil {
 		return newFutureError(err)
 	}

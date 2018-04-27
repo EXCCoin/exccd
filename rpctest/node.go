@@ -53,7 +53,7 @@ func newConfig(prefix, certFile, keyFile string, extra []string) (*nodeConfig, e
 		extra:     extra,
 		prefix:    prefix,
 
-		exe:      "dcrd",
+		exe:      "exccd",
 		endpoint: "ws",
 		certFile: certFile,
 		keyFile:  keyFile,
@@ -185,7 +185,7 @@ func (n *node) start() error {
 		return err
 	}
 
-	pid, err := os.Create(filepath.Join(n.config.String(), "dcrd.pid"))
+	pid, err := os.Create(filepath.Join(n.config.String(), "exccd.pid"))
 	if err != nil {
 		return err
 	}

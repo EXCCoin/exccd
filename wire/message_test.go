@@ -109,7 +109,7 @@ func TestMessage(t *testing.T) {
 		dcrnet CurrencyNet // Network to use for wire encoding
 		bytes  int         // Expected num bytes read/written
 	}{
-		{msgVersion, msgVersion, pver, MainNet, 125},          // [0]
+		{msgVersion, msgVersion, pver, MainNet, 126},          // [0]
 		{msgVerack, msgVerack, pver, MainNet, 24},             // [1]
 		{msgGetAddr, msgGetAddr, pver, MainNet, 24},           // [2]
 		{msgAddr, msgAddr, pver, MainNet, 25},                 // [3]

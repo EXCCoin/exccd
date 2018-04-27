@@ -6,12 +6,12 @@ chaincfg
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd/chaincfg)
 
 Package chaincfg defines chain configuration parameters for the three standard
-Decred networks and provides the ability for callers to define their own custom
-Decred networks.
+Exchangecoin networks and provides the ability for callers to define their own custom
+Exchangecoin networks.
 
-Although this package was primarily written for dcrd, it has intentionally been
+Although this package was primarily written for exccd, it has intentionally been
 designed so it can be used as a standalone package for any projects needing to
-use parameters for the standard Decred networks or for projects needing to
+use parameters for the standard Exchangecoin networks or for projects needing to
 define their own network.
 
 ## Sample Use

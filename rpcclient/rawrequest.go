@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/EXCCoin/exccd/dcrjson"
+	"github.com/EXCCoin/exccd/exccjson"
 )
 
 // FutureRawResult is a future promise to deliver the result of a RawRequest RPC
@@ -45,7 +45,7 @@ func (c *Client) RawRequestAsync(method string, params []json.RawMessage) Future
 	// since that relies on marshalling registered dcrjson commands rather
 	// than custom commands.
 	id := c.NextID()
-	rawRequest := &dcrjson.Request{
+	rawRequest := &exccjson.Request{
 		Jsonrpc: "1.0",
 		ID:      id,
 		Method:  method,

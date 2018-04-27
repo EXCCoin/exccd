@@ -143,14 +143,14 @@ the type can vary, but usually will be best handled by simply showing/logging
 it.
 
 The third category of errors, that is errors returned by the server, can be
-detected by type asserting the error in a *dcrjson.RPCError.  For example, to
+detected by type asserting the error in a *exccjson.RPCError.  For example, to
 detect if a command is unimplemented by the remote RPC server:
 
   amount, err := client.GetBalance("")
   if err != nil {
-  	if jerr, ok := err.(*dcrjson.RPCError); ok {
+  	if jerr, ok := err.(*exccjson.RPCError); ok {
   		switch jerr.Code {
-  		case dcrjson.ErrRPCUnimplemented:
+  		case exccjson.ErrRPCUnimplemented:
   			// Handle not implemented error
 
   		// Handle other specific errors you care about
@@ -165,11 +165,11 @@ Example Usage
 
 The following full-blown client examples are in the examples directory:
 
- - dcrdwebsockets
+ - exccdwebsockets
    Connects to a dcrd RPC server using TLS-secured websockets, registers for
    block connected and block disconnected notifications, and gets the current
    block count
- - dcrwalletwebsockets
+ - exccwalletwebsockets
    Connects to a dcrwallet RPC server using TLS-secured websockets, registers
    for notifications about changes to account balances, and gets a list of
    unspent transaction outputs (utxos) the wallet can sign
