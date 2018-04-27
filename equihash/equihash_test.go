@@ -107,6 +107,35 @@ func TestDistinctIndices(t *testing.T) {
 	}
 }
 
+// countZeros tests
+
+type testCountZerosParams struct {
+	h        []byte
+	expected int
+}
+
 func TestCountZeros(t *testing.T) {
 
+	var paramsSet = []testCountZerosParams{
+		{[]byte{3, 2}, 0},
+		{[]byte{0, 0, 5, 2}, 2},
+		{[]byte{0, 0, 0, 0, 0, 0}, 6},
+		{[]byte{6, 6, 0, 0, 4, 2}, 0},
+		{[]byte{7, 2, 0, 0}, 0},
+		{[]byte{0, 0, 0, 0, 0, 0, 0, 6, 2, 0, 0}, 7},
+		{[]byte{7, 2, 3, 4, 5, 6, 7, 8, 9, 0, 7}, 0},
+	}
+
+	for _, params := range paramsSet {
+		testCountZeros(t, params)
+	}
+
+}
+
+func testCountZeros(t *testing.T, p testCountZerosParams) {
+	r := countZeros(p.h)
+
+	if r != p.expected {
+		t.Error("Should be equal, actual:", r, "expected", p.expected)
+	}
 }
