@@ -140,3 +140,86 @@ func TestBinPowInt(t *testing.T) {
 		pow *= 2
 	}
 }
+
+func TestCollisionLen(t *testing.T) {
+	n, k := 90, 2
+	r := collisionLen(n, k)
+	if r != 30 {
+		t.FailNow()
+	}
+	n, k = 200, 90
+	r = collisionLen(n, k)
+	if r != 2 {
+		t.Fail()
+	}
+}
+func TestMinSlices_A(t *testing.T) {
+	a := make([]byte, 1, 5)
+	b := make([]byte, 1, 10)
+	small, large := minSlices(a, b)
+	err := byteSliceEq(a, small)
+	if err != nil {
+		t.Error(err)
+	}
+	err = byteSliceEq(b, large)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestMinSlices_B(t *testing.T) {
+	a := make([]byte, 1, 10)
+	b := make([]byte, 1, 5)
+	small, large := minSlices(a, b)
+	err := byteSliceEq(b, small)
+	if err != nil {
+		t.Error(err)
+	}
+	err = byteSliceEq(a, large)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestMinSlices_Eq(t *testing.T) {
+	a := make([]byte, 1, 5)
+	b := make([]byte, 1, 5)
+	small, large := minSlices(a, b)
+	err := byteSliceEq(a, small)
+	if err != nil {
+		t.Error(err)
+	}
+	err = byteSliceEq(b, large)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestValidateParams_ErrKTooLarge(t *testing.T) {
+	n, k := 200, 200
+	err := validateParams(n, k)
+	if err == nil {
+		t.Fail()
+	}
+	n, k = 200, 201
+	err = validateParams(n, k)
+	if err == nil {
+		t.Fail()
+	}
+}
+
+func TestValidateParams_ErrCollision(t *testing.T) {
+	n, k := 200, 200
+	err := validateParams(n, k)
+	if err == nil {
+		t.Fail()
+	}
+}
+
+func TestValidateParams(t *testing.T) {
+	n, k := 200, 90
+	err := validateParams(n, k)
+	if err != nil {
+		t.Error(err)
+	}
+}
