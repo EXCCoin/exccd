@@ -120,15 +120,12 @@ func expandArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 	return out, nil
 }
 
+// binPowInt returns pow of base 2 for only positive k
 func binPowInt(k int) int {
 	if k < 1 {
 		return 1
 	}
-	val := 2
-	for i := 0; i < k; i++ {
-		val *= 2
-	}
-	return val
+	return 1 << uint(k)
 }
 
 /*

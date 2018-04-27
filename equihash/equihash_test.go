@@ -108,5 +108,35 @@ func TestDistinctIndices(t *testing.T) {
 }
 
 func TestCountZeros(t *testing.T) {
+	in := []byte{1, 1, 1, 1, 1}
+	count := countZeros(in)
+	if count != 0 {
+		t.Fail()
+	}
+	for i := 0; i < len(in); i++ {
+		in[i] = 0
+		count = countZeros(in)
+		if (i + 1) != count {
+			t.Fail()
+		}
+	}
+}
 
+func TestHasCollision(t *testing.T) {
+	h := make([]byte, 1, 32)
+	r := hasCollision(h, h, 1, len(h))
+	if r == false {
+		t.Fail()
+	}
+}
+
+func TestBinPowInt(t *testing.T) {
+	pow := 1
+	for i := 0; i < 64; i++ {
+		val := binPowInt(i)
+		if pow != val {
+			t.Errorf("binPowInt(%v) == %v and not %v\n", i, val, pow)
+		}
+		pow *= 2
+	}
 }
