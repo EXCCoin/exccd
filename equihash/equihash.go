@@ -7,15 +7,31 @@ import (
 )
 
 var (
-	errLen      = errors.New("slices not same len")
-	errBitLen   = errors.New("bit len < 8")
-	errOutWidth = errors.New("incorrect outwidth size")
+	errLen          = errors.New("slices not same len")
+	errBitLen       = errors.New("bit len < 8")
+	errOutWidth     = errors.New("incorrect outwidth size")
+	errKLarge       = errors.New("k should be less than n")
+	errCollisionLen = errors.New("Collision length too big")
 )
 
 const (
 	wordSize = 32
 	wordMask = (1 << wordSize) - 1
 )
+
+func validateParams(n, k int) error {
+	if k >= n {
+		return errKLarge
+	}
+	if collisionLen(n, k)+1 >= 32 {
+		return errCollisionLen
+	}
+	return nil
+}
+
+func collisionLen(n, k int) int {
+	return n / (k + 1)
+}
 
 // countZeros counts leading zeros in byte array
 func countZeros(h []byte) int {
