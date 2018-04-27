@@ -2,7 +2,6 @@ package equihash
 
 import (
 	"errors"
-	"fmt"
 	"hash"
 )
 
@@ -20,11 +19,14 @@ const (
 // countZeros counts leading zeros in byte array
 func countZeros(h []byte) int {
 	for i, val := range h {
-		if val == 1 {
-			return i
+		for j := 0; j < 8; j++ {
+			mask := 1 << uint(7-j)
+			if (int(val) & mask) > 0 {
+				return (i * 8) + j
+			}
 		}
 	}
-	return len(h)
+	return len(h) * 8
 }
 
 func minSlices(a, b []byte) ([]byte, []byte) {
@@ -102,7 +104,7 @@ func expandArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 	for i := 0; i < len(in); i++ {
 		accVal = ((accVal << 8) & wordMask) | uint(in[i])
 		accBits += 8
-		fmt.Printf("i = %v\nin[%v] = %v\naccVal = %v\n accBits = %v\n", i, i, in[i], accVal, accBits)
+		//fmt.Printf("i = %v\nin[%v] = %v\naccVal = %v\n accBits = %v\n", i, i, in[i], accVal, accBits)
 
 		if accBits >= bitLen {
 			accBits -= bitLen
@@ -110,7 +112,7 @@ func expandArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 				a := accVal >> (uint(accBits + (8 * (outWidth - x - 1))))
 				b := (bitLenMask >> uint((8 * (outWidth - x - 1)))) & 0xFF
 				v := byte(a) & byte(b)
-				fmt.Printf("a = %v\nb = %v\nv = %v\n", a, b, v)
+				//fmt.Printf("a = %v\nb = %v\nv = %v\n", a, b, v)
 				out[j+x] = v
 			}
 			j += outWidth
