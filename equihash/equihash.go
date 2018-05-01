@@ -2,7 +2,6 @@ package equihash
 
 import (
 	"errors"
-	"fmt"
 	"hash"
 )
 
@@ -47,6 +46,9 @@ func countZeros(h []byte) int {
 	return len(h)
 }
 
+// minSlices returns the slices sorted by their length
+// the first returned has the smallest length and the
+// and the second is the highest of the two
 func minSlices(a, b []byte) ([]byte, []byte) {
 	if len(a) <= len(b) {
 		return a, b
@@ -54,20 +56,21 @@ func minSlices(a, b []byte) ([]byte, []byte) {
 	return b, a
 }
 
+// xor runs xor piece-wise against 2 slices
+// returns empty slice if slices are not same len
 func xor(a, b []byte) []byte {
 	if len(a) == 0 && len(b) == 0 {
 		return emptySlice
 	}
 	if len(a) == 0 {
-		return b
+		return emptySlice
 	}
 	if len(b) == 0 {
-		return a
+		return emptySlice
 	}
-	small, large := minSlices(a, b)
-	out := make([]byte, len(small))
-	for i, val := range small {
-		out[i] = val ^ large[i]
+	out := make([]byte, len(a))
+	for i, val := range a {
+		out[i] = val ^ b[i]
 	}
 	return out
 }
@@ -141,7 +144,6 @@ func expandArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 	for i := 0; i < len(in); i++ {
 		accVal = ((accVal << 8) & wordMask) | uint(in[i])
 		accBits += 8
-		fmt.Printf("i = %v\nin[%v] = %v\naccVal = %v\n accBits = %v\n", i, i, in[i], accVal, accBits)
 
 		if accBits >= bitLen {
 			accBits -= bitLen
@@ -149,7 +151,6 @@ func expandArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 				a := accVal >> (uint(accBits + (8 * (outWidth - x - 1))))
 				b := (bitLenMask >> uint((8 * (outWidth - x - 1)))) & 0xFF
 				v := byte(a) & byte(b)
-				fmt.Printf("a = %v\nb = %v\nv = %v\n", a, b, v)
 				out[j+x] = v
 			}
 			j += outWidth
