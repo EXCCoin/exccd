@@ -12,6 +12,7 @@ var (
 	errOutWidth     = errors.New("incorrect outwidth size")
 	errKLarge       = errors.New("k should be less than n")
 	errCollisionLen = errors.New("Collision length too big")
+	emptySlice      = []byte{}
 )
 
 const (
@@ -51,6 +52,15 @@ func minSlices(a, b []byte) ([]byte, []byte) {
 }
 
 func xor(a, b []byte) []byte {
+	if len(a) == 0 && len(b) == 0 {
+		return emptySlice
+	}
+	if len(a) == 0 {
+		return b
+	}
+	if len(b) == 0 {
+		return a
+	}
 	small, large := minSlices(a, b)
 	out := make([]byte, len(small))
 	for i, val := range small {
