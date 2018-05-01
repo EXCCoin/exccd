@@ -110,7 +110,6 @@ func TestDistinctIndices(t *testing.T) {
 		t.Error()
 	}
 }
-
 func TestCountZeros(t *testing.T) {
 	in := []byte{1, 1, 1, 1, 1}
 	count := countZeros(in)
@@ -125,7 +124,6 @@ func TestCountZeros(t *testing.T) {
 		}
 	}
 }
-
 func TestHasCollision(t *testing.T) {
 	h := make([]byte, 1, 32)
 	r, err := hasCollision(h, h, 1)
@@ -136,7 +134,6 @@ func TestHasCollision(t *testing.T) {
 		t.Fail()
 	}
 }
-
 func TestHasCollision_AStartPos(t *testing.T) {
 	ha, hb := []byte{}, []byte{1, 2, 3, 4, 5}
 	r, err := hasCollision(ha, hb, 1)
@@ -147,7 +144,6 @@ func TestHasCollision_AStartPos(t *testing.T) {
 		t.Error(err)
 	}
 }
-
 func TestHasCollision_BStartPos(t *testing.T) {
 	hb, ha := []byte{}, []byte{1, 2, 3, 4, 5}
 	r, err := hasCollision(ha, hb, 1)
@@ -158,7 +154,6 @@ func TestHasCollision_BStartPos(t *testing.T) {
 		t.Error(err)
 	}
 }
-
 func TestHasCollision_HashLen(t *testing.T) {
 	hb, ha := []byte{}, []byte{1, 2, 3, 4, 5}
 	r, err := hasCollision(ha, hb, 1)
@@ -169,7 +164,6 @@ func TestHasCollision_HashLen(t *testing.T) {
 		t.Fail()
 	}
 }
-
 func TestBinPowInt(t *testing.T) {
 	pow := 1
 	for i := 0; i < 64; i++ {
@@ -180,7 +174,14 @@ func TestBinPowInt(t *testing.T) {
 		pow *= 2
 	}
 }
-
+func TestBinPowInt_NegIndices(t *testing.T) {
+	for i := 0; i < 64; i++ {
+		k := -1 - i
+		if binPowInt(k) != 1 {
+			t.Errorf("binPowInt(%v) != 1\n", k)
+		}
+	}
+}
 func TestCollisionLen(t *testing.T) {
 	n, k := 90, 2
 	r := collisionLen(n, k)
@@ -206,7 +207,6 @@ func TestMinSlices_A(t *testing.T) {
 		t.Error(err)
 	}
 }
-
 func TestMinSlices_B(t *testing.T) {
 	a := make([]byte, 1, 10)
 	b := make([]byte, 1, 5)
@@ -220,7 +220,6 @@ func TestMinSlices_B(t *testing.T) {
 		t.Error(err)
 	}
 }
-
 func TestMinSlices_Eq(t *testing.T) {
 	a := make([]byte, 1, 5)
 	b := make([]byte, 1, 5)
@@ -234,7 +233,6 @@ func TestMinSlices_Eq(t *testing.T) {
 		t.Error(err)
 	}
 }
-
 func TestValidateParams_ErrKTooLarge(t *testing.T) {
 	n, k := 200, 200
 	err := validateParams(n, k)
@@ -247,7 +245,6 @@ func TestValidateParams_ErrKTooLarge(t *testing.T) {
 		t.Fail()
 	}
 }
-
 func TestValidateParams_ErrCollision(t *testing.T) {
 	n, k := 200, 200
 	err := validateParams(n, k)
@@ -255,7 +252,6 @@ func TestValidateParams_ErrCollision(t *testing.T) {
 		t.Fail()
 	}
 }
-
 func TestValidateParams(t *testing.T) {
 	n, k := 200, 90
 	err := validateParams(n, k)
@@ -264,42 +260,29 @@ func TestValidateParams(t *testing.T) {
 	}
 }
 
-func TestXor_EmptySlices(t *testing.T) {
-	a, b := []byte{1, 2, 3, 4, 5}, []byte{}
+func testXorEmptySlice(t *testing.T, a, b []byte) {
 	r := xor(a, b)
-	if !sliceMemoryEq(a, r) {
-		t.Errorf("a should point to r")
-	}
-	b, a = a, b
-	r = xor(a, b)
-	if !sliceMemoryEq(b, r) {
-		t.Errorf("a should point to r")
-	}
-	a, b = []byte{}, []byte{}
-	r = xor(a, b)
 	if len(r) != 0 {
-		t.Errorf("len(r) == %v\n", len(r))
+		t.Errorf("r should be empty")
 	}
 }
-
+func TestXor_EmptySlices(t *testing.T) {
+	a, b := []byte{1, 2, 3, 4, 5}, []byte{}
+	testXorEmptySlice(t, a, b)
+	b, a = a, b
+	testXorEmptySlice(t, a, b)
+	a, b = []byte{}, []byte{}
+	testXorEmptySlice(t, a, b)
+}
 func TestXor_NilSlices(t *testing.T) {
 	a := []byte{1, 2, 3, 4, 5}
 	var b []byte
-	r := xor(a, b)
-	if !sliceMemoryEq(a, r) {
-		t.Errorf("a should point to r")
-	}
+	testXorEmptySlice(t, a, b)
 	b, a = a, b
-	r = xor(a, b)
-	if !sliceMemoryEq(b, r) {
-		t.Errorf("a should point to r")
-	}
+	testXorEmptySlice(t, a, b)
 	var x []byte
 	var y []byte
-	r = xor(x, y)
-	if len(r) != 0 {
-		t.Errorf("len(r) == %v\n", len(r))
-	}
+	testXorEmptySlice(t, x, y)
 }
 
 func testXor(t *testing.T, a, b, exp []byte) {
@@ -309,10 +292,26 @@ func testXor(t *testing.T, a, b, exp []byte) {
 		t.Error(err)
 	}
 }
-func TestXor(t *testing.T) {
+func TestXor_Pass(t *testing.T) {
 	a, b := []byte{0, 1, 0, 1, 0, 1}, []byte{1, 0, 1, 0, 1, 0}
 	exp := []byte{1, 1, 1, 1, 1, 1}
 	testXor(t, a, b, exp)
 	a, b = []byte{1, 0, 1, 0, 1, 0}, []byte{0, 1, 0, 1, 0, 1}
+	testXor(t, a, b, exp)
+	a, b, exp = []byte{0, 0, 1, 1}, []byte{1, 1, 0, 0}, []byte{1, 1, 1, 1}
+	testXor(t, a, b, exp)
+	a, b = []byte{1, 1, 1, 1}, []byte{0, 0, 0, 0}
+	exp = []byte{1, 1, 1, 1}
+	testXor(t, a, b, exp)
+	a, b = b, a
+	testXor(t, a, b, exp)
+}
+func TestXor_Fail(t *testing.T) {
+	a, b := []byte{0, 1, 0, 1}, []byte{0, 1, 0, 1}
+	exp := []byte{0, 0, 0, 0}
+	testXor(t, a, b, exp)
+	a, b = []byte{0, 0, 0, 0}, []byte{0, 0, 0, 0}
+	testXor(t, a, b, exp)
+	a, b = []byte{1, 1, 1, 1}, []byte{1, 1, 1, 1}
 	testXor(t, a, b, exp)
 }
