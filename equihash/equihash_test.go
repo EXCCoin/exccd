@@ -7,6 +7,10 @@ import (
 	"testing"
 )
 
+func hashStr(hash []byte) string {
+	return hex.EncodeToString(hash)
+}
+
 func sliceMemoryEq(a, b []byte) bool {
 	return &a[cap(a)-1] == &b[cap(b)-1]
 }
@@ -314,4 +318,29 @@ func TestXor_Fail(t *testing.T) {
 	testXor(t, a, b, exp)
 	a, b = []byte{1, 1, 1, 1}, []byte{1, 1, 1, 1}
 	testXor(t, a, b, exp)
+}
+
+func loweralpha() string {
+	p := make([]byte, 26)
+	for i := range p {
+		p[i] = 'a' + byte(i)
+	}
+	return string(p)
+}
+func TestEquihash_LowCollisions(t *testing.T) {
+	alpha, s, set := loweralpha(), "", make(map[string]bool)
+	for i := 0; i < 526; i++ {
+		for _, c := range alpha {
+			s += string(c)
+			h, err := Equihash([]byte(s))
+			if err != nil {
+				t.Error(err)
+			}
+			hs := hashStr(h)
+			if set[hs] {
+				t.Errorf("error collision: %v with %v\n", s, hs)
+			}
+			set[hs] = true
+		}
+	}
 }
