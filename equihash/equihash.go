@@ -11,7 +11,10 @@ var (
 	errBitLen       = errors.New("bit len < 8")
 	errOutWidth     = errors.New("incorrect outwidth size")
 	errKLarge       = errors.New("k should be less than n")
-	errCollisionLen = errors.New("Collision length too big")
+	errCollisionLen = errors.New("collision length too big")
+	errHashLen      = errors.New("hash len is too small")
+	errHashStartPos = errors.New("hash len < start pos")
+	errHashEndPos   = errors.New("hash len < end pos")
 	emptySlice      = []byte{}
 )
 
@@ -69,13 +72,23 @@ func xor(a, b []byte) []byte {
 	return out
 }
 
-func hasCollision(ha, hb []byte, i, l int) bool {
+func hasCollision(ha, hb []byte, i int) (bool, error) {
+	if len(ha) != len(hb) {
+		return false, errHashLen
+	}
+	l := len(ha)
 	start, end := (i-1)*l/8, i*l/8
+	if len(ha) < start || len(hb) < start {
+		return false, errHashStartPos
+	}
+	if len(hb) < end || len(hb) < end {
+		return false, errHashEndPos
+	}
 	gate := true
 	for j := start; j < end; j++ {
 		gate = gate && (ha[j] == hb[j])
 	}
-	return gate
+	return gate, nil
 }
 
 func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
