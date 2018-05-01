@@ -7,6 +7,10 @@ import (
 	"testing"
 )
 
+func sliceMemoryEq(a, b []byte) bool {
+	return &a[cap(a)-1] == &b[cap(b)-1]
+}
+
 func byteSliceEq(a, b []byte) error {
 	if len(a) != len(b) {
 		return errors.New("a and b not same len")
@@ -222,4 +226,57 @@ func TestValidateParams(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+}
+
+func TestXor_EmptySlices(t *testing.T) {
+	a, b := []byte{1, 2, 3, 4, 5}, []byte{}
+	r := xor(a, b)
+	if !sliceMemoryEq(a, r) {
+		t.Errorf("a should point to r")
+	}
+	b, a = a, b
+	r = xor(a, b)
+	if !sliceMemoryEq(b, r) {
+		t.Errorf("a should point to r")
+	}
+	a, b = []byte{}, []byte{}
+	r = xor(a, b)
+	if len(r) != 0 {
+		t.Errorf("len(r) == %v\n", len(r))
+	}
+}
+
+func TestXor_NilSlices(t *testing.T) {
+	a := []byte{1, 2, 3, 4, 5}
+	var b []byte
+	r := xor(a, b)
+	if !sliceMemoryEq(a, r) {
+		t.Errorf("a should point to r")
+	}
+	b, a = a, b
+	r = xor(a, b)
+	if !sliceMemoryEq(b, r) {
+		t.Errorf("a should point to r")
+	}
+	var x []byte
+	var y []byte
+	r = xor(x, y)
+	if len(r) != 0 {
+		t.Errorf("len(r) == %v\n", len(r))
+	}
+}
+
+func testXor(t *testing.T, a, b, exp []byte) {
+	act := xor(a, b)
+	err := byteSliceEq(act, exp)
+	if err != nil {
+		t.Error(err)
+	}
+}
+func TestXor(t *testing.T) {
+	a, b := []byte{0, 1, 0, 1, 0, 1}, []byte{1, 0, 1, 0, 1, 0}
+	exp := []byte{1, 1, 1, 1, 1, 1}
+	testXor(t, a, b, exp)
+	a, b = []byte{1, 0, 1, 0, 1, 0}, []byte{0, 1, 0, 1, 0, 1}
+	testXor(t, a, b, exp)
 }
