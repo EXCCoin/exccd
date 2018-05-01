@@ -2,7 +2,8 @@ package equihash
 
 import (
 	"errors"
-	"hash"
+
+	"golang.org/x/crypto/blake2b"
 )
 
 var (
@@ -14,6 +15,7 @@ var (
 	errHashLen      = errors.New("hash len is too small")
 	errHashStartPos = errors.New("hash len < start pos")
 	errHashEndPos   = errors.New("hash len < end pos")
+	errWriteLen     = errors.New("didn't write full len")
 	emptySlice      = []byte{}
 )
 
@@ -168,18 +170,6 @@ func binPowInt(k int) int {
 	return 1 << uint(k)
 }
 
-/*
-func hashXi(digest hash.Hash, xi int) (hash.Hash, error) {
-	b := make([]byte, 4)
-	//binary.LittleEndian.PutUint32(b, xi)
-	n, err := digest.Write(b)
-	if err != nil {
-		return nil, err
-	}
-	return digest, nil
-}
-*/
-
 func distinctIndices(a, b []byte) bool {
 	for _, l := range a {
 		for _, r := range b {
@@ -191,8 +181,20 @@ func distinctIndices(a, b []byte) bool {
 	return true
 }
 
-func newBlakeHash() (hash.Hash, error) {
-	return nil, errors.New("nyi")
+// Equihash computes the hash digest
+func Equihash(b []byte) ([]byte, error) {
+	h, err := blake2b.New(64, nil)
+	if err != nil {
+		return nil, err
+	}
+	n, err := h.Write(b)
+	if err != nil {
+		return nil, err
+	}
+	if n != len(b) {
+		return nil, errWriteLen
+	}
+	return h.Sum(nil), nil
 }
 
 /*
