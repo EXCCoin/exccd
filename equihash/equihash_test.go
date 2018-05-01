@@ -128,8 +128,44 @@ func TestCountZeros(t *testing.T) {
 
 func TestHasCollision(t *testing.T) {
 	h := make([]byte, 1, 32)
-	r := hasCollision(h, h, 1, len(h))
+	r, err := hasCollision(h, h, 1)
+	if err != nil {
+		t.Error(err)
+	}
 	if r == false {
+		t.Fail()
+	}
+}
+
+func TestHasCollision_AStartPos(t *testing.T) {
+	ha, hb := []byte{}, []byte{1, 2, 3, 4, 5}
+	r, err := hasCollision(ha, hb, 1)
+	if r {
+		t.Errorf("r = %v\n", r)
+	}
+	if err == nil {
+		t.Error(err)
+	}
+}
+
+func TestHasCollision_BStartPos(t *testing.T) {
+	hb, ha := []byte{}, []byte{1, 2, 3, 4, 5}
+	r, err := hasCollision(ha, hb, 1)
+	if r {
+		t.Errorf("r = %v\n", r)
+	}
+	if err == nil {
+		t.Error(err)
+	}
+}
+
+func TestHasCollision_HashLen(t *testing.T) {
+	hb, ha := []byte{}, []byte{1, 2, 3, 4, 5}
+	r, err := hasCollision(ha, hb, 1)
+	if r {
+		t.Fail()
+	}
+	if err == nil {
 		t.Fail()
 	}
 }
