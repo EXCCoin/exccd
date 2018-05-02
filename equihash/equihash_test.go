@@ -336,7 +336,7 @@ func TestEquihash_Collisions(t *testing.T) {
 	for i := 0; i < 64; i++ {
 		for _, c := range alpha {
 			s += string(c)
-			h, err := Equihash([]byte(s))
+			h, err := equihash([]byte(s))
 			if err != nil {
 				t.Error(err)
 				t.FailNow()
