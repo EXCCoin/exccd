@@ -2,6 +2,8 @@ package equihash
 
 import (
 	"errors"
+	"hash"
+	"strconv"
 
 	"golang.org/x/crypto/blake2b"
 )
@@ -39,14 +41,17 @@ func collisionLen(n, k int) int {
 	return n / (k + 1)
 }
 
-// countZeros counts leading zeros in byte array
+// countZeros counts leading zero bits in byte array
 func countZeros(h []byte) int {
 	for i, val := range h {
-		if val == 1 {
-			return i
+		for j := 0; j < 8; j++ {
+			mask := 1 << uint(7-j)
+			if (int(val) & mask) > 0 {
+				return (i * 8) + j
+			}
 		}
 	}
-	return len(h)
+	return len(h) * 8
 }
 
 // minSlices returns the slices sorted by their length
@@ -164,7 +169,7 @@ func expandArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 }
 
 // binPowInt returns pow of base 2 for only positive k
-func binPowInt(k int) int {
+func pow(k int) int {
 	if k < 1 {
 		return 1
 	}
@@ -182,20 +187,69 @@ func distinctIndices(a, b []byte) bool {
 	return true
 }
 
+//TODO(jaupe) optimize function by not making a byte array copy
+func writeHashStr(h hash.Hash, s string) error {
+	return writeHashBytes(h, []byte(s))
+}
+
+func writeHashBytes(h hash.Hash, b []byte) error {
+	n, err := h.Write(b)
+	if err != nil {
+		return err
+	}
+	if n != len(b) {
+		return errWriteLen
+	}
+	return nil
+}
+
 // Equihash computes the hash digest
 func Equihash(b []byte) ([]byte, error) {
 	h, err := blake2b.New(64, nil)
 	if err != nil {
 		return nil, err
 	}
-	n, err := h.Write(b)
-	if err != nil {
-		return nil, err
-	}
-	if n != len(b) {
-		return nil, errWriteLen
-	}
+
 	return h.Sum(nil), nil
+}
+
+func hashNonce(h hash.Hash, nonce int) error {
+	for i := 0; i < 8; i++ {
+		k := nonce >> uint(32*i)
+		s := "<I" + strconv.Itoa(k)
+		err := writeHashStr(h, s)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func hashXi(h hash.Hash, xi string) error {
+	err := writeHashStr(h, "<I"+xi)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func hashLen(k, collLen int) int {
+	return (k + 1) * int((collLen+7)/8)
+}
+
+func gbp(h hash.Hash, n, k int) error {
+	collLen := collisionLen(n, k)
+	hLen := hashLen(k, collLen)
+	indicesPerHash := 512 / n
+
+	input := [][]string{}
+	tmpHash := ""
+
+	for i := 0; i < pow(collLen+1); i++ {
+
+	}
+
+	return nil
 }
 
 /*

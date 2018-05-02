@@ -114,6 +114,8 @@ func TestDistinctIndices(t *testing.T) {
 		t.Error()
 	}
 }
+
+/*
 func TestCountZeros(t *testing.T) {
 	in := []byte{1, 1, 1, 1, 1}
 	count := countZeros(in)
@@ -128,6 +130,7 @@ func TestCountZeros(t *testing.T) {
 		}
 	}
 }
+*/
 func TestHasCollision(t *testing.T) {
 	h := make([]byte, 1, 32)
 	r, err := hasCollision(h, h, 1)
@@ -168,20 +171,20 @@ func TestHasCollision_HashLen(t *testing.T) {
 		t.Fail()
 	}
 }
-func TestBinPowInt(t *testing.T) {
-	pow := 1
+func TestPow(t *testing.T) {
+	exp := 1
 	for i := 0; i < 64; i++ {
-		val := binPowInt(i)
-		if pow != val {
+		val := pow(i)
+		if exp != val {
 			t.Errorf("binPowInt(%v) == %v and not %v\n", i, val, pow)
 		}
-		pow *= 2
+		exp *= 2
 	}
 }
 func TestBinPowInt_NegIndices(t *testing.T) {
 	for i := 0; i < 64; i++ {
 		k := -1 - i
-		if binPowInt(k) != 1 {
+		if pow(k) != 1 {
 			t.Errorf("binPowInt(%v) != 1\n", k)
 		}
 	}
@@ -327,25 +330,59 @@ func loweralpha() string {
 	}
 	return string(p)
 }
-func TestEquihash_LowCollisions(t *testing.T) {
-	alpha, s, set := loweralpha(), "", make(map[string]bool)
-	for i := 0; i < 526; i++ {
+
+func TestEquihash_Collisions(t *testing.T) {
+	alpha, s, collisions := loweralpha(), "", make(map[string][]string)
+	for i := 0; i < 64; i++ {
 		for _, c := range alpha {
 			s += string(c)
 			h, err := Equihash([]byte(s))
 			if err != nil {
 				t.Error(err)
+				t.FailNow()
 			}
 			hs := hashStr(h)
-			if set[hs] {
-				t.Errorf("error collision: %v with %v\n", s, hs)
+			keys := collisions[hs]
+			keys = append(keys, s)
+			if len(keys) > 1 {
+				t.Errorf("collision: %v\n", keys)
+				t.FailNow()
 			}
-			set[hs] = true
+			collisions[hs] = keys
 		}
 	}
 }
 func TestHashSize(t *testing.T) {
 	if 64 != hashSize {
 		t.Errorf("hashSize should equal 64 and not %v\n", hashSize)
+	}
+}
+
+type testCountZerosParams struct {
+	h        []byte
+	expected int
+}
+
+func TestCountZeros(t *testing.T) {
+
+	var paramsSet = []testCountZerosParams{
+		{[]byte{1, 2}, 7},
+		{[]byte{255, 255}, 0},
+		{[]byte{126, 0, 2}, 1},
+		{[]byte{54, 2}, 2},
+		{[]byte{0, 0}, 16},
+	}
+
+	for _, params := range paramsSet {
+		testCountZeros(t, params)
+	}
+
+}
+
+func testCountZeros(t *testing.T, p testCountZerosParams) {
+	r := countZeros(p.h)
+
+	if r != p.expected {
+		t.Error("Should be equal, actual:", r, "expected", p.expected)
 	}
 }
