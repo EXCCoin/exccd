@@ -344,3 +344,8 @@ func TestEquihash_LowCollisions(t *testing.T) {
 		}
 	}
 }
+func TestHashSize(t *testing.T) {
+	if 64 != hashSize {
+		t.Errorf("hashSize should equal 64 and not %v\n", hashSize)
+	}
+}

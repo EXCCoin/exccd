@@ -22,6 +22,7 @@ var (
 const (
 	wordSize = 32
 	wordMask = (1 << wordSize) - 1
+	hashSize = 64
 )
 
 func validateParams(n, k int) error {
