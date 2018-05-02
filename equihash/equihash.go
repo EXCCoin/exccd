@@ -204,7 +204,7 @@ func writeHashBytes(h hash.Hash, b []byte) error {
 }
 
 // Equihash computes the hash digest
-func Equihash(b []byte) ([]byte, error) {
+func equihash(b []byte) ([]byte, error) {
 	h, err := blake2b.New(64, nil)
 	if err != nil {
 		return nil, err
@@ -237,6 +237,23 @@ func hashLen(k, collLen int) int {
 	return (k + 1) * int((collLen+7)/8)
 }
 
+type hashBuilder struct {
+	digest string
+}
+
+func (hb *hashBuilder) copy() hashBuilder {
+	return hashBuilder{string(hb.digest)}
+}
+
+func (hb *hashBuilder) append(s string) {
+	hb.digest += s
+}
+
+func (hb *hashBuilder) build() ([]byte, error) {
+	return equihash([]byte(hb.digest))
+}
+
+/*
 func gbp(h hash.Hash, n, k int) error {
 	collLen := collisionLen(n, k)
 	hLen := hashLen(k, collLen)
@@ -246,11 +263,15 @@ func gbp(h hash.Hash, n, k int) error {
 	tmpHash := ""
 
 	for i := 0; i < pow(collLen+1); i++ {
+		r := i % indicesPerHash
+		if r == 0 {
 
+		}
 	}
 
 	return nil
 }
+*/
 
 /*
 func EquihashSolver(digest hash.Hash, n, k int) ([][]byte, error) {
