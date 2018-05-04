@@ -97,18 +97,18 @@ func TestEquihashSolver(t *testing.T) {
 */
 
 func TestDistinctIndices(t *testing.T) {
-	a := []byte{0, 1, 2, 3, 4, 5}
-	b := []byte{0, 1, 2, 3, 4, 5}
+	a := []int{0, 1, 2, 3, 4, 5}
+	b := []int{0, 1, 2, 3, 4, 5}
 	r := distinctIndices(a, b)
 	if r {
 		t.Error()
 	}
-	b = []byte{6, 7, 8, 9, 10}
+	b = []int{6, 7, 8, 9, 10}
 	r = distinctIndices(a, b)
 	if !r {
 		t.Error()
 	}
-	a = []byte{7, 8, 9, 10, 11}
+	a = []int{7, 8, 9, 10, 11}
 	r = distinctIndices(a, b)
 	if r {
 		t.Error()
@@ -133,7 +133,7 @@ func TestCountZeros(t *testing.T) {
 */
 func TestHasCollision(t *testing.T) {
 	h := make([]byte, 1, 32)
-	r, err := hasCollision(h, h, 1)
+	r, err := hasCollision(h, h, 1, 0)
 	if err != nil {
 		t.Error(err)
 	}
@@ -143,7 +143,7 @@ func TestHasCollision(t *testing.T) {
 }
 func TestHasCollision_AStartPos(t *testing.T) {
 	ha, hb := []byte{}, []byte{1, 2, 3, 4, 5}
-	r, err := hasCollision(ha, hb, 1)
+	r, err := hasCollision(ha, hb, 1, 0)
 	if r {
 		t.Errorf("r = %v\n", r)
 	}
@@ -153,7 +153,7 @@ func TestHasCollision_AStartPos(t *testing.T) {
 }
 func TestHasCollision_BStartPos(t *testing.T) {
 	hb, ha := []byte{}, []byte{1, 2, 3, 4, 5}
-	r, err := hasCollision(ha, hb, 1)
+	r, err := hasCollision(ha, hb, 1, 0)
 	if r {
 		t.Errorf("r = %v\n", r)
 	}
@@ -163,7 +163,7 @@ func TestHasCollision_BStartPos(t *testing.T) {
 }
 func TestHasCollision_HashLen(t *testing.T) {
 	hb, ha := []byte{}, []byte{1, 2, 3, 4, 5}
-	r, err := hasCollision(ha, hb, 1)
+	r, err := hasCollision(ha, hb, 1, 0)
 	if r {
 		t.Fail()
 	}
@@ -176,7 +176,7 @@ func TestPow(t *testing.T) {
 	for i := 0; i < 64; i++ {
 		val := pow(i)
 		if exp != val {
-			t.Errorf("binPowInt(%v) == %v and not %v\n", i, val, pow)
+			t.Errorf("binPowInt(%v) == %v and not %v\n", i, val, exp)
 		}
 		exp *= 2
 	}

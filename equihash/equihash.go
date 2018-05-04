@@ -178,7 +178,7 @@ func pow(k int) int {
 	return 1 << uint(k)
 }
 
-func distinctIndices(a, b []byte) bool {
+func distinctIndices(a, b []int) bool {
 	for _, l := range a {
 		for _, r := range b {
 			if l == r {
@@ -277,7 +277,11 @@ type solution struct {
 	indices []int
 }
 
-func gbp(hb hashBuilder, n, k int) error {
+func negIndex(s []solution, i int) int {
+	return len(s) - i
+}
+
+func gbp(hb hashBuilder, n, k int) ([][]int, error) {
 	collLen := collisionLen(n, k)
 	hLen := hashLen(k, collLen)
 	indicesPerHash := 512 / n
@@ -289,11 +293,11 @@ func gbp(hb hashBuilder, n, k int) error {
 		if r == 0 {
 			hash, err := hb.copy()
 			if err != nil {
-				return err
+				return nil, err
 			}
 			err = hashXi(hash, i/indicesPerHash)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			digest, err := expandArray(inSlice(hashDigest(hash), r, n), hLen, collLen, 0)
 			sol := solution{
@@ -315,7 +319,7 @@ func gbp(hb hashBuilder, n, k int) error {
 				hb := x[len(x)-1-j].digest
 				coll, err := hasCollision(ha, hb, i, collLen)
 				if err != nil {
-					return err
+					return nil, err
 				}
 				if !coll {
 					break
@@ -326,12 +330,13 @@ func gbp(hb hashBuilder, n, k int) error {
 			for l := 0; l < j-1; l++ {
 				for m := l + 1; m < j; m++ {
 					a, b := x[len(x)-l], x[len(x)-m]
-					if distinctIndices(a.digest, b.digest) {
+					ai, bi := a.indices, b.indices
+					if distinctIndices(ai, bi) {
 						i, j := 0, 0
 						if a.digest[0] < b.digest[0] {
-							i, j = a.indices[0], b.indices[0]
+							i, j = ai[0], bi[0]
 						} else {
-							i, j = b.indices[0], a.indices[0]
+							i, j = bi[0], ai[0]
 						}
 						digest := xor(a.digest, b.digest)
 						indices := []int{i, j}
@@ -348,7 +353,48 @@ func gbp(hb hashBuilder, n, k int) error {
 		x = xc
 	}
 
-	return nil
+	sortSolutions(x)
+	solns := [][]int{}
+	for len(x) > 0 {
+		j := 1
+		for j < len(x) {
+			i := len(x) - 1
+			ha, hb := x[i].digest, x[i-j].digest
+			c1, err := hasCollision(ha, hb, k, collLen)
+			if err != nil {
+				return nil, err
+			}
+			c2, err := hasCollision(ha, hb, k+1, collLen)
+			if err != nil {
+				return nil, err
+			}
+			if !(c1 && c2) {
+				break
+			}
+			j++
+		}
+
+		for l := 0; l < j-1; l++ {
+			for m := l + 1; m < j; j++ {
+				i, j := len(x)-l, len(x)-m
+				res := xor(x[i].digest, x[j].digest)
+				ii, ji := x[i].indices, x[j].indices
+				if countZeros(res) == 8*hLen && distinctIndices(ii, ji) {
+					if ii[0] < ji[0] {
+						solns = append(solns, append(ii, ji...))
+					} else {
+						solns = append(solns, append(ji, ii...))
+					}
+				}
+			}
+		}
+
+		for j > 0 {
+			x = x[:len(x)-1] //pop last
+			j--
+		}
+	}
+	return solns, nil
 }
 
 type solutions []solution
