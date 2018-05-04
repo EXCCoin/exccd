@@ -2,6 +2,7 @@ package equihash
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"errors"
 	"hash"
@@ -21,8 +22,9 @@ var (
 	errHashStartPos = errors.New("hash len < start pos")
 	errHashEndPos   = errors.New("hash len < end pos")
 	errWriteLen     = errors.New("didn't write full len")
+	errNonce        = errors.New("no valid nonce")
 	emptySlice      = []byte{}
-	person          = []byte("exccPoW")
+	person          = []byte("excc")
 )
 
 const (
@@ -210,17 +212,21 @@ func writeHashBytes(h hash.Hash, b []byte) error {
 	return nil
 }
 
-func newDigest() (hash.Hash, error) {
+func newHash() (hash.Hash, error) {
 	return blake2b.New(hashSize, nil)
+}
+
+func newKeyedHash(n, k int) (hash.Hash, error) {
+	return blake2b.New((512/n)*n/8, exccPerson(n, k))
 }
 
 // Equihash computes the hash digest
 func equihash(b []byte) ([]byte, error) {
-	digest, err := newDigest()
+	h, err := newHash()
 	if err != nil {
 		return nil, err
 	}
-	return digest.Sum(nil), nil
+	return h.Sum(nil), nil
 }
 
 func hashLen(k, collLen int) int {
@@ -436,26 +442,42 @@ func sortSolutions(s []solution) []solution {
 	return s
 }
 
-func difficultyFilter(prevHash []byte, nonce int, soln []int, diff int) bool {
+func difficultyFilter(prevHash []byte, nonce int, soln []int, d int) bool {
 	h, err := blockHash(prevHash, nonce, soln)
 	if err != nil {
 		return false
 	}
 	count := countZeros(h)
-	return count >= diff
+	return count >= d
 }
 
 func blockHash(prevHash []byte, nonce int, soln []int) ([]byte, error) {
-	digest, err := newDigest()
+	h, err := newHash()
 	if err != nil {
 		return nil, err
 	}
-	err = writeHashBytes(digest, prevHash)
+	err = writeHashBytes(h, prevHash)
 	if err != nil {
 		return nil, err
 	}
-	hashNonce(digest, nonce)
-	return hashDigest(digest), nil
+	hashNonce(h, nonce)
+	for _, xi := range soln {
+		err := hashXi(h, xi)
+		if err != nil {
+			return nil, err
+		}
+	}
+	hb := hashDigest(h)
+	// double hash
+	h, err = newHash()
+	if err != nil {
+		return nil, err
+	}
+	err = writeHashBytes(h, hb)
+	if err != nil {
+		return nil, err
+	}
+	return hashDigest(h), nil
 }
 
 func hashNonce(h hash.Hash, nonce int) error {
@@ -502,4 +524,58 @@ func writeParams(n, k int) []byte {
 
 func hashXi(h hash.Hash, xi int) error {
 	return writeHashU32(h, uint32(xi))
+}
+
+func mine(n, k, d int) error {
+	err := validateParams(n, k)
+	if err != nil {
+		return err
+	}
+	// genesis
+	h := sha256.New()
+	prevHash := hashDigest(h)
+	var x []int
+
+	for {
+		h, err := newKeyedHash(n, k)
+		if err != nil {
+			return err
+		}
+		err = writeHashBytes(h, prevHash)
+		if err != nil {
+			return err
+		}
+		nonce := 0
+		for nonce>>161 == 0 {
+			h := copyHash(h)
+			err = hashNonce(h, nonce)
+			if err != nil {
+				return err
+			}
+			solns, err := gbp(h, n, k)
+			if err != nil {
+				return err
+			}
+			for _, soln := range solns {
+				if difficultyFilter(prevHash, nonce, soln, d) {
+					x = soln
+					break
+				}
+			}
+			if x != nil {
+				break
+			}
+			nonce++
+		}
+		if x == nil {
+			return errNonce
+		}
+		currHash, err := blockHash(prevHash, nonce, soln)
+		if err != nil {
+			return err
+		}
+		prevHash = currHash
+	}
+
+	return nil
 }
