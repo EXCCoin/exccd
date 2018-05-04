@@ -2,11 +2,11 @@ package equihash
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"hash"
 	"log"
 	"sort"
-	"strconv"
 
 	"golang.org/x/crypto/blake2b"
 )
@@ -22,6 +22,7 @@ var (
 	errHashEndPos   = errors.New("hash len < end pos")
 	errWriteLen     = errors.New("didn't write full len")
 	emptySlice      = []byte{}
+	person          = []byte("exccPoW")
 )
 
 const (
@@ -189,7 +190,11 @@ func distinctIndices(a, b []int) bool {
 	return true
 }
 
-//TODO(jaupe) optimize function by not making a byte array copy
+//TODO(jaupe) optimize function by not making a deep copy
+func writeHashU32(h hash.Hash, v uint32) error {
+	return writeHashBytes(h, writeU32(v))
+}
+
 func writeHashStr(h hash.Hash, s string) error {
 	return writeHashBytes(h, []byte(s))
 }
@@ -205,34 +210,17 @@ func writeHashBytes(h hash.Hash, b []byte) error {
 	return nil
 }
 
+func newDigest() (hash.Hash, error) {
+	return blake2b.New(hashSize, nil)
+}
+
 // Equihash computes the hash digest
 func equihash(b []byte) ([]byte, error) {
-	h, err := blake2b.New(64, nil)
+	digest, err := newDigest()
 	if err != nil {
 		return nil, err
 	}
-
-	return h.Sum(nil), nil
-}
-
-func hashNonce(h hash.Hash, nonce int) error {
-	for i := 0; i < 8; i++ {
-		k := nonce >> uint(32*i)
-		s := "<I" + strconv.Itoa(k)
-		err := writeHashStr(h, s)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func hashXi(h hash.Hash, xi int) error {
-	err := writeHashStr(h, "<I"+strconv.Itoa(xi))
-	if err != nil {
-		return err
-	}
-	return nil
+	return digest.Sum(nil), nil
 }
 
 func hashLen(k, collLen int) int {
@@ -448,47 +436,70 @@ func sortSolutions(s []solution) []solution {
 	return s
 }
 
-/*
-func EquihashSolver(digest hash.Hash, n, k int) ([][]byte, error) {
-	collisionLen := n / (k + 1)
-	hashLen := (k + 1) * int((collisionLen+7)/8)
-	indicesPerHashOutput := 512 / n
-	x := [][]byte{}
+func difficultyFilter(prevHash []byte, nonce int, soln []int, diff int) bool {
+	h, err := blockHash(prevHash, nonce, soln)
+	if err != nil {
+		return false
+	}
+	count := countZeros(h)
+	return count >= diff
+}
 
-	spaceLen := binPowInt(collisionLen + 1)
-	// 1. generate first list
-	for i := 0; i < spaceLen; i++ {
-		r := i % indicesPerHashOutput
-		if r == 0 {
-				tmpHash := digest.Copy()
-				hashXi(currDigest, i/indicesPerHashOutput)
-				tmpHash := digest.digest()
-				slice := []byte(tmpHash[r*n/8 : (r+1)*n/8])
-				x = append(x, expandArray(slice, hashLen, collisionLen))
+func blockHash(prevHash []byte, nonce int, soln []int) ([]byte, error) {
+	digest, err := newDigest()
+	if err != nil {
+		return nil, err
+	}
+	err = writeHashBytes(digest, prevHash)
+	if err != nil {
+		return nil, err
+	}
+	hashNonce(digest, nonce)
+	return hashDigest(digest), nil
+}
+
+func hashNonce(h hash.Hash, nonce int) error {
+	for i := 0; i < 8; i++ {
+		err := writeHashU32(h, uint32(i))
+		if err != nil {
+			return err
 		}
 	}
-		for i := 1; i < k; i++ {
-			sortX(x)
-			// finding collisions
-			xc = []byte{}
-			for len(X) > 0 {
-				j := 1
-				for j < len(X) {
-					if !hasCollision(X[len(X)-1][0], X[len(X)-1-j][0], i, collisionLen) {
-						break
-					}
-					j++
-				}
-
-				for l := 0; l < j-1; l++ {
-					for m := l + 1; m < j; m++ {
-						if distinctindices(X[len(X)-1-l][1], X[len(X)-1-m][1]) {
-
-						}
-					}
-				}
-			}
-		}
-	return nil, errors.New("nyi")
+	return nil
 }
-*/
+
+func writeU32(v uint32) []byte {
+	b := make([]byte, 4)
+	putU32(b, v)
+	return b
+}
+
+func putU32(b []byte, v uint32) {
+	binary.LittleEndian.PutUint32(b, v)
+}
+
+func joinBytes(x, y []byte) []byte {
+	b := make([]byte, len(x)+len(y))
+	for i, v := range x {
+		b[i] = v
+	}
+	for i, v := range y {
+		b[len(x)+i] = v
+	}
+	return b
+}
+
+func exccPerson(n, k int) []byte {
+	return joinBytes(person, writeParams(n, k))
+}
+
+func writeParams(n, k int) []byte {
+	b := make([]byte, 8)
+	putU32(b[:4], uint32(n))
+	putU32(b[4:], uint32(k))
+	return b
+}
+
+func hashXi(h hash.Hash, xi int) error {
+	return writeHashU32(h, uint32(xi))
+}

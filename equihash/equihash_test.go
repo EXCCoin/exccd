@@ -379,8 +379,26 @@ func TestCountZeros(t *testing.T) {
 
 func testCountZeros(t *testing.T, p testCountZerosParams) {
 	r := countZeros(p.h)
-
 	if r != p.expected {
 		t.Error("Should be equal, actual:", r, "expected", p.expected)
+	}
+}
+
+func TestJoinBytes(t *testing.T) {
+	a, b := []byte{1, 2, 3, 4}, []byte{5, 6, 7, 8}
+	act, exp := joinBytes(a, b), []byte{1, 2, 3, 4, 5, 6, 7, 8}
+	err := byteSliceEq(act, exp)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestWriteParams(t *testing.T) {
+	n, k := 64, 32
+	b := writeParams(n, k)
+	exp := []byte{byte(n), 0, 0, 0, byte(k), 0, 0, 0}
+	err := byteSliceEq(b, exp)
+	if err != nil {
+		t.Error(err)
 	}
 }
