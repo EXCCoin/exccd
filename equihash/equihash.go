@@ -1,8 +1,11 @@
 package equihash
 
 import (
+	"bytes"
 	"errors"
 	"hash"
+	"log"
+	"sort"
 	"strconv"
 
 	"golang.org/x/crypto/blake2b"
@@ -83,11 +86,10 @@ func xor(a, b []byte) []byte {
 	return out
 }
 
-func hasCollision(ha, hb []byte, i int) (bool, error) {
+func hasCollision(ha, hb []byte, i, l int) (bool, error) {
 	if len(ha) != len(hb) {
 		return false, errHashLen
 	}
-	l := len(ha)
 	start, end := (i-1)*l/8, i*l/8
 	if len(ha) < start || len(hb) < start {
 		return false, errHashStartPos
@@ -225,8 +227,8 @@ func hashNonce(h hash.Hash, nonce int) error {
 	return nil
 }
 
-func hashXi(h hash.Hash, xi string) error {
-	err := writeHashStr(h, "<I"+xi)
+func hashXi(h hash.Hash, xi int) error {
+	err := writeHashStr(h, "<I"+strconv.Itoa(xi))
 	if err != nil {
 		return err
 	}
@@ -241,8 +243,16 @@ type hashBuilder struct {
 	digest string
 }
 
-func (hb *hashBuilder) copy() hashBuilder {
-	return hashBuilder{string(hb.digest)}
+func (hb *hashBuilder) copy() (hash.Hash, error) {
+	h, err := blake2b.New(64, nil)
+	if err != nil {
+		return nil, err
+	}
+	err = writeHashStr(h, hb.digest)
+	if err != nil {
+		return nil, err
+	}
+	return h, nil
 }
 
 func (hb *hashBuilder) append(s string) {
@@ -253,25 +263,144 @@ func (hb *hashBuilder) build() ([]byte, error) {
 	return equihash([]byte(hb.digest))
 }
 
-/*
-func gbp(h hash.Hash, n, k int) error {
+func inSlice(b []byte, r, n int) []byte {
+	i, j := r*n/8, (r+1)*n/8
+	return b[i:j]
+}
+
+func hashDigest(h hash.Hash) []byte {
+	return h.Sum(nil)
+}
+
+type solution struct {
+	digest  []byte
+	indices []int
+}
+
+func gbp(hb hashBuilder, n, k int) error {
 	collLen := collisionLen(n, k)
 	hLen := hashLen(k, collLen)
 	indicesPerHash := 512 / n
 
-	input := [][]string{}
-	tmpHash := ""
+	x := []solution{}
 
 	for i := 0; i < pow(collLen+1); i++ {
 		r := i % indicesPerHash
 		if r == 0 {
-
+			hash, err := hb.copy()
+			if err != nil {
+				return err
+			}
+			err = hashXi(hash, i/indicesPerHash)
+			if err != nil {
+				return err
+			}
+			digest, err := expandArray(inSlice(hashDigest(hash), r, n), hLen, collLen, 0)
+			sol := solution{
+				digest:  digest,
+				indices: []int{i},
+			}
+			x = append(x, sol)
 		}
+	}
+
+	for i := 1; i < k; i++ {
+		sortSolutions(x)
+		xc := []solution{}
+		for len(x) > 0 {
+			j := 1
+
+			for j < len(x) {
+				ha := x[len(x)-1].digest
+				hb := x[len(x)-1-j].digest
+				coll, err := hasCollision(ha, hb, i, collLen)
+				if err != nil {
+					return err
+				}
+				if !coll {
+					break
+				}
+				j++
+			}
+
+			for l := 0; l < j-1; l++ {
+				for m := l + 1; m < j; m++ {
+					a, b := x[len(x)-l], x[len(x)-m]
+					if distinctIndices(a.digest, b.digest) {
+						i, j := 0, 0
+						if a.digest[0] < b.digest[0] {
+							i, j = a.indices[0], b.indices[0]
+						} else {
+							i, j = b.indices[0], a.indices[0]
+						}
+						digest := xor(a.digest, b.digest)
+						indices := []int{i, j}
+						xc = append(xc, solution{digest, indices})
+					}
+				}
+			}
+
+			for j > 0 {
+				x = x[:len(x)-1]
+				j--
+			}
+		}
+		x = xc
 	}
 
 	return nil
 }
-*/
+
+type solutions []solution
+
+func (s solutions) Len() int {
+	return len(s)
+}
+
+func (s solutions) Less(i, j int) bool {
+	x, y := s[i].digest, s[j].digest
+	switch bytes.Compare(x, y) {
+	case -1:
+		return true
+	case 0, 1:
+		return false
+	default:
+		log.Panic("not fail-able with `bytes.Comparable` bounded [-1, 1].")
+		return false
+	}
+}
+
+func (s solutions) Swap(i, j int) {
+	s[j], s[i] = s[i], s[j]
+}
+
+type sortByteArrays [][]byte
+
+func (b sortByteArrays) Len() int {
+	return len(b)
+}
+
+func (b sortByteArrays) Less(i, j int) bool {
+	// bytes package already implements Comparable for []byte.
+	switch bytes.Compare(b[i], b[j]) {
+	case -1:
+		return true
+	case 0, 1:
+		return false
+	default:
+		log.Panic("not fail-able with `bytes.Comparable` bounded [-1, 1].")
+		return false
+	}
+}
+
+func (b sortByteArrays) Swap(i, j int) {
+	b[j], b[i] = b[i], b[j]
+}
+
+func sortSolutions(s []solution) []solution {
+	sort.Sort(solutions(s))
+	return s
+}
 
 /*
 func EquihashSolver(digest hash.Hash, n, k int) ([][]byte, error) {
