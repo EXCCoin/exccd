@@ -364,7 +364,6 @@ type testCountZerosParams struct {
 }
 
 func TestCountZeros(t *testing.T) {
-
 	var paramsSet = []testCountZerosParams{
 		{[]byte{1, 2}, 7},
 		{[]byte{255, 255}, 0},
@@ -376,7 +375,6 @@ func TestCountZeros(t *testing.T) {
 	for _, params := range paramsSet {
 		testCountZeros(t, params)
 	}
-
 }
 
 func testCountZeros(t *testing.T, p testCountZerosParams) {
