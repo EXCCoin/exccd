@@ -3,9 +3,62 @@ package equihash
 import (
 	"encoding/hex"
 	"errors"
+	"sort"
 	"strconv"
 	"testing"
 )
+
+const i = "block header"
+
+var (
+	expandCompressTests = []expandCompressParams{
+		{"ffffffffffffffffffffff", "07ff07ff07ff07ff07ff07ff07ff07ff", 11, 0},
+		{"aaaaad55556aaaab55555aaaaad55556aaaab55555", "155555155555155555155555155555155555155555155555", 21, 0},
+		{"000220000a7ffffe00123022b38226ac19bdf23456", "0000440000291fffff0001230045670089ab00cdef123456", 21, 0},
+		{"cccf333cccf333cccf333cccf333cccf333cccf333cccf333cccf333", "3333333333333333333333333333333333333333333333333333333333333333", 14, 0},
+		{"ffffffffffffffffffffff", "000007ff000007ff000007ff000007ff000007ff000007ff000007ff000007ff", 11, 2},
+	}
+	miningTests = []miningParams{
+		{
+			96, 5, i, 0,
+			{
+				{976, 126621, 100174, 123328, 38477, 105390, 38834, 90500, 6411, 116489, 51107, 129167, 25557, 92292, 38525, 56514, 1110, 98024, 15426, 74455, 3185, 84007, 24328, 36473, 17427, 129451, 27556, 119967, 31704, 62448, 110460, 117894},
+				{1008, 18280, 34711, 57439, 3903, 104059, 81195, 95931, 58336, 118687, 67931, 123026, 64235, 95595, 84355, 122946, 8131, 88988, 45130, 58986, 59899, 78278, 94769, 118158, 25569, 106598, 44224, 96285, 54009, 67246, 85039, 127667},
+				{1278, 107636, 80519, 127719, 19716, 130440, 83752, 121810, 15337, 106305, 96940, 117036, 46903, 101115, 82294, 118709, 4915, 70826, 40826, 79883, 37902, 95324, 101092, 112254, 15536, 68760, 68493, 125640, 67620, 108562, 68035, 93430},
+				{3976, 108868, 80426, 109742, 33354, 55962, 68338, 80112, 26648, 28006, 64679, 130709, 41182, 126811, 56563, 129040, 4013, 80357, 38063, 91241, 30768, 72264, 97338, 124455, 5607, 36901, 67672, 87377, 17841, 66985, 77087, 85291},
+				{5970, 21862, 34861, 102517, 11849, 104563, 91620, 110653, 7619, 52100, 21162, 112513, 74964, 79553, 105558, 127256, 21905, 112672, 81803, 92086, 43695, 97911, 66587, 104119, 29017, 61613, 97690, 106345, 47428, 98460, 53655, 109002},
+			},
+			96, 5, i, 1,
+			{
+				{1911, 96020, 94086, 96830, 7895, 51522, 56142, 62444, 15441, 100732, 48983, 64776, 27781, 85932, 101138, 114362, 4497, 14199, 36249, 41817, 23995, 93888, 35798, 96337, 5530, 82377, 66438, 85247, 39332, 78978, 83015, 123505},
+			},
+		},
+	}
+)
+
+type expandCompressParams struct {
+	in      string
+	out     string
+	bitLen  int
+	bytePad int
+}
+
+type miningParams struct {
+	n      int
+	k      int
+	I      []byte
+	nonce  int
+	digest [][]byte
+}
+
+func (params *miningParams) assertSolutions(t *testing.T, in [][]byte) {
+	sort.Sort(solutions(in))
+	err := solutionsEq(t, in, p.digest)
+	if err != nil {
+		t.Error(err)
+	}
+	return solutionsEq(in, params.digest)
+}
 
 func hashStr(hash []byte) string {
 	return hex.EncodeToString(hash)
@@ -13,6 +66,21 @@ func hashStr(hash []byte) string {
 
 func sliceMemoryEq(a, b []byte) bool {
 	return &a[cap(a)-1] == &b[cap(b)-1]
+}
+
+func solutionsEq(ha, hb [][]byte) error {
+	if len(ha) != len(hb) {
+		return errors.New("ha and hb not same len")
+	}
+	for i, val := range ha {
+		if val != hb[i] {
+			av, bv := strconv.Itoa(int(val)), strconv.Itoa(int(b[i]))
+			is := strconv.Itoa(i)
+			msg := av + " != " + bv + " at " + is
+			return errors.New(msg)
+		}
+	}
+	return nil
 }
 
 func byteSliceEq(a, b []byte) error {
@@ -57,21 +125,6 @@ func testExpandCompressArray(t *testing.T, p expandCompressParams) {
 	if err != nil {
 		t.Error(err)
 	}
-}
-
-type expandCompressParams struct {
-	in      string
-	out     string
-	bitLen  int
-	bytePad int
-}
-
-var expandCompressTests = []expandCompressParams{
-	{"ffffffffffffffffffffff", "07ff07ff07ff07ff07ff07ff07ff07ff", 11, 0},
-	{"aaaaad55556aaaab55555aaaaad55556aaaab55555", "155555155555155555155555155555155555155555155555", 21, 0},
-	{"000220000a7ffffe00123022b38226ac19bdf23456", "0000440000291fffff0001230045670089ab00cdef123456", 21, 0},
-	{"cccf333cccf333cccf333cccf333cccf333cccf333cccf333cccf333", "3333333333333333333333333333333333333333333333333333333333333333", 14, 0},
-	{"ffffffffffffffffffffff", "000007ff000007ff000007ff000007ff000007ff000007ff000007ff000007ff", 11, 2},
 }
 
 func TestExpandCompressArrays(t *testing.T) {
@@ -398,6 +451,63 @@ func TestWriteParams(t *testing.T) {
 	b := writeParams(n, k)
 	exp := []byte{byte(n), 0, 0, 0, byte(k), 0, 0, 0}
 	err := byteSliceEq(b, exp)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestEquihashSolver(t *testing.T) {
+	for _, p := range miningParams {
+		testEquihashSolver(t, p)
+	}
+}
+
+func testEquihashSolver(t *testing.T, p miningParams) {
+	n, k := p.n, p.k
+	size := (512 / n) * n / 8
+	hb := newHashBuilder()
+	err := hb.update(exccPerson(p.n, p.k))
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	err = hn.update(p.I)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	err = hb.Nonce(p.nonce)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	solns, err := gbp(hb, n, k)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	p.assertSolutions(t, solns)
+}
+
+func TestNewHashBuilder(t *testing.T) {
+	n, k, prefix := 20, 9, []byte{0, 1, 2, 3}
+	hb := newHashBuilder(n, k, prefix)
+	if n != hb.n {
+		t.Errorf("%v != %v\n", n, hb.n)
+	}
+	if k != hb.k {
+		t.Errorf("%v != %v\n", k, hb.k)
+	}
+	err := byteSliceEq(prefix, hb.prefix)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestCopyByteSlice(t *testing.T) {
+	a := []byte{1, 2, 3, 4}
+	b := copyByteSlice(a)
+	err := byteSliceEq(a, b)
 	if err != nil {
 		t.Error(err)
 	}
