@@ -33,6 +33,18 @@ const (
 	hashSize = 64
 )
 
+type solution struct {
+	digest  []byte
+	indices []int
+}
+
+type expandCompressParams struct {
+	in      string
+	out     string
+	bitLen  int
+	bytePad int
+}
+
 func validateParams(n, k int) error {
 	if k >= n {
 		return errKLarge
@@ -220,37 +232,54 @@ func newKeyedHash(n, k int) (hash.Hash, error) {
 	return blake2b.New((512/n)*n/8, exccPerson(n, k))
 }
 
-// Equihash computes the hash digest
-func equihash(b []byte) ([]byte, error) {
-	h, err := newHash()
-	if err != nil {
-		return nil, err
-	}
-	return h.Sum(nil), nil
-}
-
 func hashLen(k, collLen int) int {
 	return (k + 1) * int((collLen+7)/8)
 }
 
 type hashBuilder struct {
+	n      int
+	k      int
 	prefix []byte
 }
 
-func (hb *hashBuilder) copy() (hash.Hash, error) {
-	h, err := blake2b.New(hashSize, nil)
-	if err != nil {
-		return nil, err
+func newHashBuilder(n, k int, prefix []byte) hashBuilder {
+	return hashBuilder{n, k, prefix}
+}
+
+func copyByteSlice(in []byte) []byte {
+	out := make([]byte, len(in))
+	for i, val := range in {
+		out[i] = val
 	}
-	err = writeHashStr(h, hb.prefix)
-	if err != nil {
-		return nil, err
-	}
-	return h, nil
+	return out
+}
+
+func (hb *hashBuilder) copy() hashBuilder {
+	return hashBuilder{hb.n, hb.k, copyByteSlice(hb.prefix)}
 }
 
 func (hb *hashBuilder) append(b []byte) {
 	hb.prefix = joinBytes(hb.prefix, b)
+}
+
+func (hb *hashBuilder) writeHashXi(xi int) error {
+	return errors.New("nyi")
+}
+
+func (hb *hashBuilder) writeNonce(nonce int) error {
+	return errors.New("nyi")
+}
+
+func (hb *hashBuilder) digest() ([]byte, error) {
+	h, err := newKeyedHash(hb.n, hb.k)
+	if err != nil {
+		return nil, err
+	}
+	err = writeHashBytes(h, hb.prefix)
+	if err != nil {
+		return nil, err
+	}
+	return h.Sum(nil), nil
 }
 
 func inSlice(b []byte, r, n int) []byte {
@@ -262,16 +291,11 @@ func hashDigest(h hash.Hash) []byte {
 	return h.Sum(nil)
 }
 
-type solution struct {
-	digest  []byte
-	indices []int
-}
-
 func negIndex(s []solution, i int) int {
 	return len(s) - i
 }
 
-func gbp(hb hashBuilder, n, k int) ([][]int, error) {
+func equihash(hb hashBuilder, n, k int) ([][]int, error) {
 	collLen := collisionLen(n, k)
 	hLen := hashLen(k, collLen)
 	indicesPerHash := 512 / n
@@ -281,15 +305,16 @@ func gbp(hb hashBuilder, n, k int) ([][]int, error) {
 	for i := 0; i < pow(collLen+1); i++ {
 		r := i % indicesPerHash
 		if r == 0 {
-			hash, err := hb.copy()
+			copyHB := hb.copy()
+			err := copyHB.writeHashXi(i / indicesPerHash)
 			if err != nil {
 				return nil, err
 			}
-			err = hashXi(hash, i/indicesPerHash)
+			h, err := copyHB.digest()
 			if err != nil {
 				return nil, err
 			}
-			digest, err := expandArray(inSlice(hashDigest(hash), r, n), hLen, collLen, 0)
+			digest, err := expandArray(inSlice(h, r, n), hLen, collLen, 0)
 			sol := solution{
 				digest:  digest,
 				indices: []int{i},
@@ -531,24 +556,19 @@ func mine(n, k, d int) error {
 	h := sha256.New()
 	prevHash := hashDigest(h)
 	var x []int
-
 	for {
-		h, err := newKeyedHash(n, k)
-		if err != nil {
-			return err
-		}
-		err = writeHashBytes(h, prevHash)
-		if err != nil {
-			return err
-		}
+		hb := newHashBuilder(n, k, prevHash)
 		nonce := 0
 		for nonce>>161 == 0 {
-			h := copyHash(h)
-			err = hashNonce(h, nonce)
+			copyHB := hb.copy()
 			if err != nil {
 				return err
 			}
-			solns, err := gbp(h, n, k)
+			err = copyHB.writeNonce(nonce)
+			if err != nil {
+				return err
+			}
+			solns, err := equihash(copyHB, n, k)
 			if err != nil {
 				return err
 			}
@@ -566,7 +586,7 @@ func mine(n, k, d int) error {
 		if x == nil {
 			return errNonce
 		}
-		currHash, err := blockHash(prevHash, nonce, soln)
+		currHash, err := blockHash(prevHash, nonce, x)
 		if err != nil {
 			return err
 		}
