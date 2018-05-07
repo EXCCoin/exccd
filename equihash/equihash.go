@@ -234,27 +234,23 @@ func hashLen(k, collLen int) int {
 }
 
 type hashBuilder struct {
-	digest string
+	prefix []byte
 }
 
 func (hb *hashBuilder) copy() (hash.Hash, error) {
-	h, err := blake2b.New(64, nil)
+	h, err := blake2b.New(hashSize, nil)
 	if err != nil {
 		return nil, err
 	}
-	err = writeHashStr(h, hb.digest)
+	err = writeHashStr(h, hb.prefix)
 	if err != nil {
 		return nil, err
 	}
 	return h, nil
 }
 
-func (hb *hashBuilder) append(s string) {
-	hb.digest += s
-}
-
-func (hb *hashBuilder) build() ([]byte, error) {
-	return equihash([]byte(hb.digest))
+func (hb *hashBuilder) append(b []byte) {
+	hb.prefix = joinBytes(hb.prefix, b)
 }
 
 func inSlice(b []byte, r, n int) []byte {
