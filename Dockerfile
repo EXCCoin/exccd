@@ -1,6 +1,6 @@
 FROM golang:1.10
 
-LABEL description="excd image"
+LABEL description="exccd image"
 LABEL version="1.0"
 LABEL maintainer "team@cryptoxchanger.io"
 

@@ -20,7 +20,7 @@ set -ex
 
 #Default GOVERSION
 GOVERSION=${1:-1.10}
-REPO=excd
+REPO=exccd
 ORG=EXCCoin
 DOCKER_IMAGE_TAG=excc
 DOCKER_REPO=exccoin
