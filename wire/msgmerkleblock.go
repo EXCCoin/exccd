@@ -22,7 +22,7 @@ func maxFlagsPerMerkleBlock(pver uint32) uint32 {
 	return uint32(MaxTxPerTxTree(ProtocolVersion)/8) + 1
 }
 
-// MsgMerkleBlock implements the Message interface and represents a EXCC
+// MsgMerkleBlock implements the Message interface and represents a ExchangeCoin
 // merkleblock message which is used to reset a Bloom filter.
 //
 // This message was not added until protocol version BIP0037Version.
@@ -61,7 +61,7 @@ func (msg *MsgMerkleBlock) AddSTxHash(hash *chainhash.Hash) error {
 	return nil
 }
 
-// BtcDecode decodes r using the Decred protocol encoding into the receiver.
+// BtcDecode decodes r using the ExchangeCoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
 func (msg *MsgMerkleBlock) BtcDecode(r io.Reader, pver uint32) error {
 	err := readBlockHeader(r, pver, &msg.Header)
@@ -131,7 +131,7 @@ func (msg *MsgMerkleBlock) BtcDecode(r io.Reader, pver uint32) error {
 	return err
 }
 
-// BtcEncode encodes the receiver to w using the Decred protocol encoding.
+// BtcEncode encodes the receiver to w using the ExchangeCoin protocol encoding.
 // This is part of the Message interface implementation.
 func (msg *MsgMerkleBlock) BtcEncode(w io.Writer, pver uint32) error {
 	// Read num transaction hashes and limit to max.
@@ -215,7 +215,7 @@ func (msg *MsgMerkleBlock) MaxPayloadLength(pver uint32) uint32 {
 	return MaxBlockPayload
 }
 
-// NewMsgMerkleBlock returns a new Decred merkleblock message that conforms to
+// NewMsgMerkleBlock returns a new ExchangeCoin merkleblock message that conforms to
 // the Message interface.  See MsgMerkleBlock for details.
 func NewMsgMerkleBlock(bh *BlockHeader) *MsgMerkleBlock {
 	return &MsgMerkleBlock{

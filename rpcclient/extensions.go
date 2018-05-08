@@ -1015,7 +1015,7 @@ func (r FutureSessionResult) Receive() (*exccjson.SessionResult, error) {
 //
 // See Session for the blocking version and more details.
 //
-// NOTE: This is a Decred extension.
+// NOTE: This is a ExchangeCoin extension.
 func (c *Client) SessionAsync() FutureSessionResult {
 	// Not supported in HTTP POST mode.
 	if c.config.HTTPPostMode {
@@ -1030,7 +1030,7 @@ func (c *Client) SessionAsync() FutureSessionResult {
 //
 // This RPC requires the client to be running in websocket mode.
 //
-// NOTE: This is a Decred extension.
+// NOTE: This is a ExchangeCoin extension.
 func (c *Client) Session() (*exccjson.SessionResult, error) {
 	return c.SessionAsync().Receive()
 }
@@ -1063,7 +1063,7 @@ func (r FutureTicketFeeInfoResult) Receive() (*exccjson.TicketFeeInfoResult, err
 //
 // See TicketFeeInfo for the blocking version and more details.
 //
-// NOTE: This is a Decred extension.
+// NOTE: This is a ExchangeCoin extension.
 func (c *Client) TicketFeeInfoAsync(blocks *uint32, windows *uint32) FutureTicketFeeInfoResult {
 	// Not supported in HTTP POST mode.
 	if c.config.HTTPPostMode {
@@ -1087,7 +1087,7 @@ func (c *Client) TicketFeeInfoAsync(blocks *uint32, windows *uint32) FutureTicke
 //
 // This RPC requires the client to be running in websocket mode.
 //
-// NOTE: This is a Decred extension.
+// NOTE: This is a ExchangeCoin extension.
 func (c *Client) TicketFeeInfo(blocks *uint32, windows *uint32) (*exccjson.TicketFeeInfoResult, error) {
 	return c.TicketFeeInfoAsync(blocks, windows).Receive()
 }
@@ -1125,7 +1125,7 @@ func (r FutureTicketVWAPResult) Receive() (excutil.Amount, error) {
 //
 // See TicketVWAP for the blocking version and more details.
 //
-// NOTE: This is a Decred extension.
+// NOTE: This is a ExchangeCoin extension.
 func (c *Client) TicketVWAPAsync(start *uint32, end *uint32) FutureTicketVWAPResult {
 	// Not supported in HTTP POST mode.
 	if c.config.HTTPPostMode {
@@ -1140,7 +1140,7 @@ func (c *Client) TicketVWAPAsync(start *uint32, end *uint32) FutureTicketVWAPRes
 //
 // This RPC requires the client to be running in websocket mode.
 //
-// NOTE: This is a Decred extension.
+// NOTE: This is a ExchangeCoin extension.
 func (c *Client) TicketVWAP(start *uint32, end *uint32) (excutil.Amount, error) {
 	return c.TicketVWAPAsync(start, end).Receive()
 }
@@ -1173,7 +1173,7 @@ func (r FutureTxFeeInfoResult) Receive() (*exccjson.TxFeeInfoResult, error) {
 //
 // See TxFeeInfo for the blocking version and more details.
 //
-// NOTE: This is a Decred extension.
+// NOTE: This is a ExchangeCoin extension.
 func (c *Client) TxFeeInfoAsync(blocks *uint32, start *uint32, end *uint32) FutureTxFeeInfoResult {
 	// Not supported in HTTP POST mode.
 	if c.config.HTTPPostMode {
@@ -1188,7 +1188,7 @@ func (c *Client) TxFeeInfoAsync(blocks *uint32, start *uint32, end *uint32) Futu
 //
 // This RPC requires the client to be running in websocket mode.
 //
-// NOTE: This is a Decred extension.
+// NOTE: This is a ExchangeCoin extension.
 func (c *Client) TxFeeInfo(blocks *uint32, start *uint32, end *uint32) (*exccjson.TxFeeInfoResult, error) {
 	return c.TxFeeInfoAsync(blocks, start, end).Receive()
 }

@@ -6,7 +6,7 @@ secp256k1
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd/exccec/secp256k1)
 
 Package exccec implements elliptic curve cryptography needed for working with
-Decred (secp256k1 only for now). It is designed so that it may be used with the
+ExchangeCoin (secp256k1 only for now). It is designed so that it may be used with the
 standard crypto/ecdsa packages provided with go.  A comprehensive suite of test
 is provided to ensure proper functionality.  Package exccec was originally based
 on work from ThePiachu which is licensed under the same terms as Go, but it has

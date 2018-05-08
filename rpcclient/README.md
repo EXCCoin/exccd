@@ -5,9 +5,9 @@ rpcclient
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd/rpcclient)
 
-rpcclient implements a Websocket-enabled Exchangecoin JSON-RPC client package written
+rpcclient implements a Websocket-enabled ExchangeCoin JSON-RPC client package written
 in [Go](http://golang.org/).  It provides a robust and easy to use client for
-interfacing with a Exchangecoin RPC server that uses a exccd compatible Exchangecoin
+interfacing with a ExchangeCoin RPC server that uses a exccd compatible ExchangeCoin
 JSON-RPC API.
 
 ## Status

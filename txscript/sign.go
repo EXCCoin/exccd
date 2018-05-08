@@ -165,7 +165,7 @@ func p2pkSignatureScriptAlt(tx *wire.MsgTx, idx int, subScript []byte,
 // legal to not be able to sign any of the outputs, no error is returned.
 func signMultiSig(tx *wire.MsgTx, idx int, subScript []byte, hashType SigHashType,
 	addresses []excutil.Address, nRequired int, kdb KeyDB) ([]byte, bool) {
-	// No need to add dummy in Decred.
+	// No need to add dummy in ExchangeCoin.
 	builder := NewScriptBuilder()
 	signed := 0
 	for _, addr := range addresses {
@@ -486,7 +486,7 @@ sigLoop:
 		// MultiSigTy, so we just need to hash the full thing.
 		hash, err := calcSignatureHash(pkPops, hashType, tx, idx, nil)
 		if err != nil {
-			// Decred -- is this the right handling for SIGHASH_SINGLE error ?
+			// ExchangeCoin -- is this the right handling for SIGHASH_SINGLE error ?
 			// TODO make sure this doesn't break anything.
 			continue
 		}

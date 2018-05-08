@@ -40,7 +40,7 @@ const (
 	MaxFilterLoadFilterSize = 36000
 )
 
-// MsgFilterLoad implements the Message interface and represents a EXCC
+// MsgFilterLoad implements the Message interface and represents a ExchangeCoin
 // filterload message which is used to reset a Bloom filter.
 //
 // This message was not added until protocol version BIP0037Version.
@@ -51,7 +51,7 @@ type MsgFilterLoad struct {
 	Flags     BloomUpdateType
 }
 
-// BtcDecode decodes r using the Excc protocol encoding into the receiver.
+// BtcDecode decodes r using the ExchangeCoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
 func (msg *MsgFilterLoad) BtcDecode(r io.Reader, pver uint32) error {
 	var err error
@@ -75,7 +75,7 @@ func (msg *MsgFilterLoad) BtcDecode(r io.Reader, pver uint32) error {
 	return nil
 }
 
-// BtcEncode encodes the receiver to w using the Decred protocol encoding.
+// BtcEncode encodes the receiver to w using the ExchangeCoin protocol encoding.
 // This is part of the Message interface implementation.
 func (msg *MsgFilterLoad) BtcEncode(w io.Writer, pver uint32) error {
 	size := len(msg.Filter)
@@ -114,7 +114,7 @@ func (msg *MsgFilterLoad) MaxPayloadLength(pver uint32) uint32 {
 		MaxFilterLoadFilterSize + 9
 }
 
-// NewMsgFilterLoad returns a new Decred filterload message that conforms to
+// NewMsgFilterLoad returns a new ExchangeCoin filterload message that conforms to
 // the Message interface.  See MsgFilterLoad for details.
 func NewMsgFilterLoad(filter []byte, hashFuncs uint32, tweak uint32, flags BloomUpdateType) *MsgFilterLoad {
 	return &MsgFilterLoad{

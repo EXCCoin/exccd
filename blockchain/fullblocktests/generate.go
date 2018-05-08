@@ -1971,7 +1971,7 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 	// NOTE: This section originally came from upstream and applied to the
 	// ability to create two blocks with the same hash that were not
 	// identical through merkle tree tricks in Bitcoin, however, that attack
-	// vector is not possible in Decred since the block size is included in
+	// vector is not possible in ExchangeCoin since the block size is included in
 	// the header and adding an additional duplicate transaction changes the
 	// size and consequently the hash.  The tests are therefore not ported
 	// as they do not apply.
@@ -2007,7 +2007,7 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 	//
 	// NOTE: This section originally came from upstream and applied to the
 	// ability to create coinbase transactions with the same hash, however,
-	// Decred enforces the coinbase includes the block height to which it
+	// ExchangeCoin enforces the coinbase includes the block height to which it
 	// applies, so that condition is not possible.  The tests are therefore
 	// not ported as they do not apply.
 	// ---------------------------------------------------------------------

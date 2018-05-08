@@ -45,7 +45,7 @@ var (
 	// the overhead of creating it multiple times.
 	bigOne = big.NewInt(1)
 
-	// simNetPowLimit is the highest proof of work value a Decred block
+	// simNetPowLimit is the highest proof of work value a ExchangeCoin block
 	// can have for the simulation test network.  It is the value 2^255 - 1.
 	simNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
 
@@ -99,7 +99,7 @@ var (
 	}
 )
 
-// simNetParams defines the network parameters for the simulation test Decred
+// simNetParams defines the network parameters for the simulation test ExchangeCoin
 // network.
 //
 // NOTE: The test generator intentionally does not use the existing definitions
@@ -267,7 +267,7 @@ var simNetParams = &chaincfg.Params{
 	// address generation.
 	HDCoinType: 115, // ASCII for s
 
-	// Decred PoS parameters
+	// ExchangeCoin PoS parameters
 	MinimumStakeDiff:      20000,
 	TicketPoolSize:        64,
 	TicketsPerBlock:       5,
@@ -284,7 +284,7 @@ var simNetParams = &chaincfg.Params{
 	StakeValidationHeight: 16 + (64 * 2), // CoinbaseMaturity + TicketPoolSize*2
 	StakeBaseSigScript:    []byte{0xde, 0xad, 0xbe, 0xef},
 
-	// Decred organization related parameters
+	// ExchangeCoin organization related parameters
 	OrganizationPkScript:        fromHex("a914cbb08d6ca783b533b2c7d24a51fbca92d937bf9987"),
 	OrganizationPkScriptVersion: 0,
 	BlockOneLedger: []*chaincfg.TokenPayout{

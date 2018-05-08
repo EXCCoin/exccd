@@ -22,7 +22,7 @@ var secp = 0
 var edwards = 1
 var secSchnorr = 2
 
-// This example demonstrates creating a script which pays to a Decred address.
+// This example demonstrates creating a script which pays to a ExchangeCoin address.
 // It also prints the created script hex and uses the DisasmString function to
 // display the disassembled script.
 func ExamplePayToAddrScript() {

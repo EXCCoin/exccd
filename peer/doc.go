@@ -4,22 +4,22 @@
 // license that can be found in the LICENSE file.
 
 /*
-Package peer provides a common base for creating and managing Decred network
+Package peer provides a common base for creating and managing ExchangeCoin network
 peers.
 
 Overview
 
 This package builds upon the wire package, which provides the fundamental
-primitives necessary to speak the Decred wire protocol, in order to simplify
+primitives necessary to speak the ExchangeCoin wire protocol, in order to simplify
 the process of creating fully functional peers.  In essence, it provides a
 common base for creating concurrent safe fully validating nodes, Simplified
 Payment Verification (SPV) nodes, proxies, etc.
 
 A quick overview of the major features peer provides are as follows:
 
- - Provides a basic concurrent safe Decred peer for handling EXCC
+ - Provides a basic concurrent safe ExchangeCoin peer for handling ExchangeCoin
    communications via the peer-to-peer protocol
- - Full duplex reading and writing of Decred protocol messages
+ - Full duplex reading and writing of ExchangeCoin protocol messages
  - Automatic handling of the initial handshake process including protocol
    version negotiation
  - Asynchronous message queuing of outbound messages with optional channel for
@@ -29,10 +29,10 @@ A quick overview of the major features peer provides are as follows:
      incoming connections so they have flexibility to establish connections as
      they see fit (proxies, etc)
    - User agent name and version
-   - Decred network
+   - ExchangeCoin network
    - Service support signalling (full nodes, bloom filters, etc)
    - Maximum supported protocol version
-   - Ability to register callbacks for handling Decred protocol messages
+   - Ability to register callbacks for handling ExchangeCoin protocol messages
  - Inventory message batching and send trickling with known inventory detection
    and avoidance
  - Automatic periodic keep-alive pinging and pong responses
@@ -54,8 +54,8 @@ A quick overview of the major features peer provides are as follows:
 Peer Configuration
 
 All peer configuration is handled with the Config struct.  This allows the
-caller to specify things such as the user agent name and version, the EXCC
-network to use, which services it supports, and callbacks to invoke when EXCC
+caller to specify things such as the user agent name and version, the ExchangeCoin
+network to use, which services it supports, and callbacks to invoke when ExchangeCoin
 messages are received.  See the documentation for each field of the Config
 struct for more details.
 
@@ -76,12 +76,12 @@ cleanup has completed.
 
 Callbacks
 
-In order to do anything useful with a peer, it is necessary to react to EXCC
+In order to do anything useful with a peer, it is necessary to react to ExchangeCoin
 messages.  This is accomplished by creating an instance of the MessageListeners
 struct with the callbacks to be invoke specified and setting the Listeners field
 of the Config struct specified when creating a peer to it.
 
-For convenience, a callback hook for all of the currently supported EXCC
+For convenience, a callback hook for all of the currently supported ExchangeCoin
 messages is exposed which receives the peer instance and the concrete message
 type.  In addition, a hook for OnRead is provided so even custom messages types
 for which this package does not directly provide a hook, as long as they

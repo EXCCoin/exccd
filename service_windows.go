@@ -27,7 +27,7 @@ const (
 	svcDisplayName = "Exccd Service"
 
 	// svcDesc is the description of the service.
-	svcDesc = "Downloads and stays synchronized with the Exchangecoin block " +
+	svcDesc = "Downloads and stays synchronized with the ExchangeCoin block " +
 		"chain and provides chain services to applications."
 )
 

@@ -107,8 +107,8 @@ type jsonRequest struct {
 	responseChan   chan *response
 }
 
-// Client represents a Decred RPC client which allows easy access to the
-// various RPC methods available on a Decred RPC server.  Each of the wrapper
+// Client represents a ExchangeCoin RPC client which allows easy access to the
+// various RPC methods available on a ExchangeCoin RPC server.  Each of the wrapper
 // functions handle the details of converting the passed and return types to and
 // from the underlying JSON types which are required for the JSON-RPC
 // invocations

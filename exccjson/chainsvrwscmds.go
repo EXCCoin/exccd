@@ -25,7 +25,7 @@ func NewAuthenticateCmd(username, passphrase string) *AuthenticateCmd {
 }
 
 // OutPoint describes a transaction outpoint that will be marshalled to and
-// from JSON.  Contains Decred addition.
+// from JSON.  Contains ExchangeCoin addition.
 type OutPoint struct {
 	Hash  string `json:"hash"`
 	Tree  int8   `json:"tree"`

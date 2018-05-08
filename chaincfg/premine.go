@@ -3170,7 +3170,7 @@ var BlockOneLedgerTestNet2 = []*TokenPayout{
 }
 
 // BlockOneLedgerSimNet is the block one output ledger for the simulation
-// network. See under "Decred organization related parameters" in params.go
+// network. See under "ExchangeCoin organization related parameters" in params.go
 // for information on how to spend these outputs.
 var BlockOneLedgerSimNet = []*TokenPayout{
 	{"Sshw6S86G2bV6W32cbc7EhtFy8f93rU6pae", 100000 * 1e8},

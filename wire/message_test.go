@@ -24,8 +24,8 @@ import (
 func makeHeader(dcrnet CurrencyNet, command string,
 	payloadLen uint32, checksum uint32) []byte {
 
-	// The length of a Decred message header is 24 bytes.
-	// 4 byte magic number of the Decred network + 12 byte command + 4 byte
+	// The length of a ExchangeCoin message header is 24 bytes.
+	// 4 byte magic number of the ExchangeCoin network + 12 byte command + 4 byte
 	// payload length + 4 byte checksum.
 	buf := make([]byte, 24)
 	binary.LittleEndian.PutUint32(buf, uint32(dcrnet))
@@ -266,7 +266,7 @@ func TestReadMessageWireErrors(t *testing.T) {
 	tests := []struct {
 		buf     []byte      // Wire encoding
 		pver    uint32      // Protocol version for wire encoding
-		dcrnet  CurrencyNet // Decred network for wire encoding
+		dcrnet  CurrencyNet // ExchangeCoin network for wire encoding
 		max     int         // Max size of fixed buffer to induce errors
 		readErr error       // Expected read error
 		bytes   int         // Expected num bytes read
@@ -433,7 +433,7 @@ func TestWriteMessageWireErrors(t *testing.T) {
 	tests := []struct {
 		msg    Message     // Message to encode
 		pver   uint32      // Protocol version for wire encoding
-		dcrnet CurrencyNet // Decred network for wire encoding
+		dcrnet CurrencyNet // ExchangeCoin network for wire encoding
 		max    int         // Max size of fixed buffer to induce errors
 		err    error       // Expected error
 		bytes  int         // Expected num bytes written

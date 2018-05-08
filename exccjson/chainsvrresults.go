@@ -37,7 +37,7 @@ type GetBlockHeaderVerboseResult struct {
 
 // GetBlockVerboseResult models the data from the getblock command when the
 // verbose flag is set.  When the verbose flag is not set, getblock returns a
-// hex-encoded string.  Contains Decred additions.
+// hex-encoded string.  Contains ExchangeCoin additions.
 type GetBlockVerboseResult struct {
 	Hash          string        `json:"hash"`
 	Confirmations int64         `json:"confirmations"`
@@ -450,7 +450,7 @@ type Vout struct {
 }
 
 // GetMiningInfoResult models the data from the getmininginfo command.
-// Contains Decred additions.
+// Contains ExchangeCoin additions.
 type GetMiningInfoResult struct {
 	Blocks           int64   `json:"blocks"`
 	CurrentBlockSize uint64  `json:"currentblocksize"`

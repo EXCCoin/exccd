@@ -87,7 +87,7 @@ const (
 	maxScriptSize = 16384
 
 	// DefaultScriptVersion is the default scripting language version
-	// representing extended Decred script.
+	// representing extended ExchangeCoin script.
 	DefaultScriptVersion = uint16(0)
 )
 

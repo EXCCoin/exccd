@@ -43,7 +43,7 @@ const (
 	NullBlockIndex uint32 = 0xffffffff
 
 	// DefaultPkScriptVersion is the default pkScript version, referring to
-	// extended Decred script.
+	// extended ExchangeCoin script.
 	DefaultPkScriptVersion uint16 = 0x0000
 
 	// TxTreeUnknown is the value returned for a transaction tree that is
@@ -247,7 +247,7 @@ func readScript(r io.Reader, pver uint32, maxAllowed uint32, fieldName string) (
 	return b, nil
 }
 
-// OutPoint defines a Decred data type that is used to track previous
+// OutPoint defines a ExchangeCoin data type that is used to track previous
 // transaction outputs.
 type OutPoint struct {
 	Hash  chainhash.Hash
@@ -255,7 +255,7 @@ type OutPoint struct {
 	Tree  int8
 }
 
-// NewOutPoint returns a new Decred transaction outpoint point with the
+// NewOutPoint returns a new ExchangeCoin transaction outpoint point with the
 // provided hash and index.
 func NewOutPoint(hash *chainhash.Hash, index uint32, tree int8) *OutPoint {
 	return &OutPoint{
@@ -280,7 +280,7 @@ func (o OutPoint) String() string {
 	return string(buf)
 }
 
-// TxIn defines a Decred transaction input.
+// TxIn defines a ExchangeCoin transaction input.
 type TxIn struct {
 	// Non-witness
 	PreviousOutPoint OutPoint
@@ -330,7 +330,7 @@ func (t *TxIn) SerializeSizeWitnessValueSigning() int {
 		len(t.SignatureScript)
 }
 
-// NewTxIn returns a new Decred transaction input with the provided
+// NewTxIn returns a new ExchangeCoin transaction input with the provided
 // previous outpoint point and signature script with a default sequence of
 // MaxTxInSequenceNum.
 func NewTxIn(prevOut *OutPoint, signatureScript []byte) *TxIn {
@@ -344,7 +344,7 @@ func NewTxIn(prevOut *OutPoint, signatureScript []byte) *TxIn {
 	}
 }
 
-// TxOut defines a Decred transaction output.
+// TxOut defines a ExchangeCoin transaction output.
 type TxOut struct {
 	Value    int64
 	Version  uint16
@@ -359,7 +359,7 @@ func (t *TxOut) SerializeSize() int {
 	return 8 + 2 + VarIntSerializeSize(uint64(len(t.PkScript))) + len(t.PkScript)
 }
 
-// NewTxOut returns a new Decred transaction output with the provided
+// NewTxOut returns a new ExchangeCoin transaction output with the provided
 // transaction value and public key script.
 func NewTxOut(value int64, pkScript []byte) *TxOut {
 	return &TxOut{
@@ -369,7 +369,7 @@ func NewTxOut(value int64, pkScript []byte) *TxOut {
 	}
 }
 
-// MsgTx implements the Message interface and represents a Decred tx message.
+// MsgTx implements the Message interface and represents a ExchangeCoin tx message.
 // It is used to deliver transaction information in response to a getdata
 // message (MsgGetData) for a given transaction.
 //
@@ -580,7 +580,7 @@ func writeTxScriptsToMsgTx(msg *MsgTx, totalScriptSize uint64, serType TxSeriali
 	// of runtime overhead that would otherwise be needed to keep track of
 	// millions of small allocations.
 	//
-	// Closures around writing the TxIn and TxOut scripts are used in Decred
+	// Closures around writing the TxIn and TxOut scripts are used in ExchangeCoin
 	// because, depending on the serialization type desired, only input or
 	// output scripts may be required.
 	var offset uint64
@@ -875,7 +875,7 @@ func (msg *MsgTx) decodeWitnessValueSigning(r io.Reader, pver uint32) (uint64, e
 	return totalScriptSize, nil
 }
 
-// BtcDecode decodes r using the Decred protocol encoding into the receiver.
+// BtcDecode decodes r using the ExchangeCoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
 // See Deserialize for decoding transactions stored to disk, such as in a
 // database, as opposed to decoding transactions from the wire.
@@ -973,7 +973,7 @@ func (msg *MsgTx) BtcDecode(r io.Reader, pver uint32) error {
 // Deserialize decodes a transaction from r into the receiver using a format
 // that is suitable for long-term storage such as a database while respecting
 // the Version field in the transaction.  This function differs from BtcDecode
-// in that BtcDecode decodes from the Decred wire protocol as it was sent
+// in that BtcDecode decodes from the ExchangeCoin wire protocol as it was sent
 // across the network.  The wire encoding can technically differ depending on
 // the protocol version and doesn't even really need to match the format of a
 // stored transaction at all.  As of the time this comment was written, the
@@ -1084,7 +1084,7 @@ func (msg *MsgTx) encodeWitnessValueSigning(w io.Writer, pver uint32) error {
 	return nil
 }
 
-// BtcEncode encodes the receiver to w using the Decred protocol encoding.
+// BtcEncode encodes the receiver to w using the ExchangeCoin protocol encoding.
 // This is part of the Message interface implementation.
 // See Serialize for encoding transactions to be stored to disk, such as in a
 // database, as opposed to encoding transactions for the wire.
@@ -1143,7 +1143,7 @@ func (msg *MsgTx) BtcEncode(w io.Writer, pver uint32) error {
 // Serialize encodes the transaction to w using a format that suitable for
 // long-term storage such as a database while respecting the Version field in
 // the transaction.  This function differs from BtcEncode in that BtcEncode
-// encodes the transaction to the Decred wire protocol in order to be sent
+// encodes the transaction to the ExchangeCoin wire protocol in order to be sent
 // across the network.  The wire encoding can technically differ depending on
 // the protocol version and doesn't even really need to match the format of a
 // stored transaction at all.  As of the time this comment was written, the
@@ -1304,7 +1304,7 @@ func (msg *MsgTx) PkScriptLocs() []int {
 	return pkScriptLocs
 }
 
-// NewMsgTx returns a new Decred tx message that conforms to the Message
+// NewMsgTx returns a new ExchangeCoin tx message that conforms to the Message
 // interface.  The return instance has a default version of TxVersion and there
 // are no transaction inputs or outputs.  Also, the lock time is set to zero
 // to indicate the transaction is valid immediately as opposed to some time in
@@ -1339,7 +1339,7 @@ func ReadOutPoint(r io.Reader, pver uint32, version uint16, op *OutPoint) error 
 	return nil
 }
 
-// WriteOutPoint encodes op to the Decred protocol encoding for an OutPoint
+// WriteOutPoint encodes op to the ExchangeCoin protocol encoding for an OutPoint
 // to w.
 func WriteOutPoint(w io.Writer, pver uint32, version uint16, op *OutPoint) error {
 	_, err := w.Write(op.Hash[:])
@@ -1427,7 +1427,7 @@ func readTxInWitnessValueSigning(r io.Reader, pver uint32, version uint16, ti *T
 	return err
 }
 
-// writeTxInPrefixs encodes ti to the Decred protocol encoding for a transaction
+// writeTxInPrefixs encodes ti to the ExchangeCoin protocol encoding for a transaction
 // input (TxIn) prefix to w.
 func writeTxInPrefix(w io.Writer, pver uint32, version uint16, ti *TxIn) error {
 	err := WriteOutPoint(w, pver, version, &ti.PreviousOutPoint)
@@ -1438,7 +1438,7 @@ func writeTxInPrefix(w io.Writer, pver uint32, version uint16, ti *TxIn) error {
 	return binarySerializer.PutUint32(w, littleEndian, ti.Sequence)
 }
 
-// writeTxWitness encodes ti to the Decred protocol encoding for a transaction
+// writeTxWitness encodes ti to the ExchangeCoin protocol encoding for a transaction
 // input (TxIn) witness to w.
 func writeTxInWitness(w io.Writer, pver uint32, version uint16, ti *TxIn) error {
 	// ValueIn.
@@ -1463,14 +1463,14 @@ func writeTxInWitness(w io.Writer, pver uint32, version uint16, ti *TxIn) error 
 	return WriteVarBytes(w, pver, ti.SignatureScript)
 }
 
-// writeTxInWitnessSigning encodes ti to the Decred protocol encoding for a
+// writeTxInWitnessSigning encodes ti to the ExchangeCoin protocol encoding for a
 // transaction input (TxIn) witness to w for signing.
 func writeTxInWitnessSigning(w io.Writer, pver uint32, version uint16, ti *TxIn) error {
 	// Only write the signature script.
 	return WriteVarBytes(w, pver, ti.SignatureScript)
 }
 
-// writeTxInWitnessValueSigning encodes ti to the Decred protocol encoding for a
+// writeTxInWitnessValueSigning encodes ti to the ExchangeCoin protocol encoding for a
 // transaction input (TxIn) witness to w for signing with value included.
 func writeTxInWitnessValueSigning(w io.Writer, pver uint32, version uint16, ti *TxIn) error {
 	// ValueIn.
@@ -1502,7 +1502,7 @@ func readTxOut(r io.Reader, pver uint32, version uint16, to *TxOut) error {
 	return err
 }
 
-// writeTxOut encodes to into the Decred protocol encoding for a transaction
+// writeTxOut encodes to into the ExchangeCoin protocol encoding for a transaction
 // output (TxOut) to w.
 func writeTxOut(w io.Writer, pver uint32, version uint16, to *TxOut) error {
 	err := binarySerializer.PutUint64(w, littleEndian, uint64(to.Value))

@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2013 Conformal Systems LLC <info@conformal.com>
 # Copyright (c) 2016 The Decred Authors
-# Copyright (c) 2016 The Exchangecoin Team
+# Copyright (c) 2016 The ExchangeCoin Team
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above

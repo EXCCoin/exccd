@@ -21,7 +21,7 @@ import (
 
 // This example demonstrates how to create a new chain instance and use
 // ProcessBlock to attempt to attempt add a block to the chain.  As the package
-// overview documentation describes, this includes all of the Decred consensus
+// overview documentation describes, this includes all of the ExchangeCoin consensus
 // rules.  This example intentionally attempts to insert a duplicate genesis
 // block to illustrate how an invalid block is handled.
 func ExampleBlockChain_ProcessBlock() {
@@ -80,7 +80,7 @@ func ExampleBlockChain_ProcessBlock() {
 // which represent the target difficulty to a big integer and display it using
 // the typical hex notation.
 func ExampleCompactToBig() {
-	// Convert the bits from block 300000 in the main Decred block chain.
+	// Convert the bits from block 300000 in the main ExchangeCoin block chain.
 	bits := uint32(419465580)
 	targetDifficulty := blockchain.CompactToBig(bits)
 

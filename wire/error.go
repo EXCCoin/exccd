@@ -11,7 +11,7 @@ import (
 )
 
 // MessageError describes an issue with a message.
-// An example of some potential issues are messages from the wrong EXCC
+// An example of some potential issues are messages from the wrong ExchangeCoin
 // network, invalid commands, mismatched checksums, and exceeding max payloads.
 //
 // This provides a mechanism for the caller to type assert the error to

@@ -79,7 +79,7 @@ func ParseSignature(curve *TwistedEdwardsCurve, sigStr []byte) (*Signature,
 	return parseSig(curve, sigStr, false)
 }
 
-// ParseDERSignature offers a legacy function for plugging into Decred, which
+// ParseDERSignature offers a legacy function for plugging into ExchangeCoin, which
 // is based off btcec.
 func ParseDERSignature(curve *TwistedEdwardsCurve, sigStr []byte) (*Signature,
 	error) {

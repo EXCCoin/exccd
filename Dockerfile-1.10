@@ -1,6 +1,6 @@
 FROM golang:1.10
 
-LABEL description="Exchangecoin golang builder image"
+LABEL description="ExchangeCoin golang builder image"
 LABEL version="1.0"
 LABEL maintainer "dhill@mindcry.org"
 

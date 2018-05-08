@@ -5,7 +5,7 @@
 // license that can be found in the LICENSE file.
 
 /*
-dcrd is a full-node Decred implementation written in Go.
+exccd is a full-node ExchangeCoin implementation written in Go.
 
 The default options are sane for most users.  This means dcrd will work 'out of
 the box' for most users.  However, there are also a wide variety of flags that

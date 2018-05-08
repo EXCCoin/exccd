@@ -20,7 +20,7 @@ storage, and strict checksums in key areas to ensure data integrity.
 ## Feature Overview
 
 - Key/value metadata store
-- Exchangecoin block storage
+- ExchangeCoin block storage
 - Efficient retrieval of block headers and regions (transactions, scripts, etc)
 - Read-only and read-write transactions with both manual and managed modes
 - Nested buckets

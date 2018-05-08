@@ -10,9 +10,9 @@ import (
 	"io"
 )
 
-// MsgPong implements the Message interface and represents a Decred pong
+// MsgPong implements the Message interface and represents a ExchangeCoin pong
 // message which is used primarily to confirm that a connection is still valid
-// in response to a Decred ping message (MsgPing).
+// in response to a ExchangeCoin ping message (MsgPing).
 //
 // This message was not added until protocol versions AFTER BIP0031Version.
 type MsgPong struct {
@@ -21,13 +21,13 @@ type MsgPong struct {
 	Nonce uint64
 }
 
-// BtcDecode decodes r using the Decred protocol encoding into the receiver.
+// BtcDecode decodes r using the ExchangeCoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
 func (msg *MsgPong) BtcDecode(r io.Reader, pver uint32) error {
 	return readElement(r, &msg.Nonce)
 }
 
-// BtcEncode encodes the receiver to w using the Decred protocol encoding.
+// BtcEncode encodes the receiver to w using the ExchangeCoin protocol encoding.
 // This is part of the Message interface implementation.
 func (msg *MsgPong) BtcEncode(w io.Writer, pver uint32) error {
 	return writeElement(w, msg.Nonce)
@@ -50,7 +50,7 @@ func (msg *MsgPong) MaxPayloadLength(pver uint32) uint32 {
 	return plen
 }
 
-// NewMsgPong returns a new Decred pong message that conforms to the Message
+// NewMsgPong returns a new ExchangeCoin pong message that conforms to the Message
 // interface.  See MsgPong for details.
 func NewMsgPong(nonce uint64) *MsgPong {
 	return &MsgPong{

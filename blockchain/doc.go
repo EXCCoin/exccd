@@ -5,12 +5,12 @@
 // license that can be found in the LICENSE file.
 
 /*
-Package blockchain implements Excc block handling and chain selection rules.
+Package blockchain implements ExchangeCoin block handling and chain selection rules.
 
-The Excc block handling and chain selection rules are an integral, and quite
-likely the most important, part of EXCC.  Unfortunately, at the time of
+The ExchangeCoin block handling and chain selection rules are an integral, and quite
+likely the most important, part of ExchangeCoin.  Unfortunately, at the time of
 this writing, these rules are also largely undocumented and had to be
-ascertained from the bitcoind source code.  At its core, Decred is a
+ascertained from the bitcoind source code.  At its core, ExchangeCoin is a
 distributed consensus of which blocks are valid and which ones will comprise the
 main block chain (public ledger) that ultimately determines accepted
 transactions, so it is extremely important that fully validating nodes agree on
@@ -22,13 +22,13 @@ functionality such as rejecting duplicate blocks, ensuring blocks and
 transactions follow all rules, orphan handling, and best chain selection along
 with reorganization.
 
-Since this package does not deal with other Decred specifics such as network
+Since this package does not deal with other ExchangeCoin specifics such as network
 communication or wallets, it provides a notification system which gives the
 caller a high level of flexibility in how they want to react to certain events
 such as orphan blocks which need their parents requested and newly connected
 main chain blocks which might result in wallet updates.
 
-Decred Chain Processing Overview
+ExchangeCoin Chain Processing Overview
 
 Before a block is allowed into the block chain, it must go through an intensive
 series of validation rules.  The following list serves as a general outline of

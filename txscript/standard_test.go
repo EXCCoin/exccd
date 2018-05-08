@@ -613,8 +613,8 @@ func TestPayToAddrScript(t *testing.T) {
 				"f9137f23c2c409273eb16e65 CHECKSIG",
 			nil,
 		},
-		// pay-to-pubkey address on mainnet. for Decred this would
-		// be uncompressed, but standard for Decred is 33 byte
+		// pay-to-pubkey address on mainnet. for ExchangeCoin this would
+		// be uncompressed, but standard for ExchangeCoin is 33 byte
 		// compressed public keys.
 		{
 			p2pkUncompressedMain,
@@ -718,7 +718,7 @@ func TestMultiSigScript(t *testing.T) {
 			txscript.ErrBadNumRequired,
 		},
 		{
-			// By default compressed pubkeys are used in Decred.
+			// By default compressed pubkeys are used in ExchangeCoin.
 			[]*excutil.AddressSecpPubKey{
 				p2pkUncompressedMain.(*excutil.AddressSecpPubKey),
 			},

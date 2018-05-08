@@ -355,7 +355,7 @@ func (k *ExtendedKey) ECPrivKey() (chainec.PrivateKey, error) {
 	return privKey, nil
 }
 
-// Address converts the extended key to a standard Decred pay-to-pubkey-hash
+// Address converts the extended key to a standard ExchangeCoin pay-to-pubkey-hash
 // address for the passed network.
 func (k *ExtendedKey) Address(net *chaincfg.Params) (*excutil.AddressPubKeyHash, error) {
 	pkHash := excutil.Hash160(k.pubKeyBytes())
@@ -404,7 +404,7 @@ func (k *ExtendedKey) String() (string, error) {
 }
 
 // IsForNet returns whether or not the extended key is associated with the
-// passed Decred network.
+// passed ExchangeCoin network.
 func (k *ExtendedKey) IsForNet(net *chaincfg.Params) bool {
 	return bytes.Equal(k.version, net.HDPrivateKeyID[:]) ||
 		bytes.Equal(k.version, net.HDPublicKeyID[:])

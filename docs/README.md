@@ -18,12 +18,12 @@
 5. [Developer Resources](#DeveloperResources)
     1. [Code Contribution Guidelines](#ContributionGuidelines)
     2. [JSON-RPC Reference](#JSONRPCReference)
-    3. [The Decred-related Go Packages](#GoPackages)
+    3. [The ExchangeCoin-related Go Packages](#GoPackages)
 
 <a name="About" />
 
 ### 1. About
-exccd is a full node Decred implementation written in [Go](http://golang.org),
+exccd is a full node ExchangeCoin implementation written in [Go](http://golang.org),
 licensed under the [copyfree](http://www.copyfree.org) ISC License.
 
 This project is currently under active development and is in a Beta state. It is
@@ -198,33 +198,33 @@ information.
     * [RPC Examples](https://github.com/EXCCoin/exccd/tree/master/docs/json_rpc_api.md#ExampleCode)
 <a name="GoPackages" />
 
-* The Decred-related Go Packages:
+* The ExchangeCoin-related Go Packages:
   * [rpcclient](https://github.com/EXCCoin/exccd/tree/master/rpcclient) - Implements a
-    robust and easy to use Websocket-enabled Decred JSON-RPC client
+    robust and easy to use Websocket-enabled ExchangeCoin JSON-RPC client
   * [dcrjson](https://github.com/EXCCoin/exccd/tree/master/dcrjson) - Provides an extensive API
     for the underlying JSON-RPC command and return values
   * [wire](https://github.com/EXCCoin/exccd/tree/master/wire) - Implements the
-    Decred wire protocol
+    ExchangeCoin wire protocol
   * [peer](https://github.com/EXCCoin/exccd/tree/master/peer) -
-    Provides a common base for creating and managing Decred network peers.
+    Provides a common base for creating and managing ExchangeCoin network peers.
   * [blockchain](https://github.com/EXCCoin/exccd/tree/master/blockchain) -
-    Implements Decred block handling and chain selection rules
+    Implements ExchangeCoin block handling and chain selection rules
   * [blockchain/fullblocktests](https://github.com/EXCCoin/exccd/tree/master/blockchain/fullblocktests) -
     Provides a set of block tests for testing the consensus validation rules
   * [txscript](https://github.com/EXCCoin/exccd/tree/master/txscript) -
-    Implements the Decred transaction scripting language
+    Implements the ExchangeCoin transaction scripting language
   * [exccec](https://github.com/EXCCoin/exccd/tree/master/exccec) - Implements
     support for the elliptic curve cryptographic functions needed for the
-    Decred scripts
+    ExchangeCoin scripts
   * [database](https://github.com/EXCCoin/exccd/tree/master/database) -
-    Provides a database interface for the Decred block chain
+    Provides a database interface for the ExchangeCoin block chain
   * [mempool](https://github.com/EXCCoin/exccd/tree/master/mempool) -
-    Package mempool provides a policy-enforced pool of unmined EXCC
+    Package mempool provides a policy-enforced pool of unmined ExchangeCoin
     transactions.
   * [excutil](https://github.com/EXCCoin/exccd/tree/master/excutil) - Provides
-    Decred-specific convenience functions and types
+    ExchangeCoin-specific convenience functions and types
   * [chainhash](https://github.com/EXCCoin/exccd/tree/master/chaincfg/chainhash) -
     Provides a generic hash type and associated functions that allows the
     specific hash algorithm to be abstracted.
   * [connmgr](https://github.com/EXCCoin/exccd/tree/master/connmgr) -
-    Package connmgr implements a generic Decred network connection manager.
+    Package connmgr implements a generic ExchangeCoin network connection manager.

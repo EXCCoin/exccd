@@ -1788,7 +1788,7 @@ func handleGenerate(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 func handleGetAddedNodeInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*exccjson.GetAddedNodeInfoCmd)
 
-	// Retrieve a list of persistent (added) peers from the Decred server
+	// Retrieve a list of persistent (added) peers from the ExchangeCoin server
 	// and filter the list of peers per the specified address (if any).
 	peers := s.server.AddedNodeInfo()
 	if c.Node != nil {
@@ -2813,7 +2813,7 @@ func handleGetBlockTemplateRequest(s *rpcServer, request *exccjson.TemplateReque
 	if !cfg.SimNet && s.server.ConnectedCount() == 0 {
 		return nil, &exccjson.RPCError{
 			Code:    exccjson.ErrRPCClientNotConnected,
-			Message: "Exchangecoin is not connected",
+			Message: "ExchangeCoin is not connected",
 		}
 	}
 
@@ -2822,7 +2822,7 @@ func handleGetBlockTemplateRequest(s *rpcServer, request *exccjson.TemplateReque
 	if currentHeight != 0 && !s.server.blockManager.IsCurrent() {
 		return nil, &exccjson.RPCError{
 			Code:    exccjson.ErrRPCClientInInitialDownload,
-			Message: "Exchangecoin is downloading blocks...",
+			Message: "ExchangeCoin is downloading blocks...",
 		}
 	}
 
@@ -2854,7 +2854,7 @@ func handleGetBlockTemplateRequest(s *rpcServer, request *exccjson.TemplateReque
 // chainErrToGBTErrString converts an error returned from chain to a string
 // which matches the reasons and format described in BIP0022 for rejection
 // reasons.
-// TODO Decred pop in the new errors from blockchain cj
+// TODO ExchangeCoin pop in the new errors from blockchain cj
 func chainErrToGBTErrString(err error) string {
 	// When the passed error is not a RuleError, just return a generic
 	// rejected string with the error text.
@@ -4326,7 +4326,7 @@ func handleGetWork(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (in
 	if !cfg.SimNet && s.server.ConnectedCount() == 0 {
 		return nil, &exccjson.RPCError{
 			Code:    exccjson.ErrRPCClientNotConnected,
-			Message: "Exchangecoin is not connected",
+			Message: "ExchangeCoin is not connected",
 		}
 	}
 
@@ -4335,7 +4335,7 @@ func handleGetWork(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (in
 	if currentHeight != 0 && !s.server.blockManager.IsCurrent() {
 		return nil, &exccjson.RPCError{
 			Code:    exccjson.ErrRPCClientInInitialDownload,
-			Message: "Exchangecoin is downloading blocks...",
+			Message: "ExchangeCoin is downloading blocks...",
 		}
 	}
 
@@ -5716,7 +5716,7 @@ func handleVerifyMessage(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 	// Validate the signature - this just shows that it was valid at all.
 	// we will compare it with the key next.
 	var buf bytes.Buffer
-	wire.WriteVarString(&buf, 0, "Exchangecoin Signed Message:\n")
+	wire.WriteVarString(&buf, 0, "ExchangeCoin Signed Message:\n")
 	wire.WriteVarString(&buf, 0, c.Message)
 	expectedMessageHash := chainhash.HashB(buf.Bytes())
 	pk, wasCompressed, err := chainec.Secp256k1.RecoverCompact(sig,

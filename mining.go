@@ -1054,7 +1054,7 @@ func handleCreatedBlockTemplate(blockTemplate *BlockTemplate, bm *blockManager) 
 //  |  <= policy.BlockMinSize)          |   |
 //   -----------------------------------  --
 //
-// TODO - DECRED
+// TODO - ExchangeCoin
 // We also need to include a stake tx tree that looks like the following:
 //
 //   -----------------------------------  --  --
@@ -1438,7 +1438,7 @@ mempoolLoop:
 		}
 
 		// This isn't very expensive, but we do this check a number of times.
-		// Consider caching this in the mempool in the future. - Decred
+		// Consider caching this in the mempool in the future. - ExchangeCoin
 		numP2SHSigOps, err := blockchain.CountP2SHSigOps(tx, false,
 			isSSGen, blockUtxos)
 		if err != nil {
@@ -1652,7 +1652,7 @@ mempoolLoop:
 			// In the event TxTreeRegular is disabled, we need to remove all tx
 			// in the current block that depend on tx from the TxTreeRegular of
 			// the previous block.
-			// DECRED WARNING: The ideal behaviour should also be that we re-add
+			// ExchangeCoin WARNING: The ideal behaviour should also be that we re-add
 			// all tx that we just removed from the previous block into our
 			// current block template. Right now this code fails to do that;
 			// these tx will then be included in the next block, which isn't
@@ -1755,7 +1755,7 @@ mempoolLoop:
 	// ensure the transaction is not a duplicate transaction (paying the
 	// same value to the same public key address would otherwise be an
 	// identical transaction for block version 1).
-	// Decred: We need to move this downwards because of the requirements
+	// ExchangeCoin: We need to move this downwards because of the requirements
 	// to incorporate voters and potential voters.
 	coinbaseScript := []byte{0x00, 0x00}
 	coinbaseScript = append(coinbaseScript, []byte(coinbaseFlags)...)

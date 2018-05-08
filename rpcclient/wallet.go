@@ -393,7 +393,7 @@ func (r FutureListLockUnspentResult) Receive() ([]*wire.OutPoint, error) {
 		if err != nil {
 			return nil, err
 		}
-		ops[i] = wire.NewOutPoint(sha, input.Vout, input.Tree) // Decred TODO
+		ops[i] = wire.NewOutPoint(sha, input.Vout, input.Tree) // ExchangeCoin TODO
 	}
 
 	return ops, nil
@@ -721,7 +721,7 @@ func (c *Client) SendManyComment(fromAccount string,
 		comment).Receive()
 }
 
-// Begin DECRED FUNCTIONS ---------------------------------------------------------
+// Begin ExchangeCoin FUNCTIONS ---------------------------------------------------------
 //
 // SStx generation RPC call handling
 
@@ -1185,7 +1185,7 @@ func (c *Client) SendToSSRtxComment(fromAccount string,
 	return c.SendToSSRtxCommentAsync(fromAccount, tickethash, comment).Receive()
 }
 
-// END DECRED FUNCTIONS -----------------------------------------------------------
+// END ExchangeCoin FUNCTIONS -----------------------------------------------------------
 
 // *************************
 // Address/Account Functions
@@ -1416,7 +1416,7 @@ func (c *Client) GetRawChangeAddress(account string) (excutil.Address, error) {
 type FutureGetAccountAddressResult chan *response
 
 // Receive waits for the response promised by the future and returns the current
-// Decred address for receiving payments to the specified account.
+// ExchangeCoin address for receiving payments to the specified account.
 func (r FutureGetAccountAddressResult) Receive() (excutil.Address, error) {
 	res, err := receiveFuture(r)
 	if err != nil {
@@ -1443,7 +1443,7 @@ func (c *Client) GetAccountAddressAsync(account string) FutureGetAccountAddressR
 	return c.sendCmd(cmd)
 }
 
-// GetAccountAddress returns the current Decred address for receiving payments
+// GetAccountAddress returns the current ExchangeCoin address for receiving payments
 // to the specified account.
 func (c *Client) GetAccountAddress(account string) (excutil.Address, error) {
 	return c.GetAccountAddressAsync(account).Receive()
@@ -1588,7 +1588,7 @@ func (c *Client) RenameAccount(oldAccount, newAccount string) error {
 type FutureValidateAddressResult chan *response
 
 // Receive waits for the response promised by the future and returns information
-// about the given Decred address.
+// about the given ExchangeCoin address.
 func (r FutureValidateAddressResult) Receive() (*exccjson.ValidateAddressWalletResult, error) {
 	res, err := receiveFuture(r)
 	if err != nil {
@@ -1616,7 +1616,7 @@ func (c *Client) ValidateAddressAsync(address excutil.Address) FutureValidateAdd
 	return c.sendCmd(cmd)
 }
 
-// ValidateAddress returns information about the given Decred address.
+// ValidateAddress returns information about the given ExchangeCoin address.
 func (c *Client) ValidateAddress(address excutil.Address) (*exccjson.ValidateAddressWalletResult, error) {
 	return c.ValidateAddressAsync(address).Receive()
 }

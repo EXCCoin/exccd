@@ -6,11 +6,11 @@ excutil
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
 [![GoDoc](http://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd/excutil)
 
-Package excutil provides EXCC-specific convenience functions and types.
+Package excutil provides ExchangeCoin-specific convenience functions and types.
 A comprehensive suite of tests is provided to ensure proper functionality.
 
-This package was developed for exccd, a full-node implementation of Decred which
-is under active development by Company 0.  Although it was primarily written for
+This package was developed for exccd, a full-node implementation of ExchangeCoin which
+is under active development by ExchangeCoin Team.  Although it was primarily written for
 exccd, this package has intentionally been designed so it can be used as a
 standalone package for any projects needing the functionality provided.
 

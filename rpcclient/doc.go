@@ -5,13 +5,13 @@
 // license that can be found in the LICENSE file.
 
 /*
-Package rpcclient implements a websocket-enabled Decred JSON-RPC client.
+Package rpcclient implements a websocket-enabled ExchangeCoin JSON-RPC client.
 
 Overview
 
 This client provides a robust and easy to use client for interfacing
-with a Decred RPC server that uses a mostly btcd/bitcoin core
-style Decred JSON-RPC API.  This client has been tested with dcrd
+with a ExchangeCoin RPC server that uses a mostly btcd/bitcoin core
+style ExchangeCoin JSON-RPC API.  This client has been tested with dcrd
 (https://github.com/EXCCoin/exccd) and dcrwallet
 (https://github.com/decred/dcrwallet).
 

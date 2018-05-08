@@ -92,7 +92,7 @@ func newBestState(node *blockNode, blockSize, numTxns, totalTxns uint64, medianT
 	}
 }
 
-// BlockChain provides functions for working with the Decred block chain.
+// BlockChain provides functions for working with the ExchangeCoin block chain.
 // It includes functionality such as rejecting duplicate blocks, ensuring blocks
 // follow all rules, orphan handling, checkpoint handling, and best chain
 // selection with reorganization.

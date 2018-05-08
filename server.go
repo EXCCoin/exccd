@@ -62,7 +62,7 @@ const (
 
 var (
 	// userAgentName is the user agent name and is used to help identify
-	// ourselves to other Exchangecoin peers.
+	// ourselves to other ExchangeCoin peers.
 	userAgentName = "exccd"
 
 	// userAgentVersion is the user agent version and is used to help
@@ -70,7 +70,7 @@ var (
 	userAgentVersion = fmt.Sprintf("%d.%d.%d", appMajor, appMinor, appPatch)
 )
 
-// broadcastMsg provides the ability to house a Decred message to be broadcast
+// broadcastMsg provides the ability to house a ExchangeCoin message to be broadcast
 // to all connected peers except specified excluded peers.
 type broadcastMsg struct {
 	message      wire.Message
@@ -140,8 +140,8 @@ func (ps *peerState) forAllPeers(closure func(sp *serverPeer)) {
 	ps.forAllOutboundPeers(closure)
 }
 
-// server provides a Decred server for handling communications to and from
-// Decred peers.
+// server provides a ExchangeCoin server for handling communications to and from
+// ExchangeCoin peers.
 type server struct {
 	// The following variables must only be used atomically.
 	// Putting the uint64s first makes them 64-bit aligned for 32-bit systems.
@@ -2495,7 +2495,7 @@ func standardScriptVerifyFlags(chain *blockchain.BlockChain) (txscript.ScriptFla
 }
 
 // newServer returns a new dcrd server configured to listen on addr for the
-// Decred network type specified by chainParams.  Use start to begin accepting
+// ExchangeCoin network type specified by chainParams.  Use start to begin accepting
 // connections from peers.
 func newServer(listenAddrs []string, db database.DB, chainParams *chaincfg.Params, interrupt <-chan struct{}) (*server, error) {
 	services := defaultServices

@@ -9,7 +9,7 @@ Package dcrjson implements concrete types for marshalling to and from the
 bitcoin JSON-RPC API.  A comprehensive suite of tests is provided to ensure
 proper functionality.
 
-Although this package was primarily written for the EXCC, it has
+Although this package was primarily written for the ExchangeCoin, it has
 intentionally been designed so it can be used as a standalone package for any
 projects needing to marshal to and from bitcoin JSON-RPC requests and responses.
 
@@ -47,7 +47,7 @@ $ go get -u github.com/EXCCoin/exccd/dcrjson
 ## GPG Verification Key
 
 All official release tags are signed by Conformal so users can ensure the code
-has not been tampered with and is coming from the Exchangecoin developers.  To
+has not been tampered with and is coming from the ExchangeCoin developers.  To
 verify the signature perform the following:
 
 - Download the public key from the Conformal website at
