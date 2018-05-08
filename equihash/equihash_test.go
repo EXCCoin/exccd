@@ -4,9 +4,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"hash"
-	"sort"
 	"strconv"
 	"testing"
+)
+
+const (
+	difficulty = 1
 )
 
 var (
@@ -40,23 +43,15 @@ type expandCompressParams struct {
 }
 
 type miningParams struct {
-	n      int
-	k      int
-	I      []byte
-	nonce  int
-	digest [][]int
+	n         int
+	k         int
+	I         []byte
+	nonce     int
+	solutions [][]int
 }
 
-func newMiningParams(n, k int, I []byte, nonce int, digest [][]int) miningParams {
-	return miningParams{n, k, I, nonce, digest}
-}
-
-func (p *miningParams) assertSolutions(t *testing.T, in solutions) {
-	sort.Sort(solutions(in))
-	err := solutionsEq(in, p.digest)
-	if err != nil {
-		t.Error(err)
-	}
+func newMiningParams(n, k int, I []byte, nonce int, solns [][]int) miningParams {
+	return miningParams{n, k, I, nonce, solns}
 }
 
 func hashStr(hash []byte) string {
@@ -67,27 +62,15 @@ func sliceMemoryEq(a, b []byte) bool {
 	return &a[cap(a)-1] == &b[cap(b)-1]
 }
 
-func solutionsEq(s []solution, h [][]int) error {
-	if len(s) != len(h) {
-		return errors.New("ha and hb not same len")
-	}
-	for i, sol := range s {
-		err := solutionEq(sol, h[i])
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+func valErr(x, y string, i int) error {
+	txt := x + " != " + y + " at " + strconv.Itoa(i)
+	return errors.New(txt)
 }
 
-func solutionEq(s solution, h []int) error {
-	for i, av := range s.digest {
-		hv := h[i]
-		if int(av) != hv {
-			av, bv := strconv.Itoa(int(av)), strconv.Itoa(hv)
-			is := strconv.Itoa(i)
-			msg := av + " != " + bv + " at " + is
-			return errors.New(msg)
+func intSliceEq(x, y []int) error {
+	for i, v := range x {
+		if v != y[i] {
+			return valErr(strconv.Itoa(v), strconv.Itoa(y[i]), i)
 		}
 	}
 	return nil
@@ -100,9 +83,7 @@ func byteSliceEq(a, b []byte) error {
 	for i, val := range a {
 		if val != b[i] {
 			av, bv := strconv.Itoa(int(val)), strconv.Itoa(int(b[i]))
-			is := strconv.Itoa(i)
-			msg := av + " != " + bv + " at " + is
-			return errors.New(msg)
+			return valErr(av, bv, i)
 		}
 	}
 	return nil
@@ -394,32 +375,6 @@ func loweralpha() string {
 	return string(p)
 }
 
-/*
-func TestEquihash_Collisions(t *testing.T) {
-	n, k := 200, 8
-	alpha, s, collisions := loweralpha(), "", make(map[string][]string)
-	for i := 0; i < 64; i++ {
-		for _, c := range alpha {
-			s += string(c)
-			hb := newHashBuilder(n, k, nil)
-			solutions, err := equihash(hb, n, k)
-			if err != nil {
-				t.Error(err)
-				t.FailNow()
-			}
-			hs := hashStr(h)
-			keys := collisions[hs]
-			keys = append(keys, s)
-			if len(keys) > 1 {
-				t.Errorf("collision: %v\n", keys)
-				t.FailNow()
-			}
-			collisions[hs] = keys
-		}
-	}
-}
-*/
-
 func TestHashSize(t *testing.T) {
 	if 64 != hashSize {
 		t.Errorf("hashSize should equal 64 and not %v\n", hashSize)
@@ -470,42 +425,40 @@ func TestWriteParams(t *testing.T) {
 	}
 }
 
-/*
-func TestEquihashSolver(t *testing.T) {
+func TestEquihash(t *testing.T) {
 	for _, p := range miningTests {
-		testEquihashSolver(t, p)
+		testEquihash(t, p)
 	}
 }
-*/
 
-/*
-func testEquihashSolver(t *testing.T, p miningParams) {
-	n, k := p.n, p.k
-	size := (512 / n) * n / 8
-	hb := newHashBuilder(n, k, nil)
-	err := hb.update(exccPerson(p.n, p.k))
+func testEquihash(t *testing.T, p miningParams) {
+	nonce := 1
+	hb := testHashBuilder(genesisHash(), nonce)
+	solutions, err := equihash(hb, N, K)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
 	}
-	err = hn.update(p.I)
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-	err = hb.Nonce(p.nonce)
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-	solns, err := gbp(hb, n, k)
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-	p.assertSolutions(t, solns)
+	err = solutionsEq(solutions, p.solutions)
 }
-*/
+
+func solutionsEq(x, y [][]int) error {
+	if len(x) != len(y) {
+		return errors.New("incorrect solutions lengths")
+	}
+	for i, xs := range x {
+		err := solutionEq(xs, y[i])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func solutionEq(x, y []int) error {
+	return intSliceEq(x, y)
+}
+
 func TestNewHashBuilder(t *testing.T) {
 	n, k, prefix := 20, 9, []byte{0, 1, 2, 3}
 	hb := newHashBuilder(n, k, prefix)
@@ -593,13 +546,15 @@ func TestHashBuilder_BadDigest(t *testing.T) {
 	}
 }
 
-func testHashBuilder(prefix []byte) hashBuilder {
-	return newHashBuilder(N, K, prefix)
+func testHashBuilder(prefix []byte, nonce int) hashBuilder {
+	hb := newHashBuilder(N, K, prefix)
+	hb.writeNonce(nonce)
+	return hb
 }
 
 func TestHashBuilder_WriteNonce(t *testing.T) {
-	hb := testHashBuilder(nil)
 	nonce := 1
+	hb := testHashBuilder(nil, nonce)
 	hb.writeNonce(nonce)
 	exp := writeU32(uint32(nonce))
 	err := byteSliceEq(hb.prefix, exp)
@@ -610,17 +565,17 @@ func TestHashBuilder_WriteNonce(t *testing.T) {
 }
 
 func TestHashBuilder_WriteXi(t *testing.T) {
-	hb := testHashBuilder(nil)
+	nonce := 1
+	hb := testHashBuilder(nil, nonce)
 	xi := 1
 	hb.writeHashXi(xi)
-	exp := writeU32(uint32(xi))
+	exp := joinBytes(u32b(nonce), u32b(xi))
 	err := byteSliceEq(hb.prefix, exp)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
 	}
 }
-
 func TestCopyByteSlice(t *testing.T) {
 	a := []byte{1, 2, 3, 4}
 	b := copyByteSlice(a)
@@ -629,7 +584,6 @@ func TestCopyByteSlice(t *testing.T) {
 		t.Error(err)
 	}
 }
-
 func TestExccPerson(t *testing.T) {
 	p := exccPerson(N, K)
 	n := len(personPrefix)
@@ -649,7 +603,6 @@ func TestExccPerson(t *testing.T) {
 		t.FailNow()
 	}
 }
-
 func TestWriteU32(t *testing.T) {
 	exp := []byte{1, 0, 0, 0}
 	err := byteSliceEq(writeU32(1), exp)
@@ -657,7 +610,6 @@ func TestWriteU32(t *testing.T) {
 		t.Error(err)
 	}
 }
-
 func TestPutU32(t *testing.T) {
 	exp, act := []byte{1, 0, 0, 0}, make([]byte, 4)
 	putU32(act, 1)
