@@ -546,14 +546,21 @@ func hashXi(h hash.Hash, xi int) error {
 	return writeHashU32(h, uint32(xi))
 }
 
-func mine(n, k, d int) error {
+func genesisHash() []byte {
+	h := sha256.New()
+	return hashDigest(h)
+}
+
+func u32b(x int) []byte {
+	return writeU32(uint32(x))
+}
+
+func mine(n, k, d int) ([]int, error) {
 	err := validateParams(n, k)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	// genesis
-	h := sha256.New()
-	prevHash := hashDigest(h)
+	prevHash := genesisHash()
 	var x []int
 	for {
 		hb := newHashBuilder(n, k, prevHash)
@@ -561,17 +568,16 @@ func mine(n, k, d int) error {
 		for nonce != math.MaxInt64 {
 			copyHB := hb.copy()
 			if err != nil {
-				return err
+				return nil, err
 			}
 			copyHB.writeNonce(nonce)
 			solns, err := equihash(copyHB, n, k)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			for _, soln := range solns {
 				if difficultyFilter(prevHash, nonce, soln, d) {
-					x = soln
-					break
+					return soln, err
 				}
 			}
 			if x != nil {
@@ -580,11 +586,11 @@ func mine(n, k, d int) error {
 			nonce++
 		}
 		if x == nil {
-			return errNonce
+			return nil, errNonce
 		}
 		currHash, err := blockHash(prevHash, nonce, x)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		prevHash = currHash
 	}
