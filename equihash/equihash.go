@@ -7,6 +7,7 @@ import (
 	"errors"
 	"hash"
 	"log"
+	"math"
 	"sort"
 
 	"golang.org/x/crypto/blake2b"
@@ -554,7 +555,7 @@ func mine(n, k, d int) error {
 	for {
 		hb := newHashBuilder(n, k, prevHash)
 		nonce := 0
-		for nonce>>161 == 0 {
+		for nonce != math.MaxInt64 {
 			copyHB := hb.copy()
 			if err != nil {
 				return err
