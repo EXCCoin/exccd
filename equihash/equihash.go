@@ -38,13 +38,6 @@ type solution struct {
 	indices []int
 }
 
-type expandCompressParams struct {
-	in      string
-	out     string
-	bitLen  int
-	bytePad int
-}
-
 func validateParams(n, k int) error {
 	if k >= n {
 		return errKLarge
@@ -262,12 +255,17 @@ func (hb *hashBuilder) append(b []byte) {
 	hb.prefix = joinBytes(hb.prefix, b)
 }
 
-func (hb *hashBuilder) writeHashXi(xi int) error {
-	return errors.New("nyi")
+func (hb *hashBuilder) writeHashXi(xi int) {
+	hb.writeUint32(uint32(xi))
 }
 
-func (hb *hashBuilder) writeNonce(nonce int) error {
-	return errors.New("nyi")
+func (hb *hashBuilder) writeNonce(nonce int) {
+	hb.writeUint32(uint32(nonce))
+}
+
+func (hb *hashBuilder) writeUint32(x uint32) {
+	b := writeU32(x)
+	hb.append(b)
 }
 
 func (hb *hashBuilder) digest() ([]byte, error) {
@@ -306,10 +304,7 @@ func equihash(hb hashBuilder, n, k int) ([][]int, error) {
 		r := i % indicesPerHash
 		if r == 0 {
 			copyHB := hb.copy()
-			err := copyHB.writeHashXi(i / indicesPerHash)
-			if err != nil {
-				return nil, err
-			}
+			copyHB.writeHashXi(i / indicesPerHash)
 			h, err := copyHB.digest()
 			if err != nil {
 				return nil, err
@@ -564,10 +559,7 @@ func mine(n, k, d int) error {
 			if err != nil {
 				return err
 			}
-			err = copyHB.writeNonce(nonce)
-			if err != nil {
-				return err
-			}
+			copyHB.writeNonce(nonce)
 			solns, err := equihash(copyHB, n, k)
 			if err != nil {
 				return err
@@ -592,6 +584,4 @@ func mine(n, k, d int) error {
 		}
 		prevHash = currHash
 	}
-
-	return nil
 }
