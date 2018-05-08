@@ -11,6 +11,7 @@ import (
 
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
+	"github.com/EXCCoin/exccd/exccutil"
 )
 
 func TestEncodeDecodeWIF(t *testing.T) {
@@ -60,28 +61,28 @@ func TestEncodeDecodeWIF(t *testing.T) {
 				0x94, 0xb9, 0x67, 0x89, 0xb2, 0x1a, 0x03, 0x98})
 		}
 
-		wif1, err := NewWIF(priv1, &chaincfg.MainNetParams, suite)
+		wif1, err := exccutil.NewWIF(priv1, &chaincfg.MainNetParams, suite)
 		if err != nil {
 			t.Fatal(err)
 		}
-		wif2, err := NewWIF(priv2, &chaincfg.TestNet2Params, suite)
+		wif2, err := exccutil.NewWIF(priv2, &chaincfg.TestNet2Params, suite)
 		if err != nil {
 			t.Fatal(err)
 		}
-		wif3, err := NewWIF(priv2, &chaincfg.SimNetParams, suite)
+		wif3, err := exccutil.NewWIF(priv2, &chaincfg.SimNetParams, suite)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		var tests []struct {
-			wif     *WIF
+			wif     *exccutil.WIF
 			encoded string
 		}
 
 		switch suite {
 		case chainec.ECTypeSecp256k1:
 			tests = []struct {
-				wif     *WIF
+				wif     *exccutil.WIF
 				encoded string
 			}{
 				{
@@ -99,7 +100,7 @@ func TestEncodeDecodeWIF(t *testing.T) {
 			}
 		case chainec.ECTypeEdwards:
 			tests = []struct {
-				wif     *WIF
+				wif     *exccutil.WIF
 				encoded string
 			}{
 				{
@@ -117,7 +118,7 @@ func TestEncodeDecodeWIF(t *testing.T) {
 			}
 		case chainec.ECTypeSecSchnorr:
 			tests = []struct {
-				wif     *WIF
+				wif     *exccutil.WIF
 				encoded string
 			}{
 				{
@@ -146,7 +147,7 @@ func TestEncodeDecodeWIF(t *testing.T) {
 
 			// Test that decoding the expected string results in the original WIF
 			// structure.
-			w, err := DecodeWIF(test.encoded)
+			w, err := exccutil.DecodeWIF(test.encoded)
 			if err != nil {
 				t.Error(err)
 				continue
