@@ -9,7 +9,7 @@ Package dcrjson implements concrete types for marshalling to and from the
 bitcoin JSON-RPC API.  A comprehensive suite of tests is provided to ensure
 proper functionality.
 
-Although this package was primarily written for the excc, it has
+Although this package was primarily written for the EXCC, it has
 intentionally been designed so it can be used as a standalone package for any
 projects needing to marshal to and from bitcoin JSON-RPC requests and responses.
 

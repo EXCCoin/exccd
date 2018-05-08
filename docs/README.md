@@ -213,13 +213,13 @@ information.
     Provides a set of block tests for testing the consensus validation rules
   * [txscript](https://github.com/EXCCoin/exccd/tree/master/txscript) -
     Implements the Decred transaction scripting language
-  * [dcrec](https://github.com/EXCCoin/exccd/tree/master/dcrec) - Implements
+  * [exccec](https://github.com/EXCCoin/exccd/tree/master/exccec) - Implements
     support for the elliptic curve cryptographic functions needed for the
     Decred scripts
   * [database](https://github.com/EXCCoin/exccd/tree/master/database) -
     Provides a database interface for the Decred block chain
   * [mempool](https://github.com/EXCCoin/exccd/tree/master/mempool) -
-    Package mempool provides a policy-enforced pool of unmined excc
+    Package mempool provides a policy-enforced pool of unmined EXCC
     transactions.
   * [excutil](https://github.com/EXCCoin/exccd/tree/master/excutil) - Provides
     Decred-specific convenience functions and types

@@ -40,7 +40,7 @@ const (
 	MaxFilterLoadFilterSize = 36000
 )
 
-// MsgFilterLoad implements the Message interface and represents a excc
+// MsgFilterLoad implements the Message interface and represents a EXCC
 // filterload message which is used to reset a Bloom filter.
 //
 // This message was not added until protocol version BIP0037Version.

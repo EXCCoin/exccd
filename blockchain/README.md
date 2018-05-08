@@ -15,7 +15,7 @@ There is an associated blog post about the release of this package
 [here](https://blog.conformal.com/btcchain-the-bitcoin-chain-package-from-bctd/).
 
 This package has intentionally been designed so it can be used as a standalone
-package for any projects needing to handle processing of blocks into the excc
+package for any projects needing to handle processing of blocks into the EXCC
 block chain.
 
 ## Installation and Updating

@@ -5,26 +5,26 @@
 // license that can be found in the LICENSE file.
 
 /*
-Package excutil provides excc-specific convenience functions and types.
+Package excutil provides EXCC-specific convenience functions and types.
 
 Block Overview
 
-A Block defines a excc block that provides easier and more efficient
+A Block defines a EXCC block that provides easier and more efficient
 manipulation of raw wire protocol blocks.  It also memoizes hashes for the
 block and its transactions on their first access so subsequent accesses don't
 have to repeat the relatively expensive hashing operations.
 
 Tx Overview
 
-A Tx defines a excc transaction that provides more efficient manipulation of
+A Tx defines a EXCC transaction that provides more efficient manipulation of
 raw wire protocol transactions.  It memoizes the hash for the transaction on its
 first access so subsequent accesses don't have to repeat the relatively
 expensive hashing operations.
 
 Address Overview
 
-The Address interface provides an abstraction for a excc address.  While the
-most common type is a pay-to-pubkey-hash, excc already supports others and
+The Address interface provides an abstraction for a EXCC address.  While the
+most common type is a pay-to-pubkey-hash, EXCC already supports others and
 may well support more in the future.  This package currently provides
 implementations for the pay-to-pubkey, pay-to-pubkey-hash, and
 pay-to-script-hash address types.

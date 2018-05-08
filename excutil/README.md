@@ -6,7 +6,7 @@ excutil
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
 [![GoDoc](http://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd/excutil)
 
-Package excutil provides excc-specific convenience functions and types.
+Package excutil provides EXCC-specific convenience functions and types.
 A comprehensive suite of tests is provided to ensure proper functionality.
 
 This package was developed for exccd, a full-node implementation of Decred which

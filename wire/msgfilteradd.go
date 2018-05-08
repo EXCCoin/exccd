@@ -18,7 +18,7 @@ const (
 	MaxFilterAddDataSize = 520
 )
 
-// MsgFilterAdd implements the Message interface and represents a excc
+// MsgFilterAdd implements the Message interface and represents a EXCC
 // filteradd message.  It is used to add a data element to an existing Bloom
 // filter.
 //

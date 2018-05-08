@@ -8,7 +8,7 @@
 Package txscript implements the Excc transaction script language.
 
 This package provides data structures and functions to parse and execute
-excc transaction scripts.
+EXCC transaction scripts.
 
 Script Overview
 

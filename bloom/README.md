@@ -3,7 +3,7 @@ bloom
 
 [![GoDoc](http://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd/bloom)
 
-Package bloom provides an API for dealing with excc-specific bloom filters.
+Package bloom provides an API for dealing with EXCC-specific bloom filters.
 
 A comprehensive suite of tests is provided to ensure proper functionality.
 

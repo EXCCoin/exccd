@@ -22,7 +22,7 @@ $ go get -u github.com/EXCCoin/exccd/wire
 
 The Excc protocol consists of exchanging messages between peers. Each message
 is preceded by a header which identifies information about it such as which
-excc network it is a part of, its type, how big it is, and a checksum to
+EXCC network it is a part of, its type, how big it is, and a checksum to
 verify validity. All encoding and decoding of message headers is handled by this
 package.
 

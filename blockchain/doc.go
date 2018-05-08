@@ -8,7 +8,7 @@
 Package blockchain implements Excc block handling and chain selection rules.
 
 The Excc block handling and chain selection rules are an integral, and quite
-likely the most important, part of excc.  Unfortunately, at the time of
+likely the most important, part of EXCC.  Unfortunately, at the time of
 this writing, these rules are also largely undocumented and had to be
 ascertained from the bitcoind source code.  At its core, Decred is a
 distributed consensus of which blocks are valid and which ones will comprise the

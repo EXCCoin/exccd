@@ -17,7 +17,7 @@ import (
 // per message.
 const MaxBlockLocatorsPerMsg = 500
 
-// MsgGetBlocks implements the Message interface and represents a excc
+// MsgGetBlocks implements the Message interface and represents a EXCC
 // getblocks message.  It is used to request a list of blocks starting after the
 // last known hash in the slice of block locator hashes.  The list is returned
 // via an inv message (MsgInv) and is limited by a specific hash to stop at or

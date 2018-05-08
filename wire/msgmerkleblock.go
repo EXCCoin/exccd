@@ -22,7 +22,7 @@ func maxFlagsPerMerkleBlock(pver uint32) uint32 {
 	return uint32(MaxTxPerTxTree(ProtocolVersion)/8) + 1
 }
 
-// MsgMerkleBlock implements the Message interface and represents a excc
+// MsgMerkleBlock implements the Message interface and represents a EXCC
 // merkleblock message which is used to reset a Bloom filter.
 //
 // This message was not added until protocol version BIP0037Version.

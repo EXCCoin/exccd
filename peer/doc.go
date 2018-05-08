@@ -17,7 +17,7 @@ Payment Verification (SPV) nodes, proxies, etc.
 
 A quick overview of the major features peer provides are as follows:
 
- - Provides a basic concurrent safe Decred peer for handling excc
+ - Provides a basic concurrent safe Decred peer for handling EXCC
    communications via the peer-to-peer protocol
  - Full duplex reading and writing of Decred protocol messages
  - Automatic handling of the initial handshake process including protocol
@@ -54,8 +54,8 @@ A quick overview of the major features peer provides are as follows:
 Peer Configuration
 
 All peer configuration is handled with the Config struct.  This allows the
-caller to specify things such as the user agent name and version, the excc
-network to use, which services it supports, and callbacks to invoke when excc
+caller to specify things such as the user agent name and version, the EXCC
+network to use, which services it supports, and callbacks to invoke when EXCC
 messages are received.  See the documentation for each field of the Config
 struct for more details.
 
@@ -76,12 +76,12 @@ cleanup has completed.
 
 Callbacks
 
-In order to do anything useful with a peer, it is necessary to react to excc
+In order to do anything useful with a peer, it is necessary to react to EXCC
 messages.  This is accomplished by creating an instance of the MessageListeners
 struct with the callbacks to be invoke specified and setting the Listeners field
 of the Config struct specified when creating a peer to it.
 
-For convenience, a callback hook for all of the currently supported excc
+For convenience, a callback hook for all of the currently supported EXCC
 messages is exposed which receives the peer instance and the concrete message
 type.  In addition, a hook for OnRead is provided so even custom messages types
 for which this package does not directly provide a hook, as long as they
