@@ -24,7 +24,7 @@ var (
 	errHashEndPos   = errors.New("hash len < end pos")
 	errWriteLen     = errors.New("didn't write full len")
 	errNonce        = errors.New("no valid nonce")
-	emptySlice      = []byte{}
+	errStartEndEq   = errors.New("start and end positions equal")
 	personPrefix    = []byte("excc")
 )
 
@@ -82,13 +82,13 @@ func minSlices(a, b []byte) ([]byte, []byte) {
 // returns empty slice if slices are not same len
 func xor(a, b []byte) []byte {
 	if len(a) == 0 && len(b) == 0 {
-		return emptySlice
+		return nil
 	}
 	if len(a) == 0 {
-		return emptySlice
+		return nil
 	}
 	if len(b) == 0 {
-		return emptySlice
+		return nil
 	}
 	out := make([]byte, len(a))
 	for i, val := range a {
@@ -102,6 +102,9 @@ func hasCollision(ha, hb []byte, i, l int) (bool, error) {
 		return false, errHashLen
 	}
 	start, end := (i-1)*l/8, i*l/8
+	if start == end {
+		return false, errStartEndEq
+	}
 	if len(ha) < start || len(hb) < start {
 		return false, errHashStartPos
 	}
@@ -115,6 +118,15 @@ func hasCollision(ha, hb []byte, i, l int) (bool, error) {
 	return gate, nil
 }
 
+func hasCollision2(a, b []byte, l int) bool {
+	for j := 0; j < l; j++ {
+		if a[j] == b[j] {
+			return false
+		}
+	}
+	return true
+}
+
 func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 	if bitLen < 8 {
 		return nil, errBitLen
@@ -122,19 +134,28 @@ func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 	if wordSize < 7+bitLen {
 		return nil, errBitLen
 	}
+
 	inWidth := (bitLen+7)/8 + bytePad
 	if outLen != bitLen*len(in)/(8*inWidth) {
 		return nil, errLen
 	}
-	out := make([]byte, outLen)
-	bitLenMask := (1 << uint(bitLen)) - 1
-	accBits, accVal, j := 0, 0, 0
 
+	bitLenMask := (1 << uint(bitLen)) - 1
+
+	// The accBits least-significant bits of accVal represent a bit sequence
+	// in big-endian order.
+	accBits, accVal := 0, 0
+
+	out, j := make([]byte, outLen), 0
 	for i := 0; i < outLen; i++ {
+		// When we have fewer than 8 bits left in the accumulator, read the next
+		// input element.
 		if accBits < 8 {
-			accVal = ((accVal << uint(bitLen)) & wordMask) | int(in[j])
+			accVal = accVal << uint(bitLen)
 			for x := bytePad; x < inWidth; x++ {
+				// Apply bit_len_mask across byte boundaries
 				g := int(in[j+x]) & ((bitLenMask >> uint(8*(inWidth-x-1))) & 0xFF)
+				// Big-endian
 				g = g << uint(8*(inWidth-x-1))
 				accVal = accVal | g
 			}
@@ -155,24 +176,33 @@ func expandArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 	if wordSize < 7+bitLen {
 		return nil, errBitLen
 	}
+
 	outWidth := (bitLen+7)/8 + bytePad
 	if outLen != 8*outWidth*len(in)/bitLen {
 		return nil, errOutWidth
 	}
+
 	bitLenMask := (1 << uint(bitLen)) - 1
-	accBits, accVal, j := 0, uint(0), 0
-	out := make([]byte, outLen)
+
+	// The accBits least-significant bits of accVal represent a bit sequence
+	// in big-endian order.
+	accBits, accVal := 0, uint(0)
+
+	out, j := make([]byte, outLen), 0
 	for i := 0; i < len(in); i++ {
-		accVal = ((accVal << 8) & wordMask) | uint(in[i])
+		accVal = (accVal << 8) | uint(in[i])
 		accBits += 8
 
+		// When we have bitLen or more bits in the accumulator, write the next
+		// output element.
 		if accBits >= bitLen {
 			accBits -= bitLen
 			for x := bytePad; x < outWidth; x++ {
+				// Big-endian
 				a := accVal >> (uint(accBits + (8 * (outWidth - x - 1))))
+				// Apply bit_len_mask across byte boundaries
 				b := (bitLenMask >> uint((8 * (outWidth - x - 1)))) & 0xFF
-				v := byte(a) & byte(b)
-				out[j+x] = v
+				out[j+x] = byte(a) & byte(b)
 			}
 			j += outWidth
 		}
@@ -226,10 +256,6 @@ func newHash() (hash.Hash, error) {
 
 func newKeyedHash(n, k int) (hash.Hash, error) {
 	return blake2b.New((512/n)*n/8, exccPerson(n, k))
-}
-
-func hashLen(k, collLen int) int {
-	return (k + 1) * int((collLen+7)/8)
 }
 
 type hashBuilder struct {
@@ -467,7 +493,7 @@ func difficultyFilter(prevHash []byte, nonce int, soln []int, d int) bool {
 		return false
 	}
 	count := countZeros(h)
-	return count >= d
+	return d < count
 }
 
 func blockHash(prevHash []byte, nonce int, soln []int) ([]byte, error) {
@@ -555,17 +581,17 @@ func u32b(x int) []byte {
 	return writeU32(uint32(x))
 }
 
-func mine(n, k, d int) ([]int, error) {
+func mine(n, k, d int) (*miningResult, error) {
 	err := validateParams(n, k)
 	if err != nil {
 		return nil, err
 	}
 	prevHash := genesisHash()
-	var x []int
+	var solution []int
 	for {
 		hb := newHashBuilder(n, k, prevHash)
 		nonce := 0
-		for nonce != math.MaxInt64 {
+		for nonce != math.MaxInt32 {
 			copyHB := hb.copy()
 			if err != nil {
 				return nil, err
@@ -575,23 +601,95 @@ func mine(n, k, d int) ([]int, error) {
 			if err != nil {
 				return nil, err
 			}
-			for _, soln := range solns {
-				if difficultyFilter(prevHash, nonce, soln, d) {
-					return soln, err
+			for _, s := range solns {
+				if difficultyFilter(prevHash, nonce, s, d) {
+					solution = s
+					break
 				}
 			}
-			if x != nil {
+			if solution != nil {
 				break
 			}
 			nonce++
 		}
-		if x == nil {
-			return nil, errNonce
-		}
-		currHash, err := blockHash(prevHash, nonce, x)
+
+		currHash, err := blockHash(prevHash, nonce, solution)
 		if err != nil {
 			return nil, err
 		}
 		prevHash = currHash
 	}
+}
+
+type miningResult struct {
+	prevHash    []byte
+	currentHash []byte
+	nonce       int
+}
+
+type hashKey struct {
+	digest     []byte
+	lenIndices int
+}
+
+func collisionBitLen(n, k int) int {
+	return n / (k + 1)
+}
+
+func collisionByteLen(n, k int) int {
+	return (collisionBitLen(n, k) + 7) / 8
+}
+
+func hashLen(n, k int) int {
+	return (k + 1) * collisionByteLen(n, k)
+}
+
+func indicesPerHashOutput(n int) int {
+	return 512 / n
+}
+
+func hashOutput(n int) int {
+	return indicesPerHashOutput(n) * n / 8
+}
+
+func stepRow(in []byte, n, k, hashLen int) (hashKey, error) {
+	bitLen, bytePad := collisionBitLen(n, k), 0
+	digest, err := expandArray(in, hashLen, bitLen, bytePad)
+	if err != nil {
+		return hashKey{}, err
+	}
+	return hashKey{digest, 0}, nil
+}
+
+func generateHashKey(n, k, i int) (hashKey, error) {
+	hashLen := hashOutput(n)
+	h, err := blake2b.New(hashLen, nil)
+	if err != nil {
+		return hashKey{}, err
+	}
+	err = writeHashU32(h, uint32(i))
+	if err != nil {
+		return hashKey{}, err
+	}
+	digest := hashDigest(h)
+	return hashKey{digest, g}, nil
+}
+
+func generateHashList(n, k int) []hashKey {
+	initSize := 1 << uint(collisionBitLen(n, k)+1)
+	hashLen := hashLen(n, k)
+	hashKeys := make([]hashKey, 0, initSize)
+	for g := 0; len(hashKeys) < initSize; g++ {
+		hashKey := generateHashKey(n, k, g)
+		hashKeys = append(hashKeys, hashKey)
+	}
+	return hashKeys
+}
+
+func solve(n, k int) (bool, error) {
+	hashes, err := generateHashList(n, k)
+	if err != nil {
+		return false, err
+	}
+	return false, nil
 }
