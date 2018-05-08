@@ -304,7 +304,7 @@ out:
 		m.submitBlockLock.Lock()
 		time.Sleep(100 * time.Millisecond)
 
-		// Hacks to make dcr work with ExchangeCoin PoC (simnet only)
+		// Hacks to make exccd work with ExchangeCoin PoC (simnet only)
 		// TODO Remove before production.
 		if cfg.SimNet {
 			_, curHeight := m.server.blockManager.chainState.Best()

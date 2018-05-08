@@ -13,7 +13,7 @@ import (
 
 // Note: All test data is taken from the Bitcoin blockchain.  This data is
 // intentionally unmodified since it would be an unnecessary difference between
-// the dcrd and btcd codebases.
+// the exccd and btcd codebases.
 
 // mainNetGenesisHash is the hash of the first block in the block chain for the
 // main network (genesis block).

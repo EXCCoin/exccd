@@ -175,15 +175,7 @@ information.
 <a name="ContactIRC" />
 
 **4.1 IRC**<br />
-* [irc.freenode.net](irc://irc.freenode.net), channel #dcrd
-
-<a name="MailingLists" />
-
-**4.2 Mailing Lists**<br />
-* <a href="mailto:dcrd+subscribe@opensource.conformal.com">dcrd</a>: discussion
-  of dcrd and its packages.
-* <a href="mailto:dcrd-commits+subscribe@opensource.conformal.com">dcrd-commits</a>:
-  readonly mail-out of source code changes.
+* [irc.freenode.net](irc://irc.freenode.net), channel #exccd
 
 <a name="DeveloperResources" />
 

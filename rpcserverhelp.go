@@ -809,7 +809,7 @@ var helpDescsEnUS = map[string]string{
 	// -------- ExchangeCoin-specific help --------
 
 	// EstimateFee help.
-	"estimatefee--synopsis": "Returns the estimated fee in dcr/kb.",
+	"estimatefee--synopsis": "Returns the estimated fee in EXCC/kb.",
 	"estimatefee-numblocks": "(unused)",
 	"estimatefee--result0":  "Estimated fee.",
 

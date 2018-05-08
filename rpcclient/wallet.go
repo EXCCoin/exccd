@@ -2776,7 +2776,7 @@ func (c *Client) GenerateVote(blockHash *chainhash.Hash, height int64, sstxHash 
 	return c.GenerateVoteAsync(blockHash, height, sstxHash, voteBits, voteBitsExt).Receive()
 }
 
-// NOTE: While getinfo is implemented here (in wallet.go), a dcrd chain server
+// NOTE: While getinfo is implemented here (in wallet.go), a exccd chain server
 // will respond to getinfo requests as well, excluding any wallet information.
 
 // FutureGetInfoResult is a future promise to deliver the result of a

@@ -69,7 +69,7 @@ func validDbType(dbType string) bool {
 }
 
 // netName returns the name used when referring to a bitcoin network.  At the
-// time of writing, dcrd currently places blocks for testnet version 2 in the
+// time of writing, exccd currently places blocks for testnet version 2 in the
 // data and log directory "testnet2", which does not match the Name field of the
 // chaincfg parameters.  This function can be used to override this directory name
 // as "testnet2" when the passed active network matches wire.TestNet2.

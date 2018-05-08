@@ -6,7 +6,6 @@
 
 # Databases
 exccd.db
-dcrd.db
 *-shm
 *-wal
 

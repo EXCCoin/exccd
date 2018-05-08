@@ -337,17 +337,17 @@ func loadConfig() (*config, []string, error) {
 }
 
 // createDefaultConfig creates a basic config file at the given destination path.
-// For this it tries to read the dcrd config file at its default path, and extract
+// For this it tries to read the exccd config file at its default path, and extract
 // the RPC user and password from it.
 func createDefaultConfigFile(destinationPath string) error {
-	// Nothing to do when there is no existing dcrd conf file at the default
+	// Nothing to do when there is no existing exccd conf file at the default
 	// path to extract the details from.
 	exccdConfigPath := filepath.Join(exccdHomeDir, "exccd.conf")
 	if !fileExists(exccdConfigPath) {
 		return nil
 	}
 
-	// Read dcrd.conf from its default path
+	// Read exccd.conf from its default path
 	exccdConfigFile, err := os.Open(exccdConfigPath)
 	if err != nil {
 		return err

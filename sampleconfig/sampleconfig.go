@@ -5,7 +5,7 @@
 
 package sampleconfig
 
-// FileContents is a string containing the commented example config for dcrd.
+// FileContents is a string containing the commented example config for exccd.
 const FileContents = `[Application Options]
 
 ; ------------------------------------------------------------------------------

@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	// blockDbNamePrefix is the prefix for the dcrd block database.
+	// blockDbNamePrefix is the prefix for the exccd block database.
 	blockDbNamePrefix = "blocks"
 )
 

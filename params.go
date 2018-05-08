@@ -24,9 +24,9 @@ type params struct {
 
 // mainNetParams contains parameters specific to the main network
 // (wire.MainNet).  NOTE: The RPC port is intentionally different than the
-// reference implementation because dcrd does not handle wallet requests.  The
+// reference implementation because exccd does not handle wallet requests.  The
 // separate wallet process listens on the well-known port and forwards requests
-// it does not handle on to dcrd.  This approach allows the wallet process
+// it does not handle on to exccd.  This approach allows the wallet process
 // to emulate the full reference implementation RPC API.
 var mainNetParams = params{
 	Params:  &chaincfg.MainNetParams,
@@ -48,7 +48,7 @@ var simNetParams = params{
 }
 
 // netName returns the name used when referring to a ExchangeCoin network.  At the
-// time of writing, dcrd currently places blocks for testnet version 0 in the
+// time of writing, exccd currently places blocks for testnet version 0 in the
 // data and log directory "testnet", which does not match the Name field of the
 // chaincfg parameters.  This function can be used to override this directory name
 // as "testnet2" when the passed active network matches wire.TestNet2.

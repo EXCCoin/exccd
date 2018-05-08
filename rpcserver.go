@@ -243,7 +243,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 	"version":               handleVersion,
 }
 
-// list of commands that we recognize, but for which dcrd has no support because
+// list of commands that we recognize, but for which exccd has no support because
 // it lacks support for wallet functionality. For these commands the user
 // should ask a connected instance of dcrwallet.
 var rpcAskWallet = map[string]struct{}{

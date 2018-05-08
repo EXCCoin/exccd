@@ -164,7 +164,7 @@ var (
 	}
 )
 
-// Errors that are specific to dcrd.
+// Errors that are specific to exccd.
 var (
 	ErrNoWallet = Error{
 		Code:    -1,
