@@ -25,10 +25,12 @@ var (
 	errWriteLen     = errors.New("didn't write full len")
 	errNonce        = errors.New("no valid nonce")
 	emptySlice      = []byte{}
-	person          = []byte("excc")
+	personPrefix    = []byte("excc")
 )
 
 const (
+	N        = 96
+	K        = 5
 	wordSize = 32
 	wordMask = (1 << wordSize) - 1
 	hashSize = 64
@@ -528,8 +530,9 @@ func joinBytes(x, y []byte) []byte {
 	return b
 }
 
+//TODO(woj)
 func exccPerson(n, k int) []byte {
-	return joinBytes(person, writeParams(n, k))
+	return joinBytes(personPrefix, writeParams(n, k))
 }
 
 func writeParams(n, k int) []byte {
