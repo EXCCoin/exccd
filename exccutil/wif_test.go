@@ -4,14 +4,13 @@
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
-package excutil_test
+package exccutil_test
 
 import (
 	"testing"
 
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
-	. "github.com/EXCCoin/exccd/excutil"
 )
 
 func TestEncodeDecodeWIF(t *testing.T) {

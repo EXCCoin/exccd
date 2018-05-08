@@ -28,7 +28,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/connmgr"
 	"github.com/EXCCoin/exccd/database"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/gcs"
 	"github.com/EXCCoin/exccd/gcs/blockcf"
 	"github.com/EXCCoin/exccd/mempool"
@@ -533,9 +533,9 @@ func (sp *serverPeer) OnTx(p *peer.Peer, msg *wire.MsgTx) {
 	}
 
 	// Add the transaction to the known inventory for the peer.
-	// Convert the raw MsgTx to a excutil.Tx which provides some convenience
+	// Convert the raw MsgTx to a exccutil.Tx which provides some convenience
 	// methods and things such as hash caching.
-	tx := excutil.NewTx(msg)
+	tx := exccutil.NewTx(msg)
 	iv := wire.NewInvVect(wire.InvTypeTx, tx.Hash())
 	p.AddKnownInventory(iv)
 
@@ -551,9 +551,9 @@ func (sp *serverPeer) OnTx(p *peer.Peer, msg *wire.MsgTx) {
 // OnBlock is invoked when a peer receives a block wire message.  It blocks
 // until the network block has been fully processed.
 func (sp *serverPeer) OnBlock(p *peer.Peer, msg *wire.MsgBlock, buf []byte) {
-	// Convert the raw MsgBlock to a excutil.Block which provides some
+	// Convert the raw MsgBlock to a exccutil.Block which provides some
 	// convenience methods and things such as hash caching.
-	block := excutil.NewBlockFromBlockAndBytes(msg, buf)
+	block := exccutil.NewBlockFromBlockAndBytes(msg, buf)
 
 	// Add the block to the known inventory for the peer.
 	iv := wire.NewInvVect(wire.InvTypeBlock, block.Hash())
@@ -1329,7 +1329,7 @@ func (s *server) RemoveRebroadcastInventory(iv *wire.InvVect) {
 // both websocket and getblocktemplate long poll clients of the passed
 // transactions.  This function should be called whenever new transactions
 // are added to the mempool.
-func (s *server) AnnounceNewTransactions(newTxs []*excutil.Tx) {
+func (s *server) AnnounceNewTransactions(newTxs []*exccutil.Tx) {
 	// Generate and relay inventory vectors for all newly accepted
 	// transactions into the memory pool due to the original being
 	// accepted.
@@ -1660,7 +1660,7 @@ func (s *server) handleRelayInvMsg(state *peerState, msg relayMsg) {
 			// Don't relay the transaction if there is a bloom
 			// filter loaded and the transaction doesn't match it.
 			if sp.filter.IsLoaded() {
-				tx, ok := msg.data.(*excutil.Tx)
+				tx, ok := msg.data.(*exccutil.Tx)
 				if !ok {
 					peerLog.Warnf("Underlying data for tx" +
 						" inv relay is not a transaction")

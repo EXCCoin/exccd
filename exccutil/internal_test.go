@@ -11,7 +11,7 @@ cases which are either not possible or can't reliably be tested via the public
 interface. The functions are only exported while the tests are being run.
 */
 
-package excutil
+package exccutil
 
 import (
 	"github.com/EXCCoin/exccd/chaincfg/chainec"

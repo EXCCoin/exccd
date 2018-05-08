@@ -19,7 +19,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/exccec/secp256k1"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
 )
@@ -51,7 +51,7 @@ var (
 
 	// lowFee is a single atom and exists to make the test code more
 	// readable.
-	lowFee = excutil.Amount(1)
+	lowFee = exccutil.Amount(1)
 )
 
 // TestInstance is an interface that describes a specific test instance returned
@@ -150,7 +150,7 @@ func (b RejectedNonCanonicalBlock) FullBlockTestInstance() {}
 // payToScriptHashScript returns a standard pay-to-script-hash for the provided
 // redeem script.
 func payToScriptHashScript(redeemScript []byte) []byte {
-	redeemScriptHash := excutil.Hash160(redeemScript)
+	redeemScriptHash := exccutil.Hash160(redeemScript)
 	script, err := txscript.NewScriptBuilder().
 		AddOp(txscript.OP_HASH160).AddData(redeemScriptHash).
 		AddOp(txscript.OP_EQUAL).Script()
@@ -208,7 +208,7 @@ func standardCoinbaseOpReturnScript(blockHeight uint32) []byte {
 // additionalCoinbasePoW returns a function that itself takes a block and
 // modifies it by adding the provided amount to the first proof-of-work coinbase
 // subsidy.
-func additionalCoinbasePoW(amount excutil.Amount) func(*wire.MsgBlock) {
+func additionalCoinbasePoW(amount exccutil.Amount) func(*wire.MsgBlock) {
 	return func(b *wire.MsgBlock) {
 		// Increase the first proof-of-work coinbase subsidy by the
 		// provided amount.
@@ -218,7 +218,7 @@ func additionalCoinbasePoW(amount excutil.Amount) func(*wire.MsgBlock) {
 
 // additionalCoinbaseDev returns a function that itself takes a block and
 // modifies it by adding the provided amount to the coinbase developer subsidy.
-func additionalCoinbaseDev(amount excutil.Amount) func(*wire.MsgBlock) {
+func additionalCoinbaseDev(amount exccutil.Amount) func(*wire.MsgBlock) {
 	return func(b *wire.MsgBlock) {
 		// Increase the first proof-of-work coinbase subsidy by the
 		// provided amount.
@@ -231,7 +231,7 @@ func additionalCoinbaseDev(amount excutil.Amount) func(*wire.MsgBlock) {
 //
 // NOTE: The coinbase value is NOT updated to reflect the additional fee.  Use
 // 'additionalCoinbasePoW' for that purpose.
-func additionalSpendFee(fee excutil.Amount) func(*wire.MsgBlock) {
+func additionalSpendFee(fee exccutil.Amount) func(*wire.MsgBlock) {
 	return func(b *wire.MsgBlock) {
 		// Increase the fee of the spending transaction by reducing the
 		// amount paid,
@@ -817,8 +817,8 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 			_, addrs, _, _ := txscript.ExtractPkScriptAddrs(
 				g.Params().OrganizationPkScriptVersion,
 				taxOutput.PkScript, g.Params())
-			p2shTaxAddr := addrs[0].(*excutil.AddressScriptHash)
-			p2pkhTaxAddr, err := excutil.NewAddressPubKeyHash(
+			p2shTaxAddr := addrs[0].(*exccutil.AddressScriptHash)
+			p2pkhTaxAddr, err := exccutil.NewAddressPubKeyHash(
 				p2shTaxAddr.Hash160()[:], g.Params(),
 				chainec.ECTypeSecp256k1)
 			if err != nil {
@@ -1300,8 +1300,8 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 	//                 \-> bv15(9)
 	g.SetTip("bsl5")
 	g.NextBlock("bv15", outs[9], ticketOuts[9], func(b *wire.MsgBlock) {
-		ticketFee := excutil.Amount(2)
-		ticketPrice := excutil.Amount(g.CalcNextRequiredStakeDifficulty())
+		ticketFee := exccutil.Amount(2)
+		ticketPrice := exccutil.Amount(g.CalcNextRequiredStakeDifficulty())
 		ticketPrice--
 		b.STransactions[5].TxOut[1].PkScript =
 			chaingen.PurchaseCommitmentScript(g.P2shOpTrueAddr(),
@@ -2253,7 +2253,7 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 	//                  \-> bcb9(19)
 	g.SetTip("bsb2")
 	g.NextBlock("bcb9", outs[19], ticketOuts[19], func(b *wire.MsgBlock) {
-		b.Transactions[1].TxOut[0].Value = excutil.MaxAmount + 1
+		b.Transactions[1].TxOut[0].Value = exccutil.MaxAmount + 1
 	})
 	rejected(blockchain.ErrBadTxOutValue)
 
@@ -2264,7 +2264,7 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 	//                  \-> bcb10(19)
 	g.SetTip("bsb2")
 	g.NextBlock("bcb10", outs[19], ticketOuts[19], func(b *wire.MsgBlock) {
-		b.Transactions[1].TxOut[0].Value = excutil.MaxAmount
+		b.Transactions[1].TxOut[0].Value = exccutil.MaxAmount
 		b.Transactions[1].TxOut[1].Value = 1
 	})
 	rejected(blockchain.ErrBadTxOutValue)
@@ -2448,7 +2448,7 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 		// each contain an OP_RETURN output.
 		//
 		// NOTE: The CreateSpendTx func adds the OP_RETURN output.
-		zeroFee := excutil.Amount(0)
+		zeroFee := exccutil.Amount(0)
 		for i := uint32(0); i < numAdditionalOutputs; i++ {
 			spend := chaingen.MakeSpendableOut(b, 1, i+2)
 			tx := g.CreateSpendTx(&spend, zeroFee)
@@ -2489,7 +2489,7 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 	//                  \-> bor2(20) -> bor3(21)           \-> bor6(bor1.tx[5].out[1])
 	g.NextBlock("bor6", nil, ticketOuts[23], func(b *wire.MsgBlock) {
 		// An OP_RETURN output doesn't have any value so use a fee of 0.
-		zeroFee := excutil.Amount(0)
+		zeroFee := exccutil.Amount(0)
 		tx := g.CreateSpendTx(&bor1OpReturnOut, zeroFee)
 		b.AddTransaction(tx)
 	})

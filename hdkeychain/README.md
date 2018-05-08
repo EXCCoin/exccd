@@ -24,7 +24,7 @@ report.
   keys
 - Support for custom networks by registering them with chaincfg
 - Obtaining the underlying EC pubkeys, EC privkeys, and associated ExchangeCoin
-  addresses ties in seamlessly with existing btcec and excutil types which
+  addresses ties in seamlessly with existing btcec and exccutil types which
   provide powerful tools for working with them to do things like sign
   transations and generate payment scripts
 - Uses the btcec package which is highly optimized for secp256k1

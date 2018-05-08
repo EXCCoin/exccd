@@ -44,7 +44,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/database"
 	"github.com/EXCCoin/exccd/exccjson"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/mempool"
 	"github.com/EXCCoin/exccd/mining"
 	"github.com/EXCCoin/exccd/txscript"
@@ -656,13 +656,13 @@ func handleCreateRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan 
 	// some validity checks.
 	for encodedAddr, amount := range c.Amounts {
 		// Ensure amount is in the valid range for monetary amounts.
-		if amount <= 0 || amount > excutil.MaxAmount {
+		if amount <= 0 || amount > exccutil.MaxAmount {
 			return nil, rpcInvalidError("Invalid amount: 0 >= %v "+
-				"> %v", amount, excutil.MaxAmount)
+				"> %v", amount, exccutil.MaxAmount)
 		}
 
 		// Decode the provided address.
-		addr, err := excutil.DecodeAddress(encodedAddr)
+		addr, err := exccutil.DecodeAddress(encodedAddr)
 		if err != nil {
 			return nil, rpcAddressKeyError("Could not decode "+
 				"address: %v", err)
@@ -672,8 +672,8 @@ func handleCreateRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan 
 		// the network encoded with the address matches the network the
 		// server is currently on.
 		switch addr.(type) {
-		case *excutil.AddressPubKeyHash:
-		case *excutil.AddressScriptHash:
+		case *exccutil.AddressPubKeyHash:
+		case *exccutil.AddressScriptHash:
 		default:
 			return nil, rpcAddressKeyError("Invalid type: %T", addr)
 		}
@@ -689,7 +689,7 @@ func handleCreateRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan 
 				"Pay to address script")
 		}
 
-		atomic, err := excutil.NewAmount(amount)
+		atomic, err := exccutil.NewAmount(amount)
 		if err != nil {
 			return nil, rpcInternalError(err.Error(),
 				"New amount")
@@ -760,14 +760,14 @@ func handleCreateRawSStx(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 
 	for encodedAddr, amount := range c.Amount {
 		// Ensure amount is in the valid range for monetary amounts.
-		if amount <= 0 || amount > excutil.MaxAmount {
+		if amount <= 0 || amount > exccutil.MaxAmount {
 			return nil, rpcInvalidError("Invalid SSTx commitment "+
 				"amount: 0 >= %v > %v", amount,
-				excutil.MaxAmount)
+				exccutil.MaxAmount)
 		}
 
 		// Decode the provided address.
-		addr, err := excutil.DecodeAddress(encodedAddr)
+		addr, err := exccutil.DecodeAddress(encodedAddr)
 		if err != nil {
 			return nil, rpcAddressKeyError("Could not decode "+
 				"address: %v", err)
@@ -777,7 +777,7 @@ func handleCreateRawSStx(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 		// the network encoded with the address matches the network the
 		// server is currently on.
 		switch addr.(type) {
-		case *excutil.AddressPubKeyHash:
+		case *exccutil.AddressPubKeyHash:
 		default:
 			return nil, rpcAddressKeyError("Invalid address type: "+
 				"%T", addr)
@@ -832,7 +832,7 @@ func handleCreateRawSStx(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 
 	for i, cout := range c.COuts {
 		// 1. Append future commitment output.
-		addr, err := excutil.DecodeAddress(cout.Addr)
+		addr, err := exccutil.DecodeAddress(cout.Addr)
 		if err != nil {
 			return nil, rpcAddressKeyError("Could not decode "+
 				"address: %v", err)
@@ -842,9 +842,9 @@ func handleCreateRawSStx(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 		// the network encoded with the address matches the network the
 		// server is currently on.
 		switch addr.(type) {
-		case *excutil.AddressPubKeyHash:
+		case *exccutil.AddressPubKeyHash:
 			break
-		case *excutil.AddressScriptHash:
+		case *exccutil.AddressScriptHash:
 			break
 		default:
 			return nil, rpcAddressKeyError("Invalid type: %T", addr)
@@ -858,7 +858,7 @@ func handleCreateRawSStx(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 		// rewards to.  TODO Replace 0x0000 fee limits with an argument
 		// passed to the RPC call.
 		pkScript, err := txscript.GenerateSStxAddrPush(addr,
-			excutil.Amount(amountsCommitted[i]), 0x0000)
+			exccutil.Amount(amountsCommitted[i]), 0x0000)
 		if err != nil {
 			return nil, rpcInternalError(err.Error(),
 				"Could not create SStx script")
@@ -869,13 +869,13 @@ func handleCreateRawSStx(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 		// 2. Append change output.
 
 		// Ensure amount is in the valid range for monetary amounts.
-		if cout.ChangeAmt < 0 || cout.ChangeAmt > excutil.MaxAmount {
+		if cout.ChangeAmt < 0 || cout.ChangeAmt > exccutil.MaxAmount {
 			return nil, rpcInvalidError("Invalid change amount: 0 "+
-				"> %v > %v", cout.ChangeAmt, excutil.MaxAmount)
+				"> %v > %v", cout.ChangeAmt, exccutil.MaxAmount)
 		}
 
 		// Decode the provided address.
-		addr, err = excutil.DecodeAddress(cout.ChangeAddr)
+		addr, err = exccutil.DecodeAddress(cout.ChangeAddr)
 		if err != nil {
 			return nil, rpcAddressKeyError("Wrong network: %v",
 				addr)
@@ -885,9 +885,9 @@ func handleCreateRawSStx(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 		// the network encoded with the address matches the network the
 		// server is currently on.
 		switch addr.(type) {
-		case *excutil.AddressPubKeyHash:
+		case *exccutil.AddressPubKeyHash:
 			break
-		case *excutil.AddressScriptHash:
+		case *exccutil.AddressScriptHash:
 			break
 		default:
 			return nil, rpcAddressKeyError("Invalid type: %T", addr)
@@ -1027,10 +1027,10 @@ func handleCreateRawSSGenTx(s *rpcServer, cmd interface{}, closeChan <-chan stru
 	for i, ssgenPkh := range ssgenPkhs {
 		// Ensure amount is in the valid range for monetary amounts.
 		if ssgenCalcAmts[i] <= 0 ||
-			ssgenCalcAmts[i] > excutil.MaxAmount {
+			ssgenCalcAmts[i] > exccutil.MaxAmount {
 			return nil, rpcInvalidError("Invalid SSGen amounts: "+
 				"0 >= %v > %v", ssgenCalcAmts[i],
-				excutil.MaxAmount)
+				exccutil.MaxAmount)
 		}
 
 		// Create a new script which pays to the provided address
@@ -1082,10 +1082,10 @@ func handleCreateRawSSRtx(s *rpcServer, cmd interface{}, closeChan <-chan struct
 	}
 
 	// Decode the fee as coins.
-	var feeAmt excutil.Amount
+	var feeAmt exccutil.Amount
 	if c.Fee != nil {
 		var err error
-		feeAmt, err = excutil.NewAmount(*c.Fee)
+		feeAmt, err = exccutil.NewAmount(*c.Fee)
 		if err != nil {
 			return nil, rpcInvalidError("Invalid fee amount: %v",
 				err)
@@ -1151,9 +1151,9 @@ func handleCreateRawSSRtx(s *rpcServer, cmd interface{}, closeChan <-chan struct
 	feeApplied := false
 	for i, ssrtxPkh := range ssrtxPkhs {
 		// Ensure amount is in the valid range for monetary amounts.
-		if sstxAmts[i] <= 0 || sstxAmts[i] > excutil.MaxAmount {
+		if sstxAmts[i] <= 0 || sstxAmts[i] > exccutil.MaxAmount {
 			return nil, rpcInvalidError("Invalid SSTx amount: 0 >="+
-				" %v > %v", sstxAmts[i] <= 0, excutil.MaxAmount)
+				" %v > %v", sstxAmts[i] <= 0, exccutil.MaxAmount)
 		}
 
 		// Create a new script which pays to the provided address specified in
@@ -1227,7 +1227,7 @@ func createVinList(mtx *wire.MsgTx) []exccjson.Vin {
 		vinEntry := &vinList[0]
 		vinEntry.Coinbase = hex.EncodeToString(txIn.SignatureScript)
 		vinEntry.Sequence = txIn.Sequence
-		vinEntry.AmountIn = excutil.Amount(txIn.ValueIn).ToCoin()
+		vinEntry.AmountIn = exccutil.Amount(txIn.ValueIn).ToCoin()
 		vinEntry.BlockHeight = txIn.BlockHeight
 		vinEntry.BlockIndex = txIn.BlockIndex
 		return vinList
@@ -1243,7 +1243,7 @@ func createVinList(mtx *wire.MsgTx) []exccjson.Vin {
 			vinEntry := &vinList[0]
 			vinEntry.Stakebase = hex.EncodeToString(txIn.SignatureScript)
 			vinEntry.Sequence = txIn.Sequence
-			vinEntry.AmountIn = excutil.Amount(txIn.ValueIn).ToCoin()
+			vinEntry.AmountIn = exccutil.Amount(txIn.ValueIn).ToCoin()
 			vinEntry.BlockHeight = txIn.BlockHeight
 			vinEntry.BlockIndex = txIn.BlockIndex
 			continue
@@ -1259,7 +1259,7 @@ func createVinList(mtx *wire.MsgTx) []exccjson.Vin {
 		vinEntry.Vout = txIn.PreviousOutPoint.Index
 		vinEntry.Tree = txIn.PreviousOutPoint.Tree
 		vinEntry.Sequence = txIn.Sequence
-		vinEntry.AmountIn = excutil.Amount(txIn.ValueIn).ToCoin()
+		vinEntry.AmountIn = exccutil.Amount(txIn.ValueIn).ToCoin()
 		vinEntry.BlockHeight = txIn.BlockHeight
 		vinEntry.BlockIndex = txIn.BlockIndex
 		vinEntry.ScriptSig = &exccjson.ScriptSig{
@@ -1286,10 +1286,10 @@ func createVoutList(mtx *wire.MsgTx, chainParams *chaincfg.Params, filterAddrMap
 		// the case of stake submission transactions, the odd outputs
 		// contain a commitment address, so detect that case
 		// accordingly.
-		var addrs []excutil.Address
+		var addrs []exccutil.Address
 		var scriptClass string
 		var reqSigs int
-		var commitAmt *excutil.Amount
+		var commitAmt *exccutil.Amount
 		if txType == stake.TxTypeSStx && (i%2 != 0) {
 			scriptClass = sstxCommitmentString
 			addr, err := stake.AddrFromSStxPkScrCommitment(v.PkScript,
@@ -1299,7 +1299,7 @@ func createVoutList(mtx *wire.MsgTx, chainParams *chaincfg.Params, filterAddrMap
 					"commitment addr output for tx hash "+
 					"%v, output idx %v", mtx.TxHash(), i)
 			} else {
-				addrs = []excutil.Address{addr}
+				addrs = []exccutil.Address{addr}
 			}
 			amt, err := stake.AmountFromSStxPkScrCommitment(v.PkScript)
 			if err != nil {
@@ -1344,7 +1344,7 @@ func createVoutList(mtx *wire.MsgTx, chainParams *chaincfg.Params, filterAddrMap
 		var vout exccjson.Vout
 		voutSPK := &vout.ScriptPubKey
 		vout.N = uint32(i)
-		vout.Value = excutil.Amount(v.Value).ToCoin()
+		vout.Value = exccutil.Amount(v.Value).ToCoin()
 		vout.Version = v.Version
 		voutSPK.Addresses = encodedAddrs
 		voutSPK.Asm = disbuf
@@ -1459,7 +1459,7 @@ func handleDecodeScript(s *rpcServer, cmd interface{}, closeChan <-chan struct{}
 	}
 
 	// Convert the script itself to a pay-to-script-hash address.
-	p2sh, err := excutil.NewAddressScriptHash(script, s.server.chainParams)
+	p2sh, err := exccutil.NewAddressScriptHash(script, s.server.chainParams)
 	if err != nil {
 		return nil, rpcInternalError(err.Error(),
 			"Failed to convert script to pay-to-script-hash")
@@ -1544,14 +1544,14 @@ func handleEstimateStakeDiff(s *rpcServer, cmd interface{}, closeChan <-chan str
 			return nil, rpcInternalError(err.Error(), "Could not "+
 				"estimate next user specified stake difficulty")
 		}
-		userEstFlt := excutil.Amount(userEst).ToCoin()
+		userEstFlt := exccutil.Amount(userEst).ToCoin()
 		userEstFltPtr = &userEstFlt
 	}
 
 	return &exccjson.EstimateStakeDiffResult{
-		Min:      excutil.Amount(min).ToCoin(),
-		Max:      excutil.Amount(max).ToCoin(),
-		Expected: excutil.Amount(expected).ToCoin(),
+		Min:      exccutil.Amount(min).ToCoin(),
+		Max:      exccutil.Amount(max).ToCoin(),
+		Expected: exccutil.Amount(expected).ToCoin(),
 		User:     userEstFltPtr,
 	}, nil
 }
@@ -1567,7 +1567,7 @@ func handleExistsAddress(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 	c := cmd.(*exccjson.ExistsAddressCmd)
 
 	// Attempt to decode the supplied address.
-	addr, err := excutil.DecodeAddress(c.Address)
+	addr, err := exccutil.DecodeAddress(c.Address)
 	if err != nil {
 		return nil, rpcAddressKeyError("Could not decode address: %v",
 			err)
@@ -1590,10 +1590,10 @@ func handleExistsAddresses(s *rpcServer, cmd interface{}, closeChan <-chan struc
 	}
 
 	c := cmd.(*exccjson.ExistsAddressesCmd)
-	addresses := make([]excutil.Address, len(c.Addresses))
+	addresses := make([]exccutil.Address, len(c.Addresses))
 	for i := range c.Addresses {
 		// Attempt to decode the supplied address.
-		addr, err := excutil.DecodeAddress(c.Addresses[i])
+		addr, err := exccutil.DecodeAddress(c.Addresses[i])
 		if err != nil {
 			return nil, rpcAddressKeyError("Could not decode "+
 				"address: %v", err)
@@ -1953,7 +1953,7 @@ func handleGetBlock(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 		confirmations = 1 + best.Height - int64(blockHeader.Height)
 	}
 
-	sbitsFloat := float64(blockHeader.SBits) / excutil.AtomsPerCoin
+	sbitsFloat := float64(blockHeader.SBits) / exccutil.AtomsPerCoin
 	blockReply := exccjson.GetBlockVerboseResult{
 		Hash:          c.Hash,
 		Version:       blockHeader.Version,
@@ -2118,7 +2118,7 @@ func handleGetBlockHeader(s *rpcServer, cmd interface{}, closeChan <-chan struct
 		Revocations:   blockHeader.Revocations,
 		PoolSize:      blockHeader.PoolSize,
 		Bits:          strconv.FormatInt(int64(blockHeader.Bits), 16),
-		SBits:         excutil.Amount(blockHeader.SBits).ToCoin(),
+		SBits:         exccutil.Amount(blockHeader.SBits).ToCoin(),
 		Height:        uint32(height),
 		Size:          blockHeader.Size,
 		Time:          blockHeader.Timestamp.Unix(),
@@ -2342,7 +2342,7 @@ func (state *gbtWorkState) updateBlockTemplate(s *rpcServer, useCoinbaseValue bo
 		// Choose a payment address at random if the caller requests a
 		// full coinbase as opposed to only the pertinent details needed
 		// to create their own coinbase.
-		var payAddr excutil.Address
+		var payAddr exccutil.Address
 		if !useCoinbaseValue {
 			payAddr = cfg.miningAddrs[rand.Intn(len(cfg.miningAddrs))]
 		}
@@ -2421,7 +2421,7 @@ func (state *gbtWorkState) updateBlockTemplate(s *rpcServer, useCoinbaseValue bo
 			template.ValidPayAddress = true
 
 			// Update the merkle root.
-			block := excutil.NewBlock(template.Block)
+			block := exccutil.NewBlock(template.Block)
 			merkles := blockchain.BuildMerkleTreeStore(block.Transactions())
 			template.Block.Header.MerkleRoot = *merkles[len(merkles)-1]
 		}
@@ -2964,7 +2964,7 @@ func handleGetBlockTemplateProposal(s *rpcServer, request *exccjson.TemplateRequ
 		return nil, rpcDeserializationError("Could not decode block: "+
 			"%v", err)
 	}
-	block := excutil.NewBlock(&msgBlock)
+	block := exccutil.NewBlock(&msgBlock)
 
 	// Ensure the block is building from the expected previous block.
 	expectedPrevHash, _ := s.server.blockManager.chainState.Best()
@@ -3602,14 +3602,14 @@ func handleGetStakeDifficulty(s *rpcServer, cmd interface{}, closeChan <-chan st
 			Message: "Error getting stake difficulty: " + err.Error(),
 		}
 	}
-	currentSdiff := excutil.Amount(blockHeader.SBits)
+	currentSdiff := exccutil.Amount(blockHeader.SBits)
 
 	nextSdiff, err := s.server.blockManager.CalcNextRequiredStakeDifficulty()
 	if err != nil {
 		return nil, rpcInternalError("Could not calculate next stake "+
 			"difficulty "+err.Error(), "")
 	}
-	nextSdiffAmount := excutil.Amount(nextSdiff)
+	nextSdiffAmount := exccutil.Amount(nextSdiff)
 
 	sDiffResult := &exccjson.GetStakeDifficultyResult{
 		CurrentStakeDifficulty: currentSdiff.ToCoin(),
@@ -3916,7 +3916,7 @@ func handleGetTxOut(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 	if c.IncludeMempool != nil {
 		includeMempool = *c.IncludeMempool
 	}
-	var txFromMempool *excutil.Tx
+	var txFromMempool *exccutil.Tx
 	if includeMempool {
 		txFromMempool, _ = s.server.txMemPool.FetchTransaction(txHash,
 			true)
@@ -3990,7 +3990,7 @@ func handleGetTxOut(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 	txOutReply := &exccjson.GetTxOutResult{
 		BestBlock:     bestBlockHash,
 		Confirmations: confirmations,
-		Value:         excutil.Amount(value).ToUnit(excutil.AmountCoin),
+		Value:         exccutil.Amount(value).ToUnit(exccutil.AmountCoin),
 		Version:       int32(txVersion),
 		ScriptPubKey: exccjson.ScriptPubKeyResult{
 			Asm:       disbuf,
@@ -4246,7 +4246,7 @@ func handleGetWorkSubmission(s *rpcServer, hexData string) (interface{}, error) 
 	// also deep copy the block itself because it could be accessed outside
 	// of the GW workstate mutexes once it gets submitted to the
 	// blockchain.
-	tempBlock := excutil.NewBlockDeepCopy(blockInfo.msgBlock)
+	tempBlock := exccutil.NewBlockDeepCopy(blockInfo.msgBlock)
 	msgBlock := tempBlock.MsgBlock()
 	msgBlock.Header = submittedHeader
 	if msgBlock.Header.Height > 1 {
@@ -4258,7 +4258,7 @@ func handleGetWorkSubmission(s *rpcServer, hexData string) (interface{}, error) 
 	}
 
 	// The real block to submit, with a proper nonce and extraNonce.
-	block := excutil.NewBlockDeepCopyCoinbase(msgBlock)
+	block := exccutil.NewBlockDeepCopyCoinbase(msgBlock)
 
 	// Ensure the submitted block hash is less than the target difficulty.
 	err = blockchain.CheckProofOfWork(&block.MsgBlock().Header,
@@ -4505,7 +4505,7 @@ func handleRebroadcastWinners(s *rpcServer, cmd interface{}, closeChan <-chan st
 type retrievedTx struct {
 	txBytes []byte
 	blkHash *chainhash.Hash // Only set when transaction is in a block.
-	tx      *excutil.Tx
+	tx      *exccutil.Tx
 }
 
 // fetchInputTxos fetches the outpoints from all transactions referenced by the
@@ -4595,7 +4595,7 @@ func createVinListPrevOut(s *rpcServer, mtx *wire.MsgTx, chainParams *chaincfg.P
 		txIn := mtx.TxIn[0]
 		vinList := make([]exccjson.VinPrevOut, 1)
 		vinList[0].Coinbase = hex.EncodeToString(txIn.SignatureScript)
-		amountIn := excutil.Amount(txIn.ValueIn).ToCoin()
+		amountIn := exccutil.Amount(txIn.ValueIn).ToCoin()
 		vinList[0].AmountIn = &amountIn
 		vinList[0].Sequence = txIn.Sequence
 		return vinList, nil
@@ -4622,7 +4622,7 @@ func createVinListPrevOut(s *rpcServer, mtx *wire.MsgTx, chainParams *chaincfg.P
 	for i, txIn := range mtx.TxIn {
 		// Handle only the null input of a stakebase differently.
 		if isSSGen && i == 0 {
-			amountIn := excutil.Amount(txIn.ValueIn).ToCoin()
+			amountIn := exccutil.Amount(txIn.ValueIn).ToCoin()
 			vinEntry := exccjson.VinPrevOut{
 				Stakebase: hex.EncodeToString(txIn.SignatureScript),
 				AmountIn:  &amountIn,
@@ -4641,7 +4641,7 @@ func createVinListPrevOut(s *rpcServer, mtx *wire.MsgTx, chainParams *chaincfg.P
 		// previous output details which will be added later if
 		// requested and available.
 		prevOut := &txIn.PreviousOutPoint
-		amountIn := excutil.Amount(txIn.ValueIn).ToCoin()
+		amountIn := exccutil.Amount(txIn.ValueIn).ToCoin()
 		vinEntry := exccjson.VinPrevOut{
 			Txid:        prevOut.Hash.String(),
 			Vout:        prevOut.Index,
@@ -4712,7 +4712,7 @@ func createVinListPrevOut(s *rpcServer, mtx *wire.MsgTx, chainParams *chaincfg.P
 			vinListEntry := &vinList[len(vinList)-1]
 			vinListEntry.PrevOut = &exccjson.PrevOut{
 				Addresses: encodedAddrs,
-				Value:     excutil.Amount(originTxOut.Value).ToCoin(),
+				Value:     exccutil.Amount(originTxOut.Value).ToCoin(),
 			}
 		}
 	}
@@ -4723,7 +4723,7 @@ func createVinListPrevOut(s *rpcServer, mtx *wire.MsgTx, chainParams *chaincfg.P
 // fetchMempoolTxnsForAddress queries the address index for all unconfirmed
 // transactions that involve the provided address.  The results will be limited
 // by the number to skip and the number requested.
-func fetchMempoolTxnsForAddress(s *rpcServer, addr excutil.Address, numToSkip, numRequested uint32) ([]*excutil.Tx, uint32) {
+func fetchMempoolTxnsForAddress(s *rpcServer, addr exccutil.Address, numToSkip, numRequested uint32) ([]*exccutil.Tx, uint32) {
 	// There are no entries to return when there are less available than
 	// the number being skipped.
 	mpTxns := s.server.addrIndex.UnconfirmedTxnsForAddress(addr)
@@ -4768,7 +4768,7 @@ func handleSearchRawTransactions(s *rpcServer, cmd interface{}, closeChan <-chan
 	}
 
 	// Attempt to decode the supplied address.
-	addr, err := excutil.DecodeAddress(c.Address)
+	addr, err := exccutil.DecodeAddress(c.Address)
 	if err != nil {
 		return nil, rpcAddressKeyError("Could not decode address: %v",
 			err)
@@ -5018,7 +5018,7 @@ func handleSendRawTransaction(s *rpcServer, cmd interface{}, closeChan <-chan st
 			err)
 	}
 
-	tx := excutil.NewTx(msgtx)
+	tx := exccutil.NewTx(msgtx)
 	acceptedTxs, err := s.server.blockManager.ProcessTransaction(tx, false,
 		false, allowHighFees)
 	if err != nil {
@@ -5130,7 +5130,7 @@ func handleSubmitBlock(s *rpcServer, cmd interface{}, closeChan <-chan struct{})
 		return nil, rpcInternalError(err.Error(), "Block decode")
 	}
 
-	block, err := excutil.NewBlockFromBytes(serializedBlock)
+	block, err := exccutil.NewBlockFromBytes(serializedBlock)
 	if err != nil {
 		return nil, rpcInternalError(err.Error(), "Block decode")
 	}
@@ -5145,7 +5145,7 @@ func handleSubmitBlock(s *rpcServer, cmd interface{}, closeChan <-chan struct{})
 }
 
 // min gets the minimum amount from a slice of amounts.
-func min(s []excutil.Amount) excutil.Amount {
+func min(s []exccutil.Amount) exccutil.Amount {
 	if len(s) == 0 {
 		return 0
 	}
@@ -5161,8 +5161,8 @@ func min(s []excutil.Amount) excutil.Amount {
 }
 
 // max gets the maximum amount from a slice of amounts.
-func max(s []excutil.Amount) excutil.Amount {
-	max := excutil.Amount(0)
+func max(s []exccutil.Amount) exccutil.Amount {
+	max := exccutil.Amount(0)
 	for i := range s {
 		if s[i] > max {
 			max = s[i]
@@ -5173,8 +5173,8 @@ func max(s []excutil.Amount) excutil.Amount {
 }
 
 // mean gets the mean amount from a slice of amounts.
-func mean(s []excutil.Amount) excutil.Amount {
-	sum := excutil.Amount(0)
+func mean(s []exccutil.Amount) exccutil.Amount {
+	sum := exccutil.Amount(0)
 	for i := range s {
 		sum += s[i]
 	}
@@ -5183,16 +5183,16 @@ func mean(s []excutil.Amount) excutil.Amount {
 		return 0
 	}
 
-	return sum / excutil.Amount(len(s))
+	return sum / exccutil.Amount(len(s))
 }
 
 // median gets the median amount from a slice of amounts.
-func median(s []excutil.Amount) excutil.Amount {
+func median(s []exccutil.Amount) exccutil.Amount {
 	if len(s) == 0 {
 		return 0
 	}
 
-	sort.Sort(excutil.AmountSorter(s))
+	sort.Sort(exccutil.AmountSorter(s))
 
 	middle := len(s) / 2
 
@@ -5205,7 +5205,7 @@ func median(s []excutil.Amount) excutil.Amount {
 }
 
 // stdDev gets the standard deviation amount from a slice of amounts.
-func stdDev(s []excutil.Amount) excutil.Amount {
+func stdDev(s []exccutil.Amount) exccutil.Amount {
 	var total float64
 	mean := mean(s)
 
@@ -5219,7 +5219,7 @@ func stdDev(s []excutil.Amount) excutil.Amount {
 
 	// Not concerned with an error here, it'll return
 	// zero if the amount is too small.
-	amt, _ := excutil.NewAmount(math.Sqrt(v))
+	amt, _ := exccutil.NewAmount(math.Sqrt(v))
 
 	return amt
 }
@@ -5228,11 +5228,11 @@ func stdDev(s []excutil.Amount) excutil.Amount {
 // memory pool.
 func feeInfoForMempool(s *rpcServer, txType stake.TxType) *exccjson.FeeInfoMempool {
 	txDs := s.server.txMemPool.TxDescs()
-	ticketFees := make([]excutil.Amount, 0, len(txDs))
+	ticketFees := make([]exccutil.Amount, 0, len(txDs))
 	for _, txD := range txDs {
 		if txD.Type == txType {
-			feePerKb := (excutil.Amount(txD.Fee)) * 1000 /
-				excutil.Amount(txD.Tx.MsgTx().SerializeSize())
+			feePerKb := (exccutil.Amount(txD.Fee)) * 1000 /
+				exccutil.Amount(txD.Tx.MsgTx().SerializeSize())
 			ticketFees = append(ticketFees, feePerKb)
 		}
 	}
@@ -5249,17 +5249,17 @@ func feeInfoForMempool(s *rpcServer, txType stake.TxType) *exccjson.FeeInfoMempo
 
 // calcFee calculates the fee of a transaction that has its fraud proofs
 // properly set.
-func calcFeePerKb(tx *excutil.Tx) excutil.Amount {
-	var in excutil.Amount
+func calcFeePerKb(tx *exccutil.Tx) exccutil.Amount {
+	var in exccutil.Amount
 	for _, txIn := range tx.MsgTx().TxIn {
-		in += excutil.Amount(txIn.ValueIn)
+		in += exccutil.Amount(txIn.ValueIn)
 	}
-	var out excutil.Amount
+	var out exccutil.Amount
 	for _, txOut := range tx.MsgTx().TxOut {
-		out += excutil.Amount(txOut.Value)
+		out += exccutil.Amount(txOut.Value)
 	}
 
-	return ((in - out) * 1000) / excutil.Amount(tx.MsgTx().SerializeSize())
+	return ((in - out) * 1000) / exccutil.Amount(tx.MsgTx().SerializeSize())
 }
 
 // feeInfoForBlock fetches the ticket fee information for a given tx type in a
@@ -5282,7 +5282,7 @@ func ticketFeeInfoForBlock(s *rpcServer, height int64, txType stake.TxType) (*ex
 		txNum = int(bl.MsgBlock().Header.Revocations)
 	}
 
-	txFees := make([]excutil.Amount, txNum)
+	txFees := make([]exccutil.Amount, txNum)
 	itr := 0
 	if txType == stake.TxTypeRegular {
 		for i, tx := range bl.Transactions() {
@@ -5323,7 +5323,7 @@ func ticketFeeInfoForRange(s *rpcServer, start int64, end int64, txType stake.Tx
 		return nil, err
 	}
 
-	var txFees []excutil.Amount
+	var txFees []exccutil.Amount
 	for i := range hashes {
 		bl, err := s.chain.BlockByHash(&hashes[i])
 		if err != nil {
@@ -5448,7 +5448,7 @@ func handleTicketFeeInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 func handleTicketsForAddress(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*exccjson.TicketsForAddressCmd)
 
-	addr, err := excutil.DecodeAddress(c.Address)
+	addr, err := exccutil.DecodeAddress(c.Address)
 	if err != nil {
 		return nil, rpcInvalidError("Invalid address: %v", err)
 	}
@@ -5528,7 +5528,7 @@ func handleTicketVWAP(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) 
 		vwap = totalValue / ticketNum
 	}
 
-	return excutil.Amount(vwap).ToCoin(), nil
+	return exccutil.Amount(vwap).ToCoin(), nil
 }
 
 // handleTxFeeInfo implements the txfeeinfo command.
@@ -5622,7 +5622,7 @@ func handleTxFeeInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (
 func handleValidateAddress(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	c := cmd.(*exccjson.ValidateAddressCmd)
 	result := exccjson.ValidateAddressChainResult{}
-	addr, err := excutil.DecodeAddress(c.Address)
+	addr, err := exccutil.DecodeAddress(c.Address)
 	if err != nil || !addr.IsForNet(s.server.chainParams) {
 		// Return the default value (false) for IsValid.
 		return result, nil
@@ -5690,14 +5690,14 @@ func handleVerifyMessage(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 	c := cmd.(*exccjson.VerifyMessageCmd)
 
 	// Decode the provided address.
-	addr, err := excutil.DecodeAddress(c.Address)
+	addr, err := exccutil.DecodeAddress(c.Address)
 	if err != nil {
 		return nil, rpcAddressKeyError("Could not decode address: %v",
 			err)
 	}
 
 	// Only P2PKH addresses are valid for signing.
-	if _, ok := addr.(*excutil.AddressPubKeyHash); !ok {
+	if _, ok := addr.(*exccutil.AddressPubKeyHash); !ok {
 		return nil, &exccjson.RPCError{
 			Code:    exccjson.ErrRPCType,
 			Message: "Address is not a pay-to-pubkey-hash address",
@@ -5735,7 +5735,7 @@ func handleVerifyMessage(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 	} else {
 		serializedPK = dcrPK.SerializeUncompressed()
 	}
-	address, err := excutil.NewAddressSecpPubKey(serializedPK,
+	address, err := exccutil.NewAddressSecpPubKey(serializedPK,
 		activeNetParams.Params)
 	if err != nil {
 		// Again mirror Bitcoin Core behavior, which treats error in

@@ -25,7 +25,7 @@
 //          "fmt"
 //          "log"
 //
-//          "github.com/EXCCoin/exccd/excutil"
+//          "github.com/EXCCoin/exccd/exccutil"
 //          "github.com/EXCCoin/exccd/chaincfg"
 //  )
 //
@@ -46,7 +46,7 @@
 //
 //          // Create and print new payment address, specific to the active network.
 //          pubKeyHash := make([]byte, 20)
-//          addr, err := excutil.NewAddressPubKeyHash(pubKeyHash, chainParams)
+//          addr, err := exccutil.NewAddressPubKeyHash(pubKeyHash, chainParams)
 //          if err != nil {
 //                  log.Fatal(err)
 //          }

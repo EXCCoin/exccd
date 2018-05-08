@@ -4,7 +4,7 @@
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
-package excutil_test
+package exccutil_test
 
 import (
 	"math"
@@ -12,7 +12,7 @@ import (
 	"sort"
 	"testing"
 
-	. "github.com/EXCCoin/exccd/excutil"
+	. "github.com/EXCCoin/exccd/exccutil"
 )
 
 func TestAmountCreation(t *testing.T) {

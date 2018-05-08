@@ -19,7 +19,7 @@ import (
 
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/rpcclient"
 	"github.com/EXCCoin/exccd/wire"
 )
@@ -222,7 +222,7 @@ func (h *Harness) SetUp(createTestChain bool, numMatureOutputs uint32) error {
 
 	// Filter transactions that pay to the coinbase associated with the
 	// wallet.
-	filterAddrs := []excutil.Address{h.wallet.coinbaseAddr}
+	filterAddrs := []exccutil.Address{h.wallet.coinbaseAddr}
 	if err := h.Node.LoadTxFilter(true, filterAddrs, nil); err != nil {
 		return err
 	}
@@ -317,7 +317,7 @@ func (h *Harness) connectRPCClient() error {
 // wallet.
 //
 // This function is safe for concurrent access.
-func (h *Harness) NewAddress() (excutil.Address, error) {
+func (h *Harness) NewAddress() (exccutil.Address, error) {
 	return h.wallet.NewAddress()
 }
 
@@ -325,7 +325,7 @@ func (h *Harness) NewAddress() (excutil.Address, error) {
 // wallet.
 //
 // This function is safe for concurrent access.
-func (h *Harness) ConfirmedBalance() excutil.Amount {
+func (h *Harness) ConfirmedBalance() exccutil.Amount {
 	return h.wallet.ConfirmedBalance()
 }
 
@@ -334,7 +334,7 @@ func (h *Harness) ConfirmedBalance() excutil.Amount {
 // according to targetOutputs.
 //
 // This function is safe for concurrent access.
-func (h *Harness) SendOutputs(targetOutputs []*wire.TxOut, feeRate excutil.Amount) (*chainhash.Hash, error) {
+func (h *Harness) SendOutputs(targetOutputs []*wire.TxOut, feeRate exccutil.Amount) (*chainhash.Hash, error) {
 	return h.wallet.SendOutputs(targetOutputs, feeRate)
 }
 
@@ -348,7 +348,7 @@ func (h *Harness) SendOutputs(targetOutputs []*wire.TxOut, feeRate excutil.Amoun
 // returned to the pool of spendable outputs.
 //
 // This function is safe for concurrent access.
-func (h *Harness) CreateTransaction(targetOutputs []*wire.TxOut, feeRate excutil.Amount) (*wire.MsgTx, error) {
+func (h *Harness) CreateTransaction(targetOutputs []*wire.TxOut, feeRate exccutil.Amount) (*wire.MsgTx, error) {
 	return h.wallet.CreateTransaction(targetOutputs, feeRate)
 }
 

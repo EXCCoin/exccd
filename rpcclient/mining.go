@@ -13,7 +13,7 @@ import (
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/exccjson"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 )
 
 // FutureGenerateResult is a future promise to deliver the result of a
@@ -435,7 +435,7 @@ func (r FutureSubmitBlockResult) Receive() error {
 // returned instance.
 //
 // See SubmitBlock for the blocking version and more details.
-func (c *Client) SubmitBlockAsync(block *excutil.Block, options *exccjson.SubmitBlockOptions) FutureSubmitBlockResult {
+func (c *Client) SubmitBlockAsync(block *exccutil.Block, options *exccjson.SubmitBlockOptions) FutureSubmitBlockResult {
 	blockHex := ""
 	if block != nil {
 		blockBytes, err := block.Bytes()
@@ -451,6 +451,6 @@ func (c *Client) SubmitBlockAsync(block *excutil.Block, options *exccjson.Submit
 }
 
 // SubmitBlock attempts to submit a new block into the Decred network.
-func (c *Client) SubmitBlock(block *excutil.Block, options *exccjson.SubmitBlockOptions) error {
+func (c *Client) SubmitBlock(block *exccutil.Block, options *exccjson.SubmitBlockOptions) error {
 	return c.SubmitBlockAsync(block, options).Receive()
 }

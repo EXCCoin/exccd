@@ -4,7 +4,7 @@
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
-package excutil_test
+package exccutil_test
 
 import (
 	"os"
@@ -14,7 +14,7 @@ import (
 	"testing"
 	"unicode"
 
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 )
 
 // TestAppDataDir tests the API for AppDataDir to ensure it gives expected
@@ -124,7 +124,7 @@ func TestAppDataDir(t *testing.T) {
 
 	t.Logf("Running %d tests", len(tests))
 	for i, test := range tests {
-		ret := excutil.TstAppDataDir(test.goos, test.appName, test.roaming)
+		ret := exccutil.TstAppDataDir(test.goos, test.appName, test.roaming)
 		if ret != test.want {
 			t.Errorf("appDataDir #%d (%s) does not match - "+
 				"expected got %s, want %s", i, test.goos, ret,

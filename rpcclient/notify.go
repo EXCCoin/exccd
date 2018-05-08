@@ -15,7 +15,7 @@ import (
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/exccjson"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/wire"
 )
 
@@ -145,7 +145,7 @@ type NotificationHandlers struct {
 	// memory pool.  It will only be invoked if a preceding call to
 	// NotifyNewTransactions with the verbose flag set to false has been
 	// made to register for the notification and the function is non-nil.
-	OnTxAccepted func(hash *chainhash.Hash, amount excutil.Amount)
+	OnTxAccepted func(hash *chainhash.Hash, amount exccutil.Amount)
 
 	// OnTxAccepted is invoked when a transaction is accepted into the
 	// memory pool.  It will only be invoked if a preceding call to
@@ -164,7 +164,7 @@ type NotificationHandlers struct {
 	//
 	// This will only be available when speaking to a wallet server
 	// such as exccwallet.
-	OnAccountBalance func(account string, balance excutil.Amount, confirmed bool)
+	OnAccountBalance func(account string, balance exccutil.Amount, confirmed bool)
 
 	// OnWalletLockState is invoked when a wallet is locked or unlocked.
 	//
@@ -176,7 +176,7 @@ type NotificationHandlers struct {
 	//
 	// This will only be available when client is connected to a wallet
 	// server such as exccwallet.
-	OnTicketsPurchased func(TxHash *chainhash.Hash, amount excutil.Amount)
+	OnTicketsPurchased func(TxHash *chainhash.Hash, amount exccutil.Amount)
 
 	// OnVotesCreated is invoked when a wallet generates an SSGen.
 	//
@@ -863,7 +863,7 @@ func parseStakeDifficultyNtfnParams(params []json.RawMessage) (
 // parseTxAcceptedNtfnParams parses out the transaction hash and total amount
 // from the parameters of a txaccepted notification.
 func parseTxAcceptedNtfnParams(params []json.RawMessage) (*chainhash.Hash,
-	excutil.Amount, error) {
+	exccutil.Amount, error) {
 
 	if len(params) != 2 {
 		return nil, 0, wrongNumParams(len(params))
@@ -884,7 +884,7 @@ func parseTxAcceptedNtfnParams(params []json.RawMessage) (*chainhash.Hash,
 	}
 
 	// Bounds check amount.
-	amt, err := excutil.NewAmount(famt)
+	amt, err := exccutil.NewAmount(famt)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -941,7 +941,7 @@ func parseBtcdConnectedNtfnParams(params []json.RawMessage) (bool, error) {
 // and whether or not the balance is confirmed or unconfirmed from the
 // parameters of an accountbalance notification.
 func parseAccountBalanceNtfnParams(params []json.RawMessage) (account string,
-	balance excutil.Amount, confirmed bool, err error) {
+	balance exccutil.Amount, confirmed bool, err error) {
 
 	if len(params) != 3 {
 		return "", 0, false, wrongNumParams(len(params))
@@ -967,7 +967,7 @@ func parseAccountBalanceNtfnParams(params []json.RawMessage) (account string,
 	}
 
 	// Bounds check amount.
-	bal, err := excutil.NewAmount(fbal)
+	bal, err := exccutil.NewAmount(fbal)
 	if err != nil {
 		return "", 0, false, err
 	}
@@ -978,7 +978,7 @@ func parseAccountBalanceNtfnParams(params []json.RawMessage) (account string,
 // parseTicketPurchasedNtfnParams parses out the ticket hash and amount
 // from a recent ticket purchase in the wallet.
 func parseTicketPurchasedNtfnParams(params []json.RawMessage) (txHash *chainhash.Hash,
-	amount excutil.Amount, err error) {
+	amount exccutil.Amount, err error) {
 
 	if len(params) != 2 {
 		return nil, 0, wrongNumParams(len(params))
@@ -1002,7 +1002,7 @@ func parseTicketPurchasedNtfnParams(params []json.RawMessage) (txHash *chainhash
 		return nil, 0, err
 	}
 
-	return thHash, excutil.Amount(amt), nil
+	return thHash, exccutil.Amount(amt), nil
 }
 
 // parseVoteCreatedNtfnParams parses out the hash, block hash, block height,
@@ -1440,7 +1440,7 @@ func (r FutureLoadTxFilterResult) Receive() error {
 // See LoadTxFilter for the blocking version and more details.
 //
 // NOTE: This is a exccd extension and requires a websocket connection.
-func (c *Client) LoadTxFilterAsync(reload bool, addresses []excutil.Address,
+func (c *Client) LoadTxFilterAsync(reload bool, addresses []exccutil.Address,
 	outPoints []wire.OutPoint) FutureLoadTxFilterResult {
 
 	addrStrs := make([]string, len(addresses))
@@ -1465,6 +1465,6 @@ func (c *Client) LoadTxFilterAsync(reload bool, addresses []excutil.Address,
 // during mempool acceptance, block acceptance, and for all rescanned blocks.
 //
 // NOTE: This is a exccd extension and requires a websocket connection.
-func (c *Client) LoadTxFilter(reload bool, addresses []excutil.Address, outPoints []wire.OutPoint) error {
+func (c *Client) LoadTxFilter(reload bool, addresses []exccutil.Address, outPoints []wire.OutPoint) error {
 	return c.LoadTxFilterAsync(reload, addresses, outPoints).Receive()
 }

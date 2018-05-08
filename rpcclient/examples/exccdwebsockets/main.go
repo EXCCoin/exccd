@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/rpcclient"
 )
 
@@ -31,7 +31,7 @@ func main() {
 	}
 
 	// Connect to local exccd RPC server using websockets.
-	exccdHomeDir := excutil.AppDataDir("exccd", false)
+	exccdHomeDir := exccutil.AppDataDir("exccd", false)
 	certs, err := ioutil.ReadFile(filepath.Join(exccdHomeDir, "rpc.cert"))
 	if err != nil {
 		log.Fatal(err)

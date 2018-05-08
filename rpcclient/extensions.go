@@ -14,7 +14,7 @@ import (
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/exccjson"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/wire"
 )
 
@@ -171,7 +171,7 @@ func (r FutureExistsAddressResult) Receive() (bool, error) {
 // ExistsAddressAsync returns an instance of a type that can be used to get the
 // result of the RPC at some future time by invoking the Receive function on the
 // returned instance.
-func (c *Client) ExistsAddressAsync(address excutil.Address) FutureExistsAddressResult {
+func (c *Client) ExistsAddressAsync(address exccutil.Address) FutureExistsAddressResult {
 	cmd := exccjson.NewExistsAddressCmd(address.EncodeAddress())
 	return c.sendCmd(cmd)
 }
@@ -180,7 +180,7 @@ func (c *Client) ExistsAddressAsync(address excutil.Address) FutureExistsAddress
 // used on the main chain or in mempool.
 //
 // NOTE: This is a exccd extension.
-func (c *Client) ExistsAddress(address excutil.Address) (bool, error) {
+func (c *Client) ExistsAddress(address exccutil.Address) (bool, error) {
 	return c.ExistsAddressAsync(address).Receive()
 }
 
@@ -209,7 +209,7 @@ func (r FutureExistsAddressesResult) Receive() (string, error) {
 // ExistsAddressesAsync returns an instance of a type that can be used to get the
 // result of the RPC at some future time by invoking the Receive function on the
 // returned instance.
-func (c *Client) ExistsAddressesAsync(addresses []excutil.Address) FutureExistsAddressesResult {
+func (c *Client) ExistsAddressesAsync(addresses []exccutil.Address) FutureExistsAddressesResult {
 	addrsStr := make([]string, len(addresses))
 	for i := range addresses {
 		addrsStr[i] = addresses[i].EncodeAddress()
@@ -223,7 +223,7 @@ func (c *Client) ExistsAddressesAsync(addresses []excutil.Address) FutureExistsA
 // in the blockchain or memory pool.
 //
 // NOTE: This is a exccd extension.
-func (c *Client) ExistsAddresses(addresses []excutil.Address) (string, error) {
+func (c *Client) ExistsAddresses(addresses []exccutil.Address) (string, error) {
 	return c.ExistsAddressesAsync(addresses).Receive()
 }
 
@@ -764,7 +764,7 @@ type FutureGetTicketPoolValueResult chan *response
 
 // Receive waits for the response promised by the future and returns the network
 // the server is running on.
-func (r FutureGetTicketPoolValueResult) Receive() (excutil.Amount, error) {
+func (r FutureGetTicketPoolValueResult) Receive() (exccutil.Amount, error) {
 	res, err := receiveFuture(r)
 	if err != nil {
 		return 0, err
@@ -778,7 +778,7 @@ func (r FutureGetTicketPoolValueResult) Receive() (excutil.Amount, error) {
 	}
 
 	// Convert to an amount.
-	amt, err := excutil.NewAmount(val)
+	amt, err := exccutil.NewAmount(val)
 	if err != nil {
 		return 0, err
 	}
@@ -801,7 +801,7 @@ func (c *Client) GetTicketPoolValueAsync() FutureGetTicketPoolValueResult {
 // GetTicketPoolValue returns the value of the live ticket pool.
 //
 // NOTE: This is a exccd extension.
-func (c *Client) GetTicketPoolValue() (excutil.Amount, error) {
+func (c *Client) GetTicketPoolValue() (exccutil.Amount, error) {
 	return c.GetTicketPoolValueAsync().Receive()
 }
 
@@ -875,7 +875,7 @@ func (r FutureListAddressTransactionsResult) Receive() ([]exccjson.ListTransacti
 // See ListAddressTransactions for the blocking version and more details.
 //
 // NOTE: This is a exccd extension.
-func (c *Client) ListAddressTransactionsAsync(addresses []excutil.Address, account string) FutureListAddressTransactionsResult {
+func (c *Client) ListAddressTransactionsAsync(addresses []exccutil.Address, account string) FutureListAddressTransactionsResult {
 	// Convert addresses to strings.
 	addrs := make([]string, 0, len(addresses))
 	for _, addr := range addresses {
@@ -889,7 +889,7 @@ func (c *Client) ListAddressTransactionsAsync(addresses []excutil.Address, accou
 // with the provided addresses.
 //
 // NOTE: This is a exccwallet extension.
-func (c *Client) ListAddressTransactions(addresses []excutil.Address, account string) ([]exccjson.ListTransactionsResult, error) {
+func (c *Client) ListAddressTransactions(addresses []exccutil.Address, account string) ([]exccjson.ListTransactionsResult, error) {
 	return c.ListAddressTransactionsAsync(addresses, account).Receive()
 }
 
@@ -1098,7 +1098,7 @@ type FutureTicketVWAPResult chan *response
 
 // Receive waits for the response promised by the future and returns the
 // ticketvwap result.
-func (r FutureTicketVWAPResult) Receive() (excutil.Amount, error) {
+func (r FutureTicketVWAPResult) Receive() (exccutil.Amount, error) {
 	res, err := receiveFuture(r)
 	if err != nil {
 		return 0, err
@@ -1111,7 +1111,7 @@ func (r FutureTicketVWAPResult) Receive() (excutil.Amount, error) {
 		return 0, err
 	}
 
-	amt, err := excutil.NewAmount(vwap)
+	amt, err := exccutil.NewAmount(vwap)
 	if err != nil {
 		return 0, err
 	}
@@ -1141,7 +1141,7 @@ func (c *Client) TicketVWAPAsync(start *uint32, end *uint32) FutureTicketVWAPRes
 // This RPC requires the client to be running in websocket mode.
 //
 // NOTE: This is a ExchangeCoin extension.
-func (c *Client) TicketVWAP(start *uint32, end *uint32) (excutil.Amount, error) {
+func (c *Client) TicketVWAP(start *uint32, end *uint32) (exccutil.Amount, error) {
 	return c.TicketVWAPAsync(start, end).Receive()
 }
 

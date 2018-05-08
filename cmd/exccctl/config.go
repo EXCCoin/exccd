@@ -18,7 +18,7 @@ import (
 	"strings"
 
 	"github.com/EXCCoin/exccd/exccjson"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 
 	flags "github.com/jessevdk/go-flags"
 )
@@ -31,9 +31,9 @@ const (
 )
 
 var (
-	exccdHomeDir           = excutil.AppDataDir("exccd", false)
-	exccctlHomeDir         = excutil.AppDataDir("exccctl", false)
-	exccwalletHomeDir      = excutil.AppDataDir("exccwallet", false)
+	exccdHomeDir           = exccutil.AppDataDir("exccd", false)
+	exccctlHomeDir         = exccutil.AppDataDir("exccctl", false)
+	exccwalletHomeDir      = exccutil.AppDataDir("exccwallet", false)
 	defaultConfigFile      = filepath.Join(exccctlHomeDir, "exccctl.conf")
 	defaultRPCServer       = "localhost"
 	defaultWalletRPCServer = "localhost"
