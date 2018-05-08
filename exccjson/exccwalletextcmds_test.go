@@ -15,11 +15,11 @@ import (
 	"github.com/EXCCoin/exccd/exccjson"
 )
 
-// TestDcrWalletExtCmds tests all of the btcwallet extended commands marshal and
+// TestExccWalletExtCmds tests all of the btcwallet extended commands marshal and
 // unmarshal into valid results include handling of optional fields being
 // omitted in the marshalled command, while optional fields with defaults have
 // the default assigned on unmarshalled commands.
-func TestDcrWalletExtCmds(t *testing.T) {
+func TestExccWalletExtCmds(t *testing.T) {
 	t.Parallel()
 
 	testID := int(1)

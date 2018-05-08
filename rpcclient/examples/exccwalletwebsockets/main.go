@@ -29,8 +29,8 @@ func main() {
 		},
 	}
 
-	// Connect to local dcrwallet RPC server using websockets.
-	certHomeDir := excutil.AppDataDir("dcrwallet", false)
+	// Connect to local exccwallet RPC server using websockets.
+	certHomeDir := excutil.AppDataDir("exccwallet", false)
 	certs, err := ioutil.ReadFile(filepath.Join(certHomeDir, "rpc.cert"))
 	if err != nil {
 		log.Fatal(err)

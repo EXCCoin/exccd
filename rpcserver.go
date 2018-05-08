@@ -245,7 +245,7 @@ var rpcHandlersBeforeInit = map[string]commandHandler{
 
 // list of commands that we recognize, but for which exccd has no support because
 // it lacks support for wallet functionality. For these commands the user
-// should ask a connected instance of dcrwallet.
+// should ask a connected instance of exccwallet.
 var rpcAskWallet = map[string]struct{}{
 	"accountaddressindex":     {},
 	"accountsyncaddressindex": {},
@@ -485,7 +485,7 @@ func handleUnimplemented(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 
 // handleAskWallet is the handler for commands that are recognized as valid, but
 // are unable to answer correctly since it involves wallet state.
-// These commands will be implemented in dcrwallet.
+// These commands will be implemented in exccwallet.
 func handleAskWallet(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	return nil, ErrRPCNoWallet
 }

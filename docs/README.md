@@ -165,7 +165,7 @@ configuration necessary, however, there is an optional method to use a
 **3.1 Wallet**<br />
 
 exccd was intentionally developed without an integrated wallet for security
-reasons.  Please see [dcrwallet](https://github.com/decred/dcrwallet) for more
+reasons.  Please see [exccwallet](https://github.com/EXCCoin/exccwallet) for more
 information.
 
 <a name="Contact" />

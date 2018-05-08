@@ -33,7 +33,7 @@ differences between exccd and bitcoind as far as how RPCs are serviced:
   further details on why they were separated.  This means that if you are
   talking directly to exccd, only chain-related RPCs are available.  However both
   chain-related and wallet-related RPCs are available via
-  [dcrwallet](https://github.com/decred/dcrwallet).
+  [exccwallet](https://github.com/EXCCoin/exccwallet).
 * exccd is secure by default which means that the RPC connection is TLS-enabled
   by default
 * exccd provides access to the API through both
@@ -48,7 +48,7 @@ communication with exccd.  The websocket connection endpoint for exccd is
 In addition to the [standard API](#Methods), an [extension API](#WSExtMethods)
 has been developed that is exclusive to clients using Websockets. In its current
 state, this API attempts to cover features found missing in the standard API
-during the development of dcrwallet.
+during the development of exccwallet.
 
 While the [standard API](#Methods) is stable, the
 [Websocket extension API](#WSExtMethods) should be considered a work in
@@ -389,7 +389,7 @@ the method name for further details such as parameter and return information.
 |Method|getinfo|
 |Parameters|None|
 |Description|Returns a JSON object containing various state info.|
-|Notes|NOTE: Since exccd does NOT contain wallet functionality, wallet-related fields are not returned.  See getinfo in dcrwallet for a version which includes that information.|
+|Notes|NOTE: Since exccd does NOT contain wallet functionality, wallet-related fields are not returned.  See getinfo in exccwallet for a version which includes that information.|
 |Returns|`(json object)`<br />`version`: `(numeric)` the version of the server.<br />`protocolversion`: `(numeric)` the latest supported protocol version.<br />`blocks`: `(numeric)` the number of blocks processed.<br />`timeoffset`: `(numeric)` the time offset.<br />`connections`: `(numeric)` the number of connected peers.<br />`proxy`: `(string)` the proxy used by the server<br />`difficulty`: `(numeric)` the current target difficulty.<br />`testnet`: `(boolean)` whether or not server is using testnet.<br />`relayfee`: `(numeric)` the minimum relay fee for non-free transactions in DCR/KB.<br /><br />`{"version": n,"protocolversion": n, "blocks": n, "timeoffset": n, "connections": n, "proxy": "host:port", "difficulty": n.nn, "testnet": true or false, "relayfee": n.nn}`|
 | Example Return |`{"version": 70000, "protocolversion": 70001, "blocks": 298963, "timeoffset": 0, "connections": 17, "proxy": "", "difficulty": 8000872135.97, "testnet": false,"relayfee": 0.00001}`|
 [Return to Overview](#MethodOverview)<br />

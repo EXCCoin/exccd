@@ -24,7 +24,7 @@ implement and the API is not stable yet.
   block connected and block disconnected notifications, and gets the current
   block count
 * [exccwallet Websockets Example](https://github.com/EXCCoin/exccd/tree/master/rpcclient/examples/exccwalletwebsockets)  
-  Connects to a dcrwallet RPC server using TLS-secured websockets, registers for
+  Connects to a exccwallet RPC server using TLS-secured websockets, registers for
   notifications about changes to account balances, and gets a list of unspent
   transaction outputs (utxos) the wallet can sign
 

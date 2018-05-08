@@ -157,31 +157,31 @@ type NotificationHandlers struct {
 	// exccd.
 	//
 	// This will only be available when client is connected to a wallet
-	// server such as dcrwallet.
+	// server such as exccwallet.
 	OnBtcdConnected func(connected bool)
 
 	// OnAccountBalance is invoked with account balance updates.
 	//
 	// This will only be available when speaking to a wallet server
-	// such as dcrwallet.
+	// such as exccwallet.
 	OnAccountBalance func(account string, balance excutil.Amount, confirmed bool)
 
 	// OnWalletLockState is invoked when a wallet is locked or unlocked.
 	//
 	// This will only be available when client is connected to a wallet
-	// server such as dcrwallet.
+	// server such as exccwallet.
 	OnWalletLockState func(locked bool)
 
 	// OnTicketsPurchased is invoked when a wallet purchases an SStx.
 	//
 	// This will only be available when client is connected to a wallet
-	// server such as dcrwallet.
+	// server such as exccwallet.
 	OnTicketsPurchased func(TxHash *chainhash.Hash, amount excutil.Amount)
 
 	// OnVotesCreated is invoked when a wallet generates an SSGen.
 	//
 	// This will only be available when client is connected to a wallet
-	// server such as dcrwallet.
+	// server such as exccwallet.
 	OnVotesCreated func(txHash *chainhash.Hash,
 		blockHash *chainhash.Hash,
 		height int32,
@@ -191,7 +191,7 @@ type NotificationHandlers struct {
 	// OnRevocationsCreated is invoked when a wallet generates an SSRtx.
 	//
 	// This will only be available when client is connected to a wallet
-	// server such as dcrwallet.
+	// server such as exccwallet.
 	OnRevocationsCreated func(txHash *chainhash.Hash,
 		sstxIn *chainhash.Hash)
 
@@ -921,7 +921,7 @@ func parseTxAcceptedVerboseNtfnParams(params []json.RawMessage) (*exccjson.TxRaw
 }
 
 // parseBtcdConnectedNtfnParams parses out the connection status of exccd
-// and dcrwallet from the parameters of a btcdconnected notification.
+// and exccwallet from the parameters of a btcdconnected notification.
 func parseBtcdConnectedNtfnParams(params []json.RawMessage) (bool, error) {
 	if len(params) != 1 {
 		return false, wrongNumParams(len(params))
