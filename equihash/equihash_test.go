@@ -3,6 +3,7 @@ package equihash
 import (
 	"encoding/hex"
 	"errors"
+	"hash"
 	"sort"
 	"strconv"
 	"testing"
@@ -519,10 +520,148 @@ func TestNewHashBuilder(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestNewHashBuilder_NilPrefix(t *testing.T) {
+	n, k := 20, 9
+	hb := newHashBuilder(n, k, nil)
+	if n != hb.n {
+		t.Errorf("%v != %v\n", n, hb.n)
+	}
+	if k != hb.k {
+		t.Errorf("%v != %v\n", k, hb.k)
+	}
+	if nil != hb.prefix {
+		t.Errorf("prefix is not nil")
+	}
+}
+
+func buildHash(n, k, nonce int) (hash.Hash, error) {
+	h, err := newKeyedHash(n, k)
+	if err != nil {
+		return nil, err
+	}
+	err = writeHashU32(h, uint32(nonce))
+	if err != nil {
+		return nil, err
+	}
+	return h, nil
+}
+
+func buildHashBuilder(n, k, nonce int) hashBuilder {
+	hb := newHashBuilder(n, k, nil)
+	hb.writeNonce(nonce)
+	return hb
+}
+
+func TestHashBuilder_Digest(t *testing.T) {
+	nonce := 1
+	h, err := buildHash(N, K, nonce)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	hb := buildHashBuilder(N, K, nonce)
+	actDigest := hashDigest(h)
+	expDigest, err := hb.digest()
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	err = byteSliceEq(actDigest, expDigest)
+	if err != nil {
+		t.Error("digests are not same")
+		t.Error(err)
+	}
+}
+
+func TestHashBuilder_BadDigest(t *testing.T) {
+	h, err := buildHash(N, K, 0)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	hb := buildHashBuilder(N, K, 1)
+	actDigest := hashDigest(h)
+	expDigest, err := hb.digest()
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	err = byteSliceEq(actDigest, expDigest)
+	if err == nil {
+		t.Error("digests should not be same")
+	}
+}
+
+func testHashBuilder(prefix []byte) hashBuilder {
+	return newHashBuilder(N, K, prefix)
+}
+
+func TestHashBuilder_WriteNonce(t *testing.T) {
+	hb := testHashBuilder(nil)
+	nonce := 1
+	hb.writeNonce(nonce)
+	exp := writeU32(uint32(nonce))
+	err := byteSliceEq(hb.prefix, exp)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+}
+
+func TestHashBuilder_WriteXi(t *testing.T) {
+	hb := testHashBuilder(nil)
+	xi := 1
+	hb.writeHashXi(xi)
+	exp := writeU32(uint32(xi))
+	err := byteSliceEq(hb.prefix, exp)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+}
+
 func TestCopyByteSlice(t *testing.T) {
 	a := []byte{1, 2, 3, 4}
 	b := copyByteSlice(a)
 	err := byteSliceEq(a, b)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestExccPerson(t *testing.T) {
+	p := exccPerson(N, K)
+	n := len(personPrefix)
+	err := byteSliceEq(p[:n], personPrefix)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	err = byteSliceEq(p[n:n+4], writeU32(uint32(N)))
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	err = byteSliceEq(p[n+4:n+8], writeU32(uint32(K)))
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+}
+
+func TestWriteU32(t *testing.T) {
+	exp := []byte{1, 0, 0, 0}
+	err := byteSliceEq(writeU32(1), exp)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestPutU32(t *testing.T) {
+	exp, act := []byte{1, 0, 0, 0}, make([]byte, 4)
+	putU32(act, 1)
+	err := byteSliceEq(act, exp)
 	if err != nil {
 		t.Error(err)
 	}
