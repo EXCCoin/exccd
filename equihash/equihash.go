@@ -730,7 +730,7 @@ func generateHashes(n, k int) ([]hashKey, error) {
 	return hashKeys, nil
 }
 
-func processHashKeys(keys []hashKey) error {
+func processHashes(keys []hashKey) error {
 	return nil
 }
 
@@ -744,7 +744,7 @@ func solve(n, k int) (bool, error) {
 		return false, err
 	}
 	glog.Info(keys)
-	err = processHashKeys(keys)
+	err = processHashes(keys)
 	if err != nil {
 		return false, err
 	}
@@ -752,5 +752,9 @@ func solve(n, k int) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return false, nil
+	return false, errnyi()
+}
+
+func errnyi() error {
+	return errors.New("nyi")
 }
