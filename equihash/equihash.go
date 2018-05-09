@@ -10,6 +10,8 @@ import (
 	"math"
 	"sort"
 
+	"github.com/golang/glog"
+
 	"golang.org/x/crypto/blake2b"
 )
 
@@ -661,33 +663,70 @@ func stepRow(in []byte, n, k, hashLen int) (hashKey, error) {
 	return hashKey{digest, 0}, nil
 }
 
-func generateHashKey(n, k, i int) (hashKey, error) {
+func generateHashDigest(n, k, i int) ([]byte, error) {
 	hashLen := hashOutput(n)
 	h, err := blake2b.New(hashLen, nil)
 	if err != nil {
-		return hashKey{}, err
+		return nil, err
 	}
 	err = writeHashU32(h, uint32(i))
 	if err != nil {
-		return hashKey{}, err
+		return nil, err
 	}
-	digest := hashDigest(h)
-	return hashKey{digest, g}, nil
+	return hashDigest(h), nil
 }
 
-func generateHashList(n, k int) []hashKey {
-	initSize := 1 << uint(collisionBitLen(n, k)+1)
-	hashLen := hashLen(n, k)
-	hashKeys := make([]hashKey, 0, initSize)
-	for g := 0; len(hashKeys) < initSize; g++ {
-		hashKey := generateHashKey(n, k, g)
-		hashKeys = append(hashKeys, hashKey)
+func generateHashKey(n, k, i int, buf []byte) ([]hashKey, error) {
+	keys := []hashKey{} //TODO(jaupe) work out len
+	digest, err := generateHashDigest(n, k, i)
+	if err != nil {
+		return nil, err
 	}
-	return hashKeys
+	outLen, bitLen, bytePad := hashLen(n, k), 8, 0
+	expandedDigest, err := expandArray(digest, outLen, bitLen, bytePad)
+	if err != nil {
+		return nil, err
+	}
+	return nil, errors.New("nyi")
+}
+
+func hashBuffer(n, k int) []byte {
+	return make([]byte, hashLen(n, k))
+}
+
+func generateHashKeys(n, k int) ([]hashKey, error) {
+	initSize := 1 << uint(collisionBitLen(n, k)+1)
+	hashKeys := make([]hashKey, 0, initSize)
+	tmpHash := hashBuffer(n, k)
+	for g := 0; len(hashKeys) < initSize; g++ {
+		keys, err := generateHashKey(n, k, g, tmpHash)
+		if err != nil {
+			return nil, err
+		}
+		hashKeys = append(hashKeys, keys...)
+	}
+	return hashKeys, nil
+}
+
+func processHashKeys(keys []hashKey) error {
+	return nil
+}
+
+func findCollision(keys []hashKey) error {
+	return nil
 }
 
 func solve(n, k int) (bool, error) {
-	hashes, err := generateHashList(n, k)
+	keys, err := generateHashKeys(n, k)
+	if err != nil {
+		return false, err
+	}
+	glog.Info(keys)
+	err = processHashKeys(keys)
+	if err != nil {
+		return false, err
+	}
+	err = findCollision(keys)
 	if err != nil {
 		return false, err
 	}
