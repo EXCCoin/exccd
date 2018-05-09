@@ -663,48 +663,70 @@ func stepRow(in []byte, n, k, hashLen int) (hashKey, error) {
 	return hashKey{digest, 0}, nil
 }
 
-func generateHashDigest(n, k, i int) ([]byte, error) {
+func generateHashDigest(n, g int) ([]byte, error) {
 	hashLen := hashOutput(n)
 	h, err := blake2b.New(hashLen, nil)
 	if err != nil {
 		return nil, err
 	}
-	err = writeHashU32(h, uint32(i))
+	err = writeHashU32(h, uint32(g))
 	if err != nil {
 		return nil, err
 	}
 	return hashDigest(h), nil
 }
 
-func generateHashKey(n, k, i int, buf []byte) ([]hashKey, error) {
-	keys := []hashKey{} //TODO(jaupe) work out len
-	digest, err := generateHashDigest(n, k, i)
+func hashSlice(buf []byte, i, n int) []byte {
+	if len(buf) == 0 {
+		return nil
+	}
+	start := i * n / 8
+	end := start + n/8
+	return buf[start:end]
+}
+
+func hasSpace(keys []hashKey, n int) bool {
+	return len(keys) < n
+}
+
+func generateHashKeys(n, k, g int, keys []hashKey) ([]hashKey, error) {
+	hash, err := generateHashDigest(n, g)
 	if err != nil {
 		return nil, err
 	}
 	outLen, bitLen, bytePad := hashLen(n, k), 8, 0
-	expandedDigest, err := expandArray(digest, outLen, bitLen, bytePad)
-	if err != nil {
-		return nil, err
+	initSize, indicesLen := initHashLen(n, k), indicesPerHashOutput(n)
+	for i := 0; i < indicesLen && hasSpace(keys, initSize); i++ {
+		s := hashSlice(hash, i, n)
+		digest, err := expandArray(s, outLen, bitLen, bytePad)
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, hashKey{digest, i})
 	}
-	return nil, errors.New("nyi")
+	return keys, nil
 }
 
 func hashBuffer(n, k int) []byte {
 	return make([]byte, hashLen(n, k))
 }
 
-func generateHashKeys(n, k int) ([]hashKey, error) {
-	initSize := 1 << uint(collisionBitLen(n, k)+1)
-	hashKeys := make([]hashKey, 0, initSize)
-	tmpHash := hashBuffer(n, k)
-	for g := 0; len(hashKeys) < initSize; g++ {
-		keys, err := generateHashKey(n, k, g, tmpHash)
+func initHashLen(n, k int) int {
+	return 1 << uint(collisionBitLen(n, k)+1)
+}
+
+func generateHashes(n, k int) ([]hashKey, error) {
+	initLen := initHashLen(n, k)
+	hashKeys := make([]hashKey, 0, initLen)
+
+	for g := 0; len(hashKeys) < initLen; g++ {
+		keys, err := generateHashKeys(n, k, g, hashKeys)
 		if err != nil {
 			return nil, err
 		}
 		hashKeys = append(hashKeys, keys...)
 	}
+
 	return hashKeys, nil
 }
 
@@ -717,7 +739,7 @@ func findCollision(keys []hashKey) error {
 }
 
 func solve(n, k int) (bool, error) {
-	keys, err := generateHashKeys(n, k)
+	keys, err := generateHashes(n, k)
 	if err != nil {
 		return false, err
 	}
