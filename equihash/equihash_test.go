@@ -176,7 +176,7 @@ func TestCountZeros(t *testing.T) {
 }
 */
 func TestHasCollision(t *testing.T) {
-	h := make([]byte, 1, 32)
+	h := make([]byte, 32)
 	r, err := hasCollision(h, h, 1, 0)
 	if err != nil {
 		t.Error(err)
@@ -616,5 +616,33 @@ func TestPutU32(t *testing.T) {
 	err := byteSliceEq(act, exp)
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+func TestHashBuffer(t *testing.T) {
+	buf := hashBuffer(N, K)
+	n := hashLen(N, K)
+	if n != len(buf) {
+		t.Errorf("%v != %v\n", len(buf), n)
+	}
+	for _, v := range buf {
+		if v != 0 {
+			t.Errorf("v == %v\n", v)
+		}
+	}
+}
+
+func TestHashSlice(t *testing.T) {
+	buf := hashBuffer(N, K)
+	s := hashSlice(buf, 0, N)
+	if len(s) != N/8 {
+		t.Errorf("len(s) == %v", len(s))
+	}
+}
+
+func TestHashSlice_Nil(t *testing.T) {
+	s := hashSlice(nil, 0, N)
+	if s != nil {
+		t.Errorf("slice should be empty")
 	}
 }
