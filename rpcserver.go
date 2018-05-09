@@ -2450,7 +2450,7 @@ func (state *gbtWorkState) updateBlockTemplate(s *rpcServer, useCoinbaseValue bo
 }
 
 // blockTemplateResult returns the current block template associated with the
-// state as a dcrjson.GetBlockTemplateResult that is ready to be encoded to
+// state as a exccjson.GetBlockTemplateResult that is ready to be encoded to
 // JSON and returned to the caller.
 //
 // This function MUST be called with the state locked.
@@ -3149,7 +3149,7 @@ func handleGetHeaders(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) 
 	c := cmd.(*exccjson.GetHeadersCmd)
 	blockLocators, err := exccjson.DecodeConcatenatedHashes(c.BlockLocators)
 	if err != nil {
-		// Already a *dcrjson.RPCError
+		// Already a *exccjson.RPCError
 		return nil, err
 	}
 	var hashStop chainhash.Hash
@@ -5728,12 +5728,12 @@ func handleVerifyMessage(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 	}
 
 	// Reconstruct the pubkey hash.
-	dcrPK := pk
+	exccPK := pk
 	var serializedPK []byte
 	if wasCompressed {
-		serializedPK = dcrPK.SerializeCompressed()
+		serializedPK = exccPK.SerializeCompressed()
 	} else {
-		serializedPK = dcrPK.SerializeUncompressed()
+		serializedPK = exccPK.SerializeUncompressed()
 	}
 	address, err := exccutil.NewAddressSecpPubKey(serializedPK,
 		activeNetParams.Params)
@@ -6026,7 +6026,7 @@ func parseCmd(request *exccjson.Request) *parsedRPCCmd {
 
 // createMarshalledReply returns a new marshalled JSON-RPC response given the
 // passed parameters.  It will automatically convert errors that are not of the
-// type *dcrjson.RPCError to the appropriate type as needed.
+// type *exccjson.RPCError to the appropriate type as needed.
 func createMarshalledReply(rpcVersion string, id interface{}, result interface{}, replyErr error) ([]byte, error) {
 	var jsonErr *exccjson.RPCError
 	if replyErr != nil {

@@ -44,13 +44,13 @@ func NewAccountBalanceNtfn(account string, balance float64, confirmed bool) *Acc
 	}
 }
 
-// BtcdConnectedNtfn defines the dcrddconnected JSON-RPC notification.
+// BtcdConnectedNtfn defines the exccdconnected JSON-RPC notification.
 type BtcdConnectedNtfn struct {
 	Connected bool
 }
 
 // NewBtcdConnectedNtfn returns a new instance which can be used to issue a
-// dcrddconnected JSON-RPC notification.
+// exccdconnected JSON-RPC notification.
 func NewBtcdConnectedNtfn(connected bool) *BtcdConnectedNtfn {
 	return &BtcdConnectedNtfn{
 		Connected: connected,

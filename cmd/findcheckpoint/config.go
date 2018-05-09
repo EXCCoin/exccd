@@ -42,7 +42,7 @@ type config struct {
 	TestNet       bool   `long:"testnet" description:"Use the test network"`
 	SimNet        bool   `long:"simnet" description:"Use the simulation test network"`
 	NumCandidates int    `short:"n" long:"numcandidates" description:"Max num of checkpoint candidates to show {1-20}"`
-	UseGoOutput   bool   `short:"g" long:"gooutput" description:"Display the candidates using Go syntax that is ready to insert into the dcrchain checkpoint list"`
+	UseGoOutput   bool   `short:"g" long:"gooutput" description:"Display the candidates using Go syntax that is ready to insert into the exccchain checkpoint list"`
 }
 
 // validDbType returns whether or not dbType is a supported database type.

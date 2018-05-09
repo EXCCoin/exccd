@@ -3186,7 +3186,7 @@ func (c *Client) WalletInfo() (*exccjson.WalletInfoResult, error) {
 // TODO(davec): Implement
 // backupwallet (NYI in exccwallet)
 // encryptwallet (Won't be supported by exccwallet since it's always encrypted)
-// getwalletinfo (NYI in exccwallet or dcrjson)
+// getwalletinfo (NYI in exccwallet or exccjson)
 // listaddressgroupings (NYI in exccwallet)
 // listreceivedbyaccount (NYI in exccwallet)
 

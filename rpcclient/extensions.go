@@ -647,7 +647,7 @@ func (r FutureGetStakeDifficultyResult) Receive() (*exccjson.GetStakeDifficultyR
 		return nil, err
 	}
 
-	// Unmarshal result as a dcrjson.GetStakeDifficultyResult.
+	// Unmarshal result as a exccjson.GetStakeDifficultyResult.
 	var gsdr exccjson.GetStakeDifficultyResult
 	err = json.Unmarshal(res, &gsdr)
 	if err != nil {
@@ -688,7 +688,7 @@ func (r FutureGetStakeVersionsResult) Receive() (*exccjson.GetStakeVersionsResul
 		return nil, err
 	}
 
-	// Unmarshal result as a dcrjson.GetStakeVersionsResult.
+	// Unmarshal result as a exccjson.GetStakeVersionsResult.
 	var gsvr exccjson.GetStakeVersionsResult
 	err = json.Unmarshal(res, &gsvr)
 	if err != nil {
@@ -729,7 +729,7 @@ func (r FutureGetStakeVersionInfoResult) Receive() (*exccjson.GetStakeVersionInf
 		return nil, err
 	}
 
-	// Unmarshal result as a dcrjson.GetStakeVersionInfoResult.
+	// Unmarshal result as a exccjson.GetStakeVersionInfoResult.
 	var gsvr exccjson.GetStakeVersionInfoResult
 	err = json.Unmarshal(res, &gsvr)
 	if err != nil {
@@ -817,7 +817,7 @@ func (r FutureGetVoteInfoResult) Receive() (*exccjson.GetVoteInfoResult, error) 
 		return nil, err
 	}
 
-	// Unmarshal result as a dcrjson.GetVoteInfoResult.
+	// Unmarshal result as a exccjson.GetVoteInfoResult.
 	var gsvr exccjson.GetVoteInfoResult
 	err = json.Unmarshal(res, &gsvr)
 	if err != nil {
@@ -905,7 +905,7 @@ func (r FutureLiveTicketsResult) Receive() ([]*chainhash.Hash, error) {
 		return nil, err
 	}
 
-	// Unmarshal the result as a dcrjson.LiveTicketsResult.
+	// Unmarshal the result as a exccjson.LiveTicketsResult.
 	var container exccjson.LiveTicketsResult
 	err = json.Unmarshal(res, &container)
 	if err != nil {
@@ -952,7 +952,7 @@ func (r FutureMissedTicketsResult) Receive() ([]*chainhash.Hash, error) {
 		return nil, err
 	}
 
-	// Unmarshal the result as a dcrjson.MissedTicketsResult.
+	// Unmarshal the result as a exccjson.MissedTicketsResult.
 	var container exccjson.MissedTicketsResult
 	err = json.Unmarshal(res, &container)
 	if err != nil {

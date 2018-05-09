@@ -109,7 +109,7 @@ func main() {
 	cmd, err := exccjson.NewCmd(method, params...)
 	if err != nil {
 		// Show the error along with its error code when it's a
-		// dcrjson.Error as it reallistcally will always be since the
+		// exccjson.Error as it reallistcally will always be since the
 		// NewCmd function is only supposed to return errors of that
 		// type.
 		if jerr, ok := err.(exccjson.Error); ok {
@@ -119,7 +119,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		// The error is not a dcrjson.Error and this really should not
+		// The error is not a exccjson.Error and this really should not
 		// happen.  Nevertheless, fallback to just showing the error
 		// if it should happen due to a bug in the package.
 		fmt.Fprintf(os.Stderr, "%s command: %v\n", method, err)

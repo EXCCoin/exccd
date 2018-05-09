@@ -307,7 +307,7 @@ func futureError(err error) chan *response {
 }
 
 // result checks whether the unmarshaled response contains a non-nil error,
-// returning an unmarshaled dcrjson.RPCError (or an unmarshaling error) if so.
+// returning an unmarshaled exccjson.RPCError (or an unmarshaling error) if so.
 // If the response is not an error, the raw bytes of the request are
 // returned for further unmashaling into specific result types.
 func (r rawResponse) result() (result []byte, err error) {

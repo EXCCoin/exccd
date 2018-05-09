@@ -252,7 +252,7 @@ Here is how the right prefix for a commit is chosen.
 - If a commit modifies a component in the main package
   (eg. `blocklogger`) use the component name as the commit prefix.
 - If a commit modifies a component in any of the packages besides the main
-  package use the package name as the commit prefix (eg. `dcrjson`).
+  package use the package name as the commit prefix (eg. `exccjson`).
 - If a commit modifies components in multiple packages use the word `multi`
   as the commit prefix.
 

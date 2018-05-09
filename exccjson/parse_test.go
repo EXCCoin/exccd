@@ -231,7 +231,7 @@ func TestInvalidDecodeConcatenatedHashes(t *testing.T) {
 		rpcError, ok := err.(*exccjson.RPCError)
 		if !ok {
 			t.Fatalf("DecodeConcatenatedHashes error is not "+
-				"expected type *dcrjson.RPCError: %T", err)
+				"expected type *exccjson.RPCError: %T", err)
 		}
 		if rpcError.Code != str.err.Code {
 			t.Fatalf("DecodeConcatenatedHashes returned "+

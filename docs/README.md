@@ -193,7 +193,7 @@ information.
 * The ExchangeCoin-related Go Packages:
   * [rpcclient](https://github.com/EXCCoin/exccd/tree/master/rpcclient) - Implements a
     robust and easy to use Websocket-enabled ExchangeCoin JSON-RPC client
-  * [dcrjson](https://github.com/EXCCoin/exccd/tree/master/dcrjson) - Provides an extensive API
+  * [exccjson](https://github.com/EXCCoin/exccd/tree/master/exccjson) - Provides an extensive API
     for the underlying JSON-RPC command and return values
   * [wire](https://github.com/EXCCoin/exccd/tree/master/wire) - Implements the
     ExchangeCoin wire protocol
