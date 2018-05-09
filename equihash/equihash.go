@@ -7,7 +7,6 @@ import (
 	"errors"
 	"hash"
 	"log"
-	"math"
 	"sort"
 
 	"github.com/golang/glog"
@@ -28,6 +27,8 @@ var (
 	errNonce        = errors.New("no valid nonce")
 	errStartEndEq   = errors.New("start and end positions equal")
 	errLenZero      = errors.New("len is 0")
+	errNil          = errors.New("unexpected nil pointer")
+	errBadArg       = errors.New("bad arg")
 	personPrefix    = []byte("excc")
 )
 
@@ -222,7 +223,7 @@ func pow(k int) int {
 	return 1 << uint(k)
 }
 
-func distinctIndices(a, b []int) bool {
+func distinctIndices(a, b []byte) bool {
 	for _, l := range a {
 		for _, r := range b {
 			if l == r {
@@ -325,6 +326,7 @@ func negIndex(s []solution, i int) int {
 	return len(s) - i
 }
 
+/*
 func equihash(hb hashBuilder, n, k int) ([][]int, error) {
 	collLen := collisionLen(n, k)
 	hLen := hashLen(k, collLen)
@@ -438,6 +440,7 @@ func equihash(hb hashBuilder, n, k int) ([][]int, error) {
 	}
 	return solns, nil
 }
+*/
 
 type solutions []solution
 
@@ -576,6 +579,7 @@ func u32b(x int) []byte {
 	return writeU32(uint32(x))
 }
 
+/*
 func mine(n, k, d int) (*miningResult, error) {
 	err := validateParams(n, k)
 	if err != nil {
@@ -615,6 +619,7 @@ func mine(n, k, d int) (*miningResult, error) {
 		prevHash = currHash
 	}
 }
+*/
 
 type miningResult struct {
 	prevHash    []byte
@@ -754,16 +759,39 @@ func (k hashKeys) Swap(i, j int) {
 	k[j], k[i] = k[i], k[j]
 }
 
+func finalFullWidth(n, k int) int {
+	return 2*collisionByteLen(n, k) + 32*(1<<uint(k-1))
+}
+
+func newXorHashKey(x, y, out []byte, n, k, size, lenIndices, trim int, key *hashKey) error {
+	if key == nil {
+		return errNil
+	}
+	w := finalFullWidth(n, k)
+	if size+lenIndices <= w {
+		return errBadArg
+	}
+	if size-trim+(2*lenIndices) <= hashLen(n, k) {
+		return errBadArg
+	}
+	for i := trim; i < size; i++ {
+		hash[]
+	}
+
+}
+
 func processHashes(keys []hashKey, n, k int) error {
 	if len(keys) == 0 {
 		return errLen
 	}
 	// loop until 2n/(k+1) bits remain
+	collByteLen := collisionByteLen(n, k)
 	for r := 1; r < k && len(keys) > 0; r++ {
 		sort.Sort(hashKeys(keys))
 		i, l := 0, 0
 		//posFree := collisionByteLen(n, k)
 		//_ := []hashKey{}
+		buf := []hashKey{}
 		for i < len(keys)-1 {
 			// find next set of unordered pairs with collisions on the next n/(k+1) bits
 			j, a := 1, keys[i].digest
@@ -773,8 +801,13 @@ func processHashes(keys []hashKey, n, k int) error {
 			}
 
 			// Calculate tuples (X_i ^ X_j, (i, j))
-			for l := 0; i < j-1; l++ {
-
+			for l := 0; l < j-1; l++ {
+				for m := l + 1; m < j; m++ {
+					a, b := keys[i+l], keys[i+m]
+					if distinctIndices(a.digest, b.digest) {
+						buf = append(buf, newXorHashKey(a, b, collByteLen))
+					}
+				}
 			}
 		}
 	}
