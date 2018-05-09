@@ -27,6 +27,7 @@ var (
 	errWriteLen     = errors.New("didn't write full len")
 	errNonce        = errors.New("no valid nonce")
 	errStartEndEq   = errors.New("start and end positions equal")
+	errLenZero      = errors.New("len is 0")
 	personPrefix    = []byte("excc")
 )
 
@@ -446,15 +447,7 @@ func (s solutions) Len() int {
 
 func (s solutions) Less(i, j int) bool {
 	x, y := s[i].digest, s[j].digest
-	switch bytes.Compare(x, y) {
-	case -1:
-		return true
-	case 0, 1:
-		return false
-	default:
-		log.Panic("not fail-able with `bytes.Comparable` bounded [-1, 1].")
-		return false
-	}
+	return bytesCompare(x, y)
 }
 
 func (s solutions) Swap(i, j int) {
@@ -730,12 +723,73 @@ func generateHashes(n, k int) ([]hashKey, error) {
 	return hashKeys, nil
 }
 
-func processHashes(keys []hashKey) error {
+func hashCollisionPair() {
+
+}
+
+func bytesCompare(x, y []byte) bool {
+	switch bytes.Compare(x, y) {
+	case -1:
+		return true
+	case 0, 1:
+		return false
+	default:
+		log.Panic("not fail-able with `bytes.Comparable` bounded [-1, 1].")
+		return false
+	}
+}
+
+type hashKeys []hashKey
+
+func (k hashKeys) Len() int {
+	return len(k)
+}
+
+func (k hashKeys) Less(i, j int) bool {
+	// bytes package already implements Comparable for []byte.
+	return bytesCompare(k[i].digest, k[j].digest)
+}
+
+func (k hashKeys) Swap(i, j int) {
+	k[j], k[i] = k[i], k[j]
+}
+
+func processHashes(keys []hashKey, n, k int) error {
+	if len(keys) == 0 {
+		return errLen
+	}
+	// loop until 2n/(k+1) bits remain
+	for r := 1; r < k && len(keys) > 0; r++ {
+		sort.Sort(hashKeys(keys))
+		i, l := 0, 0
+		//posFree := collisionByteLen(n, k)
+		//_ := []hashKey{}
+		for i < len(keys)-1 {
+			// find next set of unordered pairs with collisions on the next n/(k+1) bits
+			j, a := 1, keys[i].digest
+			b := keys[i+j].digest
+			for i+j < len(keys) && hasCollision2(a, b, l) {
+				j++
+			}
+
+			// Calculate tuples (X_i ^ X_j, (i, j))
+			for l := 0; i < j-1; l++ {
+
+			}
+		}
+	}
 	return nil
 }
 
-func findCollision(keys []hashKey) error {
-	return nil
+func findCollision(keys []hashKey) (bool, error) {
+	if len(keys) == 0 {
+		return false, errLen
+	}
+	return false, nil
+}
+
+func sortHashKeys(keys []hashKey) {
+	sort.Sort(hashKeys(keys))
 }
 
 func solve(n, k int) (bool, error) {
@@ -744,15 +798,11 @@ func solve(n, k int) (bool, error) {
 		return false, err
 	}
 	glog.Info(keys)
-	err = processHashes(keys)
+	err = processHashes(keys, n, k)
 	if err != nil {
 		return false, err
 	}
-	err = findCollision(keys)
-	if err != nil {
-		return false, err
-	}
-	return false, errnyi()
+	return findCollision(keys)
 }
 
 func errnyi() error {
