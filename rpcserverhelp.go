@@ -59,7 +59,7 @@ var helpDescsEnUS = map[string]string{
 	"createrawsstx-amount":        "JSON object with the destination addresses as keys and amounts as values",
 	"createrawsstx-amount--key":   "address",
 	"createrawsstx-amount--value": "n.nnn",
-	"createrawsstx-amount--desc":  "The destination address as the key and the amount in DCR as the value",
+	"createrawsstx-amount--desc":  "The destination address as the key and the amount in EXCC as the value",
 	"createrawsstx-couts":         "Array of sstx commit outs to use of type SSTxCommitOut",
 	"sstxcommitout-addr":          "Address to send sstx commit",
 	"sstxcommitout-commitamt":     "Amount to commit",
@@ -90,7 +90,7 @@ var helpDescsEnUS = map[string]string{
 	"createrawtransaction-amounts":        "JSON object with the destination addresses as keys and amounts as values",
 	"createrawtransaction-amounts--key":   "address",
 	"createrawtransaction-amounts--value": "n.nnn",
-	"createrawtransaction-amounts--desc":  "The destination address as the key and the amount in DCR as the value",
+	"createrawtransaction-amounts--desc":  "The destination address as the key and the amount in EXCC as the value",
 	"createrawtransaction-locktime":       "Locktime value; a non-zero value will also locktime-activate the inputs",
 	"createrawtransaction--result0":       "Hex-encoded bytes of the serialized transaction",
 
@@ -136,7 +136,7 @@ var helpDescsEnUS = map[string]string{
 	"scriptpubkeyresult-commitamt": "The ticket commitment value if the script is for a staking commitment",
 
 	// Vout help.
-	"vout-value":        "The amount in DCR",
+	"vout-value":        "The amount in EXCC",
 	"vout-n":            "The index of this transaction output",
 	"vout-scriptPubKey": "The public key script used to pay coins as a JSON object",
 	"vout-version":      "The version of the vout",
@@ -525,7 +525,7 @@ var helpDescsEnUS = map[string]string{
 	"infochainresult-proxy":           "The proxy used by the server",
 	"infochainresult-difficulty":      "The current target difficulty",
 	"infochainresult-testnet":         "Whether or not server is using testnet",
-	"infochainresult-relayfee":        "The minimum relay fee for non-free transactions in DCR/KB",
+	"infochainresult-relayfee":        "The minimum relay fee for non-free transactions in EXCC/KB",
 	"infochainresult-errors":          "Any current errors",
 
 	// InfoWalletResult help.
@@ -542,8 +542,8 @@ var helpDescsEnUS = map[string]string{
 	"infowalletresult-keypoololdest":   "Seconds since 1 Jan 1970 GMT of the oldest pre-generated key in the key pool",
 	"infowalletresult-keypoolsize":     "The number of new keys that are pre-generated",
 	"infowalletresult-unlocked_until":  "The timestamp in seconds since 1 Jan 1970 GMT that the wallet is unlocked for transfers, or 0 if the wallet is locked",
-	"infowalletresult-paytxfee":        "The transaction fee set in DCR/KB",
-	"infowalletresult-relayfee":        "The minimum relay fee for non-free transactions in DCR/KB",
+	"infowalletresult-paytxfee":        "The transaction fee set in EXCC/KB",
+	"infowalletresult-relayfee":        "The minimum relay fee for non-free transactions in EXCC/KB",
 	"infowalletresult-errors":          "Any current errors",
 
 	// GetHeadersCmd help.
@@ -650,7 +650,7 @@ var helpDescsEnUS = map[string]string{
 	// GetTxOutResult help.
 	"gettxoutresult-bestblock":     "The block hash that contains the transaction output",
 	"gettxoutresult-confirmations": "The number of confirmations",
-	"gettxoutresult-value":         "The transaction amount in DCR",
+	"gettxoutresult-value":         "The transaction amount in EXCC",
 	"gettxoutresult-scriptPubKey":  "The public key script used to pay coins as a JSON object",
 	"gettxoutresult-version":       "The transaction version",
 	"gettxoutresult-coinbase":      "Whether or not the transaction is a coinbase",
@@ -839,12 +839,12 @@ var helpDescsEnUS = map[string]string{
 	"ticketbucket-number":     "Bucket number.",
 
 	// TicketFeeInfo help.
-	"ticketfeeinfo--synopsis":            "Get various information about ticket fees from the mempool, blocks, and difficulty windows (units: DCR/kB)",
+	"ticketfeeinfo--synopsis":            "Get various information about ticket fees from the mempool, blocks, and difficulty windows (units: EXCC/kB)",
 	"ticketfeeinfo-blocks":               "The number of blocks, starting from the chain tip and descending, to return fee information about",
 	"ticketfeeinfo-windows":              "The number of difficulty windows to return ticket fee information about",
-	"ticketfeeinforesult-feeinfomempool": "Ticket fee information for all tickets in the mempool (units: DCR/kB)",
-	"ticketfeeinforesult-feeinfoblocks":  "Ticket fee information for a given list of blocks descending from the chain tip (units: DCR/kB)",
-	"ticketfeeinforesult-feeinfowindows": "Ticket fee information for a window period where the stake difficulty was the same (units: DCR/kB)",
+	"ticketfeeinforesult-feeinfomempool": "Ticket fee information for all tickets in the mempool (units: EXCC/kB)",
+	"ticketfeeinforesult-feeinfoblocks":  "Ticket fee information for a given list of blocks descending from the chain tip (units: EXCC/kB)",
+	"ticketfeeinforesult-feeinfowindows": "Ticket fee information for a window period where the stake difficulty was the same (units: EXCC/kB)",
 
 	"feeinfomempool-number": "Number of transactions in the mempool",
 	"feeinfomempool-min":    "Minimum transaction fee in the mempool",

@@ -460,7 +460,7 @@ func decompressScript(compressedPkScript []byte,
 // While this is simply exchanging one uint64 for another, the resulting value
 // for typical amounts has a much smaller magnitude which results in fewer bytes
 // when encoded as variable length quantity.  For example, consider the amount
-// of 0.1 DCR which is 10000000 atoms.  Encoding 10000000 as a VarInt would take
+// of 0.1 EXCC which is 10000000 atoms.  Encoding 10000000 as a VarInt would take
 // 4 bytes while encoding the compressed value of 8 as a VarInt only takes 1 byte.
 //
 // Essentially the compression is achieved by splitting the value into an

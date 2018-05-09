@@ -292,7 +292,7 @@ func TestAmountCompression(t *testing.T) {
 		compressed   uint64
 	}{
 		{
-			name:         "0 DCR (sometimes used in nulldata)",
+			name:         "0 EXCC (sometimes used in nulldata)",
 			uncompressed: 0,
 			compressed:   0,
 		},
@@ -302,37 +302,37 @@ func TestAmountCompression(t *testing.T) {
 			compressed:   4911,
 		},
 		{
-			name:         "0.00001 DCR (typical transaction fee)",
+			name:         "0.00001 EXCC (typical transaction fee)",
 			uncompressed: 1000,
 			compressed:   4,
 		},
 		{
-			name:         "0.0001 DCR (typical transaction fee)",
+			name:         "0.0001 EXCC (typical transaction fee)",
 			uncompressed: 10000,
 			compressed:   5,
 		},
 		{
-			name:         "0.12345678 DCR",
+			name:         "0.12345678 EXCC",
 			uncompressed: 12345678,
 			compressed:   111111101,
 		},
 		{
-			name:         "0.5 DCR",
+			name:         "0.5 EXCC",
 			uncompressed: 50000000,
 			compressed:   48,
 		},
 		{
-			name:         "1 DCR",
+			name:         "1 EXCC",
 			uncompressed: 100000000,
 			compressed:   9,
 		},
 		{
-			name:         "5 DCR",
+			name:         "5 EXCC",
 			uncompressed: 500000000,
 			compressed:   49,
 		},
 		{
-			name:         "21000000 DCR (max minted coins)",
+			name:         "21000000 EXCC (max minted coins)",
 			uncompressed: 2100000000000000,
 			compressed:   21000000,
 		},
@@ -376,7 +376,7 @@ func TestCompressedTxOut(t *testing.T) {
 		isCompressed  bool
 	}{
 		{
-			name:          "nulldata with 0 DCR",
+			name:          "nulldata with 0 EXCC",
 			amount:        0,
 			scriptVersion: 0,
 			pkScript:      hexToBytes("6a200102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"),
@@ -442,7 +442,7 @@ func TestCompressedTxOut(t *testing.T) {
 			isCompressed:  false,
 		},
 		{
-			name:          "pay-to-pubkey uncompressed 1 DCR, amount present",
+			name:          "pay-to-pubkey uncompressed 1 EXCC, amount present",
 			amount:        100000000,
 			scriptVersion: 0,
 			pkScript:      hexToBytes("4104192d74d0cb94344c9569c2e77901573d8d7903c3ebec3a957724895dca52c6b40d45264838c0bd96852662ce6a847b197376830160c6d2eb5e6a4c44d33f453eac"),
