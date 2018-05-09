@@ -14,7 +14,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/database"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/gcs"
 	"github.com/EXCCoin/exccd/gcs/blockcf"
 	"github.com/EXCCoin/exccd/wire"
@@ -165,7 +165,7 @@ func (idx *CFIndex) Create(dbTx database.Tx) error {
 
 // storeFilter stores a given filter, and performs the steps needed to
 // generate the filter's header.
-func storeFilter(dbTx database.Tx, block *excutil.Block, f *gcs.Filter, filterType wire.FilterType) error {
+func storeFilter(dbTx database.Tx, block *exccutil.Block, f *gcs.Filter, filterType wire.FilterType) error {
 	if uint8(filterType) > maxFilterType {
 		return errors.New("unsupported filter type")
 	}
@@ -204,7 +204,7 @@ func storeFilter(dbTx database.Tx, block *excutil.Block, f *gcs.Filter, filterTy
 // ConnectBlock is invoked by the index manager when a new block has been
 // connected to the main chain. This indexer adds a hash-to-cf mapping for
 // every passed block. This is part of the Indexer interface.
-func (idx *CFIndex) ConnectBlock(dbTx database.Tx, block, parent *excutil.Block, view *blockchain.UtxoViewpoint) error {
+func (idx *CFIndex) ConnectBlock(dbTx database.Tx, block, parent *exccutil.Block, view *blockchain.UtxoViewpoint) error {
 	f, err := blockcf.Regular(block.MsgBlock())
 	if err != nil && err != gcs.ErrNoData {
 		return err
@@ -226,7 +226,7 @@ func (idx *CFIndex) ConnectBlock(dbTx database.Tx, block, parent *excutil.Block,
 // DisconnectBlock is invoked by the index manager when a block has been
 // disconnected from the main chain.  This indexer removes the hash-to-cf
 // mapping for every passed block. This is part of the Indexer interface.
-func (idx *CFIndex) DisconnectBlock(dbTx database.Tx, block, parent *excutil.Block, view *blockchain.UtxoViewpoint) error {
+func (idx *CFIndex) DisconnectBlock(dbTx database.Tx, block, parent *exccutil.Block, view *blockchain.UtxoViewpoint) error {
 	for _, key := range cfIndexKeys {
 		err := dbDeleteFilter(dbTx, key, block.Hash())
 		if err != nil {

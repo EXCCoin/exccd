@@ -1,6 +1,6 @@
 FROM golang:1.10
 
-LABEL description="excd image"
+LABEL description="exccd image"
 LABEL version="1.0"
 LABEL maintainer "team@cryptoxchanger.io"
 
@@ -24,9 +24,9 @@ RUN mkdir /release && \
 RUN mkdir /src && \
     chown $USER /src && \
     mkdir -p /go/src/github.com/EXCCoin/exccd && \
-    mkdir -p /go/src/github.com/decred/dcrwallet && \
-    mkdir -p /go/src/github.com/decred/dcrctl && \
-    mkdir -p /go/src/github.com/decred/dcrrpcclient && \
+    mkdir -p /go/src/github.com/EXCCoin/exccwallet && \
+    mkdir -p /go/src/github.com/EXCCoin/exccctl && \
+    mkdir -p /go/src/github.com/EXCCoin/exccrpcclient && \
     chown -R $USER /go/src
 
 # switch user

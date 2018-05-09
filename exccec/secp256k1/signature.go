@@ -50,7 +50,7 @@ func NewSignature(r, s *big.Int) *Signature {
 
 // Serialize returns the ECDSA signature in the more strict DER format.  Note
 // that the serialized bytes returned do not include the appended hash type
-// used in Decred signature scripts.
+// used in ExchangeCoin signature scripts.
 //
 // encoding/asn1 is broken so we hand roll this output:
 //
@@ -286,7 +286,7 @@ func hashToInt(hash []byte) *big.Int {
 // SEC 1 Ver 2.0, page 47-48 (53 and 54 in the pdf). This performs the details
 // in the inner loop in Step 1. The counter provided is actually the j parameter
 // of the loop * 2 - on the first iteration of j we do the R case, else the -R
-// case in step 1.6. This counter is used in the Decred compressed signature
+// case in step 1.6. This counter is used in the ExchangeCoin compressed signature
 // format and thus we match bitcoind's behaviour here.
 func recoverKeyFromSignature(sig *Signature, msg []byte,
 	iter int, doChecks bool) (*PublicKey, error) {

@@ -3,7 +3,7 @@
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
-package excutil
+package exccutil
 
 // bitflags contains a simple series of functions to handle bitwise boolean
 // operations in uint16s.

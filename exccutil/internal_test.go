@@ -11,7 +11,7 @@ cases which are either not possible or can't reliably be tested via the public
 interface. The functions are only exported while the tests are being run.
 */
 
-package excutil
+package exccutil
 
 import (
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
@@ -68,7 +68,7 @@ func TstAddressPubKey(serializedPubKey []byte, pubKeyFormat PubKeyFormat,
 }
 
 // TstAddressSAddr returns the expected script address bytes for
-// P2PKH and P2SH Decred addresses.
+// P2PKH and P2SH ExchangeCoin addresses.
 func TstAddressSAddr(addr string) []byte {
 	decoded := base58.Decode(addr)
 	return decoded[2 : 2+ripemd160.Size]

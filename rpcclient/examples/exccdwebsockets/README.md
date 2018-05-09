@@ -27,7 +27,7 @@ password for the RPC server:
 Finally, navigate to the example's directory and run it with:
 
 ```bash
-$ cd $GOPATH/src/github.com/EXCCoin/exccd/rpcclient/examples/dcrdwebsockets
+$ cd $GOPATH/src/github.com/EXCCoin/exccd/rpcclient/examples/exccdwebsockets
 $ go run *.go
 ```
 

@@ -32,7 +32,7 @@ func TestServiceFlagStringer(t *testing.T) {
 	}
 }
 
-// TestCurrencyNetStringer tests the stringized output for Decred net types.
+// TestCurrencyNetStringer tests the stringized output for ExchangeCoin net types.
 func TestCurrencyNetStringer(t *testing.T) {
 	tests := []struct {
 		in   CurrencyNet

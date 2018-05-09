@@ -176,7 +176,7 @@ const (
 	// than half the number required to overflow a single byte in VLQ format
 	// (127). All scripts prefixed 64 and higher for their size are considered
 	// uncompressed scripts that are stored uncompressed. Because only 5
-	// special script types are currently stored by Decred, there is a large
+	// special script types are currently stored by ExchangeCoin, there is a large
 	// amount of room for future upgrades to the compression algorithm with
 	// scripts that are common, such as those for the staking system.
 	numSpecialScripts = 64
@@ -460,7 +460,7 @@ func decompressScript(compressedPkScript []byte,
 // While this is simply exchanging one uint64 for another, the resulting value
 // for typical amounts has a much smaller magnitude which results in fewer bytes
 // when encoded as variable length quantity.  For example, consider the amount
-// of 0.1 DCR which is 10000000 atoms.  Encoding 10000000 as a VarInt would take
+// of 0.1 EXCC which is 10000000 atoms.  Encoding 10000000 as a VarInt would take
 // 4 bytes while encoding the compressed value of 8 as a VarInt only takes 1 byte.
 //
 // Essentially the compression is achieved by splitting the value into an
@@ -683,7 +683,7 @@ func decodeCompressedTxOut(serialized []byte, compressionVersion uint32,
 }
 
 // -----------------------------------------------------------------------------
-// Decred specific transaction encoding flags
+// ExchangeCoin specific transaction encoding flags
 //
 // Details about a transaction needed to determine how it may be spent
 // according to consensus rules are given by these flags.

@@ -59,7 +59,7 @@ var helpDescsEnUS = map[string]string{
 	"createrawsstx-amount":        "JSON object with the destination addresses as keys and amounts as values",
 	"createrawsstx-amount--key":   "address",
 	"createrawsstx-amount--value": "n.nnn",
-	"createrawsstx-amount--desc":  "The destination address as the key and the amount in DCR as the value",
+	"createrawsstx-amount--desc":  "The destination address as the key and the amount in EXCC as the value",
 	"createrawsstx-couts":         "Array of sstx commit outs to use of type SSTxCommitOut",
 	"sstxcommitout-addr":          "Address to send sstx commit",
 	"sstxcommitout-commitamt":     "Amount to commit",
@@ -90,7 +90,7 @@ var helpDescsEnUS = map[string]string{
 	"createrawtransaction-amounts":        "JSON object with the destination addresses as keys and amounts as values",
 	"createrawtransaction-amounts--key":   "address",
 	"createrawtransaction-amounts--value": "n.nnn",
-	"createrawtransaction-amounts--desc":  "The destination address as the key and the amount in DCR as the value",
+	"createrawtransaction-amounts--desc":  "The destination address as the key and the amount in EXCC as the value",
 	"createrawtransaction-locktime":       "Locktime value; a non-zero value will also locktime-activate the inputs",
 	"createrawtransaction--result0":       "Hex-encoded bytes of the serialized transaction",
 
@@ -136,7 +136,7 @@ var helpDescsEnUS = map[string]string{
 	"scriptpubkeyresult-commitamt": "The ticket commitment value if the script is for a staking commitment",
 
 	// Vout help.
-	"vout-value":        "The amount in DCR",
+	"vout-value":        "The amount in EXCC",
 	"vout-n":            "The index of this transaction output",
 	"vout-scriptPubKey": "The public key script used to pay coins as a JSON object",
 	"vout-version":      "The version of the vout",
@@ -157,7 +157,7 @@ var helpDescsEnUS = map[string]string{
 	"decodescriptresult-asm":       "Disassembly of the script",
 	"decodescriptresult-reqSigs":   "The number of required signatures",
 	"decodescriptresult-type":      "The type of the script (e.g. 'pubkeyhash')",
-	"decodescriptresult-addresses": "The Exchangecoin addresses associated with this script",
+	"decodescriptresult-addresses": "The ExchangeCoin addresses associated with this script",
 	"decodescriptresult-p2sh":      "The script hash for use in pay-to-script-hash transactions (only present if the provided redeem script is not already a pay-to-script-hash script)",
 
 	// DecodeScriptCmd help.
@@ -443,7 +443,7 @@ var helpDescsEnUS = map[string]string{
 	"getconnectioncount--result0":  "The number of connections",
 
 	// GetCurrentNetCmd help.
-	"getcurrentnet--synopsis": "Get Exchangecoin network the server is running on.",
+	"getcurrentnet--synopsis": "Get ExchangeCoin network the server is running on.",
 	"getcurrentnet--result0":  "The network identifer",
 
 	// GetDifficultyCmd help.
@@ -525,14 +525,14 @@ var helpDescsEnUS = map[string]string{
 	"infochainresult-proxy":           "The proxy used by the server",
 	"infochainresult-difficulty":      "The current target difficulty",
 	"infochainresult-testnet":         "Whether or not server is using testnet",
-	"infochainresult-relayfee":        "The minimum relay fee for non-free transactions in DCR/KB",
+	"infochainresult-relayfee":        "The minimum relay fee for non-free transactions in EXCC/KB",
 	"infochainresult-errors":          "Any current errors",
 
 	// InfoWalletResult help.
 	"infowalletresult-version":         "The version of the server",
 	"infowalletresult-protocolversion": "The latest supported protocol version",
 	"infowalletresult-walletversion":   "The version of the wallet server",
-	"infowalletresult-balance":         "The total Exchangecoin balance of the wallet",
+	"infowalletresult-balance":         "The total ExchangeCoin balance of the wallet",
 	"infowalletresult-blocks":          "The number of blocks processed",
 	"infowalletresult-timeoffset":      "The time offset",
 	"infowalletresult-connections":     "The number of connected peers",
@@ -542,8 +542,8 @@ var helpDescsEnUS = map[string]string{
 	"infowalletresult-keypoololdest":   "Seconds since 1 Jan 1970 GMT of the oldest pre-generated key in the key pool",
 	"infowalletresult-keypoolsize":     "The number of new keys that are pre-generated",
 	"infowalletresult-unlocked_until":  "The timestamp in seconds since 1 Jan 1970 GMT that the wallet is unlocked for transfers, or 0 if the wallet is locked",
-	"infowalletresult-paytxfee":        "The transaction fee set in DCR/KB",
-	"infowalletresult-relayfee":        "The minimum relay fee for non-free transactions in DCR/KB",
+	"infowalletresult-paytxfee":        "The transaction fee set in EXCC/KB",
+	"infowalletresult-relayfee":        "The minimum relay fee for non-free transactions in EXCC/KB",
 	"infowalletresult-errors":          "Any current errors",
 
 	// GetHeadersCmd help.
@@ -620,7 +620,7 @@ var helpDescsEnUS = map[string]string{
 
 	// GetRawMempoolVerboseResult help.
 	"getrawmempoolverboseresult-size":             "Transaction size in bytes",
-	"getrawmempoolverboseresult-fee":              "Transaction fee in excc",
+	"getrawmempoolverboseresult-fee":              "Transaction fee in EXCC",
 	"getrawmempoolverboseresult-time":             "Local time transaction entered pool in seconds since 1 Jan 1970 GMT",
 	"getrawmempoolverboseresult-height":           "Block height when transaction entered the pool",
 	"getrawmempoolverboseresult-startingpriority": "Priority when transaction entered the pool",
@@ -650,7 +650,7 @@ var helpDescsEnUS = map[string]string{
 	// GetTxOutResult help.
 	"gettxoutresult-bestblock":     "The block hash that contains the transaction output",
 	"gettxoutresult-confirmations": "The number of confirmations",
-	"gettxoutresult-value":         "The transaction amount in DCR",
+	"gettxoutresult-value":         "The transaction amount in EXCC",
 	"gettxoutresult-scriptPubKey":  "The public key script used to pay coins as a JSON object",
 	"gettxoutresult-version":       "The transaction version",
 	"gettxoutresult-coinbase":      "Whether or not the transaction is a coinbase",
@@ -698,7 +698,7 @@ var helpDescsEnUS = map[string]string{
 		"Transactions pulled from the mempool will have the 'confirmations' field set to 0.\n" +
 		"Usage of this RPC requires the optional --addrindex flag to be activated, otherwise all responses will simply return with an error stating the address index has not yet been built.\n" +
 		"Similarly, until the address index has caught up with the current best height, all requests will return an error response in order to avoid serving stale data.",
-	"searchrawtransactions-address":     "The Exchangecoin address to search for",
+	"searchrawtransactions-address":     "The ExchangeCoin address to search for",
 	"searchrawtransactions-verbose":     "Specifies the transaction is returned as a JSON object instead of hex-encoded string",
 	"searchrawtransactions--condition0": "verbose=0",
 	"searchrawtransactions--condition1": "verbose=1",
@@ -737,11 +737,11 @@ var helpDescsEnUS = map[string]string{
 
 	// ValidateAddressResult help.
 	"validateaddresschainresult-isvalid": "Whether or not the address is valid",
-	"validateaddresschainresult-address": "The Exchangecoin address (only when isvalid is true)",
+	"validateaddresschainresult-address": "The ExchangeCoin address (only when isvalid is true)",
 
 	// ValidateAddressCmd help.
 	"validateaddress--synopsis": "Verify an address is valid.",
-	"validateaddress-address":   "Exchangecoin address to validate",
+	"validateaddress-address":   "ExchangeCoin address to validate",
 
 	// VerifyChainCmd help.
 	"verifychain--synopsis": "Verifies the block chain database.\n" +
@@ -755,7 +755,7 @@ var helpDescsEnUS = map[string]string{
 
 	// VerifyMessageCmd help.
 	"verifymessage--synopsis": "Verify a signed message.",
-	"verifymessage-address":   "The Exchangecoin address to use for the signature",
+	"verifymessage-address":   "The ExchangeCoin address to use for the signature",
 	"verifymessage-signature": "The base-64 encoded signature provided by the signer",
 	"verifymessage-message":   "The signed message",
 	"verifymessage--result0":  "Whether or not the signature verified",
@@ -806,10 +806,10 @@ var helpDescsEnUS = map[string]string{
 	"rescan--synopsis":   "Rescan blocks for transactions matching the loaded transaction filter.",
 	"rescan-blockhashes": "Concatenated block hashes to rescan.  Each next block must be a child of the previous.",
 
-	// -------- Decred-specific help --------
+	// -------- ExchangeCoin-specific help --------
 
 	// EstimateFee help.
-	"estimatefee--synopsis": "Returns the estimated fee in dcr/kb.",
+	"estimatefee--synopsis": "Returns the estimated fee in EXCC/kb.",
 	"estimatefee-numblocks": "(unused)",
 	"estimatefee--result0":  "Estimated fee.",
 
@@ -839,12 +839,12 @@ var helpDescsEnUS = map[string]string{
 	"ticketbucket-number":     "Bucket number.",
 
 	// TicketFeeInfo help.
-	"ticketfeeinfo--synopsis":            "Get various information about ticket fees from the mempool, blocks, and difficulty windows (units: DCR/kB)",
+	"ticketfeeinfo--synopsis":            "Get various information about ticket fees from the mempool, blocks, and difficulty windows (units: EXCC/kB)",
 	"ticketfeeinfo-blocks":               "The number of blocks, starting from the chain tip and descending, to return fee information about",
 	"ticketfeeinfo-windows":              "The number of difficulty windows to return ticket fee information about",
-	"ticketfeeinforesult-feeinfomempool": "Ticket fee information for all tickets in the mempool (units: DCR/kB)",
-	"ticketfeeinforesult-feeinfoblocks":  "Ticket fee information for a given list of blocks descending from the chain tip (units: DCR/kB)",
-	"ticketfeeinforesult-feeinfowindows": "Ticket fee information for a window period where the stake difficulty was the same (units: DCR/kB)",
+	"ticketfeeinforesult-feeinfomempool": "Ticket fee information for all tickets in the mempool (units: EXCC/kB)",
+	"ticketfeeinforesult-feeinfoblocks":  "Ticket fee information for a given list of blocks descending from the chain tip (units: EXCC/kB)",
+	"ticketfeeinforesult-feeinfowindows": "Ticket fee information for a window period where the stake difficulty was the same (units: EXCC/kB)",
 
 	"feeinfomempool-number": "Number of transactions in the mempool",
 	"feeinfomempool-min":    "Minimum transaction fee in the mempool",

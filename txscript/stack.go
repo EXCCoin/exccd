@@ -30,7 +30,7 @@ func fromBool(v bool) []byte {
 	return nil
 }
 
-// stack represents a stack of immutable objects to be used with excc
+// stack represents a stack of immutable objects to be used with ExchangeCoin
 // scripts.  Objects may be shared, therefore in usage if a value is to be
 // changed it *must* be deep-copied first to avoid changing other values on the
 // stack.

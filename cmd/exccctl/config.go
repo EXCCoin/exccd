@@ -18,7 +18,7 @@ import (
 	"strings"
 
 	"github.com/EXCCoin/exccd/exccjson"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 
 	flags "github.com/jessevdk/go-flags"
 )
@@ -31,9 +31,9 @@ const (
 )
 
 var (
-	exccdHomeDir           = excutil.AppDataDir("exccd", false)
-	exccctlHomeDir         = excutil.AppDataDir("exccctl", false)
-	exccwalletHomeDir      = excutil.AppDataDir("exccwallet", false)
+	exccdHomeDir           = exccutil.AppDataDir("exccd", false)
+	exccctlHomeDir         = exccutil.AppDataDir("exccctl", false)
+	exccwalletHomeDir      = exccutil.AppDataDir("exccwallet", false)
 	defaultConfigFile      = filepath.Join(exccctlHomeDir, "exccctl.conf")
 	defaultRPCServer       = "localhost"
 	defaultWalletRPCServer = "localhost"
@@ -337,17 +337,17 @@ func loadConfig() (*config, []string, error) {
 }
 
 // createDefaultConfig creates a basic config file at the given destination path.
-// For this it tries to read the dcrd config file at its default path, and extract
+// For this it tries to read the exccd config file at its default path, and extract
 // the RPC user and password from it.
 func createDefaultConfigFile(destinationPath string) error {
-	// Nothing to do when there is no existing dcrd conf file at the default
+	// Nothing to do when there is no existing exccd conf file at the default
 	// path to extract the details from.
 	exccdConfigPath := filepath.Join(exccdHomeDir, "exccd.conf")
 	if !fileExists(exccdConfigPath) {
 		return nil
 	}
 
-	// Read dcrd.conf from its default path
+	// Read exccd.conf from its default path
 	exccdConfigFile, err := os.Open(exccdConfigPath)
 	if err != nil {
 		return err

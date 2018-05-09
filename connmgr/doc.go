@@ -5,7 +5,7 @@
 // license that can be found in the LICENSE file.
 
 /*
-Package connmgr implements a generic Decred network connection manager.
+Package connmgr implements a generic ExchangeCoin network connection manager.
 
 Connection Manager Overview
 

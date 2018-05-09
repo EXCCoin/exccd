@@ -21,7 +21,7 @@ import (
 	rpc "github.com/EXCCoin/exccd/rpcclient"
 )
 
-// nodeConfig contains all the args, and data required to launch a dcrd process
+// nodeConfig contains all the args, and data required to launch a exccd process
 // and connect the rpc client to it.
 type nodeConfig struct {
 	rpcUser    string
@@ -78,7 +78,7 @@ func (n *nodeConfig) setDefaults() error {
 	return nil
 }
 
-// arguments returns an array of arguments that be used to launch the dcrd
+// arguments returns an array of arguments that be used to launch the exccd
 // process.
 func (n *nodeConfig) arguments() []string {
 	args := []string{}
@@ -130,13 +130,13 @@ func (n *nodeConfig) arguments() []string {
 	return args
 }
 
-// command returns the exec.Cmd which will be used to start the dcrd process.
+// command returns the exec.Cmd which will be used to start the exccd process.
 func (n *nodeConfig) command() *exec.Cmd {
 	return exec.Command(n.exe, n.arguments()...)
 }
 
 // rpcConnConfig returns the rpc connection config that can be used to connect
-// to the dcrd process that is launched via Start().
+// to the exccd process that is launched via Start().
 func (n *nodeConfig) rpcConnConfig() rpc.ConnConfig {
 	return rpc.ConnConfig{
 		Host:                 n.rpcListen,
@@ -154,7 +154,7 @@ func (n *nodeConfig) String() string {
 }
 
 // node houses the necessary state required to configure, launch, and manage a
-// dcrd process.
+// exccd process.
 type node struct {
 	config *nodeConfig
 
@@ -166,7 +166,7 @@ type node struct {
 
 // newNode creates a new node instance according to the passed config. dataDir
 // will be used to hold a file recording the pid of the launched process, and
-// as the base for the log and data directories for dcrd.
+// as the base for the log and data directories for exccd.
 func newNode(config *nodeConfig, dataDir string) (*node, error) {
 	return &node{
 		config:  config,
@@ -175,7 +175,7 @@ func newNode(config *nodeConfig, dataDir string) (*node, error) {
 	}, nil
 }
 
-// start creates a new dcrd process, and writes its pid in a file reserved for
+// start creates a new exccd process, and writes its pid in a file reserved for
 // recording the pid of the launched process. This file can be used to
 // terminate the process in case of a hang, or panic. In the case of a failing
 // test case, or panic, it is important that the process be stopped via stop(),
@@ -202,7 +202,7 @@ func (n *node) start() error {
 	return nil
 }
 
-// stop interrupts the running dcrd process process, and waits until it exits
+// stop interrupts the running exccd process process, and waits until it exits
 // properly. On windows, interrupt is not supported, so a kill signal is used
 // instead
 func (n *node) stop() error {
@@ -233,7 +233,7 @@ func (n *node) cleanup() error {
 	return nil
 }
 
-// shutdown terminates the running dcrd process, and cleans up all
+// shutdown terminates the running exccd process, and cleans up all
 // file/directories created by node.
 func (n *node) shutdown() error {
 	if err := n.stop(); err != nil {

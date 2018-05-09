@@ -107,8 +107,8 @@ type jsonRequest struct {
 	responseChan   chan *response
 }
 
-// Client represents a Decred RPC client which allows easy access to the
-// various RPC methods available on a Decred RPC server.  Each of the wrapper
+// Client represents a ExchangeCoin RPC client which allows easy access to the
+// various RPC methods available on a ExchangeCoin RPC server.  Each of the wrapper
 // functions handle the details of converting the passed and return types to and
 // from the underlying JSON types which are required for the JSON-RPC
 // invocations
@@ -307,7 +307,7 @@ func futureError(err error) chan *response {
 }
 
 // result checks whether the unmarshaled response contains a non-nil error,
-// returning an unmarshaled dcrjson.RPCError (or an unmarshaling error) if so.
+// returning an unmarshaled exccjson.RPCError (or an unmarshaling error) if so.
 // If the response is not an error, the raw bytes of the request are
 // returned for further unmashaling into specific result types.
 func (r rawResponse) result() (result []byte, err error) {

@@ -13,7 +13,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
 )
@@ -22,16 +22,16 @@ var secp = 0
 var edwards = 1
 var secSchnorr = 2
 
-// This example demonstrates creating a script which pays to a Decred address.
+// This example demonstrates creating a script which pays to a ExchangeCoin address.
 // It also prints the created script hex and uses the DisasmString function to
 // display the disassembled script.
 func ExamplePayToAddrScript() {
-	// Parse the address to send the coins to into a excutil.Address
+	// Parse the address to send the coins to into a exccutil.Address
 	// which is useful to ensure the accuracy of the address and determine
 	// the address type.  It is also required for the upcoming call to
 	// PayToAddrScript.
 	addressStr := "2sZrq31h196TW1jLE4hHiv9JfYJRicEwNNoQ"
-	address, err := excutil.DecodeAddress(addressStr)
+	address, err := exccutil.DecodeAddress(addressStr)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -96,8 +96,8 @@ func ExampleSignTxOutput() {
 		return
 	}
 	privKey, pubKey := chainec.Secp256k1.PrivKeyFromBytes(privKeyBytes)
-	pubKeyHash := excutil.Hash160(pubKey.SerializeCompressed())
-	addr, err := excutil.NewAddressPubKeyHash(pubKeyHash,
+	pubKeyHash := exccutil.Hash160(pubKey.SerializeCompressed())
+	addr, err := exccutil.NewAddressPubKeyHash(pubKeyHash,
 		&chaincfg.MainNetParams, chainec.ECTypeSecp256k1)
 	if err != nil {
 		fmt.Println(err)
@@ -106,7 +106,7 @@ func ExampleSignTxOutput() {
 
 	// For this example, create a fake transaction that represents what
 	// would ordinarily be the real transaction that is being spent.  It
-	// contains a single output that pays to address in the amount of 1 DCR.
+	// contains a single output that pays to address in the amount of 1 EXCC.
 	originTx := wire.NewMsgTx()
 	prevOut := wire.NewOutPoint(&chainhash.Hash{}, ^uint32(0), wire.TxTreeRegular)
 	txIn := wire.NewTxIn(prevOut, []byte{txscript.OP_0, txscript.OP_0})
@@ -136,7 +136,7 @@ func ExampleSignTxOutput() {
 	redeemTx.AddTxOut(txOut)
 
 	// Sign the redeeming transaction.
-	lookupKey := func(a excutil.Address) (chainec.PrivateKey, bool, error) {
+	lookupKey := func(a exccutil.Address) (chainec.PrivateKey, bool, error) {
 		// Ordinarily this function would involve looking up the private
 		// key for the provided address, but since the only thing being
 		// signed in this example uses the address associated with the

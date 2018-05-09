@@ -17,9 +17,9 @@ import (
 	"testing"
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/excutil"
 	. "github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
+	"github.com/EXCCoin/exccd/exccutil"
 )
 
 // testName returns a descriptive test name for the given reference test data.
@@ -378,7 +378,7 @@ testloop:
 			continue
 		}
 
-		tx, err := excutil.NewTxFromBytes(serializedTx)
+		tx, err := exccutil.NewTxFromBytes(serializedTx)
 		if err != nil {
 			t.Errorf("bad test (arg 2 not msgtx %v) %d: %v", err,
 				i, test)
@@ -521,7 +521,7 @@ testloop:
 			continue
 		}
 
-		tx, err := excutil.NewTxFromBytes(serializedTx)
+		tx, err := exccutil.NewTxFromBytes(serializedTx)
 		if err != nil {
 			t.Errorf("bad test (arg 2 not msgtx %v) %d: %v", err,
 				i, test)

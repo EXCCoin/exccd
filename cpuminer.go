@@ -17,7 +17,7 @@ import (
 	"github.com/EXCCoin/exccd/blockchain"
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/mining"
 	"github.com/EXCCoin/exccd/wire"
 )
@@ -135,7 +135,7 @@ out:
 
 // submitBlock submits the passed block to network after ensuring it passes all
 // of the consensus validation rules.
-func (m *CPUMiner) submitBlock(block *excutil.Block) bool {
+func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 	m.submitBlockLock.Lock()
 	defer m.submitBlockLock.Unlock()
 
@@ -180,7 +180,7 @@ func (m *CPUMiner) submitBlock(block *excutil.Block) bool {
 	}
 	minrLog.Infof("Block submitted via CPU miner accepted (hash %s, "+
 		"height %v, amount %v)", block.Hash(), block.Height(),
-		excutil.Amount(coinbaseTxGenerated))
+		exccutil.Amount(coinbaseTxGenerated))
 	return true
 }
 
@@ -304,7 +304,7 @@ out:
 		m.submitBlockLock.Lock()
 		time.Sleep(100 * time.Millisecond)
 
-		// Hacks to make dcr work with Decred PoC (simnet only)
+		// Hacks to make exccd work with ExchangeCoin PoC (simnet only)
 		// TODO Remove before production.
 		if cfg.SimNet {
 			_, curHeight := m.server.blockManager.chainState.Best()
@@ -356,7 +356,7 @@ out:
 		// a new block template can be generated.  When the return is
 		// true a solution was found, so submit the solved block.
 		if m.solveBlock(template.Block, ticker, quit) {
-			block := excutil.NewBlock(template.Block)
+			block := exccutil.NewBlock(template.Block)
 			m.submitBlock(block)
 			m.minedOnParents[template.Block.Header.PrevBlock]++
 		}
@@ -624,7 +624,7 @@ func (m *CPUMiner) GenerateNBlocks(n uint32) ([]*chainhash.Hash, error) {
 		// a new block template can be generated.  When the return is
 		// true a solution was found, so submit the solved block.
 		if m.solveBlock(template.Block, ticker, nil) {
-			block := excutil.NewBlock(template.Block)
+			block := exccutil.NewBlock(template.Block)
 			m.submitBlock(block)
 			blockHashes[i] = block.Hash()
 			i++

@@ -12,7 +12,7 @@ import (
 
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/wire"
 )
 
@@ -164,8 +164,8 @@ func p2pkSignatureScriptAlt(tx *wire.MsgTx, idx int, subScript []byte,
 // the contract (i.e. nrequired signatures are provided).  Since it is arguably
 // legal to not be able to sign any of the outputs, no error is returned.
 func signMultiSig(tx *wire.MsgTx, idx int, subScript []byte, hashType SigHashType,
-	addresses []excutil.Address, nRequired int, kdb KeyDB) ([]byte, bool) {
-	// No need to add dummy in Decred.
+	addresses []exccutil.Address, nRequired int, kdb KeyDB) ([]byte, bool) {
+	// No need to add dummy in ExchangeCoin.
 	builder := NewScriptBuilder()
 	signed := 0
 	for _, addr := range addresses {
@@ -193,8 +193,8 @@ func signMultiSig(tx *wire.MsgTx, idx int, subScript []byte, hashType SigHashTyp
 // sign. It handles the signing of stake outputs.
 func handleStakeOutSign(chainParams *chaincfg.Params, tx *wire.MsgTx, idx int,
 	subScript []byte, hashType SigHashType, kdb KeyDB, sdb ScriptDB,
-	addresses []excutil.Address, class ScriptClass, subClass ScriptClass,
-	nrequired int) ([]byte, ScriptClass, []excutil.Address, int, error) {
+	addresses []exccutil.Address, class ScriptClass, subClass ScriptClass,
+	nrequired int) ([]byte, ScriptClass, []exccutil.Address, int, error) {
 
 	// look up key for address
 	switch subClass {
@@ -229,7 +229,7 @@ func handleStakeOutSign(chainParams *chaincfg.Params, tx *wire.MsgTx, idx int,
 func sign(chainParams *chaincfg.Params, tx *wire.MsgTx, idx int,
 	subScript []byte, hashType SigHashType, kdb KeyDB, sdb ScriptDB,
 	sigType sigTypes) ([]byte,
-	ScriptClass, []excutil.Address, int, error) {
+	ScriptClass, []exccutil.Address, int, error) {
 
 	class, addresses, nrequired, err := ExtractPkScriptAddrs(DefaultScriptVersion,
 		subScript, chainParams)
@@ -357,7 +357,7 @@ func sign(chainParams *chaincfg.Params, tx *wire.MsgTx, idx int,
 // function with addresses, class and nrequired that do not match pkScript is
 // an error and results in undefined behaviour.
 func mergeScripts(chainParams *chaincfg.Params, tx *wire.MsgTx, idx int,
-	pkScript []byte, class ScriptClass, addresses []excutil.Address,
+	pkScript []byte, class ScriptClass, addresses []exccutil.Address,
 	nRequired int, sigScript, prevScript []byte) []byte {
 
 	// TODO(oga) the scripthash and multisig paths here are overly
@@ -424,7 +424,7 @@ func mergeScripts(chainParams *chaincfg.Params, tx *wire.MsgTx, idx int,
 // pkScript. Since this function is internal only we assume that the arguments
 // have come from other functions internally and thus are all consistent with
 // each other, behaviour is undefined if this contract is broken.
-func mergeMultiSig(tx *wire.MsgTx, idx int, addresses []excutil.Address,
+func mergeMultiSig(tx *wire.MsgTx, idx int, addresses []exccutil.Address,
 	nRequired int, pkScript, sigScript, prevScript []byte) []byte {
 
 	// This is an internal only function and we already parsed this script
@@ -486,7 +486,7 @@ sigLoop:
 		// MultiSigTy, so we just need to hash the full thing.
 		hash, err := calcSignatureHash(pkPops, hashType, tx, idx, nil)
 		if err != nil {
-			// Decred -- is this the right handling for SIGHASH_SINGLE error ?
+			// ExchangeCoin -- is this the right handling for SIGHASH_SINGLE error ?
 			// TODO make sure this doesn't break anything.
 			continue
 		}
@@ -495,7 +495,7 @@ sigLoop:
 			// All multisig addresses should be pubkey addreses
 			// it is an error to call this internal function with
 			// bad input.
-			pkaddr := addr.(*excutil.AddressSecpPubKey)
+			pkaddr := addr.(*exccutil.AddressSecpPubKey)
 
 			pubKey := pkaddr.PubKey()
 
@@ -543,14 +543,14 @@ sigLoop:
 // KeyDB is an interface type provided to SignTxOutput, it encapsulates
 // any user state required to get the private keys for an address.
 type KeyDB interface {
-	GetKey(excutil.Address) (chainec.PrivateKey, bool, error)
+	GetKey(exccutil.Address) (chainec.PrivateKey, bool, error)
 }
 
 // KeyClosure implements KeyDB with a closure.
-type KeyClosure func(excutil.Address) (chainec.PrivateKey, bool, error)
+type KeyClosure func(exccutil.Address) (chainec.PrivateKey, bool, error)
 
 // GetKey implements KeyDB by returning the result of calling the closure.
-func (kc KeyClosure) GetKey(address excutil.Address) (chainec.PrivateKey,
+func (kc KeyClosure) GetKey(address exccutil.Address) (chainec.PrivateKey,
 	bool, error) {
 	return kc(address)
 }
@@ -558,14 +558,14 @@ func (kc KeyClosure) GetKey(address excutil.Address) (chainec.PrivateKey,
 // ScriptDB is an interface type provided to SignTxOutput, it encapsulates any
 // user state required to get the scripts for an pay-to-script-hash address.
 type ScriptDB interface {
-	GetScript(excutil.Address) ([]byte, error)
+	GetScript(exccutil.Address) ([]byte, error)
 }
 
 // ScriptClosure implements ScriptDB with a closure.
-type ScriptClosure func(excutil.Address) ([]byte, error)
+type ScriptClosure func(exccutil.Address) ([]byte, error)
 
 // GetScript implements ScriptDB by returning the result of calling the closure.
-func (sc ScriptClosure) GetScript(address excutil.Address) ([]byte, error) {
+func (sc ScriptClosure) GetScript(address exccutil.Address) ([]byte, error) {
 	return sc(address)
 }
 

@@ -5,7 +5,7 @@ hdkeychain
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
 [![GoDoc](http://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd/hdkeychain)
 
-Package hdkeychain provides an API for Decred hierarchical deterministic
+Package hdkeychain provides an API for ExchangeCoin hierarchical deterministic
 extended keys (based on BIP0032).
 
 A comprehensive suite of tests is provided to ensure proper functionality.  See
@@ -23,8 +23,8 @@ report.
 - Easy serialization and deserialization for both private and public extended
   keys
 - Support for custom networks by registering them with chaincfg
-- Obtaining the underlying EC pubkeys, EC privkeys, and associated excc
-  addresses ties in seamlessly with existing btcec and excutil types which
+- Obtaining the underlying EC pubkeys, EC privkeys, and associated ExchangeCoin
+  addresses ties in seamlessly with existing btcec and exccutil types which
   provide powerful tools for working with them to do things like sign
   transations and generate payment scripts
 - Uses the btcec package which is highly optimized for secp256k1

@@ -1,7 +1,7 @@
-dcrwallet Websockets Example
+exccwallet Websockets Example
 ============================
 
-This example shows how to use the rpcclient package to connect to a dcrwallet
+This example shows how to use the rpcclient package to connect to a exccwallet
 RPC server using TLS-secured websockets, register for notifications about
 changes to account balances, and get a list of unspent transaction outputs
 (utxos) the wallet can sign.
@@ -28,7 +28,7 @@ password for the RPC server:
 Finally, navigate to the example's directory and run it with:
 
 ```bash
-$ cd $GOPATH/src/github.com/EXCCoin/exccd/rpcclient/examples/dcrwalletwebsockets
+$ cd $GOPATH/src/github.com/EXCCoin/exccd/rpcclient/examples/exccwalletwebsockets
 $ go run *.go
 ```
 

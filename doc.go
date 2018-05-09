@@ -5,22 +5,22 @@
 // license that can be found in the LICENSE file.
 
 /*
-dcrd is a full-node Decred implementation written in Go.
+exccd is a full-node ExchangeCoin implementation written in Go.
 
-The default options are sane for most users.  This means dcrd will work 'out of
+The default options are sane for most users.  This means exccd will work 'out of
 the box' for most users.  However, there are also a wide variety of flags that
 can be used to control it.
 
 The following section provides a usage overview which enumerates the flags.  An
 interesting point to note is that the long form of all of these options
 (except -C) can be specified in a configuration file that is automatically
-parsed when dcrd starts up.  By default, the configuration file is located at
-~/.dcrd/dcrd.conf on POSIX-style operating systems and %LOCALAPPDATA%\dcrd\dcrd.conf
+parsed when exccd starts up.  By default, the configuration file is located at
+~/.exccd/exccd.conf on POSIX-style operating systems and %LOCALAPPDATA%\exccd\exccd.conf
 on Windows.  The -C (--configfile) flag, as shown below, can be used to override
 this location.
 
 Usage:
-  dcrd [OPTIONS]
+  exccd [OPTIONS]
 
 Application Options:
   -V, --version             Display version information and exit
@@ -92,7 +92,7 @@ Application Options:
                             the log level for individual subsystems -- Use show
                             to list available subsystems (info)
       --upnp                Use UPnP to map our listening port outside of NAT
-      --minrelaytxfee=      The minimum transaction fee in DCR/kB to be
+      --minrelaytxfee=      The minimum transaction fee in EXCC/kB to be
                             considered a non-zero fee.
       --limitfreerelay=     Limit relay of transactions with no transaction fee
                             to the given amount in thousands of bytes per

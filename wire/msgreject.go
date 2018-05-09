@@ -50,7 +50,7 @@ func (code RejectCode) String() string {
 	return fmt.Sprintf("Unknown RejectCode (%d)", uint8(code))
 }
 
-// MsgReject implements the Message interface and represents a Decred reject
+// MsgReject implements the Message interface and represents a ExchangeCoin reject
 // message.
 //
 // This message was not added until protocol version RejectVersion.
@@ -73,7 +73,7 @@ type MsgReject struct {
 	Hash chainhash.Hash
 }
 
-// BtcDecode decodes r using the Decred protocol encoding into the receiver.
+// BtcDecode decodes r using the ExchangeCoin protocol encoding into the receiver.
 // This is part of the Message interface implementation.
 func (msg *MsgReject) BtcDecode(r io.Reader, pver uint32) error {
 	// Command that was rejected.
@@ -109,7 +109,7 @@ func (msg *MsgReject) BtcDecode(r io.Reader, pver uint32) error {
 	return nil
 }
 
-// BtcEncode encodes the receiver to w using the Decred protocol encoding.
+// BtcEncode encodes the receiver to w using the ExchangeCoin protocol encoding.
 // This is part of the Message interface implementation.
 func (msg *MsgReject) BtcEncode(w io.Writer, pver uint32) error {
 	// Command that was rejected.
@@ -152,13 +152,13 @@ func (msg *MsgReject) Command() string {
 // MaxPayloadLength returns the maximum length the payload can be for the
 // receiver.  This is part of the Message interface implementation.
 func (msg *MsgReject) MaxPayloadLength(pver uint32) uint32 {
-	// Unfortunately the Decred protocol does not enforce a sane
+	// Unfortunately the ExchangeCoin protocol does not enforce a sane
 	// limit on the length of the reason, so the max payload is the
 	// overall maximum message payload.
 	return uint32(MaxMessagePayload)
 }
 
-// NewMsgReject returns a new Decred reject message that conforms to the
+// NewMsgReject returns a new ExchangeCoin reject message that conforms to the
 // Message interface.  See MsgReject for details.
 func NewMsgReject(command string, code RejectCode, reason string) *MsgReject {
 	return &MsgReject{

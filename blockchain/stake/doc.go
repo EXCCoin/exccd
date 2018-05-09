@@ -5,7 +5,7 @@
 // license that can be found in the LICENSE file.
 
 /*
-Package stake contains code for all of dcrd's stake
+Package stake contains code for all of exccd's stake
 transaction chain handling and other portions related to the
 Proof-of-Stake (PoS) system.
 

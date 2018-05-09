@@ -22,11 +22,11 @@ import (
 
 var cfg *config
 
-// winServiceMain is only invoked on Windows.  It detects when dcrd is running
+// winServiceMain is only invoked on Windows.  It detects when exccd is running
 // as a service and reacts accordingly.
 var winServiceMain func() (bool, error)
 
-// exccdMain is the real main function for dcrd.  It is necessary to work around
+// exccdMain is the real main function for exccd.  It is necessary to work around
 // the fact that deferred functions do not run when os.Exit() is called.  The
 // optional serverChan parameter is mainly used by the service code to be
 // notified with the server once it is setup so it can gracefully stop it when

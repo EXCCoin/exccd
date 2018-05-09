@@ -18,7 +18,7 @@ storage, and strict checksums in key areas to ensure data integrity.
 A quick overview of the features database provides are as follows:
 
  - Key/value metadata store
- - Decred block storage
+ - ExchangeCoin block storage
  - Efficient retrieval of block headers and regions (transactions, scripts, etc)
  - Read-only and read-write transactions with both manual and managed modes
  - Nested buckets

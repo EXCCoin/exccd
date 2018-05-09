@@ -14,7 +14,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/database"
 	_ "github.com/EXCCoin/exccd/database/ffldb"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/wire"
 	flags "github.com/jessevdk/go-flags"
 )
@@ -27,7 +27,7 @@ const (
 )
 
 var (
-	exccdHomeDir    = excutil.AppDataDir("exccd", false)
+	exccdHomeDir    = exccutil.AppDataDir("exccd", false)
 	defaultDataDir  = filepath.Join(exccdHomeDir, "data")
 	knownDbTypes    = database.SupportedDrivers()
 	activeNetParams = &chaincfg.MainNetParams
@@ -42,7 +42,7 @@ type config struct {
 	TestNet       bool   `long:"testnet" description:"Use the test network"`
 	SimNet        bool   `long:"simnet" description:"Use the simulation test network"`
 	NumCandidates int    `short:"n" long:"numcandidates" description:"Max num of checkpoint candidates to show {1-20}"`
-	UseGoOutput   bool   `short:"g" long:"gooutput" description:"Display the candidates using Go syntax that is ready to insert into the dcrchain checkpoint list"`
+	UseGoOutput   bool   `short:"g" long:"gooutput" description:"Display the candidates using Go syntax that is ready to insert into the exccchain checkpoint list"`
 }
 
 // validDbType returns whether or not dbType is a supported database type.
@@ -56,8 +56,8 @@ func validDbType(dbType string) bool {
 	return false
 }
 
-// netName returns the name used when referring to a Decred network.  At the
-// time of writing, dcrd currently places blocks for testnet version 2 in the
+// netName returns the name used when referring to a ExchangeCoin network.  At the
+// time of writing, exccd currently places blocks for testnet version 2 in the
 // data and log directory "testnet2", which does not match the Name field of the
 // chaincfg parameters.  This function can be used to override this directory name
 // as "testnet2" when the passed active network matches wire.TestNet2.

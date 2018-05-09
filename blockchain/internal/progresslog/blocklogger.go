@@ -12,7 +12,7 @@ import (
 
 	"github.com/btcsuite/btclog"
 
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/wire"
 )
 
@@ -48,8 +48,8 @@ func (b *BlockProgressLogger) LogBlockHeight(block, parent *wire.MsgBlock) {
 	b.Lock()
 	defer b.Unlock()
 	b.receivedLogBlocks++
-	regularTxTreeValid := excutil.IsFlagSet16(block.Header.VoteBits,
-		excutil.BlockValid)
+	regularTxTreeValid := exccutil.IsFlagSet16(block.Header.VoteBits,
+		exccutil.BlockValid)
 	if regularTxTreeValid {
 		b.receivedLogTx += int64(len(parent.Transactions))
 	}

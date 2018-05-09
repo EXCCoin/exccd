@@ -23,7 +23,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/decred/base58"
 )
 
@@ -304,7 +304,7 @@ func (k *ExtendedKey) Child(i uint32) (*ExtendedKey, error) {
 
 	// The fingerprint of the parent for the derived child is the first 4
 	// bytes of the RIPEMD160(SHA256(parentPubKey)).
-	parentFP := excutil.Hash160(k.pubKeyBytes())[:4]
+	parentFP := exccutil.Hash160(k.pubKeyBytes())[:4]
 	return newExtendedKey(k.version, childKey, childChainCode, parentFP,
 		k.depth+1, i, isPrivate), nil
 }
@@ -355,11 +355,11 @@ func (k *ExtendedKey) ECPrivKey() (chainec.PrivateKey, error) {
 	return privKey, nil
 }
 
-// Address converts the extended key to a standard Decred pay-to-pubkey-hash
+// Address converts the extended key to a standard ExchangeCoin pay-to-pubkey-hash
 // address for the passed network.
-func (k *ExtendedKey) Address(net *chaincfg.Params) (*excutil.AddressPubKeyHash, error) {
-	pkHash := excutil.Hash160(k.pubKeyBytes())
-	return excutil.NewAddressPubKeyHash(pkHash, net, chainec.ECTypeSecp256k1)
+func (k *ExtendedKey) Address(net *chaincfg.Params) (*exccutil.AddressPubKeyHash, error) {
+	pkHash := exccutil.Hash160(k.pubKeyBytes())
+	return exccutil.NewAddressPubKeyHash(pkHash, net, chainec.ECTypeSecp256k1)
 }
 
 // paddedAppend appends the src byte slice to dst, returning the new slice.
@@ -404,7 +404,7 @@ func (k *ExtendedKey) String() (string, error) {
 }
 
 // IsForNet returns whether or not the extended key is associated with the
-// passed Decred network.
+// passed ExchangeCoin network.
 func (k *ExtendedKey) IsForNet(net *chaincfg.Params) bool {
 	return bytes.Equal(k.version, net.HDPrivateKeyID[:]) ||
 		bytes.Equal(k.version, net.HDPublicKeyID[:])

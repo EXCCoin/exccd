@@ -6,12 +6,12 @@ chaincfg
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd/chaincfg)
 
 Package chaincfg defines chain configuration parameters for the three standard
-Exchangecoin networks and provides the ability for callers to define their own custom
-Exchangecoin networks.
+ExchangeCoin networks and provides the ability for callers to define their own custom
+ExchangeCoin networks.
 
 Although this package was primarily written for exccd, it has intentionally been
 designed so it can be used as a standalone package for any projects needing to
-use parameters for the standard Exchangecoin networks or for projects needing to
+use parameters for the standard ExchangeCoin networks or for projects needing to
 define their own network.
 
 ## Sample Use
@@ -24,11 +24,11 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/chaincfg"
 )
 
-var testnet = flag.Bool("testnet", false, "operate on the testnet Decred network")
+var testnet = flag.Bool("testnet", false, "operate on the testnet ExchangeCoin network")
 
 // By default (without -testnet), use mainnet.
 var chainParams = &chaincfg.MainNetParams

@@ -5,7 +5,7 @@
 // license that can be found in the LICENSE file.
 
 /*
-Package hdkeychain provides an API for Decred hierarchical deterministic
+Package hdkeychain provides an API for ExchangeCoin hierarchical deterministic
 extended keys (based on BIP0032).
 
 Overview
@@ -78,7 +78,7 @@ looks like the following:
 
 Network
 
-Extended keys are much like normal Decred addresses in that they have version
+Extended keys are much like normal ExchangeCoin addresses in that they have version
 bytes which tie them to a specific network.  The SetNet and IsForNet functions
 are provided to set and determinine which network an extended key is associated
 with.

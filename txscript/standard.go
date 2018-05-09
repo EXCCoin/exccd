@@ -13,7 +13,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 )
 
 const (
@@ -727,7 +727,7 @@ func payToSchnorrPubKeyScript(serializedPubKey []byte) ([]byte, error) {
 // PayToSStx creates a new script to pay a transaction output to a script hash or
 // public key hash, but tags the output with OP_SSTX. For use in constructing
 // valid SStxs.
-func PayToSStx(addr excutil.Address) ([]byte, error) {
+func PayToSStx(addr exccutil.Address) ([]byte, error) {
 	if addr == nil {
 		return nil, ErrUnsupportedAddress
 	}
@@ -736,11 +736,11 @@ func PayToSStx(addr excutil.Address) ([]byte, error) {
 	// supported.
 	scriptType := PubKeyHashTy
 	switch addr := addr.(type) {
-	case *excutil.AddressPubKeyHash:
+	case *exccutil.AddressPubKeyHash:
 		if addr.DSA(addr.Net()) != chainec.ECTypeSecp256k1 {
 			return nil, ErrUnsupportedAddress
 		}
-	case *excutil.AddressScriptHash:
+	case *exccutil.AddressScriptHash:
 		scriptType = ScriptHashTy
 	default:
 		return nil, ErrUnsupportedAddress
@@ -760,7 +760,7 @@ func PayToSStx(addr excutil.Address) ([]byte, error) {
 // PayToSStxChange creates a new script to pay a transaction output to a
 // public key hash, but tags the output with OP_SSTXCHANGE. For use in constructing
 // valid SStxs.
-func PayToSStxChange(addr excutil.Address) ([]byte, error) {
+func PayToSStxChange(addr exccutil.Address) ([]byte, error) {
 	if addr == nil {
 		return nil, ErrUnsupportedAddress
 	}
@@ -769,11 +769,11 @@ func PayToSStxChange(addr excutil.Address) ([]byte, error) {
 	// supported.
 	scriptType := PubKeyHashTy
 	switch addr := addr.(type) {
-	case *excutil.AddressPubKeyHash:
+	case *exccutil.AddressPubKeyHash:
 		if addr.DSA(addr.Net()) != chainec.ECTypeSecp256k1 {
 			return nil, ErrUnsupportedAddress
 		}
-	case *excutil.AddressScriptHash:
+	case *exccutil.AddressScriptHash:
 		scriptType = ScriptHashTy
 	default:
 		return nil, ErrUnsupportedAddress
@@ -793,7 +793,7 @@ func PayToSStxChange(addr excutil.Address) ([]byte, error) {
 // PayToSSGen creates a new script to pay a transaction output to a public key
 // hash or script hash, but tags the output with OP_SSGEN. For use in constructing
 // valid SSGen txs.
-func PayToSSGen(addr excutil.Address) ([]byte, error) {
+func PayToSSGen(addr exccutil.Address) ([]byte, error) {
 	if addr == nil {
 		return nil, ErrUnsupportedAddress
 	}
@@ -802,11 +802,11 @@ func PayToSSGen(addr excutil.Address) ([]byte, error) {
 	// supported.
 	scriptType := PubKeyHashTy
 	switch addr := addr.(type) {
-	case *excutil.AddressPubKeyHash:
+	case *exccutil.AddressPubKeyHash:
 		if addr.DSA(addr.Net()) != chainec.ECTypeSecp256k1 {
 			return nil, ErrUnsupportedAddress
 		}
-	case *excutil.AddressScriptHash:
+	case *exccutil.AddressScriptHash:
 		scriptType = ScriptHashTy
 	default:
 		return nil, ErrUnsupportedAddress
@@ -853,7 +853,7 @@ func PayToSSGenSHDirect(sh []byte) ([]byte, error) {
 // PayToSSRtx creates a new script to pay a transaction output to a
 // public key hash, but tags the output with OP_SSRTX. For use in constructing
 // valid SSRtx.
-func PayToSSRtx(addr excutil.Address) ([]byte, error) {
+func PayToSSRtx(addr exccutil.Address) ([]byte, error) {
 	if addr == nil {
 		return nil, ErrUnsupportedAddress
 	}
@@ -862,11 +862,11 @@ func PayToSSRtx(addr excutil.Address) ([]byte, error) {
 	// supported.
 	scriptType := PubKeyHashTy
 	switch addr := addr.(type) {
-	case *excutil.AddressPubKeyHash:
+	case *exccutil.AddressPubKeyHash:
 		if addr.DSA(addr.Net()) != chainec.ECTypeSecp256k1 {
 			return nil, ErrUnsupportedAddress
 		}
-	case *excutil.AddressScriptHash:
+	case *exccutil.AddressScriptHash:
 		scriptType = ScriptHashTy
 	default:
 		return nil, ErrUnsupportedAddress
@@ -912,7 +912,7 @@ func PayToSSRtxSHDirect(sh []byte) ([]byte, error) {
 
 // GenerateSStxAddrPush generates an OP_RETURN push for SSGen payment addresses in
 // an SStx.
-func GenerateSStxAddrPush(addr excutil.Address, amount excutil.Amount,
+func GenerateSStxAddrPush(addr exccutil.Address, amount exccutil.Amount,
 	limits uint16) ([]byte, error) {
 	if addr == nil {
 		return nil, ErrUnsupportedAddress
@@ -922,11 +922,11 @@ func GenerateSStxAddrPush(addr excutil.Address, amount excutil.Amount,
 	// supported.
 	scriptType := PubKeyHashTy
 	switch addr := addr.(type) {
-	case *excutil.AddressPubKeyHash:
+	case *exccutil.AddressPubKeyHash:
 		if addr.DSA(addr.Net()) != chainec.ECTypeSecp256k1 {
 			return nil, ErrUnsupportedAddress
 		}
-	case *excutil.AddressScriptHash:
+	case *exccutil.AddressScriptHash:
 		scriptType = ScriptHashTy
 	default:
 		return nil, ErrUnsupportedAddress
@@ -1010,9 +1010,9 @@ func GenerateProvablyPruneableOut(data []byte) ([]byte, error) {
 
 // PayToAddrScript creates a new script to pay a transaction output to a the
 // specified address.
-func PayToAddrScript(addr excutil.Address) ([]byte, error) {
+func PayToAddrScript(addr exccutil.Address) ([]byte, error) {
 	switch addr := addr.(type) {
-	case *excutil.AddressPubKeyHash:
+	case *exccutil.AddressPubKeyHash:
 		if addr == nil {
 			return nil, ErrUnsupportedAddress
 		}
@@ -1025,25 +1025,25 @@ func PayToAddrScript(addr excutil.Address) ([]byte, error) {
 			return payToPubKeyHashSchnorrScript(addr.ScriptAddress())
 		}
 
-	case *excutil.AddressScriptHash:
+	case *exccutil.AddressScriptHash:
 		if addr == nil {
 			return nil, ErrUnsupportedAddress
 		}
 		return payToScriptHashScript(addr.ScriptAddress())
 
-	case *excutil.AddressSecpPubKey:
+	case *exccutil.AddressSecpPubKey:
 		if addr == nil {
 			return nil, ErrUnsupportedAddress
 		}
 		return payToPubKeyScript(addr.ScriptAddress())
 
-	case *excutil.AddressEdwardsPubKey:
+	case *exccutil.AddressEdwardsPubKey:
 		if addr == nil {
 			return nil, ErrUnsupportedAddress
 		}
 		return payToEdwardsPubKeyScript(addr.ScriptAddress())
 
-	case *excutil.AddressSecSchnorrPubKey:
+	case *exccutil.AddressSecSchnorrPubKey:
 		if addr == nil {
 			return nil, ErrUnsupportedAddress
 		}
@@ -1057,7 +1057,7 @@ func PayToAddrScript(addr excutil.Address) ([]byte, error) {
 // nrequired of the keys in pubkeys are required to have signed the transaction
 // for success.  An ErrBadNumRequired will be returned if nrequired is larger
 // than the number of keys provided.
-func MultiSigScript(pubkeys []*excutil.AddressSecpPubKey, nrequired int) ([]byte,
+func MultiSigScript(pubkeys []*exccutil.AddressSecpPubKey, nrequired int) ([]byte,
 	error) {
 	if len(pubkeys) < nrequired {
 		return nil, ErrBadNumRequired
@@ -1113,12 +1113,12 @@ func GetMultisigMandN(script []byte) (uint8, uint8, error) {
 // 'standard' transaction script types.  Any data such as public keys which are
 // invalid are omitted from the results.
 func ExtractPkScriptAddrs(version uint16, pkScript []byte,
-	chainParams *chaincfg.Params) (ScriptClass, []excutil.Address, int, error) {
+	chainParams *chaincfg.Params) (ScriptClass, []exccutil.Address, int, error) {
 	if version != DefaultScriptVersion {
 		return NonStandardTy, nil, 0, fmt.Errorf("invalid script version")
 	}
 
-	var addrs []excutil.Address
+	var addrs []exccutil.Address
 	var requiredSigs int
 
 	// No valid addresses or required signatures if the script doesn't
@@ -1137,7 +1137,7 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 		// Therefore the pubkey hash is the 3rd item on the stack.
 		// Skip the pubkey hash if it's invalid for some reason.
 		requiredSigs = 1
-		addr, err := excutil.NewAddressPubKeyHash(pops[2].data,
+		addr, err := exccutil.NewAddressPubKeyHash(pops[2].data,
 			chainParams, chainec.ECTypeSecp256k1)
 		if err == nil {
 			addrs = append(addrs, addr)
@@ -1150,7 +1150,7 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 		// Skip the pubkey hash if it's invalid for some reason.
 		requiredSigs = 1
 		suite, _ := ExtractPkScriptAltSigType(pkScript)
-		addr, err := excutil.NewAddressPubKeyHash(pops[2].data,
+		addr, err := exccutil.NewAddressPubKeyHash(pops[2].data,
 			chainParams, suite)
 		if err == nil {
 			addrs = append(addrs, addr)
@@ -1164,7 +1164,7 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 		requiredSigs = 1
 		pk, err := chainec.Secp256k1.ParsePubKey(pops[0].data)
 		if err == nil {
-			addr, err := excutil.NewAddressSecpPubKeyCompressed(pk, chainParams)
+			addr, err := exccutil.NewAddressSecpPubKeyCompressed(pk, chainParams)
 			if err == nil {
 				addrs = append(addrs, addr)
 			}
@@ -1177,14 +1177,14 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 		// Skip the pubkey if it's invalid for some reason.
 		requiredSigs = 1
 		suite, _ := ExtractPkScriptAltSigType(pkScript)
-		var addr excutil.Address
+		var addr exccutil.Address
 		err := fmt.Errorf("invalid signature suite for alt sig")
 		switch suite {
 		case chainec.ECTypeEdwards:
-			addr, err = excutil.NewAddressEdwardsPubKey(pops[0].data,
+			addr, err = exccutil.NewAddressEdwardsPubKey(pops[0].data,
 				chainParams)
 		case chainec.ECTypeSecSchnorr:
-			addr, err = excutil.NewAddressSecSchnorrPubKey(pops[0].data,
+			addr, err = exccutil.NewAddressSecSchnorrPubKey(pops[0].data,
 				chainParams)
 		}
 		if err == nil {
@@ -1194,7 +1194,7 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 	case StakeSubmissionTy:
 		// A pay-to-stake-submission-hash script is of the form:
 		//  OP_SSTX ... P2PKH or P2SH
-		var localAddrs []excutil.Address
+		var localAddrs []exccutil.Address
 		_, localAddrs, requiredSigs, err =
 			ExtractPkScriptAddrs(version, getStakeOutSubscript(pkScript),
 				chainParams)
@@ -1205,7 +1205,7 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 	case StakeGenTy:
 		// A pay-to-stake-generation-hash script is of the form:
 		//  OP_SSGEN  ... P2PKH or P2SH
-		var localAddrs []excutil.Address
+		var localAddrs []exccutil.Address
 		_, localAddrs, requiredSigs, err = ExtractPkScriptAddrs(version,
 			getStakeOutSubscript(pkScript), chainParams)
 		if err == nil {
@@ -1215,7 +1215,7 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 	case StakeRevocationTy:
 		// A pay-to-stake-revocation-hash script is of the form:
 		//  OP_SSRTX  ... P2PKH or P2SH
-		var localAddrs []excutil.Address
+		var localAddrs []exccutil.Address
 		_, localAddrs, requiredSigs, err =
 			ExtractPkScriptAddrs(version, getStakeOutSubscript(pkScript),
 				chainParams)
@@ -1226,7 +1226,7 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 	case StakeSubChangeTy:
 		// A pay-to-stake-submission-change-hash script is of the form:
 		// OP_SSTXCHANGE ... P2PKH or P2SH
-		var localAddrs []excutil.Address
+		var localAddrs []exccutil.Address
 		_, localAddrs, requiredSigs, err =
 			ExtractPkScriptAddrs(version, getStakeOutSubscript(pkScript),
 				chainParams)
@@ -1240,7 +1240,7 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 		// Therefore the script hash is the 2nd item on the stack.
 		// Skip the script hash if it's invalid for some reason.
 		requiredSigs = 1
-		addr, err := excutil.NewAddressScriptHashFromHash(pops[1].data,
+		addr, err := exccutil.NewAddressScriptHashFromHash(pops[1].data,
 			chainParams)
 		if err == nil {
 			addrs = append(addrs, addr)
@@ -1256,11 +1256,11 @@ func ExtractPkScriptAddrs(version uint16, pkScript []byte,
 		numPubKeys := asSmallInt(pops[len(pops)-2].opcode)
 
 		// Extract the public keys while skipping any that are invalid.
-		addrs = make([]excutil.Address, 0, numPubKeys)
+		addrs = make([]exccutil.Address, 0, numPubKeys)
 		for i := 0; i < numPubKeys; i++ {
 			pubkey, err := chainec.Secp256k1.ParsePubKey(pops[i+1].data)
 			if err == nil {
-				addr, err := excutil.NewAddressSecpPubKeyCompressed(pubkey,
+				addr, err := exccutil.NewAddressSecpPubKeyCompressed(pubkey,
 					chainParams)
 				if err == nil {
 					addrs = append(addrs, addr)
@@ -1374,7 +1374,7 @@ type AtomicSwapDataPushes struct {
 // ExtractAtomicSwapDataPushes returns (nil, nil).  Non-nil errors are returned
 // for unparsable scripts.
 //
-// NOTE: Atomic swaps are not considered standard script types by the dcrd
+// NOTE: Atomic swaps are not considered standard script types by the exccd
 // mempool policy and should be used with P2SH.  The atomic swap format is also
 // expected to change to use a more secure hash function in the future.
 //

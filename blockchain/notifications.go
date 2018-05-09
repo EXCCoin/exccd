@@ -10,7 +10,7 @@ import (
 	"fmt"
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 )
 
 // NotificationType represents the type of a notification message.
@@ -71,7 +71,7 @@ func (n NotificationType) String() string {
 // about a block being accepted.
 type BlockAcceptedNtfnsData struct {
 	OnMainChain bool
-	Block       *excutil.Block
+	Block       *exccutil.Block
 }
 
 // ReorganizationNtfnsData is the structure for data indicating information
@@ -98,8 +98,8 @@ type TicketNotificationsData struct {
 // function provided during the call to New and consists of a notification type
 // as well as associated data that depends on the type as follows:
 // 	- NTBlockAccepted:         *BlockAcceptedNtfnsData
-// 	- NTBlockConnected:        []*excutil.Block of len 2
-// 	- NTBlockDisconnected:     []*excutil.Block of len 2
+// 	- NTBlockConnected:        []*exccutil.Block of len 2
+// 	- NTBlockDisconnected:     []*exccutil.Block of len 2
 //  - NTReorganization:        *ReorganizationNtfnsData
 //  - NTSpentAndMissedTickets: *TicketNotificationsData
 //  - NTNewTickets:            *TicketNotificationsData

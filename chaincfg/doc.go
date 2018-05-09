@@ -1,6 +1,6 @@
 // Package chaincfg defines chain configuration parameters.
 //
-// In addition to the main Decred network, which is intended for the transfer
+// In addition to the main ExchangeCoin network, which is intended for the transfer
 // of monetary value, there also exists two currently active standard networks:
 // regression test and testnet (version 0).  These networks are incompatible
 // with each other (each sharing a different genesis block) and software should
@@ -10,7 +10,7 @@
 // For library packages, chaincfg provides the ability to lookup chain
 // parameters and encoding magics when passed a *Params.  Older APIs not updated
 // to the new convention of passing a *Params may lookup the parameters for a
-// wire.DecredNet using ParamsForNet, but be aware that this usage is
+// wire.EXCCNet using ParamsForNet, but be aware that this usage is
 // deprecated and will be removed from chaincfg in the future.
 //
 // For main packages, a (typically global) var may be assigned the address of
@@ -25,11 +25,11 @@
 //          "fmt"
 //          "log"
 //
-//          "github.com/EXCCoin/exccd/excutil"
+//          "github.com/EXCCoin/exccd/exccutil"
 //          "github.com/EXCCoin/exccd/chaincfg"
 //  )
 //
-//  var testnet = flag.Bool("testnet", false, "operate on the testnet Decred network")
+//  var testnet = flag.Bool("testnet", false, "operate on the testnet ExchangeCoin network")
 //
 //  // By default (without -testnet), use mainnet.
 //  var chainParams = &chaincfg.MainNetParams
@@ -46,14 +46,14 @@
 //
 //          // Create and print new payment address, specific to the active network.
 //          pubKeyHash := make([]byte, 20)
-//          addr, err := excutil.NewAddressPubKeyHash(pubKeyHash, chainParams)
+//          addr, err := exccutil.NewAddressPubKeyHash(pubKeyHash, chainParams)
 //          if err != nil {
 //                  log.Fatal(err)
 //          }
 //          fmt.Println(addr)
 //  }
 //
-// If an application does not use one of the three standard Decred networks,
+// If an application does not use one of the three standard ExchangeCoin networks,
 // a new Params struct may be created which defines the parameters for the
 // non-standard network.  As a general rule of thumb, all network parameters
 // should be unique to the network, but parameter collisions can still occur

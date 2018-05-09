@@ -18,7 +18,7 @@ import (
 	"github.com/EXCCoin/exccd/blockchain/stake"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/database"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/wire"
 )
 
@@ -83,7 +83,7 @@ func isDeserializeErr(err error) bool {
 
 // serializeSizeForMinimalOutputs calculates the number of bytes needed to
 // serialize a transaction to its minimal outputs.
-func serializeSizeForMinimalOutputs(tx *excutil.Tx) int {
+func serializeSizeForMinimalOutputs(tx *exccutil.Tx) int {
 	sz := serializeSizeVLQ(uint64(len(tx.MsgTx().TxOut)))
 	for _, out := range tx.MsgTx().TxOut {
 		sz += serializeSizeVLQ(compressTxOutAmount(uint64(out.Value)))
@@ -98,7 +98,7 @@ func serializeSizeForMinimalOutputs(tx *excutil.Tx) int {
 // putTxToMinimalOutputs serializes a transaction to its minimal outputs.
 // It returns the amount of data written. The function will panic if it writes
 // beyond the bounds of the passed memory.
-func putTxToMinimalOutputs(target []byte, tx *excutil.Tx) int {
+func putTxToMinimalOutputs(target []byte, tx *exccutil.Tx) int {
 	offset := putVLQ(target, uint64(len(tx.MsgTx().TxOut)))
 	for _, out := range tx.MsgTx().TxOut {
 		offset += putVLQ(target[offset:], compressTxOutAmount(uint64(out.Value)))
@@ -435,7 +435,7 @@ func dbFetchBlockIndexEntry(dbTx database.Tx, hash *chainhash.Hash, height uint3
 
 // dbMaybeStoreBlock stores the provided block in the database if it's not
 // already there.
-func dbMaybeStoreBlock(dbTx database.Tx, block *excutil.Block) error {
+func dbMaybeStoreBlock(dbTx database.Tx, block *exccutil.Block) error {
 	// Store the block in ffldb if not already done.
 	hasBlock, err := dbTx.HasBlock(block.Hash())
 	if err != nil {
@@ -531,7 +531,7 @@ type spentTxOut struct {
 
 // spentTxOutSerializeSize returns the number of bytes it would take to
 // serialize the passed stxo according to the format described above.
-// The amount is never encoded into spent transaction outputs in Decred
+// The amount is never encoded into spent transaction outputs in ExchangeCoin
 // because they're already encoded into the transactions, so skip them when
 // determining the serialization size.
 func spentTxOutSerializeSize(stxo *spentTxOut) int {
@@ -617,7 +617,7 @@ func decodeSpentTxOut(serialized []byte, stxo *spentTxOut, amount int64, height 
 	}
 
 	// Decode the compressed txout. We pass false for the amount flag,
-	// since in Decred we only need pkScript at most due to fraud proofs
+	// since in ExchangeCoin we only need pkScript at most due to fraud proofs
 	// already storing the decompressed amount.
 	_, scriptVersion, compScript, bytesRead, err :=
 		decodeCompressedTxOut(serialized[offset:], currentCompressionVersion,
@@ -788,7 +788,7 @@ func serializeSpendJournalEntry(stxos []spentTxOut) ([]byte, error) {
 // view MUST have the utxos referenced by all of the transactions available for
 // the passed block since that information is required to reconstruct the spent
 // txouts.
-func dbFetchSpendJournalEntry(dbTx database.Tx, block *excutil.Block, parent *excutil.Block) ([]spentTxOut, error) {
+func dbFetchSpendJournalEntry(dbTx database.Tx, block *exccutil.Block, parent *exccutil.Block) ([]spentTxOut, error) {
 	// Exclude the coinbase transaction since it can't spend anything.
 	spendBucket := dbTx.Metadata().Bucket(dbnamespace.SpendJournalBucketName)
 	serialized := spendBucket.Get(block.Hash()[:])
@@ -1564,7 +1564,7 @@ func dbPutBestState(dbTx database.Tx, snapshot *BestState, workSum *big.Int) err
 // the genesis block, so it must only be called on an uninitialized database.
 func (b *BlockChain) createChainState() error {
 	// Create a new node from the genesis block and set it as the best node.
-	genesisBlock := excutil.NewBlock(b.chainParams.GenesisBlock)
+	genesisBlock := exccutil.NewBlock(b.chainParams.GenesisBlock)
 	header := &genesisBlock.MsgBlock().Header
 	node := newBlockNode(header, nil)
 	node.status = statusDataStored | statusValid
@@ -1892,8 +1892,8 @@ func (b *BlockChain) HeaderByHeight(height int64) (*wire.BlockHeader, error) {
 
 // dbFetchBlockByHash uses an existing database transaction to retrieve the raw
 // block for the provided hash, deserialize it, retrieve the appropriate height
-// from the index, and return a excutil.Block with the height set.
-func dbFetchBlockByHash(dbTx database.Tx, hash *chainhash.Hash) (*excutil.Block, error) {
+// from the index, and return a exccutil.Block with the height set.
+func dbFetchBlockByHash(dbTx database.Tx, hash *chainhash.Hash) (*exccutil.Block, error) {
 	// Check if the block is in the main chain.
 	if !dbMainChainHasBlock(dbTx, hash) {
 		str := fmt.Sprintf("block %s is not in the main chain", hash)
@@ -1907,7 +1907,7 @@ func dbFetchBlockByHash(dbTx database.Tx, hash *chainhash.Hash) (*excutil.Block,
 	}
 
 	// Create the encapsulated block and set the height appropriately.
-	block, err := excutil.NewBlockFromBytes(blockBytes)
+	block, err := exccutil.NewBlockFromBytes(blockBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -1916,9 +1916,9 @@ func dbFetchBlockByHash(dbTx database.Tx, hash *chainhash.Hash) (*excutil.Block,
 }
 
 // dbFetchBlockByHeight uses an existing database transaction to retrieve the
-// raw block for the provided height, deserialize it, and return a excutil.Block
+// raw block for the provided height, deserialize it, and return a exccutil.Block
 // with the height set.
-func dbFetchBlockByHeight(dbTx database.Tx, height int64) (*excutil.Block, error) {
+func dbFetchBlockByHeight(dbTx database.Tx, height int64) (*exccutil.Block, error) {
 	// First find the hash associated with the provided height in the index.
 	hash, err := dbFetchHashByHeight(dbTx, height)
 	if err != nil {
@@ -1932,7 +1932,7 @@ func dbFetchBlockByHeight(dbTx database.Tx, height int64) (*excutil.Block, error
 	}
 
 	// Create the encapsulated block and set the height appropriately.
-	block, err := excutil.NewBlockFromBytes(blockBytes)
+	block, err := exccutil.NewBlockFromBytes(blockBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -1941,7 +1941,7 @@ func dbFetchBlockByHeight(dbTx database.Tx, height int64) (*excutil.Block, error
 }
 
 // DBFetchBlockByHeight is the exported version of dbFetchBlockByHeight.
-func DBFetchBlockByHeight(dbTx database.Tx, height int64) (*excutil.Block, error) {
+func DBFetchBlockByHeight(dbTx database.Tx, height int64) (*exccutil.Block, error) {
 	return dbFetchBlockByHeight(dbTx, height)
 }
 
@@ -2001,8 +2001,8 @@ func (b *BlockChain) BlockHashByHeight(blockHeight int64) (*chainhash.Hash, erro
 // BlockByHeight returns the block at the given height in the main chain.
 //
 // This function is safe for concurrent access.
-func (b *BlockChain) BlockByHeight(blockHeight int64) (*excutil.Block, error) {
-	var block *excutil.Block
+func (b *BlockChain) BlockByHeight(blockHeight int64) (*exccutil.Block, error) {
+	var block *exccutil.Block
 	err := b.db.View(func(dbTx database.Tx) error {
 		var err error
 		block, err = dbFetchBlockByHeight(dbTx, blockHeight)
@@ -2014,7 +2014,7 @@ func (b *BlockChain) BlockByHeight(blockHeight int64) (*excutil.Block, error) {
 // BlockByHash returns the block from the main chain with the given hash.
 //
 // This function is safe for concurrent access.
-func (b *BlockChain) BlockByHash(hash *chainhash.Hash) (*excutil.Block, error) {
+func (b *BlockChain) BlockByHash(hash *chainhash.Hash) (*exccutil.Block, error) {
 	b.chainLock.RLock()
 	defer b.chainLock.RUnlock()
 

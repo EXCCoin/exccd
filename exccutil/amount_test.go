@@ -4,7 +4,7 @@
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
 
-package excutil_test
+package exccutil_test
 
 import (
 	"math"
@@ -12,7 +12,7 @@ import (
 	"sort"
 	"testing"
 
-	. "github.com/EXCCoin/exccd/excutil"
+	. "github.com/EXCCoin/exccd/exccutil"
 )
 
 func TestAmountCreation(t *testing.T) {
@@ -123,40 +123,40 @@ func TestAmountUnitConversions(t *testing.T) {
 		s         string
 	}{
 		{
-			name:      "MDCR",
+			name:      "MEXCC",
 			amount:    MaxAmount,
 			unit:      AmountMegaCoin,
 			converted: 21,
-			s:         "21 MDCR",
+			s:         "21 MEXCC",
 		},
 		{
-			name:      "kDCR",
+			name:      "kEXCC",
 			amount:    44433322211100,
 			unit:      AmountKiloCoin,
 			converted: 444.33322211100,
-			s:         "444.333222111 kDCR",
+			s:         "444.333222111 kEXCC",
 		},
 		{
 			name:      "Coin",
 			amount:    44433322211100,
 			unit:      AmountCoin,
 			converted: 444333.22211100,
-			s:         "444333.222111 DCR",
+			s:         "444333.222111 EXCC",
 		},
 		{
-			name:      "mDCR",
+			name:      "mEXCC",
 			amount:    44433322211100,
 			unit:      AmountMilliCoin,
 			converted: 444333222.11100,
-			s:         "444333222.111 mDCR",
+			s:         "444333222.111 mEXCC",
 		},
 		{
 
-			name:      "μDCR",
+			name:      "μEXCC",
 			amount:    44433322211100,
 			unit:      AmountMicroCoin,
 			converted: 444333222111.00,
-			s:         "444333222111 μDCR",
+			s:         "444333222111 μEXCC",
 		},
 		{
 
@@ -172,7 +172,7 @@ func TestAmountUnitConversions(t *testing.T) {
 			amount:    44433322211100,
 			unit:      AmountUnit(-1),
 			converted: 4443332.2211100,
-			s:         "4443332.22111 1e-1 DCR",
+			s:         "4443332.22111 1e-1 EXCC",
 		},
 	}
 
@@ -213,52 +213,52 @@ func TestAmountMulF64(t *testing.T) {
 		res  Amount
 	}{
 		{
-			name: "Multiply 0.1 DCR by 2",
-			amt:  100e5, // 0.1 DCR
+			name: "Multiply 0.1 EXCC by 2",
+			amt:  100e5, // 0.1 EXCC
 			mul:  2,
-			res:  200e5, // 0.2 DCR
+			res:  200e5, // 0.2 EXCC
 		},
 		{
-			name: "Multiply 0.2 DCR by 0.02",
-			amt:  200e5, // 0.2 DCR
+			name: "Multiply 0.2 EXCC by 0.02",
+			amt:  200e5, // 0.2 EXCC
 			mul:  1.02,
-			res:  204e5, // 0.204 DCR
+			res:  204e5, // 0.204 EXCC
 		},
 		{
-			name: "Multiply 0.1 DCR by -2",
-			amt:  100e5, // 0.1 DCR
+			name: "Multiply 0.1 EXCC by -2",
+			amt:  100e5, // 0.1 EXCC
 			mul:  -2,
-			res:  -200e5, // -0.2 DCR
+			res:  -200e5, // -0.2 EXCC
 		},
 		{
-			name: "Multiply 0.2 DCR by -0.02",
-			amt:  200e5, // 0.2 DCR
+			name: "Multiply 0.2 EXCC by -0.02",
+			amt:  200e5, // 0.2 EXCC
 			mul:  -1.02,
-			res:  -204e5, // -0.204 DCR
+			res:  -204e5, // -0.204 EXCC
 		},
 		{
-			name: "Multiply -0.1 DCR by 2",
-			amt:  -100e5, // -0.1 DCR
+			name: "Multiply -0.1 EXCC by 2",
+			amt:  -100e5, // -0.1 EXCC
 			mul:  2,
-			res:  -200e5, // -0.2 DCR
+			res:  -200e5, // -0.2 EXCC
 		},
 		{
-			name: "Multiply -0.2 DCR by 0.02",
-			amt:  -200e5, // -0.2 DCR
+			name: "Multiply -0.2 EXCC by 0.02",
+			amt:  -200e5, // -0.2 EXCC
 			mul:  1.02,
-			res:  -204e5, // -0.204 DCR
+			res:  -204e5, // -0.204 EXCC
 		},
 		{
-			name: "Multiply -0.1 DCR by -2",
-			amt:  -100e5, // -0.1 DCR
+			name: "Multiply -0.1 EXCC by -2",
+			amt:  -100e5, // -0.1 EXCC
 			mul:  -2,
-			res:  200e5, // 0.2 DCR
+			res:  200e5, // 0.2 EXCC
 		},
 		{
-			name: "Multiply -0.2 DCR by -0.02",
-			amt:  -200e5, // -0.2 DCR
+			name: "Multiply -0.2 EXCC by -0.02",
+			amt:  -200e5, // -0.2 EXCC
 			mul:  -1.02,
-			res:  204e5, // 0.204 DCR
+			res:  204e5, // 0.204 EXCC
 		},
 		{
 			name: "Round down",
@@ -274,9 +274,9 @@ func TestAmountMulF64(t *testing.T) {
 		},
 		{
 			name: "Multiply by 0.",
-			amt:  1e8, // 1 DCR
+			amt:  1e8, // 1 EXCC
 			mul:  0,
-			res:  0, // 0 DCR
+			res:  0, // 0 EXCC
 		},
 		{
 			name: "Multiply 1 by 0.5.",

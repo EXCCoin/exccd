@@ -17,7 +17,7 @@ import (
 
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
 )
@@ -56,7 +56,7 @@ type SpendableOut struct {
 	prevOut     wire.OutPoint
 	blockHeight uint32
 	blockIndex  uint32
-	amount      excutil.Amount
+	amount      exccutil.Amount
 }
 
 // PrevOut returns the outpoint associated with the spendable output.
@@ -75,7 +75,7 @@ func (s *SpendableOut) BlockIndex() uint32 {
 }
 
 // Amount returns the amount associated with the spendable output.
-func (s *SpendableOut) Amount() excutil.Amount {
+func (s *SpendableOut) Amount() exccutil.Amount {
 	return s.amount
 }
 
@@ -91,7 +91,7 @@ func MakeSpendableOutForTx(tx *wire.MsgTx, blockHeight, txIndex, txOutIndex uint
 		},
 		blockHeight: blockHeight,
 		blockIndex:  txIndex,
-		amount:      excutil.Amount(tx.TxOut[txOutIndex].Value),
+		amount:      exccutil.Amount(tx.TxOut[txOutIndex].Value),
 	}
 }
 
@@ -141,7 +141,7 @@ type Generator struct {
 	blocks           map[chainhash.Hash]*wire.MsgBlock
 	blockHeights     map[chainhash.Hash]uint32
 	blocksByName     map[string]*wire.MsgBlock
-	p2shOpTrueAddr   excutil.Address
+	p2shOpTrueAddr   exccutil.Address
 	p2shOpTrueScript []byte
 
 	// Used for tracking spendable coinbase outputs.
@@ -163,7 +163,7 @@ func MakeGenerator(params *chaincfg.Params) (Generator, error) {
 	// Generate a generic pay-to-script-hash script that is a simple
 	// OP_TRUE.  This allows the tests to avoid needing to generate and
 	// track actual public keys and signatures.
-	p2shOpTrueAddr, err := excutil.NewAddressScriptHash(opTrueScript, params)
+	p2shOpTrueAddr, err := exccutil.NewAddressScriptHash(opTrueScript, params)
 	if err != nil {
 		return Generator{}, err
 	}
@@ -206,7 +206,7 @@ func (g *Generator) TipName() string {
 
 // P2shOpTrueAddr returns the generator p2sh script that is composed with
 // a single OP_TRUE.
-func (g *Generator) P2shOpTrueAddr() excutil.Address {
+func (g *Generator) P2shOpTrueAddr() exccutil.Address {
 	return g.p2shOpTrueAddr
 }
 
@@ -270,14 +270,14 @@ func UniqueOpReturnScript() []byte {
 // using the blockchain code since the intent is to be able to generate known
 // good tests which exercise that code, so it wouldn't make sense to use the
 // same code to generate them.
-func (g *Generator) calcFullSubsidy(blockHeight uint32) excutil.Amount {
+func (g *Generator) calcFullSubsidy(blockHeight uint32) exccutil.Amount {
 	iterations := int64(blockHeight) / g.params.SubsidyReductionInterval
 	subsidy := g.params.BaseSubsidy
 	for i := int64(0); i < iterations; i++ {
 		subsidy *= g.params.MulSubsidy
 		subsidy /= g.params.DivSubsidy
 	}
-	return excutil.Amount(subsidy)
+	return exccutil.Amount(subsidy)
 }
 
 // calcPoWSubsidy returns the proof-of-work subsidy portion from a given full
@@ -288,17 +288,17 @@ func (g *Generator) calcFullSubsidy(blockHeight uint32) excutil.Amount {
 // using the blockchain code since the intent is to be able to generate known
 // good tests which exercise that code, so it wouldn't make sense to use the
 // same code to generate them.
-func (g *Generator) calcPoWSubsidy(fullSubsidy excutil.Amount, blockHeight uint32, numVotes uint16) excutil.Amount {
-	powProportion := excutil.Amount(g.params.WorkRewardProportion)
-	totalProportions := excutil.Amount(g.params.TotalSubsidyProportions())
+func (g *Generator) calcPoWSubsidy(fullSubsidy exccutil.Amount, blockHeight uint32, numVotes uint16) exccutil.Amount {
+	powProportion := exccutil.Amount(g.params.WorkRewardProportion)
+	totalProportions := exccutil.Amount(g.params.TotalSubsidyProportions())
 	powSubsidy := (fullSubsidy * powProportion) / totalProportions
 	if int64(blockHeight) < g.params.StakeValidationHeight {
 		return powSubsidy
 	}
 
 	// Reduce the subsidy according to the number of votes.
-	ticketsPerBlock := excutil.Amount(g.params.TicketsPerBlock)
-	return (powSubsidy * excutil.Amount(numVotes)) / ticketsPerBlock
+	ticketsPerBlock := exccutil.Amount(g.params.TicketsPerBlock)
+	return (powSubsidy * exccutil.Amount(numVotes)) / ticketsPerBlock
 }
 
 // calcPoSSubsidy returns the proof-of-stake subsidy portion for a given block
@@ -308,14 +308,14 @@ func (g *Generator) calcPoWSubsidy(fullSubsidy excutil.Amount, blockHeight uint3
 // using the blockchain code since the intent is to be able to generate known
 // good tests which exercise that code, so it wouldn't make sense to use the
 // same code to generate them.
-func (g *Generator) calcPoSSubsidy(heightVotedOn uint32) excutil.Amount {
+func (g *Generator) calcPoSSubsidy(heightVotedOn uint32) exccutil.Amount {
 	if int64(heightVotedOn+1) < g.params.StakeValidationHeight {
 		return 0
 	}
 
 	fullSubsidy := g.calcFullSubsidy(heightVotedOn)
-	posProportion := excutil.Amount(g.params.StakeRewardProportion)
-	totalProportions := excutil.Amount(g.params.TotalSubsidyProportions())
+	posProportion := exccutil.Amount(g.params.StakeRewardProportion)
+	totalProportions := exccutil.Amount(g.params.TotalSubsidyProportions())
 	return (fullSubsidy * posProportion) / totalProportions
 }
 
@@ -325,17 +325,17 @@ func (g *Generator) calcPoSSubsidy(heightVotedOn uint32) excutil.Amount {
 // using the blockchain code since the intent is to be able to generate known
 // good tests which exercise that code, so it wouldn't make sense to use the
 // same code to generate them.
-func (g *Generator) calcDevSubsidy(fullSubsidy excutil.Amount, blockHeight uint32, numVotes uint16) excutil.Amount {
-	devProportion := excutil.Amount(g.params.BlockTaxProportion)
-	totalProportions := excutil.Amount(g.params.TotalSubsidyProportions())
+func (g *Generator) calcDevSubsidy(fullSubsidy exccutil.Amount, blockHeight uint32, numVotes uint16) exccutil.Amount {
+	devProportion := exccutil.Amount(g.params.BlockTaxProportion)
+	totalProportions := exccutil.Amount(g.params.TotalSubsidyProportions())
 	devSubsidy := (fullSubsidy * devProportion) / totalProportions
 	if int64(blockHeight) < g.params.StakeValidationHeight {
 		return devSubsidy
 	}
 
 	// Reduce the subsidy according to the number of votes.
-	ticketsPerBlock := excutil.Amount(g.params.TicketsPerBlock)
-	return (devSubsidy * excutil.Amount(numVotes)) / ticketsPerBlock
+	ticketsPerBlock := exccutil.Amount(g.params.TicketsPerBlock)
+	return (devSubsidy * exccutil.Amount(numVotes)) / ticketsPerBlock
 }
 
 // standardCoinbaseOpReturnScript returns a standard script suitable for use as
@@ -364,7 +364,7 @@ func standardCoinbaseOpReturnScript(blockHeight uint32) []byte {
 // - Second output is a standard provably prunable data-only coinbase output
 // - Third and subsequent outputs pay the pow subsidy portion to the generic
 //   OP_TRUE p2sh script hash
-func (g *Generator) addCoinbaseTxOutputs(tx *wire.MsgTx, blockHeight uint32, devSubsidy, powSubsidy excutil.Amount) {
+func (g *Generator) addCoinbaseTxOutputs(tx *wire.MsgTx, blockHeight uint32, devSubsidy, powSubsidy exccutil.Amount) {
 	// First output is the developer subsidy.
 	tx.AddTxOut(&wire.TxOut{
 		Value:    int64(devSubsidy),
@@ -424,7 +424,7 @@ func (g *Generator) CreateCoinbaseTx(blockHeight uint32, numVotes uint16) *wire.
 // PurchaseCommitmentScript returns a standard provably-pruneable OP_RETURN
 // commitment script suitable for use in a ticket purchase tx (sstx) using the
 // provided target address, amount, and fee limits.
-func PurchaseCommitmentScript(addr excutil.Address, amount, voteFeeLimit, revocationFeeLimit excutil.Amount) []byte {
+func PurchaseCommitmentScript(addr exccutil.Address, amount, voteFeeLimit, revocationFeeLimit exccutil.Amount) []byte {
 	// The limits are defined in terms of the closest base 2 exponent and
 	// a bit that must be set to specify the limit is to be applied.  The
 	// vote fee exponent is in the bottom 8 bits, while the revocation fee
@@ -465,7 +465,7 @@ func PurchaseCommitmentScript(addr excutil.Address, amount, voteFeeLimit, revoca
 // - First output is an OP_SSTX followed by the OP_TRUE p2sh script hash
 // - Second output is an OP_RETURN followed by the commitment script
 // - Third output is an OP_SSTXCHANGE followed by the OP_TRUE p2sh script hash
-func (g *Generator) createTicketPurchaseTx(spend *SpendableOut, ticketPrice, fee excutil.Amount) *wire.MsgTx {
+func (g *Generator) createTicketPurchaseTx(spend *SpendableOut, ticketPrice, fee exccutil.Amount) *wire.MsgTx {
 	// The first output is the voting rights address.  This impl uses the
 	// standard pay-to-script-hash to an OP_TRUE.
 	pkScript, err := txscript.PayToSStx(g.p2shOpTrueAddr)
@@ -610,8 +610,8 @@ func (g *Generator) createVoteTx(parentBlock *wire.MsgBlock, ticket *stakeTicket
 	// Calculate the proof-of-stake subsidy proportion based on the block
 	// height.
 	posSubsidy := g.calcPoSSubsidy(parentBlock.Header.Height)
-	voteSubsidy := posSubsidy / excutil.Amount(g.params.TicketsPerBlock)
-	ticketPrice := excutil.Amount(ticket.tx.TxOut[0].Value)
+	voteSubsidy := posSubsidy / exccutil.Amount(g.params.TicketsPerBlock)
+	ticketPrice := exccutil.Amount(ticket.tx.TxOut[0].Value)
 
 	// The first output is the block (hash and height) the vote is for.
 	blockScript := voteBlockScript(parentBlock)
@@ -1233,7 +1233,7 @@ func hashMerkleBranches(left *chainhash.Hash, right *chainhash.Hash) *chainhash.
 // is stored in a linear array.
 //
 // A merkle tree is a tree in which every non-leaf node is the hash of its
-// children nodes.  A diagram depicting how this works for Decred transactions
+// children nodes.  A diagram depicting how this works for ExchangeCoin transactions
 // where h(x) is a blake256 hash follows:
 //
 //	         root = h1234 = h(h12 + h34)
@@ -1254,7 +1254,7 @@ func hashMerkleBranches(left *chainhash.Hash, right *chainhash.Hash) *chainhash.
 // are calculated by concatenating the left node with itself before hashing.
 // Since this function uses nodes that are pointers to the hashes, empty nodes
 // will be nil.
-func buildMerkleTreeStore(transactions []*excutil.Tx) []*chainhash.Hash {
+func buildMerkleTreeStore(transactions []*exccutil.Tx) []*chainhash.Hash {
 	// If there's an empty stake tree, return totally zeroed out merkle tree root
 	// only.
 	if len(transactions) == 0 {
@@ -1306,9 +1306,9 @@ func buildMerkleTreeStore(transactions []*excutil.Tx) []*chainhash.Hash {
 // calcMerkleRoot creates a merkle tree from the slice of transactions and
 // returns the root of the tree.
 func calcMerkleRoot(txns []*wire.MsgTx) chainhash.Hash {
-	utilTxns := make([]*excutil.Tx, 0, len(txns))
+	utilTxns := make([]*exccutil.Tx, 0, len(txns))
 	for _, tx := range txns {
-		utilTxns = append(utilTxns, excutil.NewTx(tx))
+		utilTxns = append(utilTxns, exccutil.NewTx(tx))
 	}
 	merkles := buildMerkleTreeStore(utilTxns)
 	return *merkles[len(merkles)-1]
@@ -1348,7 +1348,7 @@ func hashToBig(hash *chainhash.Hash) *big.Int {
 // The formula to calculate N is:
 // 	N = (-1^sign) * mantissa * 256^(exponent-3)
 //
-// This compact form is only used in Decred to encode unsigned 256-bit numbers
+// This compact form is only used in ExchangeCoin to encode unsigned 256-bit numbers
 // which represent difficulty targets, thus there really is not a need for a
 // sign bit, but it is implemented here to stay consistent with bitcoind.
 func compactToBig(compact uint32) *big.Int {
@@ -1594,7 +1594,7 @@ func ReplaceVotes(voteBits uint16, newVersion uint32) func(*wire.MsgBlock) {
 // transaction ends up with a unique hash.  The public key script is a simple
 // OP_TRUE p2sh script which avoids the need to track addresses and signature
 // scripts in the tests.  The signature script is the opTrueRedeemScript.
-func (g *Generator) CreateSpendTx(spend *SpendableOut, fee excutil.Amount) *wire.MsgTx {
+func (g *Generator) CreateSpendTx(spend *SpendableOut, fee exccutil.Amount) *wire.MsgTx {
 	spendTx := wire.NewMsgTx()
 	spendTx.AddTxIn(&wire.TxIn{
 		PreviousOutPoint: spend.prevOut,
@@ -1616,7 +1616,7 @@ func (g *Generator) CreateSpendTx(spend *SpendableOut, fee excutil.Amount) *wire
 // is a simple OP_TRUE p2sh script which avoids the need to track addresses and
 // signature scripts in the tests.  This signature script the
 // opTrueRedeemScript.
-func (g *Generator) CreateSpendTxForTx(tx *wire.MsgTx, blockHeight, txIndex uint32, fee excutil.Amount) *wire.MsgTx {
+func (g *Generator) CreateSpendTxForTx(tx *wire.MsgTx, blockHeight, txIndex uint32, fee exccutil.Amount) *wire.MsgTx {
 	spend := MakeSpendableOutForTx(tx, blockHeight, txIndex, 0)
 	return g.CreateSpendTx(&spend, fee)
 }
@@ -1985,7 +1985,7 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 	}
 
 	// Calculate the next required stake difficulty (aka ticket price).
-	ticketPrice := excutil.Amount(g.CalcNextRequiredStakeDifficulty())
+	ticketPrice := exccutil.Amount(g.CalcNextRequiredStakeDifficulty())
 
 	// Generate the appropriate votes and ticket purchases based on the
 	// current tip block and provided ticket spendable outputs.
@@ -2019,7 +2019,7 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 		// Generate ticket purchases (sstx) using the provided spendable
 		// outputs.
 		if ticketSpends != nil {
-			const ticketFee = excutil.Amount(2)
+			const ticketFee = exccutil.Amount(2)
 			for i := 0; i < len(ticketSpends); i++ {
 				out := &ticketSpends[i]
 				purchaseTx := g.createTicketPurchaseTx(out,
@@ -2043,7 +2043,7 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 	var numVotes uint16
 	var numTicketRevocations uint8
 	var ticketPurchases []*stakeTicket
-	var stakeTreeFees excutil.Amount
+	var stakeTreeFees exccutil.Amount
 	for txIdx, tx := range stakeTxns {
 		switch {
 		case isVoteTx(tx):
@@ -2056,12 +2056,12 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 		}
 
 		// Calculate any fees for the transaction.
-		var inputSum, outputSum excutil.Amount
+		var inputSum, outputSum exccutil.Amount
 		for _, txIn := range tx.TxIn {
-			inputSum += excutil.Amount(txIn.ValueIn)
+			inputSum += exccutil.Amount(txIn.ValueIn)
 		}
 		for _, txOut := range tx.TxOut {
-			outputSum += excutil.Amount(txOut.Value)
+			outputSum += exccutil.Amount(txOut.Value)
 		}
 		stakeTreeFees += (inputSum - outputSum)
 	}
@@ -2082,7 +2082,7 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 		if spend != nil {
 			// Create the transaction with a fee of 1 atom for the
 			// miner and increase the PoW subsidy accordingly.
-			fee := excutil.Amount(1)
+			fee := exccutil.Amount(1)
 			coinbaseTx.TxOut[2].Value += int64(fee)
 
 			// Create a transaction that spends from the provided
@@ -2204,7 +2204,7 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 // premine payouts.  The additional amount parameter can be used to create a
 // block that is otherwise a completely valid premine block except it adds the
 // extra amount to each payout and thus create a block that violates consensus.
-func (g *Generator) CreatePremineBlock(blockName string, additionalAmount excutil.Amount, mungers ...func(*wire.MsgBlock)) *wire.MsgBlock {
+func (g *Generator) CreatePremineBlock(blockName string, additionalAmount exccutil.Amount, mungers ...func(*wire.MsgBlock)) *wire.MsgBlock {
 	coinbaseTx := wire.NewMsgTx()
 	coinbaseTx.AddTxIn(&wire.TxIn{
 		PreviousOutPoint: *wire.NewOutPoint(&chainhash.Hash{},
@@ -2218,9 +2218,9 @@ func (g *Generator) CreatePremineBlock(blockName string, additionalAmount excuti
 
 	// Add each required output and tally the total payouts for the coinbase
 	// in order to set the input value appropriately.
-	var totalSubsidy excutil.Amount
+	var totalSubsidy exccutil.Amount
 	for _, payout := range g.params.BlockOneLedger {
-		payoutAddr, err := excutil.DecodeAddress(payout.Address)
+		payoutAddr, err := exccutil.DecodeAddress(payout.Address)
 		if err != nil {
 			panic(err)
 		}
@@ -2234,7 +2234,7 @@ func (g *Generator) CreatePremineBlock(blockName string, additionalAmount excuti
 			PkScript: pkScript,
 		})
 
-		totalSubsidy += excutil.Amount(payout.Amount)
+		totalSubsidy += exccutil.Amount(payout.Amount)
 	}
 	coinbaseTx.TxIn[0].ValueIn = int64(totalSubsidy)
 

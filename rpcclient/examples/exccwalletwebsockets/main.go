@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/rpcclient"
 	"github.com/davecgh/go-spew/spew"
 )
@@ -23,14 +23,14 @@ func main() {
 	// for notifications.  See the documentation of the rpcclient
 	// NotificationHandlers type for more details about each handler.
 	ntfnHandlers := rpcclient.NotificationHandlers{
-		OnAccountBalance: func(account string, balance excutil.Amount, confirmed bool) {
+		OnAccountBalance: func(account string, balance exccutil.Amount, confirmed bool) {
 			log.Printf("New balance for account %s: %v", account,
 				balance)
 		},
 	}
 
-	// Connect to local dcrwallet RPC server using websockets.
-	certHomeDir := excutil.AppDataDir("dcrwallet", false)
+	// Connect to local exccwallet RPC server using websockets.
+	certHomeDir := exccutil.AppDataDir("exccwallet", false)
 	certs, err := ioutil.ReadFile(filepath.Join(certHomeDir, "rpc.cert"))
 	if err != nil {
 		log.Fatal(err)

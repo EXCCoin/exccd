@@ -644,7 +644,7 @@ func pickRandWinners(sz int, r rand.Source) []int {
 }
 
 // TestImmutableMemory tests the memory for creating n many nodes cloned and
-// modified in the memory analogous to what is actually seen in the Decred
+// modified in the memory analogous to what is actually seen in the ExchangeCoin
 // mainnet, then analyzes the relative memory usage with runtime stats.
 func TestImmutableMemory(t *testing.T) {
 	// Collect information about memory at the start.

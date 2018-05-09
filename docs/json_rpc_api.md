@@ -33,7 +33,7 @@ differences between exccd and bitcoind as far as how RPCs are serviced:
   further details on why they were separated.  This means that if you are
   talking directly to exccd, only chain-related RPCs are available.  However both
   chain-related and wallet-related RPCs are available via
-  [dcrwallet](https://github.com/decred/dcrwallet).
+  [exccwallet](https://github.com/EXCCoin/exccwallet).
 * exccd is secure by default which means that the RPC connection is TLS-enabled
   by default
 * exccd provides access to the API through both
@@ -41,14 +41,14 @@ differences between exccd and bitcoind as far as how RPCs are serviced:
   [Websockets](http://en.wikipedia.org/wiki/WebSocket)
 
 Websockets are the preferred transport for exccd RPC and are used by applications
-such as [exccwallet](https://github.com/Exchangecoin/exccwallet) for inter-process
+such as [exccwallet](https://github.com/EXCCoin/exccwallet) for inter-process
 communication with exccd.  The websocket connection endpoint for exccd is
 `wss://your_ip_or_domain:9109/ws`.
 
 In addition to the [standard API](#Methods), an [extension API](#WSExtMethods)
 has been developed that is exclusive to clients using Websockets. In its current
 state, this API attempts to cover features found missing in the standard API
-during the development of dcrwallet.
+during the development of exccwallet.
 
 While the [standard API](#Methods) is stable, the
 [Websocket extension API](#WSExtMethods) should be considered a work in
@@ -188,7 +188,7 @@ the method name for further details such as parameter and return information.
 |32|[verifychain](#verifychain)|N|Verifies the block chain database.|
 |33|[debuglevel](#debuglevel)|N|Dynamically changes the debug logging level.|
 |34|[getbestblock](#getbestblock)|Y|Get block height and hash of best block in the main chain.|
-|35|[getcurrentnet](#getcurrentnet)|Y|Get Exchangecoin network exccd is running on.|
+|35|[getcurrentnet](#getcurrentnet)|Y|Get ExchangeCoin network exccd is running on.|
 |36|[searchrawtransactions](#searchrawtransactions)|Y|Query for transactions related to a particular address.|
 |37|[node](#node)|N|Attempts to add or remove a peer. |
 |38|[generate](#generate)|N|When in simnet or regtest mode, generate a set number of blocks. |
@@ -214,7 +214,7 @@ the method name for further details such as parameter and return information.
 |   |   |
 |---|---|
 |Method|createrawtransaction|
-|Parameters|1. `transaction inputs`:  `(JSON array, required)` json array of json objects.<br />`hash`: `(string, required)` the hash of the input.</br> `vout`: (numeric, required) the specific output of the input transaction to redeem transaction.<br /><br />`[{"txid": "hash", "vout": n}, ...]`<br /><br />2. `addresses and amounts`: `(JSON object, required)` - json object with addresses as keys and amounts as values.</br>`address`:   `(numeric, required)` the address to send to as the key and the amount in DCR as the value.<br /><br />`{"address": n.nnn, ...}`|
+|Parameters|1. `transaction inputs`:  `(JSON array, required)` json array of json objects.<br />`hash`: `(string, required)` the hash of the input.</br> `vout`: (numeric, required) the specific output of the input transaction to redeem transaction.<br /><br />`[{"txid": "hash", "vout": n}, ...]`<br /><br />2. `addresses and amounts`: `(JSON object, required)` - json object with addresses as keys and amounts as values.</br>`address`:   `(numeric, required)` the address to send to as the key and the amount in EXCC as the value.<br /><br />`{"address": n.nnn, ...}`|
 |Description|Returns a new transaction spending the provided inputs and sending to the provided addresses.The transaction inputs are not signed in the created transaction.<br /><br />The `signrawtransaction` RPC command provided by wallet must be used to sign the resulting transaction.|
 |Returns|`"transaction" (string) hex-encoded bytes of the serialized transaction`|
 |Example Parameters|1. transaction inputs `[{"txid":"e6da89de7a6b8508ce8f371a3d0535b04b5e108cb1a6e9284602d3bfd357c018", "vout":1}]`<br /><br />2. addresses and amounts ```{"13cgrTP7wgbZYWrY9BZ22BV6p82QXQT3nY": 0.49213337}```|
@@ -229,7 +229,7 @@ the method name for further details such as parameter and return information.
 |Method|decoderawtransaction|
 |Parameters|1. `data`: `(string, required)` serialized, hex-encoded transaction.|
 |Description|Returns a JSON object representing the provided serialized, hex-encoded transaction.|
-|Returns|`(json object)`<br />`txid`: `(string)` the transaction id. <br />`hash`: `(string)` the hash of the transaction. <br /> `locktime`: `(numeric)` the transaction lock time.<br />`version`: `(numeric)` the block version. <br />`expiry`: `(numeric)` the transaction expiry. <br />`vin`: `(array of json objects)` the transaction inputs as json objects.<br />`vout`: `(array of json objects)` the transaction outputs as json objects.<br /><br />`{"txid": "hash", "locktime": n, "version":n, "expiry": n, "vin": [...], "vout": [...]}`<br /><br />**vin (for coinbase transactions)**<br />`(json object)`<br /> `coinbase`: (string) the hex-encoded bytes of the signature script.<br />`sequence`: (numeric) the script sequence number.<br /><br />`{"coinbase": "data", "sequence": n, ...}`<br /><br />**vin (for stakebase transactions)**<br />`(json object)`<br /> `stakebase`: (string) the hash of the stake transaction.<br />`sequence`: (numeric) the script sequence number.<br /><br />`{"stakebase": "hash", "sequence": n, ...}`<br /><br />**vin (for non-coinbase / non-stakebase transactions)**<br />`(json object)`<br />`txid`: `(string)` the hash of the origin transaction.<br />`vout`: `(numeric)` the index of the output being redeemed from the origin transaction.<br />`scriptSig`: `(json object)` the signature script used to redeem the origin transaction.<br />`asm`:`(string)` disassembly of the script.<br />`data`: `(string)` hex-encoded bytes of the script.<br />`sequence`:  `(numeric)` the script sequence number.<br /><br />`{"txid": "hash", "vout": n,"scriptSig": {"asm": "asm", "hex": "data"}, "sequence": n, ...}`<br /><br />**vout**<br />`(json object)`<br />`value`: `(numeric)` the value in DCR.<br />`n`: `(numeric)` the index of this transaction output.<br />`scriptPubKey`:`(json object)` the public key script used to pay coins.<br />`asm`: `(string)` disassembly of the script.<br /> `hex`: `(string)` hex-encoded bytes of the script.<br /> `reqSigs`: `(numeric)` the number of required signatures.<br />`type`: `(string)` the type of the script (e.g. 'pubkeyhash').<br />`addresses`: `(json array of string)` the Exchangecoin addresses associated with this output.<br /><br />`{ "value": n, "n": n, "scriptPubKey": {"asm": "asm", "hex": "data","reqSigs": n, "type": "scripttype","addresses": [...]}}`|
+|Returns|`(json object)`<br />`txid`: `(string)` the transaction id. <br />`hash`: `(string)` the hash of the transaction. <br /> `locktime`: `(numeric)` the transaction lock time.<br />`version`: `(numeric)` the block version. <br />`expiry`: `(numeric)` the transaction expiry. <br />`vin`: `(array of json objects)` the transaction inputs as json objects.<br />`vout`: `(array of json objects)` the transaction outputs as json objects.<br /><br />`{"txid": "hash", "locktime": n, "version":n, "expiry": n, "vin": [...], "vout": [...]}`<br /><br />**vin (for coinbase transactions)**<br />`(json object)`<br /> `coinbase`: (string) the hex-encoded bytes of the signature script.<br />`sequence`: (numeric) the script sequence number.<br /><br />`{"coinbase": "data", "sequence": n, ...}`<br /><br />**vin (for stakebase transactions)**<br />`(json object)`<br /> `stakebase`: (string) the hash of the stake transaction.<br />`sequence`: (numeric) the script sequence number.<br /><br />`{"stakebase": "hash", "sequence": n, ...}`<br /><br />**vin (for non-coinbase / non-stakebase transactions)**<br />`(json object)`<br />`txid`: `(string)` the hash of the origin transaction.<br />`vout`: `(numeric)` the index of the output being redeemed from the origin transaction.<br />`scriptSig`: `(json object)` the signature script used to redeem the origin transaction.<br />`asm`:`(string)` disassembly of the script.<br />`data`: `(string)` hex-encoded bytes of the script.<br />`sequence`:  `(numeric)` the script sequence number.<br /><br />`{"txid": "hash", "vout": n,"scriptSig": {"asm": "asm", "hex": "data"}, "sequence": n, ...}`<br /><br />**vout**<br />`(json object)`<br />`value`: `(numeric)` the value in EXCC.<br />`n`: `(numeric)` the index of this transaction output.<br />`scriptPubKey`:`(json object)` the public key script used to pay coins.<br />`asm`: `(string)` disassembly of the script.<br /> `hex`: `(string)` hex-encoded bytes of the script.<br /> `reqSigs`: `(numeric)` the number of required signatures.<br />`type`: `(string)` the type of the script (e.g. 'pubkeyhash').<br />`addresses`: `(json array of string)` the ExchangeCoin addresses associated with this output.<br /><br />`{ "value": n, "n": n, "scriptPubKey": {"asm": "asm", "hex": "data","reqSigs": n, "type": "scripttype","addresses": [...]}}`|
 |Example Return|**For coinbase transactions**<br />`{"txid": "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b", "version": 1, "locktime": 0, "vin": [{"coinbase": "04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6...","sequence": 4294967295}, ...],"vout": [{"value": 50, "n": 0, "scriptPubKey": {"asm": "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4ce...","hex": "4104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4...", "reqSigs": 1,"type": "pubkey","addresses": ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", ...]}}]}`<br /><br />**For stakebase transactions**<br />`{"txid": "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b", "version": 1, "locktime": 0, "vin": [{"stakebase": "60ac4b057247b3d0b9a8173de56b5e1be8c1d1da970511c626ef53706c66be04","sequence": 4294967295}, ...],"vout": [{"value": 50, "n": 0, "scriptPubKey": {"asm": "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4ce...","hex": "4104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4...", "reqSigs": 1,"type": "pubkey","addresses": ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", ...]}}]}`<br /><br />**For non-coinbase / non-stakebase transactions**<br />`{"txid": "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b", "version": 1, "locktime": 0, "vin": [{"txid": "60ac4b057247b3d0b9a8173de56b5e1be8c1d1da970511c626ef53706c66be04", "vout": 0, "scriptSig": {"asm": "3046022100cb42f8df44eca83dd0a727988dcde9384953e830b1f8004d57485e2ede1b9c8f0...", "hex": "493046022100cb42f8df44eca83dd0a727988dcde9384953e830b1f8004d57485e2ede1b9c8...",},"sequence": 4294967295}, ...],"vout": [{"value": 50, "n": 0, "scriptPubKey": {"asm": "04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4ce...","hex": "4104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4...", "reqSigs": 1,"type": "pubkey","addresses": ["1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa", ...]}}]}`|
 [Return to Overview](#MethodOverview)<br />
 ***
@@ -240,7 +240,7 @@ the method name for further details such as parameter and return information.
 |Method|decodescript|
 |Parameters|1. `script`: `(string, required)` hex-encoded script.|
 |Description|Returns a JSON object with information about the provided hex-encoded script.|
-|Returns|`(json object)`<br />`asm`: `(string)` disassembly of the script (absent for nonstandard scripts).<br />`reqSigs`: `(numeric)` the number of required signatures.<br />`type`: `(string)` the type of the script (e.g. 'pubkeyhash').<br />`addresses`: `(json array of string)` the Exchangecoin addresses associated with this script.<br />`p2sh`: `(string)` the script hash for use in pay-to-script-hash transactions.<br /><br />`{ "asm": "asm", "reqSigs": n, "type": "scripttype", "addresses": [...], "p2sh": "scripthash"}`|
+|Returns|`(json object)`<br />`asm`: `(string)` disassembly of the script (absent for nonstandard scripts).<br />`reqSigs`: `(numeric)` the number of required signatures.<br />`type`: `(string)` the type of the script (e.g. 'pubkeyhash').<br />`addresses`: `(json array of string)` the ExchangeCoin addresses associated with this script.<br />`p2sh`: `(string)` the script hash for use in pay-to-script-hash transactions.<br /><br />`{ "asm": "asm", "reqSigs": n, "type": "scripttype", "addresses": [...], "p2sh": "scripthash"}`|
 |Example Return|`{"asm": "OP_DUP OP_HASH160 b0a4d8a91981106e4ed85165a66748b19f7b7ad4 OP_EQUALVERIFY OP_CHECKSIG", "reqSigs": 1, "type": "pubkeyhash", "addresses": ["1H71QVBpzuLTNUh5pewaH3UTLTo2vWgcRJ"], "p2sh": "359b84ff799f48231990ff0298206f54117b08b6"}`|
 [Return to Overview](#MethodOverview)<br />
 
@@ -389,8 +389,8 @@ the method name for further details such as parameter and return information.
 |Method|getinfo|
 |Parameters|None|
 |Description|Returns a JSON object containing various state info.|
-|Notes|NOTE: Since exccd does NOT contain wallet functionality, wallet-related fields are not returned.  See getinfo in dcrwallet for a version which includes that information.|
-|Returns|`(json object)`<br />`version`: `(numeric)` the version of the server.<br />`protocolversion`: `(numeric)` the latest supported protocol version.<br />`blocks`: `(numeric)` the number of blocks processed.<br />`timeoffset`: `(numeric)` the time offset.<br />`connections`: `(numeric)` the number of connected peers.<br />`proxy`: `(string)` the proxy used by the server<br />`difficulty`: `(numeric)` the current target difficulty.<br />`testnet`: `(boolean)` whether or not server is using testnet.<br />`relayfee`: `(numeric)` the minimum relay fee for non-free transactions in DCR/KB.<br /><br />`{"version": n,"protocolversion": n, "blocks": n, "timeoffset": n, "connections": n, "proxy": "host:port", "difficulty": n.nn, "testnet": true or false, "relayfee": n.nn}`|
+|Notes|NOTE: Since exccd does NOT contain wallet functionality, wallet-related fields are not returned.  See getinfo in exccwallet for a version which includes that information.|
+|Returns|`(json object)`<br />`version`: `(numeric)` the version of the server.<br />`protocolversion`: `(numeric)` the latest supported protocol version.<br />`blocks`: `(numeric)` the number of blocks processed.<br />`timeoffset`: `(numeric)` the time offset.<br />`connections`: `(numeric)` the number of connected peers.<br />`proxy`: `(string)` the proxy used by the server<br />`difficulty`: `(numeric)` the current target difficulty.<br />`testnet`: `(boolean)` whether or not server is using testnet.<br />`relayfee`: `(numeric)` the minimum relay fee for non-free transactions in EXCC/KB.<br /><br />`{"version": n,"protocolversion": n, "blocks": n, "timeoffset": n, "connections": n, "proxy": "host:port", "difficulty": n.nn, "testnet": true or false, "relayfee": n.nn}`|
 | Example Return |`{"version": 70000, "protocolversion": 70001, "blocks": 298963, "timeoffset": 0, "connections": 17, "proxy": "", "difficulty": 8000872135.97, "testnet": false,"relayfee": 0.00001}`|
 [Return to Overview](#MethodOverview)<br />
 ***
@@ -462,7 +462,7 @@ the method name for further details such as parameter and return information.
 |Parameters|1. `transaction hash`: `(string, required)` the hash of the transaction.<br />2. `verbose`: `(int, optional, default=0)` specifies the transaction is returned as a JSON object instead of hex-encoded string.|
 |Description|Returns information about a transaction given its hash.|
 |Returns (verbose=0)|`"data" (string) hex-encoded bytes of the serialized transaction`|
-|Returns (verbose=1)|`(json object)`<br />`hex`: `(string)` hex-encoded transaction / hex-encoded bytes of the script.<br />`txid`: `(string)` the hash of the transaction.<br />`version`: `(numeric)` the transaction version.<br />`locktime`: `(numeric)` the transaction lock time.<br />`vin`: `(array of json objects)` the transaction inputs as json objects.<br />`coinbase`: `(string)` the hex-encoded bytes of the signature script.<br />`stakebase`: `(string)` the hash of the stake transaction.<br />`sequence`: `(numeric)` the script sequence number.<br />`txid`: `(string)` the hash of the origin transaction.<br />`vout`: `(numeric)` the index of the output being redeemed from the origin transaction.<br />`scriptSig`: `(json object)` the signature script used to redeem the origin transaction.<br />`asm`: `(string)` disassembly of the script.<br />`sequence`: `(numeric)` the script sequence number.<br />`vout`: `(array of json objects)` the transaction outputs as json objects.<br />`value`: `(numeric)` the value in DCR.<br />`n`: `(numeric)` the index of this transaction output.<br />`scriptPubKey`: `(json object)` the public key script used to pay coins.<br />`reqSigs`: `(numeric)` the number of required signatures.<br />`type`: `(string)` the type of the script (e.g. 'pubkeyhash').<br />`addresses`: `(json array of string)` the Exchangecoin addresses associated with this output.<br />`decredaddress`:  `(string)` the Decred address<br /><br />**For coinbase transactions**<br />`{"hex": "data", "txid": "hash", "version": n, "locktime": n, "vin": [{ "coinbase": "data", "sequence": n}, ...], "vout": [{"value": n, "n": n,"scriptPubKey": { "asm": "asm","hex": "data", "reqSigs": n,"type": "scripttype", "addresses": [ "decredaddress", ...]}}, ...]}`<br /><br />**For stakebase transactions**<br />`{"hex": "data", "txid": "hash", "version": n, "locktime": n, "vin": [{ "stakebase": "hash", "sequence": n}, ...], "vout": [{"value": n, "n": n,"scriptPubKey": { "asm": "asm","hex": "data", "reqSigs": n,"type": "scripttype", "addresses": [ "decredaddress", ...]}}, ...]}`<br /><br />**For non-coinbase / non-stakebase transactions**<br />`{"hex": "data", "txid": "hash", "version": n, "locktime": n, "vin": [{"txid": "hash","vout": n, "scriptSig": {"asm": "asm", "hex": "data"}, "sequence": n}, ...], "vout": [{"value": n, "n": n,"scriptPubKey": { "asm": "asm","hex": "data", "reqSigs": n,"type": "scripttype", "addresses": [ "decredaddress", ...]}}, ...]}`|
+|Returns (verbose=1)|`(json object)`<br />`hex`: `(string)` hex-encoded transaction / hex-encoded bytes of the script.<br />`txid`: `(string)` the hash of the transaction.<br />`version`: `(numeric)` the transaction version.<br />`locktime`: `(numeric)` the transaction lock time.<br />`vin`: `(array of json objects)` the transaction inputs as json objects.<br />`coinbase`: `(string)` the hex-encoded bytes of the signature script.<br />`stakebase`: `(string)` the hash of the stake transaction.<br />`sequence`: `(numeric)` the script sequence number.<br />`txid`: `(string)` the hash of the origin transaction.<br />`vout`: `(numeric)` the index of the output being redeemed from the origin transaction.<br />`scriptSig`: `(json object)` the signature script used to redeem the origin transaction.<br />`asm`: `(string)` disassembly of the script.<br />`sequence`: `(numeric)` the script sequence number.<br />`vout`: `(array of json objects)` the transaction outputs as json objects.<br />`value`: `(numeric)` the value in EXCC.<br />`n`: `(numeric)` the index of this transaction output.<br />`scriptPubKey`: `(json object)` the public key script used to pay coins.<br />`reqSigs`: `(numeric)` the number of required signatures.<br />`type`: `(string)` the type of the script (e.g. 'pubkeyhash').<br />`addresses`: `(json array of string)` the ExchangeCoin addresses associated with this output.<br />`exccaddress`:  `(string)` the ExchangeCoin address<br /><br />**For coinbase transactions**<br />`{"hex": "data", "txid": "hash", "version": n, "locktime": n, "vin": [{ "coinbase": "data", "sequence": n}, ...], "vout": [{"value": n, "n": n,"scriptPubKey": { "asm": "asm","hex": "data", "reqSigs": n,"type": "scripttype", "addresses": [ "exccaddress", ...]}}, ...]}`<br /><br />**For stakebase transactions**<br />`{"hex": "data", "txid": "hash", "version": n, "locktime": n, "vin": [{ "stakebase": "hash", "sequence": n}, ...], "vout": [{"value": n, "n": n,"scriptPubKey": { "asm": "asm","hex": "data", "reqSigs": n,"type": "scripttype", "addresses": [ "exccaddress", ...]}}, ...]}`<br /><br />**For non-coinbase / non-stakebase transactions**<br />`{"hex": "data", "txid": "hash", "version": n, "locktime": n, "vin": [{"txid": "hash","vout": n, "scriptSig": {"asm": "asm", "hex": "data"}, "sequence": n}, ...], "vout": [{"value": n, "n": n,"scriptPubKey": { "asm": "asm","hex": "data", "reqSigs": n,"type": "scripttype", "addresses": [ "exccaddress", ...]}}, ...]}`|
 |Example Return (verbose=0)|Newlines added for display purposes.  The actual return does not contain newlines.<br />`"010000000104be666c7053ef26c6110597dad1c1e81b5e6be53d17a8b9d0b34772054bac60000000`<br />`008c493046022100cb42f8df44eca83dd0a727988dcde9384953e830b1f8004d57485e2ede1b9c8f`<br />`022100fbce8d84fcf2839127605818ac6c3e7a1531ebc69277c504599289fb1e9058df0141045a33`<br />`76eeb85e494330b03c1791619d53327441002832f4bd618fd9efa9e644d242d5e1145cb9c2f71965`<br />`656e276633d4ff1a6db5e7153a0a9042745178ebe0f5ffffffff0280841e00000000001976a91406`<br />`f1b6703d3f56427bfcfd372f952d50d04b64bd88ac4dd52700000000001976a9146b63f291c295ee`<br />`abd9aee6be193ab2d019e7ea7088ac00000000`|
 |Example Return (verbose=1)|**For coinbase transactions**<br />`{"hex": "01000000010000000000000000000000000000000000000000000000000000000000000000f...","txid": "90743aad855880e517270550d2a881627d84db5265142fd1e7fb7add38b08be9","version": 1,"locktime": 0,"vin": [{"coinbase": "03708203062f503253482f04066d605108f800080100000ea2122f6f7a636f696e4065757374726174756d2f","sequence": 0},...], "vout": [{"value": 25.1394,"n": 0, "scriptPubKey": {"asm": "OP_DUP OP_HASH160 ea132286328cfc819457b9dec386c4b5c84faa5c OP_EQUALVERIFY OP_CHECKSIG", "hex": "76a914ea132286328cfc819457b9dec386c4b5c84faa5c88ac", "reqSigs": 1, "type": "pubkeyhash", "addresses": ["1NLg3QJMsMQGM5KEUaEu5ADDmKQSLHwmyh", ...]}}, ...]}`<br /><br />**For stakebase transactions**<br />`{"hex": "01000000010000000000000000000000000000000000000000000000000000000000000000f...","txid": "90743aad855880e517270550d2a881627d84db5265142fd1e7fb7add38b08be9","version": 1,"locktime": 0,"vin": [{"stakebase": "90743aad855880e517270550d2a881627d84db5265142fd1e7fb7add38b08be9","sequence": 0},...], "vout": [{"value": 25.1394,"n": 0, "scriptPubKey": {"asm": "OP_DUP OP_HASH160 ea132286328cfc819457b9dec386c4b5c84faa5c OP_EQUALVERIFY OP_CHECKSIG", "hex": "76a914ea132286328cfc819457b9dec386c4b5c84faa5c88ac", "reqSigs": 1, "type": "pubkeyhash", "addresses": ["1NLg3QJMsMQGM5KEUaEu5ADDmKQSLHwmyh", ...]}}, ...]}`<br /><br />**For non-coinbase / non-stakebase transactions**<br />`{"hex": "01000000010000000000000000000000000000000000000000000000000000000000000000f...","txid": "90743aad855880e517270550d2a881627d84db5265142fd1e7fb7add38b08be9","version": 1,"locktime": 0,"vin": [{"txid": "60ac4b057247b3d0b9a8173de56b5e1be8c1d1da970511c626ef53706c66be04","scriptSig": {"asm": "3046022100cb42f8df44eca83dd0a727988dcde9384953e830b1f8004d57485e2ede1b9c8f0...","hex": "493046022100cb42f8df44eca83dd0a727988dcde9384953e830b1f8004d57485e2ede1b9c8..."}, "sequence": 4294967295}, ...], "vout": [{"value": 25.1394,"n": 0, "scriptPubKey": {"asm": "OP_DUP OP_HASH160 ea132286328cfc819457b9dec386c4b5c84faa5c OP_EQUALVERIFY OP_CHECKSIG", "hex": "76a914ea132286328cfc819457b9dec386c4b5c84faa5c88ac", "reqSigs": 1, "type": "pubkeyhash", "addresses": ["1NLg3QJMsMQGM5KEUaEu5ADDmKQSLHwmyh", ...]}}, ...]}`|
 [Return to Overview](#MethodOverview)<br />
@@ -515,7 +515,7 @@ the method name for further details such as parameter and return information.
 |Description|Returns an array of hashes for all of the transactions currently in the memory pool.<br />The `verbose` flag specifies that each transaction is returned as a JSON object.|
 |Notes|Since exccd does not perform any mining, the priority related fields `startingpriority` and `currentpriority` that are available when the `verbose` flag is set are always 0.|
 |Returns (verbose=false)|`(json array of string)`<br />`transactionhash`: `(string)` hash of the transaction.<br />`["transactionhash", ...]`|
-|Returns (verbose=true)|`(json object)`<br />`size`: `(numeric)` transaction size in bytes.<br />`fee` : `(numeric)` transaction fee in DCR.<br />`time`:  `(numeric)` local time transaction entered pool in seconds since 1 Jan 1970 GMT.<br />`height`: `(numeric)` block height when transaction entered the pool.<br />`startingpriority`: `(numeric)` priority when transaction entered the pool.<br />`currentpriority`: `(numeric)` current priority.<br />`depends`:  `(json array)` unconfirmed transactions used as inputs for this transaction.<br />`transactionhash`: `(string)` hash of the parent transaction.<br /><br />`{"transactionhash": {"size": n,"fee" : n, "time": n,"height": n, "startingpriority": n, "currentpriority": n, "depends": ["transactionhash", ...]}, ...}`|
+|Returns (verbose=true)|`(json object)`<br />`size`: `(numeric)` transaction size in bytes.<br />`fee` : `(numeric)` transaction fee in EXCC.<br />`time`:  `(numeric)` local time transaction entered pool in seconds since 1 Jan 1970 GMT.<br />`height`: `(numeric)` block height when transaction entered the pool.<br />`startingpriority`: `(numeric)` priority when transaction entered the pool.<br />`currentpriority`: `(numeric)` current priority.<br />`depends`:  `(json array)` unconfirmed transactions used as inputs for this transaction.<br />`transactionhash`: `(string)` hash of the parent transaction.<br /><br />`{"transactionhash": {"size": n,"fee" : n, "time": n,"height": n, "startingpriority": n, "currentpriority": n, "depends": ["transactionhash", ...]}, ...}`|
 |Example Return (verbose=false)|`["3480058a397b6ffcc60f7e3345a61370fded1ca6bef4b58156ed17987f20d4e7","cbfe7c056a358c3a1dbced5a22b06d74b8650055d5195c1c2469e6b63a41514a"]`|
 |Example Return (verbose=true)|`{"1697a19cede08694278f19584e8dcc87945f40c6b59a942dd8906f133ad3f9cc": {"size": 226, "fee" : 0.0001, "time": 1387992789, "height": 276836, "startingpriority": 0, "currentpriority": 0, "depends": ["aa96f672fcc5a1ec6a08a94aa46d6b789799c87bd6542967da25a96b2dee0afb", ...]}`|
 [Return to Overview](#MethodOverview)<br />
@@ -573,9 +573,9 @@ the method name for further details such as parameter and return information.
 |   |   |
 |---|---|
 |Method|validateaddress|
-|Parameters|1. `address`: `(string, required)` Exchangecoin address.|
+|Parameters|1. `address`: `(string, required)` ExchangeCoin address.|
 |Description|Verify an address is valid.|
-|Returns|`(json object)`<br />`isvalid`: `(bool)` whether or not the address is valid.<br />`address`: `(string)` the Exchangecoin address validated.<br /><br />`{"isvalid": true or false,"address": "decredaddress"}`|
+|Returns|`(json object)`<br />`isvalid`: `(bool)` whether or not the address is valid.<br />`address`: `(string)` the ExchangeCoin address validated.<br /><br />`{"isvalid": true or false,"address": "exccaddress"}`|
 [Return to Overview](#MethodOverview)<br />
 
 ***
@@ -624,7 +624,7 @@ the method name for further details such as parameter and return information.
 |---|---|
 |Method|getcurrentnet|
 |Parameters|None|
-|Description|Get Exchangecoin network exccd is running on.|
+|Description|Get ExchangeCoin network exccd is running on.|
 |Returns|`numeric`|
 |Example Return|`(mainnet)` `3652501241` <br /> `(testnet)` `118034699`  <br /> `(testnet2)` `1223139429` |
 [Return to Overview](#ExtMethodOverview)<br />
@@ -636,10 +636,10 @@ the method name for further details such as parameter and return information.
 |   |   |
 |---|---|
 |Method|searchrawtransactions|
-|Parameters|1. `address`: `(string, required)` Exchangecoin address.<br /> 2. `verbose`: `(int, optional, default=true)` specifies the transaction is returned as a JSON object instead of hex-encoded string.<br />3. `skip`: `(int, optional, default=0)` the number of leading transactions to leave out of the final response.<br /> 4. `count`: `(int, optional, default=100)` the maximum number of transactions to return.<br /> 5. `vinextra`: `(int, optional, default=0)` specify that extra data from previous output will be returned in vin.|
+|Parameters|1. `address`: `(string, required)` ExchangeCoin address.<br /> 2. `verbose`: `(int, optional, default=true)` specifies the transaction is returned as a JSON object instead of hex-encoded string.<br />3. `skip`: `(int, optional, default=0)` the number of leading transactions to leave out of the final response.<br /> 4. `count`: `(int, optional, default=100)` the maximum number of transactions to return.<br /> 5. `vinextra`: `(int, optional, default=0)` specify that extra data from previous output will be returned in vin.|
 |Description|Returns raw data for transactions involving the passed address. Returned transactions are pulled from both the database, and transactions currently in the mempool. Transactions pulled from the mempool will have the `"confirmations"` field set to 0. Usage of this RPC requires the optional `--addrindex` flag to be activated, otherwise all responses will simply return with an error stating the address index has not yet been built up. Similarly, until the address index has caught up with the current best height, all requests will return an error response in order to avoid serving stale data.|
 |Returns (verbose=0)|`(json array of strings)`<br />`serializedtx`: `(string)` hex-encoded bytes of the serialized transaction.<br />`["serializedtx", ... ]` |
-|Returns (verbose=1)|`(array of json objects)`<br/>`hex`: `(string)` hex-encoded transaction.<br />`txid`: `(string)` the hash of the transaction.<br />`version`: `(numeric)` the transaction version.<br />`locktime`: `(numeric)` the transaction lock time.<br />`vin`: `(json array)` the transaction inputs as json objects.<br />`coinbase`: `(string)` the hex-encoded bytes of the signature script.<br />`stakebase`: `(string)` the hash of the stake transaction.<br />`sequence`:  `(numeric)` the script sequence number.<br />`txid`: `(string)` the hash of the origin transaction.<br />`vout`: `(numeric)` the index of the output being redeemed from the origin transaction.<br />`scriptSig`: `(json object)` the signature script used to redeem the origin transaction.<br />`asm`: `(string)` disassembly of the script.<br />`hex`: `(string)` hex-encoded bytes of the script.<br />`prevOut`: Data from the origin transaction output with index vout.<br />`addresses`:  `(array of string)` previous output addresses.<br />`value`: `(numeric)` previous output value.<br />`sequence`: `(numeric)` the script sequence number.<br />`vout`: `(array of json objects)` the transaction outputs as json objects.<br />`value`: `(numeric)` the value in DCR.<br />`n`: `(numeric)` the index of this transaction output.<br />`scriptPubKey`: `(json object)` the public key script used to pay coins.<br />`asm`: `(string)` disassembly of the script.<br />`hex`: `(string)` hex-encoded bytes of the script.<br />`reqSigs`: `(numeric)` the number of required signatures.<br />`type`: `(string)` the type of the script (e.g. 'pubkeyhash').<br />`addresses`: `(json array of string)` the Exchangecoin addresses associated with this output.<br />`address`:  `(string)` the Decred address.<br />`blockhash`: `(string)` hash of the block the transaction is part of.<br />`confirmations`: `(numeric)` number of numeric confirmations of block.<br /> `time`: `(numeric)` transaction time in seconds since the epoch.<br />`blocktime`: `(numeric)` block time in seconds since the epoch.<br/><br />**For coinbase transactions**<br />`[{"hex": "data", "txid": "hash", "version": n, "locktime": n,"vin": [{"coinbase": "data",  "sequence": n},{"txid": "hash", "vout": n, "scriptSig": {"asm": "asm", "hex": "data"}, "prevOut": {"addresses": ["value", ...], "value": n.nnn}, "sequence": n}, ...],"vout": [{ "value": n,"n": n, "scriptPubKey": {"asm": "asm", "hex": "data", "reqSigs": n, "type": "scripttype", "addresses": ["address", ...]}}, ...], "blockhash":"hash", "confirmations":n, "time":t, "blocktime":t },...]`<br /><br />**For stakebase transactions**<br />`[{"hex": "data", "txid": "hash", "version": n, "locktime": n,"vin": [{"stakebase": "hash",  "sequence": n},{"txid": "hash", "vout": n, "scriptSig": {"asm": "asm", "hex": "data"}, "prevOut": {"addresses": ["value", ...], "value": n.nnn}, "sequence": n}, ...],"vout": [{ "value": n,"n": n, "scriptPubKey": {"asm": "asm", "hex": "data", "reqSigs": n, "type": "scripttype", "addresses": ["address", ...]}}, ...], "blockhash":"hash", "confirmations":n, "time":t, "blocktime":t },...]`<br /><br />**For non-coinbase / non-stakebase transactions**<br />`[{"hex": "data", "txid": "hash", "version": n, "locktime": n,"vin": [{"txid": "hash", "vout": n, "scriptSig": {"asm": "asm", "hex": "data"}, "prevOut": {"addresses": ["value",...], "value": n.nnn}, "sequence": n}, ...],"vout": [{ "value": n,"n": n, "scriptPubKey": {"asm": "asm", "hex": "data", "reqSigs": n, "type": "scripttype", "addresses": ["address", ...]}}, ...], "blockhash":"hash", "confirmations":n, "time":t, "blocktime":t },...]`|
+|Returns (verbose=1)|`(array of json objects)`<br/>`hex`: `(string)` hex-encoded transaction.<br />`txid`: `(string)` the hash of the transaction.<br />`version`: `(numeric)` the transaction version.<br />`locktime`: `(numeric)` the transaction lock time.<br />`vin`: `(json array)` the transaction inputs as json objects.<br />`coinbase`: `(string)` the hex-encoded bytes of the signature script.<br />`stakebase`: `(string)` the hash of the stake transaction.<br />`sequence`:  `(numeric)` the script sequence number.<br />`txid`: `(string)` the hash of the origin transaction.<br />`vout`: `(numeric)` the index of the output being redeemed from the origin transaction.<br />`scriptSig`: `(json object)` the signature script used to redeem the origin transaction.<br />`asm`: `(string)` disassembly of the script.<br />`hex`: `(string)` hex-encoded bytes of the script.<br />`prevOut`: Data from the origin transaction output with index vout.<br />`addresses`:  `(array of string)` previous output addresses.<br />`value`: `(numeric)` previous output value.<br />`sequence`: `(numeric)` the script sequence number.<br />`vout`: `(array of json objects)` the transaction outputs as json objects.<br />`value`: `(numeric)` the value in EXCC.<br />`n`: `(numeric)` the index of this transaction output.<br />`scriptPubKey`: `(json object)` the public key script used to pay coins.<br />`asm`: `(string)` disassembly of the script.<br />`hex`: `(string)` hex-encoded bytes of the script.<br />`reqSigs`: `(numeric)` the number of required signatures.<br />`type`: `(string)` the type of the script (e.g. 'pubkeyhash').<br />`addresses`: `(json array of string)` the ExchangeCoin addresses associated with this output.<br />`address`:  `(string)` the ExchangeCoin address.<br />`blockhash`: `(string)` hash of the block the transaction is part of.<br />`confirmations`: `(numeric)` number of numeric confirmations of block.<br /> `time`: `(numeric)` transaction time in seconds since the epoch.<br />`blocktime`: `(numeric)` block time in seconds since the epoch.<br/><br />**For coinbase transactions**<br />`[{"hex": "data", "txid": "hash", "version": n, "locktime": n,"vin": [{"coinbase": "data",  "sequence": n},{"txid": "hash", "vout": n, "scriptSig": {"asm": "asm", "hex": "data"}, "prevOut": {"addresses": ["value", ...], "value": n.nnn}, "sequence": n}, ...],"vout": [{ "value": n,"n": n, "scriptPubKey": {"asm": "asm", "hex": "data", "reqSigs": n, "type": "scripttype", "addresses": ["address", ...]}}, ...], "blockhash":"hash", "confirmations":n, "time":t, "blocktime":t },...]`<br /><br />**For stakebase transactions**<br />`[{"hex": "data", "txid": "hash", "version": n, "locktime": n,"vin": [{"stakebase": "hash",  "sequence": n},{"txid": "hash", "vout": n, "scriptSig": {"asm": "asm", "hex": "data"}, "prevOut": {"addresses": ["value", ...], "value": n.nnn}, "sequence": n}, ...],"vout": [{ "value": n,"n": n, "scriptPubKey": {"asm": "asm", "hex": "data", "reqSigs": n, "type": "scripttype", "addresses": ["address", ...]}}, ...], "blockhash":"hash", "confirmations":n, "time":t, "blocktime":t },...]`<br /><br />**For non-coinbase / non-stakebase transactions**<br />`[{"hex": "data", "txid": "hash", "version": n, "locktime": n,"vin": [{"txid": "hash", "vout": n, "scriptSig": {"asm": "asm", "hex": "data"}, "prevOut": {"addresses": ["value",...], "value": n.nnn}, "sequence": n}, ...],"vout": [{ "value": n,"n": n, "scriptPubKey": {"asm": "asm", "hex": "data", "reqSigs": n, "type": "scripttype", "addresses": ["address", ...]}}, ...], "blockhash":"hash", "confirmations":n, "time":t, "blocktime":t },...]`|
 [Return to Overview](#ExtMethodOverview)<br />
 
 ***
@@ -750,7 +750,7 @@ user.  Click the method name for further details such as parameter and return in
 |---|---|
 |Method|notifyreceived|
 |Notifications|[recvtx](#recvtx) and [redeemingtx](#redeemingtx)|
-|Parameters|1. `Addresses`: `(JSON array, required)`<br />`decredaddress`: `(string)` the Exchangecoin address.<br /><br />`["decredaddress", ...]`|
+|Parameters|1. `Addresses`: `(JSON array, required)`<br />`exccaddress`: `(string)` the ExchangeCoin address.<br /><br />`["exccaddress", ...]`|
 |Description|Send a recvtx notification when a transaction added to mempool or appears in a newly-attached block contains a txout pkScript sending to any of the passed addresses.  Matching outpoints are automatically registered for redeemingtx notifications.|
 |Returns|Nothing|
 [Return to Overview](#WSMethodOverview)<br />
@@ -763,7 +763,7 @@ user.  Click the method name for further details such as parameter and return in
 |---|---|
 |Method|stopnotifyreceived|
 |Notifications|None|
-|Parameters|1. `Addresses`: `(JSON array, required)`<br />`Fdecredaddress`: `(string)` the Decred address.<br /><br />`["decredaddress", ...]`|
+|Parameters|1. `Addresses`: `(JSON array, required)`<br />`exccaddress`: `(string)` the ExchangeCoin address.<br /><br />`["exccaddress", ...]`|
 |Description|Cancel registered receive notifications for each passed address.|
 |Returns|Nothing|
 [Return to Overview](#WSMethodOverview)<br />
@@ -1031,7 +1031,7 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/rpcclient"
 )
 
@@ -1039,8 +1039,8 @@ func main() {
 	// Load the certificate for the TLS connection which is automatically
 	// generated by exccd when it starts the RPC server and doesn't already
 	// have one.
-	dcrdHomeDir := excutil.AppDataDir("exccd", false)
-	certs, err := ioutil.ReadFile(filepath.Join(dcrdHomeDir, "rpc.cert"))
+	exccdHomeDir := exccutil.AppDataDir("exccd", false)
+	certs, err := ioutil.ReadFile(filepath.Join(exccdHomeDir, "rpc.cert"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1095,7 +1095,7 @@ import (
 	"time"
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/rpcclient"
 )
 
@@ -1103,8 +1103,8 @@ func main() {
 	// Load the certificate for the TLS connection which is automatically
 	// generated by exccd when it starts the RPC server and doesn't already
 	// have one.
-	dcrdHomeDir := excutil.AppDataDir("exccd", false)
-	certs, err := ioutil.ReadFile(filepath.Join(dcrdHomeDir, "rpc.cert"))
+	exccdHomeDir := exccutil.AppDataDir("exccd", false)
+	certs, err := ioutil.ReadFile(filepath.Join(exccdHomeDir, "rpc.cert"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1186,7 +1186,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/rpcclient"
 )
 
@@ -1206,8 +1206,8 @@ func main() {
 	// Load the certificate for the TLS connection which is automatically
 	// generated by exccd when it starts the RPC server and doesn't already
 	// have one.
-	dcrdHomeDir := excutil.AppDataDir("exccd", false)
-	certs, err := ioutil.ReadFile(filepath.Join(dcrdHomeDir, "rpc.cert"))
+	exccdHomeDir := exccutil.AppDataDir("exccd", false)
+	certs, err := ioutil.ReadFile(filepath.Join(exccdHomeDir, "rpc.cert"))
 	if err != nil {
 		log.Fatal(err)
 	}

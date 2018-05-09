@@ -14,7 +14,7 @@ import (
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/exccjson"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/wire"
 )
 
@@ -39,20 +39,20 @@ func (r FutureCreateEncryptedWalletResult) Receive() error {
 //
 // See CreateEncryptedWallet for the blocking version and more details.
 //
-// NOTE: This is a dcrwallet extension.
+// NOTE: This is a exccwallet extension.
 func (c *Client) CreateEncryptedWalletAsync(passphrase string) FutureCreateEncryptedWalletResult {
 	cmd := exccjson.NewCreateEncryptedWalletCmd(passphrase)
 	return c.sendCmd(cmd)
 }
 
 // CreateEncryptedWallet requests the creation of an encrypted wallet.  Wallets
-// managed by dcrwallet are only written to disk with encrypted private keys,
+// managed by exccwallet are only written to disk with encrypted private keys,
 // and generating wallets on the fly is impossible as it requires user input for
 // the encryption passphrase.  This RPC specifies the passphrase and instructs
 // the wallet creation.  This may error if a wallet is already opened, or the
 // new wallet cannot be written to disk.
 //
-// NOTE: This is a dcrwallet extension.
+// NOTE: This is a exccwallet extension.
 func (c *Client) CreateEncryptedWallet(passphrase string) error {
 	return c.CreateEncryptedWalletAsync(passphrase).Receive()
 }
@@ -85,7 +85,7 @@ func (r FutureDebugLevelResult) Receive() (string, error) {
 //
 // See DebugLevel for the blocking version and more details.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) DebugLevelAsync(levelSpec string) FutureDebugLevelResult {
 	cmd := exccjson.NewDebugLevelCmd(levelSpec)
 	return c.sendCmd(cmd)
@@ -100,7 +100,7 @@ func (c *Client) DebugLevelAsync(levelSpec string) FutureDebugLevelResult {
 // Additionally, the special keyword 'show' can be used to get a list of the
 // available subsystems.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) DebugLevel(levelSpec string) (string, error) {
 	return c.DebugLevelAsync(levelSpec).Receive()
 }
@@ -133,7 +133,7 @@ func (r FutureEstimateStakeDiffResult) Receive() (*exccjson.EstimateStakeDiffRes
 //
 // See EstimateStakeDiff for the blocking version and more details.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) EstimateStakeDiffAsync(tickets *uint32) FutureEstimateStakeDiffResult {
 	cmd := exccjson.NewEstimateStakeDiffCmd(tickets)
 	return c.sendCmd(cmd)
@@ -142,7 +142,7 @@ func (c *Client) EstimateStakeDiffAsync(tickets *uint32) FutureEstimateStakeDiff
 // EstimateStakeDiff returns the minimum, maximum, and expected next stake
 // difficulty.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) EstimateStakeDiff(tickets *uint32) (*exccjson.EstimateStakeDiffResult, error) {
 	return c.EstimateStakeDiffAsync(tickets).Receive()
 }
@@ -171,7 +171,7 @@ func (r FutureExistsAddressResult) Receive() (bool, error) {
 // ExistsAddressAsync returns an instance of a type that can be used to get the
 // result of the RPC at some future time by invoking the Receive function on the
 // returned instance.
-func (c *Client) ExistsAddressAsync(address excutil.Address) FutureExistsAddressResult {
+func (c *Client) ExistsAddressAsync(address exccutil.Address) FutureExistsAddressResult {
 	cmd := exccjson.NewExistsAddressCmd(address.EncodeAddress())
 	return c.sendCmd(cmd)
 }
@@ -179,8 +179,8 @@ func (c *Client) ExistsAddressAsync(address excutil.Address) FutureExistsAddress
 // ExistsAddress returns information about whether or not an address has been
 // used on the main chain or in mempool.
 //
-// NOTE: This is a dcrd extension.
-func (c *Client) ExistsAddress(address excutil.Address) (bool, error) {
+// NOTE: This is a exccd extension.
+func (c *Client) ExistsAddress(address exccutil.Address) (bool, error) {
 	return c.ExistsAddressAsync(address).Receive()
 }
 
@@ -209,7 +209,7 @@ func (r FutureExistsAddressesResult) Receive() (string, error) {
 // ExistsAddressesAsync returns an instance of a type that can be used to get the
 // result of the RPC at some future time by invoking the Receive function on the
 // returned instance.
-func (c *Client) ExistsAddressesAsync(addresses []excutil.Address) FutureExistsAddressesResult {
+func (c *Client) ExistsAddressesAsync(addresses []exccutil.Address) FutureExistsAddressesResult {
 	addrsStr := make([]string, len(addresses))
 	for i := range addresses {
 		addrsStr[i] = addresses[i].EncodeAddress()
@@ -222,8 +222,8 @@ func (c *Client) ExistsAddressesAsync(addresses []excutil.Address) FutureExistsA
 // ExistsAddresses returns information about whether or not an address exists
 // in the blockchain or memory pool.
 //
-// NOTE: This is a dcrd extension.
-func (c *Client) ExistsAddresses(addresses []excutil.Address) (string, error) {
+// NOTE: This is a exccd extension.
+func (c *Client) ExistsAddresses(addresses []exccutil.Address) (string, error) {
 	return c.ExistsAddressesAsync(addresses).Receive()
 }
 
@@ -305,7 +305,7 @@ func (c *Client) ExistsExpiredTicketsAsync(hashes []*chainhash.Hash) FutureExist
 // ExistsExpiredTickets returns information about whether or not a ticket hash exists
 // in the expired ticket database.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) ExistsExpiredTickets(hashes []*chainhash.Hash) (string, error) {
 	return c.ExistsExpiredTicketsAsync(hashes).Receive()
 }
@@ -343,7 +343,7 @@ func (c *Client) ExistsLiveTicketAsync(hash *chainhash.Hash) FutureExistsLiveTic
 // ExistsLiveTicket returns information about whether or not a ticket hash exists
 // in the live ticket database.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) ExistsLiveTicket(hash *chainhash.Hash) (bool, error) {
 	return c.ExistsLiveTicketAsync(hash).Receive()
 }
@@ -386,7 +386,7 @@ func (c *Client) ExistsLiveTicketsAsync(hashes []*chainhash.Hash) FutureExistsLi
 // ExistsLiveTickets returns information about whether or not a ticket hash exists
 // in the live ticket database.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) ExistsLiveTickets(hashes []*chainhash.Hash) (string, error) {
 	return c.ExistsLiveTicketsAsync(hashes).Receive()
 }
@@ -429,7 +429,7 @@ func (c *Client) ExistsMempoolTxsAsync(hashes []*chainhash.Hash) FutureExistsMem
 // ExistsMempoolTxs returns information about whether or not a ticket hash exists
 // in the live ticket database.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) ExistsMempoolTxs(hashes []*chainhash.Hash) (string, error) {
 	return c.ExistsMempoolTxsAsync(hashes).Receive()
 }
@@ -487,7 +487,7 @@ func (r FutureExportWatchingWalletResult) Receive() ([]byte, []byte, error) {
 //
 // See ExportWatchingWallet for the blocking version and more details.
 //
-// NOTE: This is a dcrwallet extension.
+// NOTE: This is a exccwallet extension.
 func (c *Client) ExportWatchingWalletAsync(account string) FutureExportWatchingWalletResult {
 	cmd := exccjson.NewExportWatchingWalletCmd(&account, exccjson.Bool(true))
 	return c.sendCmd(cmd)
@@ -495,10 +495,10 @@ func (c *Client) ExportWatchingWalletAsync(account string) FutureExportWatchingW
 
 // ExportWatchingWallet returns the raw bytes for a watching-only version of
 // wallet.bin and tx.bin, respectively, for the specified account that can be
-// used by dcrwallet to enable a wallet which does not have the private keys
+// used by exccwallet to enable a wallet which does not have the private keys
 // necessary to spend funds.
 //
-// NOTE: This is a dcrwallet extension.
+// NOTE: This is a exccwallet extension.
 func (c *Client) ExportWatchingWallet(account string) ([]byte, []byte, error) {
 	return c.ExportWatchingWalletAsync(account).Receive()
 }
@@ -537,7 +537,7 @@ func (r FutureGetBestBlockResult) Receive() (*chainhash.Hash, int64, error) {
 //
 // See GetBestBlock for the blocking version and more details.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) GetBestBlockAsync() FutureGetBestBlockResult {
 	cmd := exccjson.NewGetBestBlockCmd()
 	return c.sendCmd(cmd)
@@ -546,7 +546,7 @@ func (c *Client) GetBestBlockAsync() FutureGetBestBlockResult {
 // GetBestBlock returns the hash and height of the block in the longest (best)
 // chain.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) GetBestBlock() (*chainhash.Hash, int64, error) {
 	return c.GetBestBlockAsync().Receive()
 }
@@ -579,7 +579,7 @@ func (r FutureGetCurrentNetResult) Receive() (wire.CurrencyNet, error) {
 //
 // See GetCurrentNet for the blocking version and more details.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) GetCurrentNetAsync() FutureGetCurrentNetResult {
 	cmd := exccjson.NewGetCurrentNetCmd()
 	return c.sendCmd(cmd)
@@ -587,7 +587,7 @@ func (c *Client) GetCurrentNetAsync() FutureGetCurrentNetResult {
 
 // GetCurrentNet returns the network the server is running on.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) GetCurrentNet() (wire.CurrencyNet, error) {
 	return c.GetCurrentNetAsync().Receive()
 }
@@ -647,7 +647,7 @@ func (r FutureGetStakeDifficultyResult) Receive() (*exccjson.GetStakeDifficultyR
 		return nil, err
 	}
 
-	// Unmarshal result as a dcrjson.GetStakeDifficultyResult.
+	// Unmarshal result as a exccjson.GetStakeDifficultyResult.
 	var gsdr exccjson.GetStakeDifficultyResult
 	err = json.Unmarshal(res, &gsdr)
 	if err != nil {
@@ -663,7 +663,7 @@ func (r FutureGetStakeDifficultyResult) Receive() (*exccjson.GetStakeDifficultyR
 //
 // See GetStakeDifficulty for the blocking version and more details.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) GetStakeDifficultyAsync() FutureGetStakeDifficultyResult {
 	cmd := exccjson.NewGetStakeDifficultyCmd()
 	return c.sendCmd(cmd)
@@ -671,7 +671,7 @@ func (c *Client) GetStakeDifficultyAsync() FutureGetStakeDifficultyResult {
 
 // GetStakeDifficulty returns the current and next stake difficulty.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) GetStakeDifficulty() (*exccjson.GetStakeDifficultyResult, error) {
 	return c.GetStakeDifficultyAsync().Receive()
 }
@@ -688,7 +688,7 @@ func (r FutureGetStakeVersionsResult) Receive() (*exccjson.GetStakeVersionsResul
 		return nil, err
 	}
 
-	// Unmarshal result as a dcrjson.GetStakeVersionsResult.
+	// Unmarshal result as a exccjson.GetStakeVersionsResult.
 	var gsvr exccjson.GetStakeVersionsResult
 	err = json.Unmarshal(res, &gsvr)
 	if err != nil {
@@ -704,7 +704,7 @@ func (r FutureGetStakeVersionsResult) Receive() (*exccjson.GetStakeVersionsResul
 //
 // See GetStakeVersionInfo for the blocking version and more details.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) GetStakeVersionInfoAsync(count int32) FutureGetStakeVersionInfoResult {
 	cmd := exccjson.NewGetStakeVersionInfoCmd(count)
 	return c.sendCmd(cmd)
@@ -712,7 +712,7 @@ func (c *Client) GetStakeVersionInfoAsync(count int32) FutureGetStakeVersionInfo
 
 // GetStakeVersionInfo returns the stake versions results for past requested intervals (count).
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) GetStakeVersionInfo(count int32) (*exccjson.GetStakeVersionInfoResult, error) {
 	return c.GetStakeVersionInfoAsync(count).Receive()
 }
@@ -729,7 +729,7 @@ func (r FutureGetStakeVersionInfoResult) Receive() (*exccjson.GetStakeVersionInf
 		return nil, err
 	}
 
-	// Unmarshal result as a dcrjson.GetStakeVersionInfoResult.
+	// Unmarshal result as a exccjson.GetStakeVersionInfoResult.
 	var gsvr exccjson.GetStakeVersionInfoResult
 	err = json.Unmarshal(res, &gsvr)
 	if err != nil {
@@ -745,7 +745,7 @@ func (r FutureGetStakeVersionInfoResult) Receive() (*exccjson.GetStakeVersionInf
 //
 // See GetStakeVersions for the blocking version and more details.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) GetStakeVersionsAsync(hash string, count int32) FutureGetStakeVersionsResult {
 	cmd := exccjson.NewGetStakeVersionsCmd(hash, count)
 	return c.sendCmd(cmd)
@@ -753,7 +753,7 @@ func (c *Client) GetStakeVersionsAsync(hash string, count int32) FutureGetStakeV
 
 // GetStakeVersions returns the stake versions and vote versions of past requested blocks.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) GetStakeVersions(hash string, count int32) (*exccjson.GetStakeVersionsResult, error) {
 	return c.GetStakeVersionsAsync(hash, count).Receive()
 }
@@ -764,7 +764,7 @@ type FutureGetTicketPoolValueResult chan *response
 
 // Receive waits for the response promised by the future and returns the network
 // the server is running on.
-func (r FutureGetTicketPoolValueResult) Receive() (excutil.Amount, error) {
+func (r FutureGetTicketPoolValueResult) Receive() (exccutil.Amount, error) {
 	res, err := receiveFuture(r)
 	if err != nil {
 		return 0, err
@@ -778,7 +778,7 @@ func (r FutureGetTicketPoolValueResult) Receive() (excutil.Amount, error) {
 	}
 
 	// Convert to an amount.
-	amt, err := excutil.NewAmount(val)
+	amt, err := exccutil.NewAmount(val)
 	if err != nil {
 		return 0, err
 	}
@@ -792,7 +792,7 @@ func (r FutureGetTicketPoolValueResult) Receive() (excutil.Amount, error) {
 //
 // See GetTicketPoolValue for the blocking version and more details.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) GetTicketPoolValueAsync() FutureGetTicketPoolValueResult {
 	cmd := exccjson.NewGetTicketPoolValueCmd()
 	return c.sendCmd(cmd)
@@ -800,8 +800,8 @@ func (c *Client) GetTicketPoolValueAsync() FutureGetTicketPoolValueResult {
 
 // GetTicketPoolValue returns the value of the live ticket pool.
 //
-// NOTE: This is a dcrd extension.
-func (c *Client) GetTicketPoolValue() (excutil.Amount, error) {
+// NOTE: This is a exccd extension.
+func (c *Client) GetTicketPoolValue() (exccutil.Amount, error) {
 	return c.GetTicketPoolValueAsync().Receive()
 }
 
@@ -817,7 +817,7 @@ func (r FutureGetVoteInfoResult) Receive() (*exccjson.GetVoteInfoResult, error) 
 		return nil, err
 	}
 
-	// Unmarshal result as a dcrjson.GetVoteInfoResult.
+	// Unmarshal result as a exccjson.GetVoteInfoResult.
 	var gsvr exccjson.GetVoteInfoResult
 	err = json.Unmarshal(res, &gsvr)
 	if err != nil {
@@ -833,7 +833,7 @@ func (r FutureGetVoteInfoResult) Receive() (*exccjson.GetVoteInfoResult, error) 
 //
 // See GetVoteInfo for the blocking version and more details.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) GetVoteInfoAsync(version uint32) FutureGetVoteInfoResult {
 	cmd := exccjson.NewGetVoteInfoCmd(version)
 	return c.sendCmd(cmd)
@@ -842,7 +842,7 @@ func (c *Client) GetVoteInfoAsync(version uint32) FutureGetVoteInfoResult {
 // GetVoteInfo returns voting information for the specified stake version. This
 // includes current voting window, quorum, total votes and agendas.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) GetVoteInfo(version uint32) (*exccjson.GetVoteInfoResult, error) {
 	return c.GetVoteInfoAsync(version).Receive()
 }
@@ -874,8 +874,8 @@ func (r FutureListAddressTransactionsResult) Receive() ([]exccjson.ListTransacti
 //
 // See ListAddressTransactions for the blocking version and more details.
 //
-// NOTE: This is a dcrd extension.
-func (c *Client) ListAddressTransactionsAsync(addresses []excutil.Address, account string) FutureListAddressTransactionsResult {
+// NOTE: This is a exccd extension.
+func (c *Client) ListAddressTransactionsAsync(addresses []exccutil.Address, account string) FutureListAddressTransactionsResult {
 	// Convert addresses to strings.
 	addrs := make([]string, 0, len(addresses))
 	for _, addr := range addresses {
@@ -888,8 +888,8 @@ func (c *Client) ListAddressTransactionsAsync(addresses []excutil.Address, accou
 // ListAddressTransactions returns information about all transactions associated
 // with the provided addresses.
 //
-// NOTE: This is a dcrwallet extension.
-func (c *Client) ListAddressTransactions(addresses []excutil.Address, account string) ([]exccjson.ListTransactionsResult, error) {
+// NOTE: This is a exccwallet extension.
+func (c *Client) ListAddressTransactions(addresses []exccutil.Address, account string) ([]exccjson.ListTransactionsResult, error) {
 	return c.ListAddressTransactionsAsync(addresses, account).Receive()
 }
 
@@ -905,7 +905,7 @@ func (r FutureLiveTicketsResult) Receive() ([]*chainhash.Hash, error) {
 		return nil, err
 	}
 
-	// Unmarshal the result as a dcrjson.LiveTicketsResult.
+	// Unmarshal the result as a exccjson.LiveTicketsResult.
 	var container exccjson.LiveTicketsResult
 	err = json.Unmarshal(res, &container)
 	if err != nil {
@@ -935,7 +935,7 @@ func (c *Client) LiveTicketsAsync() FutureLiveTicketsResult {
 // LiveTickets returns all currently missed tickets from the missed
 // ticket database in the daemon.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) LiveTickets() ([]*chainhash.Hash, error) {
 	return c.LiveTicketsAsync().Receive()
 }
@@ -952,7 +952,7 @@ func (r FutureMissedTicketsResult) Receive() ([]*chainhash.Hash, error) {
 		return nil, err
 	}
 
-	// Unmarshal the result as a dcrjson.MissedTicketsResult.
+	// Unmarshal the result as a exccjson.MissedTicketsResult.
 	var container exccjson.MissedTicketsResult
 	err = json.Unmarshal(res, &container)
 	if err != nil {
@@ -982,7 +982,7 @@ func (c *Client) MissedTicketsAsync() FutureMissedTicketsResult {
 // MissedTickets returns all currently missed tickets from the missed
 // ticket database in the daemon.
 //
-// NOTE: This is a dcrd extension.
+// NOTE: This is a exccd extension.
 func (c *Client) MissedTickets() ([]*chainhash.Hash, error) {
 	return c.MissedTicketsAsync().Receive()
 }
@@ -1015,7 +1015,7 @@ func (r FutureSessionResult) Receive() (*exccjson.SessionResult, error) {
 //
 // See Session for the blocking version and more details.
 //
-// NOTE: This is a Decred extension.
+// NOTE: This is a ExchangeCoin extension.
 func (c *Client) SessionAsync() FutureSessionResult {
 	// Not supported in HTTP POST mode.
 	if c.config.HTTPPostMode {
@@ -1030,7 +1030,7 @@ func (c *Client) SessionAsync() FutureSessionResult {
 //
 // This RPC requires the client to be running in websocket mode.
 //
-// NOTE: This is a Decred extension.
+// NOTE: This is a ExchangeCoin extension.
 func (c *Client) Session() (*exccjson.SessionResult, error) {
 	return c.SessionAsync().Receive()
 }
@@ -1063,7 +1063,7 @@ func (r FutureTicketFeeInfoResult) Receive() (*exccjson.TicketFeeInfoResult, err
 //
 // See TicketFeeInfo for the blocking version and more details.
 //
-// NOTE: This is a Decred extension.
+// NOTE: This is a ExchangeCoin extension.
 func (c *Client) TicketFeeInfoAsync(blocks *uint32, windows *uint32) FutureTicketFeeInfoResult {
 	// Not supported in HTTP POST mode.
 	if c.config.HTTPPostMode {
@@ -1087,7 +1087,7 @@ func (c *Client) TicketFeeInfoAsync(blocks *uint32, windows *uint32) FutureTicke
 //
 // This RPC requires the client to be running in websocket mode.
 //
-// NOTE: This is a Decred extension.
+// NOTE: This is a ExchangeCoin extension.
 func (c *Client) TicketFeeInfo(blocks *uint32, windows *uint32) (*exccjson.TicketFeeInfoResult, error) {
 	return c.TicketFeeInfoAsync(blocks, windows).Receive()
 }
@@ -1098,7 +1098,7 @@ type FutureTicketVWAPResult chan *response
 
 // Receive waits for the response promised by the future and returns the
 // ticketvwap result.
-func (r FutureTicketVWAPResult) Receive() (excutil.Amount, error) {
+func (r FutureTicketVWAPResult) Receive() (exccutil.Amount, error) {
 	res, err := receiveFuture(r)
 	if err != nil {
 		return 0, err
@@ -1111,7 +1111,7 @@ func (r FutureTicketVWAPResult) Receive() (excutil.Amount, error) {
 		return 0, err
 	}
 
-	amt, err := excutil.NewAmount(vwap)
+	amt, err := exccutil.NewAmount(vwap)
 	if err != nil {
 		return 0, err
 	}
@@ -1125,7 +1125,7 @@ func (r FutureTicketVWAPResult) Receive() (excutil.Amount, error) {
 //
 // See TicketVWAP for the blocking version and more details.
 //
-// NOTE: This is a Decred extension.
+// NOTE: This is a ExchangeCoin extension.
 func (c *Client) TicketVWAPAsync(start *uint32, end *uint32) FutureTicketVWAPResult {
 	// Not supported in HTTP POST mode.
 	if c.config.HTTPPostMode {
@@ -1140,8 +1140,8 @@ func (c *Client) TicketVWAPAsync(start *uint32, end *uint32) FutureTicketVWAPRes
 //
 // This RPC requires the client to be running in websocket mode.
 //
-// NOTE: This is a Decred extension.
-func (c *Client) TicketVWAP(start *uint32, end *uint32) (excutil.Amount, error) {
+// NOTE: This is a ExchangeCoin extension.
+func (c *Client) TicketVWAP(start *uint32, end *uint32) (exccutil.Amount, error) {
 	return c.TicketVWAPAsync(start, end).Receive()
 }
 
@@ -1173,7 +1173,7 @@ func (r FutureTxFeeInfoResult) Receive() (*exccjson.TxFeeInfoResult, error) {
 //
 // See TxFeeInfo for the blocking version and more details.
 //
-// NOTE: This is a Decred extension.
+// NOTE: This is a ExchangeCoin extension.
 func (c *Client) TxFeeInfoAsync(blocks *uint32, start *uint32, end *uint32) FutureTxFeeInfoResult {
 	// Not supported in HTTP POST mode.
 	if c.config.HTTPPostMode {
@@ -1188,7 +1188,7 @@ func (c *Client) TxFeeInfoAsync(blocks *uint32, start *uint32, end *uint32) Futu
 //
 // This RPC requires the client to be running in websocket mode.
 //
-// NOTE: This is a Decred extension.
+// NOTE: This is a ExchangeCoin extension.
 func (c *Client) TxFeeInfo(blocks *uint32, start *uint32, end *uint32) (*exccjson.TxFeeInfoResult, error) {
 	return c.TxFeeInfoAsync(blocks, start, end).Receive()
 }

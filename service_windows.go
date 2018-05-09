@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	// svcName is the name of dcrd service.
+	// svcName is the name of exccd service.
 	svcName = "exccdsvc"
 
 	// svcDisplayName is the service name that will be shown in the windows
@@ -27,14 +27,14 @@ const (
 	svcDisplayName = "Exccd Service"
 
 	// svcDesc is the description of the service.
-	svcDesc = "Downloads and stays synchronized with the Exchangecoin block " +
+	svcDesc = "Downloads and stays synchronized with the ExchangeCoin block " +
 		"chain and provides chain services to applications."
 )
 
 // elog is used to send messages to the Windows event log.
 var elog *eventlog.Log
 
-// logServiceStartOfDay logs information about dcrd when the main server has
+// logServiceStartOfDay logs information about exccd when the main server has
 // been started to the Windows event log.
 func logServiceStartOfDay(srvr *server) {
 	var message string
@@ -52,7 +52,7 @@ type exccdService struct{}
 
 // Execute is the main entry point the winsvc package calls when receiving
 // information from the Windows service control manager.  It launches the
-// long-running exccdMain (which is the real meat of dcrd), handles service
+// long-running exccdMain (which is the real meat of exccd), handles service
 // change requests, and notifies the service control manager of changes.
 func (s *exccdService) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (bool, uint32) {
 	// Service start is pending.
@@ -112,7 +112,7 @@ loop:
 	return false, 0
 }
 
-// installService attempts to install the dcrd service.  Typically this should
+// installService attempts to install the exccd service.  Typically this should
 // be done by the msi installer, but it is provided here since it can be useful
 // for development.
 func installService() error {
@@ -161,7 +161,7 @@ func installService() error {
 	return eventlog.InstallAsEventCreate(svcName, eventsSupported)
 }
 
-// removeService attempts to uninstall the dcrd service.  Typically this should
+// removeService attempts to uninstall the exccd service.  Typically this should
 // be done by the msi uninstaller, but it is provided here since it can be
 // useful for development.  Not the eventlog entry is intentionally not removed
 // since it would invalidate any existing event log messages.
@@ -184,7 +184,7 @@ func removeService() error {
 	return service.Delete()
 }
 
-// startService attempts to start the dcrd service.
+// startService attempts to start the exccd service.
 func startService() error {
 	// Connect to the windows service manager.
 	serviceManager, err := mgr.Connect()

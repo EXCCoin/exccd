@@ -18,7 +18,7 @@ import (
 	"github.com/EXCCoin/exccd/blockchain/stake"
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/mempool"
 	"github.com/EXCCoin/exccd/mining"
 	"github.com/EXCCoin/exccd/txscript"
@@ -54,7 +54,7 @@ const (
 // transaction to be prioritized and track dependencies on other transactions
 // which have not been mined into a block yet.
 type txPrioItem struct {
-	tx       *excutil.Tx
+	tx       *exccutil.Tx
 	txType   stake.TxType
 	fee      int64
 	priority float64
@@ -233,7 +233,7 @@ func newTxPriorityQueue(reserve int, lessFunc func(*txPriorityQueue, int, int) b
 
 // containsTx is a helper function that checks to see if a list of transactions
 // contains any of the TxIns of some transaction.
-func containsTxIns(txs []*excutil.Tx, tx *excutil.Tx) bool {
+func containsTxIns(txs []*exccutil.Tx, tx *exccutil.Tx) bool {
 	for _, txToCheck := range txs {
 		for _, txIn := range tx.MsgTx().TxIn {
 			if txIn.PreviousOutPoint.Hash.IsEqual(txToCheck.Hash()) {
@@ -406,7 +406,7 @@ func hashInSlice(h chainhash.Hash, list []chainhash.Hash) bool {
 
 // txIndexFromTxList returns a transaction's index in a list, or -1 if it
 // can not be found.
-func txIndexFromTxList(hash chainhash.Hash, list []*excutil.Tx) int {
+func txIndexFromTxList(hash chainhash.Hash, list []*exccutil.Tx) int {
 	for i, tx := range list {
 		h := tx.Hash()
 		if hash == *h {
@@ -475,12 +475,12 @@ func UpdateExtraNonce(msgBlock *wire.MsgBlock, blockHeight int64, extraNonce uin
 	}
 	msgBlock.Transactions[0].TxOut[1].PkScript = coinbaseOpReturn
 
-	// TODO(davec): A excutil.Block should use saved in the state to avoid
+	// TODO(davec): A exccutil.Block should use saved in the state to avoid
 	// recalculating all of the other transaction hashes.
 	// block.Transactions[0].InvalidateCache()
 
 	// Recalculate the merkle root with the updated extra nonce.
-	block := excutil.NewBlockDeepCopyCoinbase(msgBlock)
+	block := exccutil.NewBlockDeepCopyCoinbase(msgBlock)
 	merkles := blockchain.BuildMerkleTreeStore(block.Transactions())
 	msgBlock.Header.MerkleRoot = *merkles[len(merkles)-1]
 	return nil
@@ -492,7 +492,7 @@ func UpdateExtraNonce(msgBlock *wire.MsgBlock, blockHeight int64, extraNonce uin
 //
 // See the comment for NewBlockTemplate for more information about why the nil
 // address handling is useful.
-func createCoinbaseTx(subsidyCache *blockchain.SubsidyCache, coinbaseScript []byte, opReturnPkScript []byte, nextBlockHeight int64, addr excutil.Address, voters uint16, params *chaincfg.Params) (*excutil.Tx, error) {
+func createCoinbaseTx(subsidyCache *blockchain.SubsidyCache, coinbaseScript []byte, opReturnPkScript []byte, nextBlockHeight int64, addr exccutil.Address, voters uint16, params *chaincfg.Params) (*exccutil.Tx, error) {
 	tx := wire.NewMsgTx()
 	tx.AddTxIn(&wire.TxIn{
 		// Coinbase transactions have no inputs, so previous outpoint is
@@ -508,9 +508,9 @@ func createCoinbaseTx(subsidyCache *blockchain.SubsidyCache, coinbaseScript []by
 	// Block one is a special block that might pay out tokens to a ledger.
 	if nextBlockHeight == 1 && len(params.BlockOneLedger) != 0 {
 		// Convert the addresses in the ledger into useable format.
-		addrs := make([]excutil.Address, len(params.BlockOneLedger))
+		addrs := make([]exccutil.Address, len(params.BlockOneLedger))
 		for i, payout := range params.BlockOneLedger {
-			addr, err := excutil.DecodeAddress(payout.Address)
+			addr, err := exccutil.DecodeAddress(payout.Address)
 			if err != nil {
 				return nil, err
 			}
@@ -531,7 +531,7 @@ func createCoinbaseTx(subsidyCache *blockchain.SubsidyCache, coinbaseScript []by
 
 		tx.TxIn[0].ValueIn = params.BlockOneSubsidy()
 
-		return excutil.NewTx(tx), nil
+		return exccutil.NewTx(tx), nil
 	}
 
 	// Create a coinbase with correct block subsidy and extranonce.
@@ -594,13 +594,13 @@ func createCoinbaseTx(subsidyCache *blockchain.SubsidyCache, coinbaseScript []by
 		PkScript: pksSubsidy,
 	})
 
-	return excutil.NewTx(tx), nil
+	return exccutil.NewTx(tx), nil
 }
 
 // spendTransaction updates the passed view by marking the inputs to the passed
 // transaction as spent.  It also adds all outputs in the passed transaction
 // which are not provably unspendable as available unspent transaction outputs.
-func spendTransaction(utxoView *blockchain.UtxoViewpoint, tx *excutil.Tx, height int64) error {
+func spendTransaction(utxoView *blockchain.UtxoViewpoint, tx *exccutil.Tx, height int64) error {
 	for _, txIn := range tx.MsgTx().TxIn {
 		originHash := &txIn.PreviousOutPoint.Hash
 		originIndex := txIn.PreviousOutPoint.Index
@@ -617,7 +617,7 @@ func spendTransaction(utxoView *blockchain.UtxoViewpoint, tx *excutil.Tx, height
 
 // logSkippedDeps logs any dependencies which are also skipped as a result of
 // skipping a transaction while generating a block template at the trace level.
-func logSkippedDeps(tx *excutil.Tx, deps map[chainhash.Hash]*txPrioItem) {
+func logSkippedDeps(tx *exccutil.Tx, deps map[chainhash.Hash]*txPrioItem) {
 	if deps == nil {
 		return
 	}
@@ -669,7 +669,7 @@ func medianAdjustedTime(chainState *chainState, timeSource blockchain.MedianTime
 // valid from the perspective of the mainchain (not necessarily
 // the mempool or block) before inserting into a tx tree.
 // If it fails the check, it returns false; otherwise true.
-func maybeInsertStakeTx(bm *blockManager, stx *excutil.Tx, treeValid bool) bool {
+func maybeInsertStakeTx(bm *blockManager, stx *exccutil.Tx, treeValid bool) bool {
 	missingInput := false
 
 	view, err := bm.chain.FetchUtxoView(stx, treeValid)
@@ -724,7 +724,7 @@ func deepCopyBlockTemplate(blockTemplate *BlockTemplate) *BlockTemplate {
 	// the extra nonce.
 	transactionsCopy := make([]*wire.MsgTx, len(blockTemplate.Block.Transactions))
 	coinbaseCopy :=
-		excutil.NewTxDeep(blockTemplate.Block.Transactions[0])
+		exccutil.NewTxDeep(blockTemplate.Block.Transactions[0])
 	for i, mtx := range blockTemplate.Block.Transactions {
 		if i == 0 {
 			transactionsCopy[i] = coinbaseCopy.MsgTx()
@@ -762,7 +762,7 @@ func deepCopyBlockTemplate(blockTemplate *BlockTemplate) *BlockTemplate {
 // work off of is present, it will return a copy of that template to pass to the
 // miner.
 // Safe for concurrent access.
-func handleTooFewVoters(subsidyCache *blockchain.SubsidyCache, nextHeight int64, miningAddress excutil.Address, bm *blockManager) (*BlockTemplate, error) {
+func handleTooFewVoters(subsidyCache *blockchain.SubsidyCache, nextHeight int64, miningAddress exccutil.Address, bm *blockManager) (*BlockTemplate, error) {
 	timeSource := bm.server.timeSource
 	chainState := &bm.chainState
 	stakeValidationHeight := bm.server.chainParams.StakeValidationHeight
@@ -828,7 +828,7 @@ func handleTooFewVoters(subsidyCache *blockchain.SubsidyCache, nextHeight int64,
 				}
 
 				// Make sure the block validates.
-				block := excutil.NewBlockDeepCopyCoinbase(cptCopy.Block)
+				block := exccutil.NewBlockDeepCopyCoinbase(cptCopy.Block)
 				err = bm.chain.CheckConnectBlock(block, blockchain.BFNoPoWCheck)
 				if err != nil {
 					minrLog.Errorf("failed to check template while "+
@@ -922,7 +922,7 @@ func handleTooFewVoters(subsidyCache *blockchain.SubsidyCache, nextHeight int64,
 
 				// Recalculate the merkle roots. Use a temporary 'immutable'
 				// block object as we're changing the header contents.
-				btBlockTemp := excutil.NewBlockDeepCopyCoinbase(btMsgBlock)
+				btBlockTemp := exccutil.NewBlockDeepCopyCoinbase(btMsgBlock)
 				merkles :=
 					blockchain.BuildMerkleTreeStore(btBlockTemp.Transactions())
 				merklesStake :=
@@ -931,7 +931,7 @@ func handleTooFewVoters(subsidyCache *blockchain.SubsidyCache, nextHeight int64,
 				btMsgBlock.Header.StakeRoot = *merklesStake[len(merklesStake)-1]
 
 				// Make sure the block validates.
-				btBlock := excutil.NewBlockDeepCopyCoinbase(btMsgBlock)
+				btBlock := exccutil.NewBlockDeepCopyCoinbase(btMsgBlock)
 				err = bm.chain.CheckConnectBlock(btBlock, blockchain.BFNoPoWCheck)
 				if err != nil {
 					str := fmt.Sprintf("failed to check template: %v while "+
@@ -1054,7 +1054,7 @@ func handleCreatedBlockTemplate(blockTemplate *BlockTemplate, bm *blockManager) 
 //  |  <= policy.BlockMinSize)          |   |
 //   -----------------------------------  --
 //
-// TODO - DECRED
+// TODO - ExchangeCoin
 // We also need to include a stake tx tree that looks like the following:
 //
 //   -----------------------------------  --  --
@@ -1073,7 +1073,7 @@ func handleCreatedBlockTemplate(blockTemplate *BlockTemplate, bm *blockManager) 
 //
 //  This function returns nil, nil if there are not enough voters on any of
 //  the current top blocks to create a new block template.
-func NewBlockTemplate(policy *mining.Policy, server *server, payToAddress excutil.Address) (*BlockTemplate, error) {
+func NewBlockTemplate(policy *mining.Policy, server *server, payToAddress exccutil.Address) (*BlockTemplate, error) {
 	var txSource mining.TxSource = server.txMemPool
 	blockManager := server.blockManager
 	timeSource := server.timeSource
@@ -1207,7 +1207,7 @@ func NewBlockTemplate(policy *mining.Policy, server *server, payToAddress excuti
 	// generated block with reserved space.  Also create a utxo view to
 	// house all of the input transactions so multiple lookups can be
 	// avoided.
-	blockTxns := make([]*excutil.Tx, 0, len(sourceTxns))
+	blockTxns := make([]*exccutil.Tx, 0, len(sourceTxns))
 	blockUtxos := blockchain.NewUtxoViewpoint()
 
 	// dependers is used to track transactions which depend on another
@@ -1438,7 +1438,7 @@ mempoolLoop:
 		}
 
 		// This isn't very expensive, but we do this check a number of times.
-		// Consider caching this in the mempool in the future. - Decred
+		// Consider caching this in the mempool in the future. - ExchangeCoin
 		numP2SHSigOps, err := blockchain.CountP2SHSigOps(tx, false,
 			isSSGen, blockUtxos)
 		if err != nil {
@@ -1589,7 +1589,7 @@ mempoolLoop:
 	}
 
 	// Build tx list for stake tx.
-	blockTxnsStake := make([]*excutil.Tx, 0, len(blockTxns))
+	blockTxnsStake := make([]*exccutil.Tx, 0, len(blockTxns))
 
 	// Stake tx ordering in stake tree:
 	// 1. SSGen (votes).
@@ -1607,7 +1607,7 @@ mempoolLoop:
 		}
 
 		if stake.IsSSGen(msgTx) {
-			txCopy := excutil.NewTxDeepTxIns(msgTx)
+			txCopy := exccutil.NewTxDeepTxIns(msgTx)
 			if maybeInsertStakeTx(blockManager, txCopy, !treeKnownInvalid) {
 				vb := stake.SSGenVoteBits(txCopy.MsgTx())
 				voteBitsVoters = append(voteBitsVoters, vb)
@@ -1634,7 +1634,7 @@ mempoolLoop:
 		totalVotes := 0
 
 		for _, vb := range voteBitsVoters {
-			if excutil.IsFlagSet16(vb, excutil.BlockValid) {
+			if exccutil.IsFlagSet16(vb, exccutil.BlockValid) {
 				voteYea++
 			}
 			totalVotes++
@@ -1652,7 +1652,7 @@ mempoolLoop:
 			// In the event TxTreeRegular is disabled, we need to remove all tx
 			// in the current block that depend on tx from the TxTreeRegular of
 			// the previous block.
-			// DECRED WARNING: The ideal behaviour should also be that we re-add
+			// ExchangeCoin WARNING: The ideal behaviour should also be that we re-add
 			// all tx that we just removed from the previous block into our
 			// current block template. Right now this code fails to do that;
 			// these tx will then be included in the next block, which isn't
@@ -1667,7 +1667,7 @@ mempoolLoop:
 			}
 			topBlockRegTx := topBlock.Transactions()
 
-			tempBlockTxns := make([]*excutil.Tx, 0, len(sourceTxns))
+			tempBlockTxns := make([]*exccutil.Tx, 0, len(sourceTxns))
 			for _, tx := range blockTxns {
 				if tx.Tree() == wire.TxTreeRegular {
 					// Go through all the inputs and check to see if this mempool
@@ -1684,11 +1684,11 @@ mempoolLoop:
 					}
 
 					if isValid {
-						txCopy := excutil.NewTxDeepTxIns(tx.MsgTx())
+						txCopy := exccutil.NewTxDeepTxIns(tx.MsgTx())
 						tempBlockTxns = append(tempBlockTxns, txCopy)
 					}
 				} else {
-					txCopy := excutil.NewTxDeepTxIns(tx.MsgTx())
+					txCopy := exccutil.NewTxDeepTxIns(tx.MsgTx())
 					tempBlockTxns = append(tempBlockTxns, txCopy)
 				}
 			}
@@ -1711,7 +1711,7 @@ mempoolLoop:
 
 			// Quick check for difficulty here.
 			if msgTx.TxOut[0].Value >= reqStakeDifficulty {
-				txCopy := excutil.NewTxDeepTxIns(msgTx)
+				txCopy := exccutil.NewTxDeepTxIns(msgTx)
 				if maybeInsertStakeTx(blockManager, txCopy, !treeKnownInvalid) {
 					blockTxnsStake = append(blockTxnsStake, txCopy)
 					freshStake++
@@ -1734,7 +1734,7 @@ mempoolLoop:
 
 		msgTx := tx.MsgTx()
 		if tx.Tree() == wire.TxTreeStake && stake.IsSSRtx(msgTx) {
-			txCopy := excutil.NewTxDeepTxIns(msgTx)
+			txCopy := exccutil.NewTxDeepTxIns(msgTx)
 			if maybeInsertStakeTx(blockManager, txCopy, !treeKnownInvalid) {
 				blockTxnsStake = append(blockTxnsStake, txCopy)
 				revocations++
@@ -1755,7 +1755,7 @@ mempoolLoop:
 	// ensure the transaction is not a duplicate transaction (paying the
 	// same value to the same public key address would otherwise be an
 	// identical transaction for block version 1).
-	// Decred: We need to move this downwards because of the requirements
+	// ExchangeCoin: We need to move this downwards because of the requirements
 	// to incorporate voters and potential voters.
 	coinbaseScript := []byte{0x00, 0x00}
 	coinbaseScript = append(coinbaseScript, []byte(coinbaseFlags)...)
@@ -1794,7 +1794,7 @@ mempoolLoop:
 	txSigOpCountsMap[*coinbaseTx.Hash()] = numCoinbaseSigOps
 
 	// Build tx lists for regular tx.
-	blockTxnsRegular := make([]*excutil.Tx, 0, len(blockTxns)+1)
+	blockTxnsRegular := make([]*exccutil.Tx, 0, len(blockTxns)+1)
 
 	// Append coinbase.
 	blockTxnsRegular = append(blockTxnsRegular, coinbaseTx)
@@ -1907,7 +1907,7 @@ mempoolLoop:
 		}
 
 		// Copy the transaction and swap the pointer.
-		txCopy := excutil.NewTxDeepTxIns(tx.MsgTx())
+		txCopy := exccutil.NewTxDeepTxIns(tx.MsgTx())
 		blockTxnsRegular[i] = txCopy
 		tx = txCopy
 
@@ -1935,7 +1935,7 @@ mempoolLoop:
 		}
 
 		// Copy the transaction and swap the pointer.
-		txCopy := excutil.NewTxDeepTxIns(tx.MsgTx())
+		txCopy := exccutil.NewTxDeepTxIns(tx.MsgTx())
 		blockTxnsRegular[i] = txCopy
 		tx = txCopy
 
@@ -2016,7 +2016,7 @@ mempoolLoop:
 	// Finally, perform a full check on the created block against the chain
 	// consensus rules to ensure it properly connects to the current best
 	// chain with no issues.
-	block := excutil.NewBlockDeepCopyCoinbase(&msgBlock)
+	block := exccutil.NewBlockDeepCopyCoinbase(&msgBlock)
 	err = blockManager.chain.CheckConnectBlock(block, blockchain.BFNoPoWCheck)
 	if err != nil {
 		str := fmt.Sprintf("failed to do final check for check connect "+
@@ -2031,7 +2031,7 @@ mempoolLoop:
 		len(msgBlock.Transactions), len(msgBlock.STransactions),
 		totalFees, blockSigOps, blockSize,
 		blockchain.CompactToBig(msgBlock.Header.Bits),
-		excutil.Amount(msgBlock.Header.SBits).ToCoin())
+		exccutil.Amount(msgBlock.Header.SBits).ToCoin())
 
 	blockTemplate := &BlockTemplate{
 		Block:           &msgBlock,

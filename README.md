@@ -5,12 +5,12 @@ exccd
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd)
 
-exccd is a EXCC full node implementation written in Go (golang).
+exccd is a ExchangeCoin full node implementation written in Go (golang).
 
-This acts as a chain daemon for the [EXCC](https://cryptoxchanger.io/) cryptocurrency.
-The exccd maintains the entire past transactional ledger of EXCC and allows
-relaying of transactions to other excc nodes across the world. To read more
-about excc please see the
+This acts as a chain daemon for the [ExchangeCoin](https://cryptoxchanger.io/) cryptocurrency.
+The exccd maintains the entire past transactional ledger of ExchangeCoin and allows
+relaying of transactions to other ExchangeCoin nodes across the world. To read more
+about ExchangeCoin please see the
 [project documentation](https://cryptoxchanger.io/faq).
 
 Note: To send or receive funds and join Proof-of-Stake mining, you will also need
@@ -18,8 +18,8 @@ Note: To send or receive funds and join Proof-of-Stake mining, you will also nee
 
 This project is currently under active development and is in a Beta state.
 
-It is forked from [dcrd](https://github.com/decred/dcrd) which is a bitcoin
-full node implementation written in Go.  Decred is a ongoing project under active
+It is forked from [dcrd](https://github.com/decred/dcrd) which is a Decred
+full node implementation written in Go.  dcrd is a ongoing project under active
 development.  Because exccd is constantly synced with dcrd codebase, it will
 get the benefit of dcrd's ongoing upgrades to peer and connection handling,
 database optimization and other blockchain related technology improvements.
@@ -83,7 +83,7 @@ go install . ./cmd/...
 All tests and linters may be run in a docker container using the script
 `run_tests.sh`.  This script defaults to using the current supported version of
 go.  You can run it with the major version of Go you would like to use as the
-only arguement to test a previous on a previous version of Go (generally Exchangecoin
+only arguement to test a previous on a previous version of Go (generally ExchangeCoin
 supports the current version of Go and the previous one).
 
 ```

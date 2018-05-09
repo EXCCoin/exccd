@@ -16,12 +16,12 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/database"
 	_ "github.com/EXCCoin/exccd/database/ffldb"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 )
 
 // This example demonstrates how to create a new chain instance and use
 // ProcessBlock to attempt to attempt add a block to the chain.  As the package
-// overview documentation describes, this includes all of the Decred consensus
+// overview documentation describes, this includes all of the ExchangeCoin consensus
 // rules.  This example intentionally attempts to insert a duplicate genesis
 // block to illustrate how an invalid block is handled.
 func ExampleBlockChain_ProcessBlock() {
@@ -60,7 +60,7 @@ func ExampleBlockChain_ProcessBlock() {
 	// Process a block.  For this example, we are going to intentionally
 	// cause an error by trying to process the genesis block which already
 	// exists.
-	genesisBlock := excutil.NewBlock(chaincfg.MainNetParams.GenesisBlock)
+	genesisBlock := exccutil.NewBlock(chaincfg.MainNetParams.GenesisBlock)
 	isMainChain, isOrphan, err := chain.ProcessBlock(genesisBlock,
 		blockchain.BFNone)
 	if err != nil {
@@ -80,7 +80,7 @@ func ExampleBlockChain_ProcessBlock() {
 // which represent the target difficulty to a big integer and display it using
 // the typical hex notation.
 func ExampleCompactToBig() {
-	// Convert the bits from block 300000 in the main Decred block chain.
+	// Convert the bits from block 300000 in the main ExchangeCoin block chain.
 	bits := uint32(419465580)
 	targetDifficulty := blockchain.CompactToBig(bits)
 

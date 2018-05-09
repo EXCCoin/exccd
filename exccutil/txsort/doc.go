@@ -12,7 +12,7 @@ This package implements a standard lexicographical sort order of transaction
 inputs and outputs.  This is useful to standardize transactions for faster
 multi-party agreement as well as preventing information leaks in a single-party
 use case.  It is a modified form of BIP69 which has been updated to account for
-differences with Decred-specific transactions.
+differences with ExchangeCoin-specific transactions.
 
 The sort order for transaction inputs is defined as follows:
 - Previous transaction tree in ascending order

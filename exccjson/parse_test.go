@@ -26,7 +26,7 @@ func decodeHash(reversedHash string) chainhash.Hash {
 }
 
 func TestEncodeConcatenatedHashes(t *testing.T) {
-	// Input Hash slice. Data taken from Decred's first three mainnet blocks.
+	// Input Hash slice. Data taken from ExchangeCoin's first three mainnet blocks.
 	hashSlice := []chainhash.Hash{
 		decodeHash("298e5cc3d985bfe7f81dc135f360abe089edd4396b86d2de66b0cef42b21d980"),
 		decodeHash("000000000000437482b6d47f82f374cde539440ddb108b0a76886f0d87d126b9"),
@@ -59,7 +59,7 @@ func TestEncodeConcatenatedHashes(t *testing.T) {
 }
 
 func TestDecodeConcatenatedHashes(t *testing.T) {
-	// Test data taken from Decred's first three mainnet blocks
+	// Test data taken from ExchangeCoin's first three mainnet blocks
 	testHashes := []chainhash.Hash{
 		decodeHash("298e5cc3d985bfe7f81dc135f360abe089edd4396b86d2de66b0cef42b21d980"),
 		decodeHash("000000000000437482b6d47f82f374cde539440ddb108b0a76886f0d87d126b9"),
@@ -231,7 +231,7 @@ func TestInvalidDecodeConcatenatedHashes(t *testing.T) {
 		rpcError, ok := err.(*exccjson.RPCError)
 		if !ok {
 			t.Fatalf("DecodeConcatenatedHashes error is not "+
-				"expected type *dcrjson.RPCError: %T", err)
+				"expected type *exccjson.RPCError: %T", err)
 		}
 		if rpcError.Code != str.err.Code {
 			t.Fatalf("DecodeConcatenatedHashes returned "+

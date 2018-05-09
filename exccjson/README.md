@@ -1,15 +1,15 @@
-dcrjson
+exccjson
 =======
 
 [![Build Status](https://travis-ci.org/EXCCoin/exccd.png?branch=master)](https://travis-ci.org/EXCCoin/exccd)
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd/dcrjson)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd/exccjson)
 
-Package dcrjson implements concrete types for marshalling to and from the
+Package exccjson implements concrete types for marshalling to and from the
 bitcoin JSON-RPC API.  A comprehensive suite of tests is provided to ensure
 proper functionality.
 
-Although this package was primarily written for the excc, it has
+Although this package was primarily written for the ExchangeCoin, it has
 intentionally been designed so it can be used as a standalone package for any
 projects needing to marshal to and from bitcoin JSON-RPC requests and responses.
 
@@ -25,29 +25,29 @@ ints, etc) to higher-level types with many nice and useful properties.
 ## Installation and Updating
 
 ```bash
-$ go get -u github.com/EXCCoin/exccd/dcrjson
+$ go get -u github.com/EXCCoin/exccd/exccjson
 ```
 
 ## Examples
 
-* [Marshal Command](http://godoc.org/github.com/EXCCoin/exccd/dcrjson#example-MarshalCmd)  
+* [Marshal Command](http://godoc.org/github.com/EXCCoin/exccd/exccjson#example-MarshalCmd)  
   Demonstrates how to create and marshal a command into a JSON-RPC request.
 
-* [Unmarshal Command](http://godoc.org/github.com/EXCCoin/exccd/dcrjson#example-UnmarshalCmd)  
+* [Unmarshal Command](http://godoc.org/github.com/EXCCoin/exccd/exccjson#example-UnmarshalCmd)  
   Demonstrates how to unmarshal a JSON-RPC request and then unmarshal the
   concrete request into a concrete command.
 
-* [Marshal Response](http://godoc.org/github.com/EXCCoin/exccd/dcrjson#example-MarshalResponse)  
+* [Marshal Response](http://godoc.org/github.com/EXCCoin/exccd/exccjson#example-MarshalResponse)  
   Demonstrates how to marshal a JSON-RPC response.
 
-* [Unmarshal Response](http://godoc.org/github.com/EXCCoin/exccd/dcrjson#example-package--UnmarshalResponse)  
+* [Unmarshal Response](http://godoc.org/github.com/EXCCoin/exccd/exccjson#example-package--UnmarshalResponse)  
   Demonstrates how to unmarshal a JSON-RPC response and then unmarshal the
   result field in the response to a concrete type.
 
 ## GPG Verification Key
 
 All official release tags are signed by Conformal so users can ensure the code
-has not been tampered with and is coming from the Exchangecoin developers.  To
+has not been tampered with and is coming from the ExchangeCoin developers.  To
 verify the signature perform the following:
 
 - Download the public key from the Conformal website at
@@ -66,5 +66,5 @@ verify the signature perform the following:
 
 ## License
 
-Package dcrjson is licensed under the [copyfree](http://copyfree.org) ISC
+Package exccjson is licensed under the [copyfree](http://copyfree.org) ISC
 License.

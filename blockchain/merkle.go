@@ -10,7 +10,7 @@ import (
 	"math"
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/excutil"
+	"github.com/EXCCoin/exccd/exccutil"
 )
 
 // nextPowerOfTwo returns the next highest power of two from a given number if
@@ -47,7 +47,7 @@ func HashMerkleBranches(left *chainhash.Hash, right *chainhash.Hash) *chainhash.
 // is stored in a linear array.
 //
 // A merkle tree is a tree in which every non-leaf node is the hash of its
-// children nodes.  A diagram depicting how this works for Decred transactions
+// children nodes.  A diagram depicting how this works for ExchangeCoin transactions
 // where h(x) is a blake256 hash follows:
 //
 //	         root = h1234 = h(h12 + h34)
@@ -68,7 +68,7 @@ func HashMerkleBranches(left *chainhash.Hash, right *chainhash.Hash) *chainhash.
 // are calculated by concatenating the left node with itself before hashing.
 // Since this function uses nodes that are pointers to the hashes, empty nodes
 // will be nil.
-func BuildMerkleTreeStore(transactions []*excutil.Tx) []*chainhash.Hash {
+func BuildMerkleTreeStore(transactions []*exccutil.Tx) []*chainhash.Hash {
 	// If there's an empty stake tree, return totally zeroed out merkle tree root
 	// only.
 	if len(transactions) == 0 {

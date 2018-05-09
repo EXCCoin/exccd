@@ -47,7 +47,7 @@ func NewAddNodeCmd(addr string, subCmd AddNodeSubCmd) *AddNodeCmd {
 }
 
 // TransactionInput represents the inputs to a transaction.  Specifically a
-// transaction hash and output number pair. Contains Decred additions.
+// transaction hash and output number pair. Contains ExchangeCoin additions.
 type TransactionInput struct {
 	Txid string `json:"txid"`
 	Vout uint32 `json:"vout"`
@@ -57,7 +57,7 @@ type TransactionInput struct {
 // CreateRawTransactionCmd defines the createrawtransaction JSON-RPC command.
 type CreateRawTransactionCmd struct {
 	Inputs   []TransactionInput
-	Amounts  map[string]float64 `jsonrpcusage:"{\"address\":amount,...}"` // In DCR
+	Amounts  map[string]float64 `jsonrpcusage:"{\"address\":amount,...}"` // In EXCC
 	LockTime *int64
 }
 

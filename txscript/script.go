@@ -319,7 +319,7 @@ func calcSignatureHash(script []parsedOpcode, hashType SigHashType,
 	// cleverly construct transactions which can steal those coins provided
 	// they can reuse signatures.
 	//
-	// Decred mitigates this by actually returning an error instead.
+	// ExchangeCoin mitigates this by actually returning an error instead.
 	if hashType&sigHashMask == SigHashSingle && idx >= len(tx.TxOut) {
 		return nil, ErrSighashSingleIdx
 	}
@@ -544,7 +544,7 @@ func GetPreciseSigOpCount(scriptSig, scriptPubKey []byte, bip16 bool) int {
 
 // IsUnspendable returns whether the passed public key script is unspendable, or
 // guaranteed to fail at execution.  This allows inputs to be pruned instantly
-// when entering the UTXO set. In Decred, all zero value outputs are unspendable.
+// when entering the UTXO set. In ExchangeCoin, all zero value outputs are unspendable.
 func IsUnspendable(amount int64, pkScript []byte) bool {
 	if amount == 0 {
 		return true
