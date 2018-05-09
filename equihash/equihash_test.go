@@ -1,9 +1,12 @@
 package equihash
 
 import (
+	"bytes"
 	"encoding/hex"
 	"errors"
 	"hash"
+	"math"
+	"math/rand"
 	"strconv"
 	"testing"
 )
@@ -644,5 +647,58 @@ func TestHashSlice_Nil(t *testing.T) {
 	s := hashSlice(nil, 0, N)
 	if s != nil {
 		t.Errorf("slice should be empty")
+	}
+}
+
+func TestFindCollision_EmptyKeys(t *testing.T) {
+	_, err := findCollision(nil)
+	if err == nil {
+		t.Error("expected err")
+	}
+	keys := []hashKey{}
+	_, err = findCollision(keys)
+	if err == nil {
+		t.Error("expected err")
+	}
+}
+
+func TestProcessHashes_EmptyKeys(t *testing.T) {
+	err := processHashes(nil, N, K)
+	if err == nil {
+		t.Error("expected err")
+	}
+	keys := []hashKey{}
+	err = processHashes(keys, N, K)
+	if err == nil {
+		t.Error("expected err")
+	}
+}
+
+func testHashKeys() []hashKey {
+	n := 8
+	keys := make([]hashKey, 0, n)
+	hashLen := 4
+	for i := 0; i < n; i++ {
+		digest := make([]byte, hashLen)
+		for j := 0; j < hashLen; j++ {
+			v := rand.Intn(math.MaxInt8)
+			digest = append(digest, byte(v))
+		}
+		keys = append(keys, hashKey{digest, i})
+	}
+	return keys
+}
+
+func TestSortHashKeys(t *testing.T) {
+	keys := testHashKeys()
+	sortHashKeys(keys)
+	for i := 0; i < len(keys)-1; i++ {
+		for j := i + 1; j < len(keys); j++ {
+			x, y := keys[i].digest, keys[j].digest
+			cmp := bytes.Compare(x, y)
+			if cmp != -1 {
+				t.Errorf("%v >= %v\n", x, y)
+			}
+		}
 	}
 }
