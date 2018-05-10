@@ -1,3 +1,8 @@
+#decred-golang-builder-1.10
+# This image may be called with the run_tests.sh script included in any of the
+# supported go repos.
+# ./run_tests.sh 1.10
+
 FROM golang:1.10
 
 LABEL description="ExchangeCoin golang builder image"
@@ -21,7 +26,6 @@ RUN mkdir /release && \
     chown $USER /release
 
 # create directory to get source from
-# TODO: finish porting these utilities
 RUN mkdir /src && \
     chown $USER /src && \
     mkdir -p /go/src/github.com/EXCCoin/exccd && \
