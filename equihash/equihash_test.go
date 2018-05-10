@@ -128,18 +128,18 @@ func TestExpandCompressArrays(t *testing.T) {
 }
 
 func TestDistinctIndices(t *testing.T) {
-	a := []int{0, 1, 2, 3, 4, 5}
-	b := []int{0, 1, 2, 3, 4, 5}
+	a := []byte{0, 1, 2, 3, 4, 5}
+	b := []byte{0, 1, 2, 3, 4, 5}
 	r := distinctIndices(a, b)
 	if r {
 		t.Error()
 	}
-	b = []int{6, 7, 8, 9, 10}
+	b = []byte{6, 7, 8, 9, 10}
 	r = distinctIndices(a, b)
 	if !r {
 		t.Error()
 	}
-	a = []int{7, 8, 9, 10, 11}
+	a = []byte{7, 8, 9, 10, 11}
 	r = distinctIndices(a, b)
 	if r {
 		t.Error()
@@ -396,12 +396,32 @@ func TestWriteParams(t *testing.T) {
 	}
 }
 
-func TestEquihash(t *testing.T) {
-	for _, p := range miningTests {
-		testEquihash(t, p)
+func hashKeyEq(x, y hashKey) bool {
+	if bytes.Compare(x.digest, y.digest) != 0 {
+		return false
+	}
+	return true
+}
+
+func TestPopBack(t *testing.T) {
+	n := 8
+	k := testHashKeys(n)
+	exp := k[len(k)-1]
+	k2, act := popBack(k)
+	if !hashKeyEq(exp, act) {
+		t.Error("hash keys are not eq")
+		t.FailNow()
+	}
+	if len(k2) != n-1 {
+		t.FailNow()
 	}
 }
 
+func TestEquihashVerification(t *testing.T) {
+	t.FailNow()
+}
+
+/*
 func testEquihash(t *testing.T, p miningParams) {
 	nonce := 1
 	hb := testHashBuilder(genesisHash(), nonce)
@@ -412,6 +432,7 @@ func testEquihash(t *testing.T, p miningParams) {
 	}
 	err = solutionsEq(solutions, p.solutions)
 }
+*/
 
 func solutionsEq(x, y [][]int) error {
 	if len(x) != len(y) {
@@ -641,8 +662,7 @@ func TestProcessHashes_EmptyKeys(t *testing.T) {
 	}
 }
 
-func testHashKeys() []hashKey {
-	n := 8
+func testHashKeys(n int) []hashKey {
 	keys := make([]hashKey, 0, n)
 	hashLen := 4
 	for i := 0; i < n; i++ {
@@ -657,7 +677,8 @@ func testHashKeys() []hashKey {
 }
 
 func TestSortHashKeys(t *testing.T) {
-	keys := testHashKeys()
+	n := 8
+	keys := testHashKeys(n)
 	sortHashKeys(keys)
 	for i := 0; i < len(keys)-1; i++ {
 		for j := i + 1; j < len(keys); j++ {
@@ -666,6 +687,29 @@ func TestSortHashKeys(t *testing.T) {
 			if cmp != -1 {
 				t.Errorf("%v >= %v\n", x, y)
 			}
+		}
+	}
+}
+
+func randDigest(n int) []byte {
+	b := make([]byte, n)
+	for i := 0; i < n; i++ {
+		b[i] = byte(rand.Int())
+	}
+	return b
+}
+
+func TestBytesCompare(t *testing.T) {
+	n := 6
+	x, y := randDigest(n), randDigest(n)
+	r := bytesCompare(x, y)
+	if r {
+		if bytes.Compare(x, y) >= 0 {
+			t.Error("incorrect comparison")
+		}
+	} else {
+		if bytes.Compare(x, y) < 0 {
+			t.Error("incorrect comparison")
 		}
 	}
 }

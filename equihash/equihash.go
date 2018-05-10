@@ -29,6 +29,7 @@ var (
 	errLenZero      = errors.New("len is 0")
 	errNil          = errors.New("unexpected nil pointer")
 	errBadArg       = errors.New("bad arg")
+	errEmptySlice   = errors.New("empty slice")
 	personPrefix    = []byte("excc")
 )
 
@@ -733,15 +734,7 @@ func hashCollisionPair() {
 }
 
 func bytesCompare(x, y []byte) bool {
-	switch bytes.Compare(x, y) {
-	case -1:
-		return true
-	case 0, 1:
-		return false
-	default:
-		log.Panic("not fail-able with `bytes.Comparable` bounded [-1, 1].")
-		return false
-	}
+	return bytes.Compare(x, y) < 0
 }
 
 type hashKeys []hashKey
@@ -763,79 +756,132 @@ func finalFullWidth(n, k int) int {
 	return 2*collisionByteLen(n, k) + 32*(1<<uint(k-1))
 }
 
-func newXorHashKey(x, y, out []byte, n, k, size, lenIndices, trim int, key *hashKey) error {
-	if key == nil {
-		return errNil
-	}
-	w := finalFullWidth(n, k)
-	if size+lenIndices <= w {
-		return errBadArg
-	}
-	if size-trim+(2*lenIndices) <= hashLen(n, k) {
-		return errBadArg
-	}
-	for i := trim; i < size; i++ {
-		hash[]
-	}
-
+func indicesBefore(a, b []byte, size, lenIndices int) bool {
+	i, j := size, size+lenIndices
+	x, y := a[i:j], b[i:j]
+	return bytesCompare(x, y)
 }
 
-func processHashes(keys []hashKey, n, k int) error {
+func newXorHashKey(x, y []byte, n, k int) (hashKey, error) {
+	/*
+		if key == nil {
+			return errNil
+		}
+		w := finalFullWidth(n, k)
+		if size+lenIndices <= w {
+			return errBadArg
+		}
+		if size-trim+(2*lenIndices) <= hashLen(n, k) {
+			return errBadArg
+		}
+		for i := trim; i < size; i++ {
+			out[i-trim] = x[i] ^ y[i]
+		}
+	*/
+	return hashKey{}, errnyi()
+}
+
+func trim(g, i, n int) int {
+	return g*indicesPerHashOutput(n) + i
+}
+
+func popBack(k []hashKey) ([]hashKey, hashKey) {
+	i := len(k) - 1
+	return k[:i], k[i]
+}
+
+func processHashes(keys []hashKey, n, k int) ([]hashKey, error) {
 	if len(keys) == 0 {
-		return errLen
+		return nil, errLen
 	}
 	// loop until 2n/(k+1) bits remain
-	collByteLen := collisionByteLen(n, k)
+	hashLen, lenIndices := hashOutput(n), 32
+	//collByteLen, tmpHash := collisionByteLen(n, k), make([]byte, hashLen)
 	for r := 1; r < k && len(keys) > 0; r++ {
+		// 2a) sort the list
 		sort.Sort(hashKeys(keys))
-		i, l := 0, 0
-		//posFree := collisionByteLen(n, k)
+		i, l, posFree := 0, 0, 0
 		//_ := []hashKey{}
-		buf := []hashKey{}
+		xc := []hashKey{}
 		for i < len(keys)-1 {
-			// find next set of unordered pairs with collisions on the next n/(k+1) bits
+			// 2b) find next set of unordered pairs with collisions on the next n/(k+1) bits
 			j, a := 1, keys[i].digest
 			b := keys[i+j].digest
 			for i+j < len(keys) && hasCollision2(a, b, l) {
 				j++
 			}
 
-			// Calculate tuples (X_i ^ X_j, (i, j))
+			// 2c) Calculate tuples (X_i ^ X_j, (i, j))
 			for l := 0; l < j-1; l++ {
 				for m := l + 1; m < j; m++ {
 					a, b := keys[i+l], keys[i+m]
 					if distinctIndices(a.digest, b.digest) {
-						buf = append(buf, newXorHashKey(a, b, collByteLen))
+						key, err := newXorHashKey(a.digest, b.digest, n, k)
+						if err != nil {
+							return nil, err
+						}
+						xc = append(xc, key)
 					}
 				}
 			}
+
+			// 2d) Store tuples on the table in place if possible
+			for posFree < i+j && len(xc) > 0 {
+				head, tail := popBack(xc)
+				keys[posFree] = tail
+				posFree++
+				xc = head
+			}
+
+			i += j
 		}
+
+		// 2e) handle edge case where final table entry has no collision
+		for posFree < len(keys) && len(xc) > 0 {
+			head, tail := popBack(xc)
+			keys[posFree] = tail
+			posFree++
+			xc = head
+		}
+
+		if len(xc) > 0 {
+			keys = append(keys, xc...)
+		} else if posFree < len(keys) {
+			// remove empty space at back
+			keys = keys[:posFree]
+		}
+
+		hashLen = hashLen - collisionByteLen(n, k)
+		lenIndices *= 2
 	}
-	return nil
+	return nil, nil
 }
 
-func findCollision(keys []hashKey) (bool, error) {
+func findSolution(keys []hashKey, d uint) ([]byte, error) {
 	if len(keys) == 0 {
-		return false, errLen
+		return nil, errEmptySlice
 	}
-	return false, nil
+	if len(keys) == 1 {
+		return nil, errBadArg
+	}
+	return nil, errnyi()
 }
 
 func sortHashKeys(keys []hashKey) {
 	sort.Sort(hashKeys(keys))
 }
 
-func solve(n, k int) (bool, error) {
+func solve(n, k, d int) ([]byte, error) {
 	keys, err := generateHashes(n, k)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	glog.Info(keys)
-	err = processHashes(keys, n, k)
+	keys, err = processHashes(keys, n, k)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	return findCollision(keys)
+	return findSolution(keys, uint(d))
 }
 
 func errnyi() error {
