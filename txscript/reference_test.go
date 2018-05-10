@@ -17,9 +17,9 @@ import (
 	"testing"
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/exccutil"
 	. "github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
-	"github.com/EXCCoin/exccd/exccutil"
 )
 
 // testName returns a descriptive test name for the given reference test data.

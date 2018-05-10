@@ -103,11 +103,11 @@ func TestMessage(t *testing.T) {
 	msgReject := NewMsgReject("block", RejectDuplicate, "duplicate block")
 
 	tests := []struct {
-		in     Message     // Value to encode
-		out    Message     // Expected decoded value
-		pver   uint32      // Protocol version for wire encoding
+		in      Message     // Value to encode
+		out     Message     // Expected decoded value
+		pver    uint32      // Protocol version for wire encoding
 		exccnet CurrencyNet // Network to use for wire encoding
-		bytes  int         // Expected num bytes read/written
+		bytes   int         // Expected num bytes read/written
 	}{
 		{msgVersion, msgVersion, pver, MainNet, 126},          // [0]
 		{msgVerack, msgVerack, pver, MainNet, 24},             // [1]
@@ -266,7 +266,7 @@ func TestReadMessageWireErrors(t *testing.T) {
 	tests := []struct {
 		buf     []byte      // Wire encoding
 		pver    uint32      // Protocol version for wire encoding
-		exccnet  CurrencyNet // ExchangeCoin network for wire encoding
+		exccnet CurrencyNet // ExchangeCoin network for wire encoding
 		max     int         // Max size of fixed buffer to induce errors
 		readErr error       // Expected read error
 		bytes   int         // Expected num bytes read
@@ -431,12 +431,12 @@ func TestWriteMessageWireErrors(t *testing.T) {
 	bogusMsg := &fakeMessage{command: "bogus", payload: bogusPayload}
 
 	tests := []struct {
-		msg    Message     // Message to encode
-		pver   uint32      // Protocol version for wire encoding
+		msg     Message     // Message to encode
+		pver    uint32      // Protocol version for wire encoding
 		exccnet CurrencyNet // ExchangeCoin network for wire encoding
-		max    int         // Max size of fixed buffer to induce errors
-		err    error       // Expected error
-		bytes  int         // Expected num bytes written
+		max     int         // Max size of fixed buffer to induce errors
+		err     error       // Expected error
+		bytes   int         // Expected num bytes written
 	}{
 		// Command too long.
 		{badCommandMsg, pver, exccnet, 0, wireErr, 0},
