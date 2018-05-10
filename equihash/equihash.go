@@ -790,7 +790,7 @@ func popBack(k []hashKey) ([]hashKey, hashKey) {
 	return k[:i], k[i]
 }
 
-func processHashes(keys []hashKey, n, k int) ([]hashKey, error) {
+func xorHashes(keys []hashKey, n, k int) ([]hashKey, error) {
 	if len(keys) == 0 {
 		return nil, errLen
 	}
@@ -857,12 +857,21 @@ func processHashes(keys []hashKey, n, k int) ([]hashKey, error) {
 	return nil, nil
 }
 
-func findSolution(keys []hashKey, d uint) ([]byte, error) {
+// finds solution on last 2n(k+1) bits
+func findCollision(keys []hashKey, d uint, hashLen int) ([]byte, error) {
 	if len(keys) == 0 {
 		return nil, errEmptySlice
 	}
 	if len(keys) == 1 {
 		return nil, errBadArg
+	}
+	// sort hashes
+	sortHashKeys(keys)
+
+	i := 0
+	for i < len(keys)-1 {
+		//j := 0
+		//for i + j < len(keys) && hasCollision2(a, b, hashLen)
 	}
 	return nil, errnyi()
 }
@@ -871,17 +880,22 @@ func sortHashKeys(keys []hashKey) {
 	sort.Sort(hashKeys(keys))
 }
 
-func solve(n, k, d int) ([]byte, error) {
+func Solve(n, k, d int) ([]byte, error) {
 	keys, err := generateHashes(n, k)
 	if err != nil {
 		return nil, err
 	}
 	glog.Info(keys)
-	keys, err = processHashes(keys, n, k)
+	hashLen := 0 //TODO(jaupe), pass to processHashes
+	keys, err = xorHashes(keys, n, k)
 	if err != nil {
 		return nil, err
 	}
-	return findSolution(keys, uint(d))
+	return findCollision(keys, uint(d), hashLen)
+}
+
+func IsValidSolution(n, k int, solution []byte) bool {
+	return false
 }
 
 func errnyi() error {
