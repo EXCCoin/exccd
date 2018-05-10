@@ -640,23 +640,23 @@ func TestHashSlice_Nil(t *testing.T) {
 }
 
 func TestFindCollision_EmptyKeys(t *testing.T) {
-	_, err := findCollision(nil)
+	d, hashLen := uint(1), 32
+	_, err := findCollision(nil, d, hashLen)
 	if err == nil {
 		t.Error("expected err")
 	}
 	keys := []hashKey{}
-	_, err = findCollision(keys)
+	_, err = findCollision(keys, d, hashLen)
 	if err == nil {
 		t.Error("expected err")
 	}
 }
-func TestProcessHashes_EmptyKeys(t *testing.T) {
-	err := processHashes(nil, N, K)
+func TestXorHashes_EmptyKeys(t *testing.T) {
+	_, err := xorHashes(nil, N, K)
 	if err == nil {
 		t.Error("expected err")
 	}
-	keys := []hashKey{}
-	err = processHashes(keys, N, K)
+	_, err = xorHashes([]hashKey{}, N, K)
 	if err == nil {
 		t.Error("expected err")
 	}
