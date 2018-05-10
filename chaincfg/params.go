@@ -477,7 +477,7 @@ var MainNetParams = Params{
 	DNSSeeds: []DNSSeed{
 		{"188.166.147.21", false},
 		{"139.59.147.139", false},
-		{"174.138.47.202" , false},
+		{"174.138.47.202", false},
 	},
 
 	// Chain parameters
@@ -507,8 +507,7 @@ var MainNetParams = Params{
 	BlockTaxProportion:       1,
 
 	// Checkpoints ordered from oldest to newest.
-	Checkpoints: []Checkpoint{
-	},
+	Checkpoints: []Checkpoint{},
 
 	// The miner confirmation window is defined as:
 	//   target proof of work timespan / target proof of work spacing
@@ -593,12 +592,12 @@ var MainNetParams = Params{
 	NetworkAddressPrefix: "2",
 	// In order to see actual prefixes, encoded string must consist of prefix mentioned below
 	// followed by zeros up to 26 bytes total length.
-	PubKeyAddrID:         [2]byte{0x21, 0xB9}, // starts with 22
-	PubKeyHashAddrID:     [2]byte{0x3d, 0x21}, // starts with 2s
-	PKHEdwardsAddrID:     [2]byte{0x35, 0xcf}, // starts with 2e
-	PKHSchnorrAddrID:     [2]byte{0x2f, 0x0d}, // starts with 2S
-	ScriptHashAddrID:     [2]byte{0x34, 0xAF}, // starts with 2c
-	PrivateKeyID:         [2]byte{0x80}, // starts with 4
+	PubKeyAddrID:     [2]byte{0x21, 0xB9}, // starts with 22
+	PubKeyHashAddrID: [2]byte{0x3d, 0x21}, // starts with 2s
+	PKHEdwardsAddrID: [2]byte{0x35, 0xcf}, // starts with 2e
+	PKHSchnorrAddrID: [2]byte{0x2f, 0x0d}, // starts with 2S
+	ScriptHashAddrID: [2]byte{0x34, 0xAF}, // starts with 2c
+	PrivateKeyID:     [2]byte{0x80},       // starts with 4
 
 	// BIP32 hierarchical deterministic extended key magics
 	// In order to see actual prefixes, encoded string must consist of prefix mentioned below
@@ -675,8 +674,7 @@ var TestNet2Params = Params{
 	BlockTaxProportion:       1,
 
 	// Checkpoints ordered from oldest to newest.
-	Checkpoints: []Checkpoint{
-	},
+	Checkpoints: []Checkpoint{},
 
 	// Consensus rule change deployments.
 	//
