@@ -20,10 +20,10 @@ set -ex
 
 #Default GOVERSION
 GOVERSION=${1:-1.10}
-REPO=exccd
-ORG=EXCCoin
-DOCKER_IMAGE_TAG=excc
-DOCKER_REPO=exccoin
+GITHUB_ORG=EXCCoin
+GITHUB_REPO=exccd
+DOCKER_ORG=exccco
+DOCKER_IMAGE_TAG=exchangecoin-golang-builder-$GOVERSION
 
 testrepo () {
   TMPFILE=$(mktemp)
@@ -85,23 +85,23 @@ if [ -f ~/.cache/$DOCKER_IMAGE_TAG.tar ]; then
 		exit 1
 	fi
 else
-	# pull and save image to cache 
-	docker pull $DOCKER_REPO/$DOCKER_IMAGE_TAG
+	# pull and save image to cache
+	docker pull $DOCKER_ORG/$DOCKER_IMAGE_TAG
 	if [ $? != 0 ]; then
 		echo 'docker pull failed'
 		exit 1
 	fi
-	docker save $DOCKER_REPO/$DOCKER_IMAGE_TAG > ~/.cache/$DOCKER_IMAGE_TAG.tar
+	docker save $DOCKER_ORG/$DOCKER_IMAGE_TAG > ~/.cache/$DOCKER_IMAGE_TAG.tar
 	if [ $? != 0 ]; then
 		echo 'docker save failed'
 		exit 1
 	fi
 fi
 
-docker run --rm -it -v $(pwd):/src $DOCKER_REPO/$DOCKER_IMAGE_TAG /bin/bash -c "\
+docker run --rm -it -v $(pwd):/src $DOCKER_ORG/$DOCKER_IMAGE_TAG /bin/bash -c "\
   rsync -ra --filter=':- .gitignore'  \
-  /src/ /go/src/github.com/$ORG/$REPO/ && \
-  cd github.com/$ORG/$REPO/ && \
+  /src/ /go/src/github.com/$GITHUB_ORG/$GITHUB_REPO/ && \
+  cd github.com/$GITHUB_ORG/$GITHUB_REPO/ && \
   bash run_tests.sh local"
 if [ $? != 0 ]; then
 	echo 'docker run failed'
