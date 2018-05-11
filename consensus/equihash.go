@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"sort"
 
-	"golang.org/x/crypto/blake2b"
+	blake2b "github.com/minio/blake2b-simd"
 )
 
 const (
@@ -26,22 +26,26 @@ func bytesCmp(x, y []byte) bool {
 	return bytes.Compare(x, y) < 0
 }
 
-type tuples []tuple
+type hashKeys []hashKey
 
-func (t tuples) Len() int {
-	return len(t)
+func (k hashKeys) Len() int {
+	return len(k)
 }
 
-func (t tuples) Less(i, j int) bool {
-	return bytesCmp(t[i].hash, t[j].hash)
+func (k hashKeys) Less(i, j int) bool {
+	return bytesCmp(k[i].hash, k[j].hash)
 }
 
-func (t tuples) Swap(i, j int) {
-	t[i], t[j] = t[j], t[i]
+func (k hashKeys) Swap(i, j int) {
+	k[i], k[j] = k[j], k[i]
 }
 
 func hashXi(h hash.Hash, xi int) error {
 	return writeUint32ToHash(h, uint32(xi))
+}
+
+func hashDigest(h hash.Hash) []byte {
+	return h.Sum(nil)
 }
 
 func expandArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
@@ -75,7 +79,7 @@ func expandArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 
 type equihashSolution []int
 
-type tuple struct {
+type hashKey struct {
 	hash    []byte
 	indices []int
 }
@@ -106,7 +110,7 @@ func hasCollision(x, y []byte, i, length int) bool {
 	return false
 }
 
-func collisionOffset(tuples []tuple, i, collisionLen int) int {
+func collisionOffset(tuples []hashKey, i, collisionLen int) int {
 	n := len(tuples)
 	last := tuples[n-1]
 	ha := last.hash
@@ -143,7 +147,7 @@ func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 	indicesPeHashOutput := 512 / n
 
 	//  1) Generate list (X)
-	X := []tuple{}
+	X := []hashKey{}
 	var tmpHash []byte
 	for i := 0; i < pow(collisionLength+1); i++ {
 		r := i % indicesPeHashOutput
@@ -160,15 +164,15 @@ func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 		if err != nil {
 			return nil, err
 		}
-		X = append(X, tuple{expanded, []int{i}})
+		X = append(X, hashKey{expanded, []int{i}})
 	}
 
 	// 3) Repeat step 2 until 2n/(k+1) bits remain
 	for i := 1; i < k; i++ {
 		// sort tuples by hash
-		sort.Sort(tuples(X))
+		sort.Sort(hashKeys(X))
 
-		xc := []tuple{}
+		xc := []hashKey{}
 		for len(X) > 0 {
 			// 2b) Find next set of unordered pairs with collisions on first n/(k+1) bits
 			xSize := len(X)
@@ -181,7 +185,7 @@ func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 					if distinctIndices(x1l.indices, x1m.indices) {
 						concat := concatIndices(x1l.indices, x1m.indices)
 						a, b := x1l.hash, x1m.hash
-						xc = append(xc, tuple{xor(a, b), concat})
+						xc = append(xc, hashKey{xor(a, b), concat})
 					}
 				}
 			}
@@ -192,7 +196,7 @@ func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 		X = xc
 	}
 
-	sort.Sort(tuples(X))
+	sort.Sort(hashKeys(X))
 	//find solutions
 	solns := []equihashSolution{}
 	for len(X) > 0 {
@@ -229,7 +233,7 @@ func countZeros(h []byte) int {
 	return len(h) * 8
 }
 
-func solutionOffset(x []tuple, k, collisionLen int) int {
+func solutionOffset(x []hashKey, k, collisionLen int) int {
 	xSize := len(x)
 	for j := 1; j < xSize; j++ {
 		lc := hasCollision(x[xSize-1].hash, x[xSize-1-j].hash, k, collisionLen)
@@ -354,7 +358,8 @@ func ValidateSolution(n, k int, person, header []byte, solutionIndices []int) (b
 	outLen := wordsPerHash * bytesPerWord
 
 	// create hash digest and words
-	digest, err := blake2b.New(outLen, person)
+	c := blake2b.Config()
+	digest, err := blake2b.New(c)
 	if err != nil {
 		return false, err
 	}
