@@ -1,18 +1,245 @@
 package consensus
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"hash"
 	"reflect"
+	"sort"
 
 	"golang.org/x/crypto/blake2b"
+)
+
+const (
+	wordSize = 32
+	wordMask = (1 << wordSize) - 1
+	byteMask = 0xFF
 )
 
 var (
 	errBadArg   = errors.New("invalid argument")
 	errWriteLen = errors.New("didn't write full len")
 )
+
+func bytesCmp(x, y []byte) bool {
+	return bytes.Compare(x, y) < 0
+}
+
+type tuples []tuple
+
+func (t tuples) Len() int {
+	return len(t)
+}
+
+func (t tuples) Less(i, j int) bool {
+	return bytesCmp(t[i].hash, t[j].hash)
+}
+
+func (t tuples) Swap(i, j int) {
+	t[i], t[j] = t[j], t[i]
+}
+
+func hashXi(h hash.Hash, xi int) error {
+	return writeUint32ToHash(h, uint32(xi))
+}
+
+func expandArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
+	if bitLen < 8 && wordSize < 7+bitLen {
+		return nil, errBadArg
+	}
+	outWidth := (bitLen+7)/8 + bytePad
+	if outLen != 8*outWidth*len(in)/bitLen {
+		return nil, errBadArg
+	}
+
+	out, bitLenMask := make([]byte, outLen), (1<<uint(bitLen))-1
+	accBits, accValue, j := 0, 0, 0
+	for _, val := range in {
+		accValue = (accValue<<8)&wordMask | int(val&0xFF)
+		accBits += 8
+
+		if accBits >= bitLen {
+			accBits -= bitLen
+			for x := bytePad; x < outWidth; x++ {
+				a := accValue >> uint(accBits+8*(outWidth-x-1))
+				b := (bitLenMask >> uint(8*(outWidth-x-1))) & byteMask
+				out[j+x] = byte(a & b)
+			}
+			j += outWidth
+		}
+	}
+
+	return out, nil
+}
+
+type equihashSolution []int
+
+type tuple struct {
+	hash    []byte
+	indices []int
+}
+
+func minLen(x, y int) int {
+	if x <= y {
+		return x
+	}
+	return y
+}
+
+func xor(a, b []byte) []byte {
+	n := minLen(len(a), len(b))
+	x := make([]byte, n)
+	for i := 0; i < n; i++ {
+		x[i] = a[i] ^ b[i]
+	}
+	return x
+}
+
+func hasCollision(x, y []byte, i, length int) bool {
+	start, end := (i-1)*length/8, i*length/8
+	for j := start; j < end; j++ {
+		if x[j] == y[j] {
+			return true
+		}
+	}
+	return false
+}
+
+func collisionOffset(tuples []tuple, i, collisionLen int) int {
+	n := len(tuples)
+	last := tuples[n-1]
+	ha := last.hash
+	for j := 1; j < n; j++ {
+		hb := tuples[n-1-j].hash
+		if !hasCollision(ha, hb, i, collisionLen) {
+			return j
+		}
+	}
+	return n
+}
+
+func distinctIndices(a, b []int) bool {
+	for _, av := range a {
+		for _, bv := range b {
+			if av == bv {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func concatIndices(x, y []int) []int {
+	if x[0] < y[0] {
+		return append(x, y...)
+	}
+	return append(y, x...)
+}
+
+func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
+	collisionLength := n / (k + 1)
+	hashLength := (k + 1) * (collisionLength + 7) / 8
+	indicesPeHashOutput := 512 / n
+
+	//  1) Generate list (X)
+	X := []tuple{}
+	var tmpHash []byte
+	for i := 0; i < pow(collisionLength+1); i++ {
+		r := i % indicesPeHashOutput
+		if r == 0 {
+			currDigest := copyHash(digest)
+			err := hashXi(currDigest, i/indicesPeHashOutput)
+			if err != nil {
+				return nil, err
+			}
+			tmpHash = currDigest.Sum(nil)
+		}
+		d := tmpHash[r*n/8 : (r+1)*n/8]
+		expanded, err := expandArray(d, hashLength, collisionLength, 0)
+		if err != nil {
+			return nil, err
+		}
+		X = append(X, tuple{expanded, []int{i}})
+	}
+
+	// 3) Repeat step 2 until 2n/(k+1) bits remain
+	for i := 1; i < k; i++ {
+		// sort tuples by hash
+		sort.Sort(tuples(X))
+
+		xc := []tuple{}
+		for len(X) > 0 {
+			// 2b) Find next set of unordered pairs with collisions on first n/(k+1) bits
+			xSize := len(X)
+			j := collisionOffset(X, i, collisionLength)
+
+			//2c) Store tuples (X_i ^ X_j, (i, j)) on the table
+			for l := 0; l < j-1; l++ {
+				for m := l + 1; m < l; m++ {
+					x1l, x1m := X[xSize-1-l], X[xSize-1-m]
+					if distinctIndices(x1l.indices, x1m.indices) {
+						concat := concatIndices(x1l.indices, x1m.indices)
+						a, b := x1l.hash, x1m.hash
+						xc = append(xc, tuple{xor(a, b), concat})
+					}
+				}
+			}
+			// 2d) drop this set
+			X = X[:len(X)-j]
+		}
+		// 2e) replace previous list with new list
+		X = xc
+	}
+
+	sort.Sort(tuples(X))
+	//find solutions
+	solns := []equihashSolution{}
+	for len(X) > 0 {
+		xn := len(X)
+		j := solutionOffset(X, k, collisionLength)
+		for l := 0; l < j-1; l++ {
+			for m := l + 1; m < j; m++ {
+				a, b := X[xn-1-l], X[xn-1-m]
+				res := xor(a.hash, b.hash)
+				f1 := countZeros(res) == 8*hashLength
+				f2 := distinctIndices(a.indices, b.indices)
+				if f1 && f2 {
+					indices := concatIndices(a.indices, b.indices)
+					solns = append(solns, indices)
+				}
+			}
+		}
+		X = X[:len(X)-j]
+	}
+
+	return solns, nil
+}
+
+// countZeros counts leading zero bits in byte array
+func countZeros(h []byte) int {
+	for i, val := range h {
+		for j := 0; j < 8; j++ {
+			mask := 1 << uint(7-j)
+			if (int(val) & mask) > 0 {
+				return (i * 8) + j
+			}
+		}
+	}
+	return len(h) * 8
+}
+
+func solutionOffset(x []tuple, k, collisionLen int) int {
+	xSize := len(x)
+	for j := 1; j < xSize; j++ {
+		lc := hasCollision(x[xSize-1].hash, x[xSize-1-j].hash, k, collisionLen)
+		rc := hasCollision(x[xSize-1].hash, x[xSize-1-j].hash, k+1, collisionLen)
+		if !(lc && rc) {
+			return j
+		}
+	}
+	return xSize
+}
 
 // pow returns pow of base 2 for only positive k
 func pow(k int) int {
@@ -45,6 +272,10 @@ func writeBytesToHash(h hash.Hash, b []byte) error {
 		return errWriteLen
 	}
 	return nil
+}
+
+func writeUint32ToHash(h hash.Hash, v uint32) error {
+	return writeBytesToHash(h, writeUint32(v))
 }
 
 func writeUint32(v uint32) []byte {
@@ -95,7 +326,7 @@ func generateWords(n, solutionLen int, indices []int, h hash.Hash) ([]int, error
 	return words, nil
 }
 
-func validateSolution(n, k int, person, header []byte, solutionIndices []int) (bool, error) {
+func ValidateSolution(n, k int, person, header []byte, solutionIndices []int) (bool, error) {
 	if n < 2 {
 		return false, errBadArg
 	}
@@ -148,6 +379,16 @@ func validateSolution(n, k int, person, header []byte, solutionIndices []int) (b
 	}
 
 	// check XOR conditions
-
+	bitsPerStage := n / (k + 1)
+	for s := 0; s < k; s++ {
+		d := 1 << uint(s)
+		for i := 0; i < solutionLen; i += 2 * d {
+			w := words[i] ^ words[i+d]
+			if (w >> uint(n-(s+1)*bitsPerStage)) != 0 {
+				return false, nil
+			}
+			words[i] = w
+		}
+	}
 	return words[0] == 0, nil
 }
