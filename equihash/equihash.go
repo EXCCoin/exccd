@@ -9,8 +9,6 @@ import (
 	"log"
 	"sort"
 
-	"github.com/golang/glog"
-
 	"golang.org/x/crypto/blake2b"
 )
 
@@ -885,7 +883,6 @@ func Solve(n, k, d int) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	glog.Info(keys)
 	hashLen := 0 //TODO(jaupe), pass to processHashes
 	keys, err = xorHashes(keys, n, k)
 	if err != nil {
