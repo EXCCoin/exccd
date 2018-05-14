@@ -17,6 +17,8 @@ const (
 	wordMask = (1 << wordSize) - 1
 	byteMask = 0xFF
 	hashSize = 64
+	N        = 96
+	K        = 5
 )
 
 var (
@@ -35,12 +37,13 @@ var (
 	errLenZero      = errors.New("len is 0")
 	errNil          = errors.New("unexpected nil pointer")
 	errEmptySlice   = errors.New("empty slice")
-	header          = []byte("excc")
+	personPrefix    = []byte("excc")
+	person          = exccPerson(N, K)
 )
 
 func exccPerson(n, k int) []byte {
 	nb, kb := writeUint32(uint32(n)), writeUint32(uint32(k))
-	return append(header, append(nb, kb...)...)
+	return append(personPrefix, append(nb, kb...)...)
 }
 
 func bytesCmp(x, y []byte) bool {
@@ -160,6 +163,10 @@ func concatIndices(x, y []int) []int {
 		return append(x, y...)
 	}
 	return append(y, x...)
+}
+
+func sortHashKeys(k []hashKey) {
+	sort.Sort(hashKeys(k))
 }
 
 func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
@@ -339,6 +346,36 @@ func generateWord(n int, h hash.Hash, idx int) (int, error) {
 	return word, nil
 }
 
+func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
+	if bitLen < 8 && wordSize < 7+bitLen {
+		return nil, errBadArg
+	}
+	inWidth := (bitLen+7)/8 + bytePad
+	if outLen != bitLen*len(in)/(8*inWidth) {
+		return nil, errBadArg
+	}
+	out := make([]byte, outLen)
+	bitLenMask, accBits, accVal, j := (1<<uint(bitLen))-1, 0, 0, 0
+
+	for i := 0; i < outLen; i++ {
+		if accBits < 8 {
+			accVal = ((accVal << uint(bitLen)) & wordMask) | int(in[j])
+			for x := bytePad; x < inWidth; x++ {
+				v := int(in[j+x])
+				a := (bitLenMask >> uint(8*(inWidth-x-1))) & 0xFF
+				b := v & a << uint(8*(inWidth-x-1))
+				accVal = accVal | int(b)
+			}
+			j += inWidth
+			accBits += bitLen
+		}
+		accBits -= 8
+		out[i] = byte((accVal << uint(accBits)) & 0xFF)
+	}
+
+	return out, nil
+}
+
 func generateWords(n, solutionLen int, indices []int, h hash.Hash) ([]int, error) {
 	words := []int{}
 	for i := 0; i < solutionLen; i++ {
@@ -349,6 +386,17 @@ func generateWords(n, solutionLen int, indices []int, h hash.Hash) ([]int, error
 		words = append(words, word)
 	}
 	return words, nil
+}
+
+func minSlices(a, b []int) ([]int, []int) {
+	if len(a) <= len(b) {
+		return a, b
+	}
+	return b, a
+}
+
+func joinBytes(a, b []byte) []byte {
+	return append(a, b...)
 }
 
 func ValidateSolution(n, k int, person, header []byte, solutionIndices []int) (bool, error) {
@@ -424,8 +472,8 @@ func ValidateSolution(n, k int, person, header []byte, solutionIndices []int) (b
 	return words[0] == 0, nil
 }
 
-func newBlakeHash(n, k int, prevHash []byte) (hash.Hash, error) {
-	return nil, errors.New("nyi")
+func newBlake2bHash(n, k int, prevHash []byte) (hash.Hash, error) {
+	return newHash(n, k)
 }
 
 type MiningResult struct {
@@ -488,12 +536,17 @@ func writeHashBytes(h hash.Hash, b []byte) error {
 	return nil
 }
 
-func newHash() (hash.Hash, error) {
-	return nil, errors.New("nyi")
+func newHash(n, k int) (hash.Hash, error) {
+	h, err := blake2b.New(&blake2b.Config{
+		Key:    nil,
+		Person: exccPerson(n, k),
+		Size:   uint8(hashDigestSize(n)),
+	})
+	return h, err
 }
 
-func blockHash(prevHash []byte, nonce int, soln []int) ([]byte, error) {
-	h, err := newHash()
+func blockHash(n, k int, prevHash []byte, nonce int, soln []int) ([]byte, error) {
+	h, err := newHash(n, k)
 	if err != nil {
 		return nil, err
 	}
@@ -510,7 +563,7 @@ func blockHash(prevHash []byte, nonce int, soln []int) ([]byte, error) {
 	}
 	hb := hashDigest(h)
 	// double hash
-	h, err = newHash()
+	h, err = newHash(n, k)
 	if err != nil {
 		return nil, err
 	}
@@ -521,13 +574,17 @@ func blockHash(prevHash []byte, nonce int, soln []int) ([]byte, error) {
 	return hashDigest(h), nil
 }
 
-func difficultyFilter(prevHash []byte, nonce int, soln []int, d int) bool {
-	h, err := blockHash(prevHash, nonce, soln)
+func difficultyFilter(n, k int, prevHash []byte, nonce int, soln []int, d int) bool {
+	h, err := blockHash(n, k, prevHash, nonce, soln)
 	if err != nil {
 		return false
 	}
 	count := countZeros(h)
 	return d < count
+}
+
+func hashDigestSize(n int) int {
+	return (512 / n) * n / 8
 }
 
 func Mine(n, k, d int) (MiningResult, error) {
@@ -540,8 +597,8 @@ func Mine(n, k, d int) (MiningResult, error) {
 	prevHash := hashDigest(digest)
 	var x []int
 	nonce := 0
-	for {
-		digest, err = newBlakeHash(n, k, prevHash)
+	for x == nil {
+		digest, err = newBlake2bHash(n, k, prevHash)
 		if err != nil {
 			return MiningResult{}, err
 		}
@@ -558,7 +615,7 @@ func Mine(n, k, d int) (MiningResult, error) {
 				return MiningResult{}, err
 			}
 			for _, soln := range solns {
-				if difficultyFilter(prevHash, nonce, soln, d) {
+				if difficultyFilter(n, k, prevHash, nonce, soln, d) {
 					x = soln
 					break
 				}
@@ -569,7 +626,7 @@ func Mine(n, k, d int) (MiningResult, error) {
 			nonce++
 		}
 	}
-	currHash, err := blockHash(prevHash, nonce, x)
+	currHash, err := blockHash(n, k, prevHash, nonce, x)
 	if err != nil {
 		return MiningResult{}, err
 	}
