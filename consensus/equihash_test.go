@@ -385,19 +385,6 @@ func TestEquihashVerification(t *testing.T) {
 	t.FailNow()
 }
 
-/*
-func testEquihash(t *testing.T, p miningParams) {
-	nonce := 1
-	hb := testHashBuilder(genesisHash(), nonce)
-	solutions, err := equihash(hb, N, K)
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-	err = solutionsEq(solutions, p.solutions)
-}
-*/
-
 func solutionsEq(x, y [][]int) error {
 	if len(x) != len(y) {
 		return errors.New("incorrect solutions lengths")
@@ -415,137 +402,6 @@ func solutionEq(x, y []int) error {
 	return intSliceEq(x, y)
 }
 
-/*
-func TestNewHashBuilder(t *testing.T) {
-	n, k, prefix := 20, 9, []byte{0, 1, 2, 3}
-	hb := newHashBuilder(n, k, prefix)
-	if n != hb.n {
-		t.Errorf("%v != %v\n", n, hb.n)
-	}
-	if k != hb.k {
-		t.Errorf("%v != %v\n", k, hb.k)
-	}
-	err := byteSliceEq(prefix, hb.prefix)
-	if err != nil {
-		t.Error(err)
-	}
-}
-
-func TestNewHashBuilder_NilPrefix(t *testing.T) {
-	n, k := 20, 9
-	hb := newHashBuilder(n, k, nil)
-	if n != hb.n {
-		t.Errorf("%v != %v\n", n, hb.n)
-	}
-	if k != hb.k {
-		t.Errorf("%v != %v\n", k, hb.k)
-	}
-	if nil != hb.prefix {
-		t.Errorf("prefix is not nil")
-	}
-}
-*/
-
-/*
-func buildHash(n, k, nonce int) (hash.Hash, error) {
-	h, err := newKeyedHash(n, k)
-	if err != nil {
-		return nil, err
-	}
-	err = writeHashU32(h, uint32(nonce))
-	if err != nil {
-		return nil, err
-	}
-	return h, nil
-}
-
-func buildHashBuilder(n, k, nonce int) hashBuilder {
-	hb := newHashBuilder(n, k, nil)
-	hb.writeNonce(nonce)
-	return hb
-}
-
-func TestHashBuilder_Digest(t *testing.T) {
-	nonce := 1
-	h, err := buildHash(N, K, nonce)
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-	hb := buildHashBuilder(N, K, nonce)
-	actDigest := hashDigest(h)
-	expDigest, err := hb.digest()
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-	err = byteSliceEq(actDigest, expDigest)
-	if err != nil {
-		t.Error("digests are not same")
-		t.Error(err)
-	}
-}
-
-func TestHashBuilder_BadDigest(t *testing.T) {
-	h, err := buildHash(N, K, 0)
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-	hb := buildHashBuilder(N, K, 1)
-	actDigest := hashDigest(h)
-	expDigest, err := hb.digest()
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-	err = byteSliceEq(actDigest, expDigest)
-	if err == nil {
-		t.Error("digests should not be same")
-	}
-}
-
-func testHashBuilder(prefix []byte, nonce int) hashBuilder {
-	hb := newHashBuilder(N, K, prefix)
-	hb.writeNonce(nonce)
-	return hb
-}
-
-func TestHashBuilder_WriteNonce(t *testing.T) {
-	nonce := 1
-	hb := testHashBuilder(nil, nonce)
-	hb.writeNonce(nonce)
-	exp := writeU32(uint32(nonce))
-	err := byteSliceEq(hb.prefix, exp)
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-}
-
-func TestHashBuilder_WriteXi(t *testing.T) {
-	nonce := 1
-	hb := testHashBuilder(nil, nonce)
-	xi := 1
-	hb.writeHashXi(xi)
-	exp := joinBytes(u32b(nonce), u32b(xi))
-	err := byteSliceEq(hb.prefix, exp)
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-}
-*/
-/*
-func TestCopyByteSlice(t *testing.T) {
-	a := []byte{1, 2, 3, 4}
-	b := copyByteSlice(a)
-	err := byteSliceEq(a, b)
-	if err != nil {
-		t.Error(err)
-	}
-}
-*/
 func TestExccPerson(t *testing.T) {
 	p := exccPerson(N, K)
 	n := len(personPrefix)
@@ -581,59 +437,6 @@ func TestPutU32(t *testing.T) {
 	}
 }
 
-/*
-func TestHashBuffer(t *testing.T) {
-	buf := hashBuffer(N, K)
-	n := hashLen(N, K)
-	if n != len(buf) {
-		t.Errorf("%v != %v\n", len(buf), n)
-	}
-	for _, v := range buf {
-		if v != 0 {
-			t.Errorf("v == %v\n", v)
-		}
-	}
-}
-
-func TestHashSlice(t *testing.T) {
-	buf := hashBuffer(N, K)
-	s := hashSlice(buf, 0, N)
-	if len(s) != N/8 {
-		t.Errorf("len(s) == %v", len(s))
-	}
-}
-
-func TestHashSlice_Nil(t *testing.T) {
-	s := hashSlice(nil, 0, N)
-	if s != nil {
-		t.Errorf("slice should be empty")
-	}
-}
-
-func TestFindCollision_EmptyKeys(t *testing.T) {
-	d, hashLen := uint(1), 32
-	_, err := findCollision(nil, d, hashLen)
-	if err == nil {
-		t.Error("expected err")
-	}
-	keys := []hashKey{}
-	_, err = findCollision(keys, d, hashLen)
-	if err == nil {
-		t.Error("expected err")
-	}
-}
-
-func TestXorHashes_EmptyKeys(t *testing.T) {
-	_, err := xorHashes(nil, N, K)
-	if err == nil {
-		t.Error("expected err")
-	}
-	_, err = xorHashes([]hashKey{}, N, K)
-	if err == nil {
-		t.Error("expected err")
-	}
-}
-*/
 func testHashKeys(n int) []hashKey {
 	keys := make([]hashKey, 0, n)
 	hashLen := 4
@@ -685,5 +488,23 @@ func TestCopyHash(t *testing.T) {
 	act := hashDigest(h)
 	if bytes.Compare(exp, act) != 0 {
 		t.Error("digests are not equal")
+	}
+}
+
+func testCompressArray(t *testing.T, p expandCompressParams) error {
+	return errors.New("nyi")
+	/*
+		exp, outLen, bitLen, bytePad := decodeHex(p.out), len(p.out), p.bitLen, p.bytePad
+		act, err := compressArray(exp, outLen, bitLen, bytePad)
+	*/
+
+}
+
+func TestCompressArray(t *testing.T) {
+	for _, p := range expandCompressTests {
+		err := testCompressArray(t, p)
+		if err != nil {
+			t.Error(err)
+		}
 	}
 }
