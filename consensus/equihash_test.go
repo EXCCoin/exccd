@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
-	"hash"
 	"math"
 	"math/rand"
 	"strconv"
@@ -36,6 +35,8 @@ var (
 			},
 		},
 	}
+	n = N
+	k = K
 )
 
 type expandCompressParams struct {
@@ -126,18 +127,18 @@ func TestExpandCompressArrays(t *testing.T) {
 	}
 }
 func TestDistinctIndices(t *testing.T) {
-	a := []byte{0, 1, 2, 3, 4, 5}
-	b := []byte{0, 1, 2, 3, 4, 5}
+	a := []int{0, 1, 2, 3, 4, 5}
+	b := []int{0, 1, 2, 3, 4, 5}
 	r := distinctIndices(a, b)
 	if r {
 		t.Error()
 	}
-	b = []byte{6, 7, 8, 9, 10}
+	b = []int{6, 7, 8, 9, 10}
 	r = distinctIndices(a, b)
 	if !r {
 		t.Error()
 	}
-	a = []byte{7, 8, 9, 10, 11}
+	a = []int{7, 8, 9, 10, 11}
 	r = distinctIndices(a, b)
 	if r {
 		t.Error()
@@ -146,41 +147,29 @@ func TestDistinctIndices(t *testing.T) {
 
 func TestHasCollision(t *testing.T) {
 	h := make([]byte, 32)
-	r, err := hasCollision(h, h, 1, 0)
-	if err != nil {
-		t.Error(err)
-	}
+	r := hasCollision(h, h, 1, 0)
 	if r == false {
 		t.Fail()
 	}
 }
 func TestHasCollision_AStartPos(t *testing.T) {
 	ha, hb := []byte{}, []byte{1, 2, 3, 4, 5}
-	r, err := hasCollision(ha, hb, 1, 0)
+	r := hasCollision(ha, hb, 1, 0)
 	if r {
 		t.Errorf("r = %v\n", r)
-	}
-	if err == nil {
-		t.Error(err)
 	}
 }
 func TestHasCollision_BStartPos(t *testing.T) {
 	hb, ha := []byte{}, []byte{1, 2, 3, 4, 5}
-	r, err := hasCollision(ha, hb, 1, 0)
+	r := hasCollision(ha, hb, 1, 0)
 	if r {
 		t.Errorf("r = %v\n", r)
-	}
-	if err == nil {
-		t.Error(err)
 	}
 }
 func TestHasCollision_HashLen(t *testing.T) {
 	hb, ha := []byte{}, []byte{1, 2, 3, 4, 5}
-	r, err := hasCollision(ha, hb, 1, 0)
+	r := hasCollision(ha, hb, 1, 0)
 	if r {
-		t.Fail()
-	}
-	if err == nil {
 		t.Fail()
 	}
 }
@@ -215,40 +204,40 @@ func TestCollisionLen(t *testing.T) {
 	}
 }
 func TestMinSlices_A(t *testing.T) {
-	a := make([]byte, 1, 5)
-	b := make([]byte, 1, 10)
+	a := make([]int, 1, 5)
+	b := make([]int, 1, 10)
 	small, large := minSlices(a, b)
-	err := byteSliceEq(a, small)
+	err := intSliceEq(a, small)
 	if err != nil {
 		t.Error(err)
 	}
-	err = byteSliceEq(b, large)
+	err = intSliceEq(b, large)
 	if err != nil {
 		t.Error(err)
 	}
 }
 func TestMinSlices_B(t *testing.T) {
-	a := make([]byte, 1, 10)
-	b := make([]byte, 1, 5)
+	a := make([]int, 1, 10)
+	b := make([]int, 1, 5)
 	small, large := minSlices(a, b)
-	err := byteSliceEq(b, small)
+	err := intSliceEq(b, small)
 	if err != nil {
 		t.Error(err)
 	}
-	err = byteSliceEq(a, large)
+	err = intSliceEq(a, large)
 	if err != nil {
 		t.Error(err)
 	}
 }
 func TestMinSlices_Eq(t *testing.T) {
-	a := make([]byte, 1, 5)
-	b := make([]byte, 1, 5)
+	a := make([]int, 1, 5)
+	b := make([]int, 1, 5)
 	small, large := minSlices(a, b)
-	err := byteSliceEq(a, small)
+	err := intSliceEq(a, small)
 	if err != nil {
 		t.Error(err)
 	}
-	err = byteSliceEq(b, large)
+	err = intSliceEq(b, large)
 	if err != nil {
 		t.Error(err)
 	}
@@ -384,35 +373,12 @@ func TestJoinBytes(t *testing.T) {
 		t.Error(err)
 	}
 }
-func TestWriteParams(t *testing.T) {
-	n, k := 64, 32
-	b := writeParams(n, k)
-	exp := []byte{byte(n), 0, 0, 0, byte(k), 0, 0, 0}
-	err := byteSliceEq(b, exp)
-	if err != nil {
-		t.Error(err)
-	}
-}
 
 func hashKeyEq(x, y hashKey) bool {
-	if bytes.Compare(x.digest, y.digest) != 0 {
+	if bytes.Compare(x.hash, y.hash) != 0 {
 		return false
 	}
 	return true
-}
-
-func TestPopBack(t *testing.T) {
-	n := 8
-	k := testHashKeys(n)
-	exp := k[len(k)-1]
-	k2, act := popBack(k)
-	if !hashKeyEq(exp, act) {
-		t.Error("hash keys are not eq")
-		t.FailNow()
-	}
-	if len(k2) != n-1 {
-		t.FailNow()
-	}
 }
 
 func TestEquihashVerification(t *testing.T) {
@@ -449,6 +415,7 @@ func solutionEq(x, y []int) error {
 	return intSliceEq(x, y)
 }
 
+/*
 func TestNewHashBuilder(t *testing.T) {
 	n, k, prefix := 20, 9, []byte{0, 1, 2, 3}
 	hb := newHashBuilder(n, k, prefix)
@@ -477,7 +444,9 @@ func TestNewHashBuilder_NilPrefix(t *testing.T) {
 		t.Errorf("prefix is not nil")
 	}
 }
+*/
 
+/*
 func buildHash(n, k, nonce int) (hash.Hash, error) {
 	h, err := newKeyedHash(n, k)
 	if err != nil {
@@ -566,6 +535,8 @@ func TestHashBuilder_WriteXi(t *testing.T) {
 		t.FailNow()
 	}
 }
+*/
+/*
 func TestCopyByteSlice(t *testing.T) {
 	a := []byte{1, 2, 3, 4}
 	b := copyByteSlice(a)
@@ -574,6 +545,7 @@ func TestCopyByteSlice(t *testing.T) {
 		t.Error(err)
 	}
 }
+*/
 func TestExccPerson(t *testing.T) {
 	p := exccPerson(N, K)
 	n := len(personPrefix)
@@ -609,6 +581,7 @@ func TestPutU32(t *testing.T) {
 	}
 }
 
+/*
 func TestHashBuffer(t *testing.T) {
 	buf := hashBuffer(N, K)
 	n := hashLen(N, K)
@@ -649,6 +622,7 @@ func TestFindCollision_EmptyKeys(t *testing.T) {
 		t.Error("expected err")
 	}
 }
+
 func TestXorHashes_EmptyKeys(t *testing.T) {
 	_, err := xorHashes(nil, N, K)
 	if err == nil {
@@ -659,7 +633,7 @@ func TestXorHashes_EmptyKeys(t *testing.T) {
 		t.Error("expected err")
 	}
 }
-
+*/
 func testHashKeys(n int) []hashKey {
 	keys := make([]hashKey, 0, n)
 	hashLen := 4
@@ -669,7 +643,7 @@ func testHashKeys(n int) []hashKey {
 			v := rand.Intn(math.MaxInt8)
 			digest = append(digest, byte(v))
 		}
-		keys = append(keys, hashKey{digest, i})
+		keys = append(keys, hashKey{digest, []int{i}})
 	}
 	return keys
 }
@@ -679,7 +653,7 @@ func TestSortHashKeys(t *testing.T) {
 	sortHashKeys(keys)
 	for i := 0; i < len(keys)-1; i++ {
 		for j := i + 1; j < len(keys); j++ {
-			x, y := keys[i].digest, keys[j].digest
+			x, y := keys[i].hash, keys[j].hash
 			cmp := bytes.Compare(x, y)
 			if cmp != -1 {
 				t.Errorf("%v >= %v\n", x, y)
@@ -696,23 +670,8 @@ func randDigest(n int) []byte {
 	return b
 }
 
-func TestBytesCompare(t *testing.T) {
-	n := 6
-	x, y := randDigest(n), randDigest(n)
-	r := bytesCompare(x, y)
-	if r {
-		if bytes.Compare(x, y) >= 0 {
-			t.Error("incorrect comparison")
-		}
-	} else {
-		if bytes.Compare(x, y) < 0 {
-			t.Error("incorrect comparison")
-		}
-	}
-}
-
 func TestCopyHash(t *testing.T) {
-	h, err := newHash()
+	h, err := newHash(n, k)
 	if err != nil {
 		t.Error(err)
 	}
@@ -721,6 +680,10 @@ func TestCopyHash(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	hCopy := copyHash(h)
-
+	exp := hashDigest(h)
+	h = copyHash(h)
+	act := hashDigest(h)
+	if bytes.Compare(exp, act) != 0 {
+		t.Error("digests are not equal")
+	}
 }
