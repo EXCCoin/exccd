@@ -2,6 +2,7 @@ package consensus
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"errors"
 	"hash"
@@ -15,12 +16,32 @@ const (
 	wordSize = 32
 	wordMask = (1 << wordSize) - 1
 	byteMask = 0xFF
+	hashSize = 64
 )
 
 var (
-	errBadArg   = errors.New("invalid argument")
-	errWriteLen = errors.New("didn't write full len")
+	errBadArg       = errors.New("invalid argument")
+	errWriteLen     = errors.New("didn't write full len")
+	errLen          = errors.New("slices not same len")
+	errBitLen       = errors.New("bit len < 8")
+	errOutWidth     = errors.New("incorrect outwidth size")
+	errKLarge       = errors.New("k should be less than n")
+	errCollisionLen = errors.New("collision length too big")
+	errHashLen      = errors.New("hash len is too small")
+	errHashStartPos = errors.New("hash len < start pos")
+	errHashEndPos   = errors.New("hash len < end pos")
+	errNonce        = errors.New("no valid nonce")
+	errStartEndEq   = errors.New("start and end positions equal")
+	errLenZero      = errors.New("len is 0")
+	errNil          = errors.New("unexpected nil pointer")
+	errEmptySlice   = errors.New("empty slice")
+	header          = []byte("excc")
 )
+
+func exccPerson(n, k int) []byte {
+	nb, kb := writeUint32(uint32(n)), writeUint32(uint32(k))
+	return append(header, append(nb, kb...)...)
+}
 
 func bytesCmp(x, y []byte) bool {
 	return bytes.Compare(x, y) < 0
@@ -353,13 +374,18 @@ func ValidateSolution(n, k int, person, header []byte, solutionIndices []int) (b
 		return false, nil
 	}
 
-	bytesPerWord := n / 8
+	//bytesPerWord := n / 8
 	wordsPerHash := 512 / n
-	outLen := wordsPerHash * bytesPerWord
+	//outLen := wordsPerHash * bytesPerWord
 
 	// create hash digest and words
-	c := blake2b.Config()
-	digest, err := blake2b.New(c)
+	digest, err := blake2b.New(&blake2b.Config{
+		Key:    nil,
+		Person: exccPerson(n, k),
+		Salt:   nil,
+		Size:   uint8(wordsPerHash),
+		Tree:   nil,
+	})
 	if err != nil {
 		return false, err
 	}
@@ -396,4 +422,156 @@ func ValidateSolution(n, k int, person, header []byte, solutionIndices []int) (b
 		}
 	}
 	return words[0] == 0, nil
+}
+
+func newBlakeHash(n, k int, prevHash []byte) (hash.Hash, error) {
+	return nil, errors.New("nyi")
+}
+
+type MiningResult struct {
+	previousHash []byte
+	currHash     []byte
+	nonce        int
+}
+
+func validateParams(n, k int) error {
+	if k >= n {
+		return errKLarge
+	}
+	if collisionLen(n, k)+1 >= 32 {
+		return errCollisionLen
+	}
+	return nil
+}
+
+func collisionLen(n, k int) int {
+	return n / (k + 1)
+}
+
+func hashNonce(h hash.Hash, nonce int) error {
+	for i := 0; i < 8; i++ {
+		err := writeHashU32(h, uint32(i))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func putU32(b []byte, v uint32) {
+	binary.LittleEndian.PutUint32(b, v)
+}
+
+func writeU32(v uint32) []byte {
+	b := make([]byte, 4)
+	putU32(b, v)
+	return b
+}
+
+//TODO(jaupe) optimize function by not making a deep copy
+func writeHashU32(h hash.Hash, v uint32) error {
+	return writeHashBytes(h, writeU32(v))
+}
+
+func writeHashStr(h hash.Hash, s string) error {
+	return writeHashBytes(h, []byte(s))
+}
+
+func writeHashBytes(h hash.Hash, b []byte) error {
+	n, err := h.Write(b)
+	if err != nil {
+		return err
+	}
+	if n != len(b) {
+		return errWriteLen
+	}
+	return nil
+}
+
+func newHash() (hash.Hash, error) {
+	return nil, errors.New("nyi")
+}
+
+func blockHash(prevHash []byte, nonce int, soln []int) ([]byte, error) {
+	h, err := newHash()
+	if err != nil {
+		return nil, err
+	}
+	err = writeHashBytes(h, prevHash)
+	if err != nil {
+		return nil, err
+	}
+	hashNonce(h, nonce)
+	for _, xi := range soln {
+		err := hashXi(h, xi)
+		if err != nil {
+			return nil, err
+		}
+	}
+	hb := hashDigest(h)
+	// double hash
+	h, err = newHash()
+	if err != nil {
+		return nil, err
+	}
+	err = writeHashBytes(h, hb)
+	if err != nil {
+		return nil, err
+	}
+	return hashDigest(h), nil
+}
+
+func difficultyFilter(prevHash []byte, nonce int, soln []int, d int) bool {
+	h, err := blockHash(prevHash, nonce, soln)
+	if err != nil {
+		return false
+	}
+	count := countZeros(h)
+	return d < count
+}
+
+func Mine(n, k, d int) (MiningResult, error) {
+	err := validateParams(n, k)
+	if err != nil {
+		return MiningResult{}, err
+	}
+
+	digest := sha256.New()
+	prevHash := hashDigest(digest)
+	var x []int
+	nonce := 0
+	for {
+		digest, err = newBlakeHash(n, k, prevHash)
+		if err != nil {
+			return MiningResult{}, err
+		}
+		nonce = 0
+
+		for {
+			currDigest := copyHash(digest)
+			err = hashNonce(currDigest, nonce)
+			if err != nil {
+				return MiningResult{}, err
+			}
+			solns, err := gbp(currDigest, n, k)
+			if err != nil {
+				return MiningResult{}, err
+			}
+			for _, soln := range solns {
+				if difficultyFilter(prevHash, nonce, soln, d) {
+					x = soln
+					break
+				}
+			}
+			if x != nil {
+				break
+			}
+			nonce++
+		}
+	}
+	currHash, err := blockHash(prevHash, nonce, x)
+	if err != nil {
+		return MiningResult{}, err
+	}
+	return MiningResult{prevHash, currHash, nonce}, nil
 }
