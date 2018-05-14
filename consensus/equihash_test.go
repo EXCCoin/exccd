@@ -9,8 +9,6 @@ import (
 	"math/rand"
 	"strconv"
 	"testing"
-
-	"golang.org/x/crypto/blake2b"
 )
 
 const (
@@ -714,8 +712,15 @@ func TestBytesCompare(t *testing.T) {
 }
 
 func TestCopyHash(t *testing.T) {
-	h, err := blake2b.New(512/N, nil)
+	h, err := newHash()
 	if err != nil {
 		t.Error(err)
 	}
+	b := []byte{1, 2, 3, 4}
+	err = writeHashBytes(h, b)
+	if err != nil {
+		t.Error(err)
+	}
+	hCopy := copyHash(h)
+
 }
