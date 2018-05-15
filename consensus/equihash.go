@@ -37,13 +37,16 @@ var (
 	errLenZero      = errors.New("len is 0")
 	errNil          = errors.New("unexpected nil pointer")
 	errEmptySlice   = errors.New("empty slice")
-	personPrefix    = []byte("excc")
-	person          = exccPerson(N, K)
+	exccPrefix      = "excc"
 )
 
-func exccPerson(n, k int) []byte {
+func person(prefix string, n, k int) []byte {
 	nb, kb := writeUint32(uint32(n)), writeUint32(uint32(k))
-	return append(personPrefix, append(nb, kb...)...)
+	return append([]byte(prefix), append(nb, kb...)...)
+}
+
+func exccPerson(n, k int) []byte {
+	return person(exccPrefix, n, k)
 }
 
 func bytesCmp(x, y []byte) bool {
@@ -73,12 +76,15 @@ func hashDigest(h hash.Hash) []byte {
 }
 
 func expandArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
-	if bitLen < 8 && wordSize < 7+bitLen {
-		return nil, errBadArg
+	if bitLen < 8 {
+		return nil, errors.New("bitLen < 8")
+	}
+	if wordSize < 7+bitLen {
+		return nil, errors.New("wordSize < 7+bitLen")
 	}
 	outWidth := (bitLen+7)/8 + bytePad
 	if outLen != 8*outWidth*len(in)/bitLen {
-		return nil, errBadArg
+		return nil, errors.New("outLen != 8*outWidth*len(in)/bitLen")
 	}
 
 	out, bitLenMask := make([]byte, outLen), (1<<uint(bitLen))-1
@@ -185,12 +191,12 @@ func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 			if err != nil {
 				return nil, err
 			}
-			tmpHash = currDigest.Sum(nil)
+			tmpHash = hashDigest(currDigest)
 		}
 		d := tmpHash[r*n/8 : (r+1)*n/8]
 		expanded, err := expandArray(d, hashLength, collisionLength, 0)
 		if err != nil {
-			return nil, err
+			return nil, errors.New("expandArray err: " + err.Error() + "\n")
 		}
 		X = append(X, hashKey{expanded, []int{i}})
 	}
@@ -347,12 +353,15 @@ func generateWord(n int, h hash.Hash, idx int) (int, error) {
 }
 
 func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
-	if bitLen < 8 && wordSize < 7+bitLen {
-		return nil, errBadArg
+	if bitLen < 8 {
+		return nil, errors.New("bitLen < 8")
+	}
+	if wordSize < 7+bitLen {
+		return nil, errors.New("wordSize < 7+bitLen")
 	}
 	inWidth := (bitLen+7)/8 + bytePad
 	if outLen != bitLen*len(in)/(8*inWidth) {
-		return nil, errBadArg
+		return nil, errors.New("bitLen*len(in)/(8*inWidth)")
 	}
 	out := make([]byte, outLen)
 	bitLenMask, accBits, accVal, j := (1<<uint(bitLen))-1, 0, 0, 0
