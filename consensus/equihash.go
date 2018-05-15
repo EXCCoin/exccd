@@ -401,16 +401,16 @@ func joinBytes(a, b []byte) []byte {
 
 func ValidateSolution(n, k int, person, header []byte, solutionIndices []int) (bool, error) {
 	if n < 2 {
-		return false, errBadArg
+		return false, errors.New("n < 2")
 	}
-	if !(k >= 3) {
-		return false, errBadArg
+	if k < 3 {
+		return false, errors.New("k < 3")
 	}
 	if n%8 != 0 {
-		return false, errBadArg
+		return false, errors.New("n%8 != 0")
 	}
 	if n%(k+1) != 0 {
-		return false, errBadArg
+		return false, errors.New("n%(k+1) != 0")
 	}
 
 	solutionLen := pow(k)

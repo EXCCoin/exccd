@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
+	"hash"
 	"math"
 	"math/rand"
 	"strconv"
@@ -16,14 +17,14 @@ const (
 
 var (
 	i                   = []byte("block header")
-	expandCompressTests = []expandCompressParams{
-		{"ffffffffffffffffffffff", "07ff07ff07ff07ff07ff07ff07ff07ff", 11, 0},
-		{"aaaaad55556aaaab55555aaaaad55556aaaab55555", "155555155555155555155555155555155555155555155555", 21, 0},
-		{"000220000a7ffffe00123022b38226ac19bdf23456", "0000440000291fffff0001230045670089ab00cdef123456", 21, 0},
-		{"cccf333cccf333cccf333cccf333cccf333cccf333cccf333cccf333", "3333333333333333333333333333333333333333333333333333333333333333", 14, 0},
-		{"ffffffffffffffffffffff", "000007ff000007ff000007ff000007ff000007ff000007ff000007ff000007ff", 11, 2},
+	expandCompressTests = []expandCompressTest{
+		{decodeHex("ffffffffffffffffffffff"), decodeHex("07ff07ff07ff07ff07ff07ff07ff07ff"), 11, 0},
+		{decodeHex("aaaaad55556aaaab55555aaaaad55556aaaab55555"), decodeHex("155555155555155555155555155555155555155555155555"), 21, 0},
+		{decodeHex("000220000a7ffffe00123022b38226ac19bdf23456"), decodeHex("0000440000291fffff0001230045670089ab00cdef123456"), 21, 0},
+		{decodeHex("cccf333cccf333cccf333cccf333cccf333cccf333cccf333cccf333"), decodeHex("3333333333333333333333333333333333333333333333333333333333333333"), 14, 0},
+		{decodeHex("ffffffffffffffffffffff"), decodeHex("000007ff000007ff000007ff000007ff000007ff000007ff000007ff000007ff"), 11, 2},
 	}
-	miningTests = []miningParams{
+	miningTests = []miningTest{
 		{
 			96, 5, i, 0,
 			[][]int{
@@ -39,14 +40,14 @@ var (
 	k = K
 )
 
-type expandCompressParams struct {
-	in      string
-	out     string
-	bitLen  int
-	bytePad int
+type expandCompressTest struct {
+	compact  []byte
+	expanded []byte
+	bitLen   int
+	bytePad  int
 }
 
-type miningParams struct {
+type miningTest struct {
 	n         int
 	k         int
 	I         []byte
@@ -54,8 +55,54 @@ type miningParams struct {
 	solutions [][]int
 }
 
-func newMiningParams(n, k int, I []byte, nonce int, solns [][]int) miningParams {
-	return miningParams{n, k, I, nonce, solns}
+func createDigest(n, k, nonce int, I []byte) (hash.Hash, error) {
+	//bytesPerWord := n / 8
+	//wordsPerWord := 512 / n
+	return nil, nil
+}
+
+func (mt *miningTest) createDigest() (hash.Hash, error) {
+	h, err := newHash(mt.n, mt.k)
+	if err != nil {
+		return nil, err
+	}
+	err = writeHashU32(h, uint32(mt.nonce))
+	if err != nil {
+		return nil, err
+	}
+	return h, nil
+}
+
+func (mt *miningTest) header() []byte {
+	nonce := writeU32(uint32(mt.nonce))
+	tail := make([]byte, 28)
+	return append(mt.I, append(nonce, tail...)...)
+}
+
+func intSlicesCmp(a, b []int) bool {
+
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+func newMiningParams(n, k int, I []byte, nonce int, solns [][]int) miningTest {
+	return miningTest{n, k, I, nonce, solns}
 }
 
 func hashStr(hash []byte) string {
@@ -101,31 +148,32 @@ func decodeHex(s string) []byte {
 	return decoded
 }
 
-func testExpandCompressArray(t *testing.T, p expandCompressParams) {
-	inHex, outHex := decodeHex(p.in), decodeHex(p.out)
-	outLen := len(outHex)
-	expanded, err := expandArray(inHex, outLen, p.bitLen, p.bytePad)
+func testExpandCompressArray(t *testing.T, p expandCompressTest) {
+	outLen := len(p.expanded)
+	expanded, err := expandArray(p.compact, outLen, p.bitLen, p.bytePad)
 	if err != nil {
 		t.Error(err)
 	}
-	err = byteSliceEq(outHex, expanded)
+	err = byteSliceEq(expanded, p.expanded)
 	if err != nil {
 		t.Error(err)
 	}
-	compact, err := compressArray(expanded, len(inHex), p.bitLen, p.bytePad)
+	compact, err := compressArray(expanded, len(p.compact), p.bitLen, p.bytePad)
 	if err != nil {
 		t.Error(err)
 	}
-	err = byteSliceEq(inHex, compact)
+	err = byteSliceEq(p.compact, compact)
 	if err != nil {
 		t.Error(err)
 	}
 }
+
 func TestExpandCompressArrays(t *testing.T) {
 	for _, params := range expandCompressTests {
 		testExpandCompressArray(t, params)
 	}
 }
+
 func TestDistinctIndices(t *testing.T) {
 	a := []int{0, 1, 2, 3, 4, 5}
 	b := []int{0, 1, 2, 3, 4, 5}
@@ -147,11 +195,12 @@ func TestDistinctIndices(t *testing.T) {
 
 func TestHasCollision(t *testing.T) {
 	h := make([]byte, 32)
-	r := hasCollision(h, h, 1, 0)
+	r := hasCollision(h, h, 1, len(h))
 	if r == false {
 		t.Fail()
 	}
 }
+
 func TestHasCollision_AStartPos(t *testing.T) {
 	ha, hb := []byte{}, []byte{1, 2, 3, 4, 5}
 	r := hasCollision(ha, hb, 1, 0)
@@ -159,6 +208,7 @@ func TestHasCollision_AStartPos(t *testing.T) {
 		t.Errorf("r = %v\n", r)
 	}
 }
+
 func TestHasCollision_BStartPos(t *testing.T) {
 	hb, ha := []byte{}, []byte{1, 2, 3, 4, 5}
 	r := hasCollision(ha, hb, 1, 0)
@@ -166,6 +216,7 @@ func TestHasCollision_BStartPos(t *testing.T) {
 		t.Errorf("r = %v\n", r)
 	}
 }
+
 func TestHasCollision_HashLen(t *testing.T) {
 	hb, ha := []byte{}, []byte{1, 2, 3, 4, 5}
 	r := hasCollision(ha, hb, 1, 0)
@@ -173,6 +224,7 @@ func TestHasCollision_HashLen(t *testing.T) {
 		t.Fail()
 	}
 }
+
 func TestPow(t *testing.T) {
 	exp := 1
 	for i := 0; i < 64; i++ {
@@ -183,6 +235,7 @@ func TestPow(t *testing.T) {
 		exp *= 2
 	}
 }
+
 func TestBinPowInt_NegIndices(t *testing.T) {
 	for i := 0; i < 64; i++ {
 		k := -1 - i
@@ -191,6 +244,7 @@ func TestBinPowInt_NegIndices(t *testing.T) {
 		}
 	}
 }
+
 func TestCollisionLen(t *testing.T) {
 	n, k := 90, 2
 	r := collisionLen(n, k)
@@ -203,6 +257,7 @@ func TestCollisionLen(t *testing.T) {
 		t.Fail()
 	}
 }
+
 func TestMinSlices_A(t *testing.T) {
 	a := make([]int, 1, 5)
 	b := make([]int, 1, 10)
@@ -216,6 +271,7 @@ func TestMinSlices_A(t *testing.T) {
 		t.Error(err)
 	}
 }
+
 func TestMinSlices_B(t *testing.T) {
 	a := make([]int, 1, 10)
 	b := make([]int, 1, 5)
@@ -229,6 +285,7 @@ func TestMinSlices_B(t *testing.T) {
 		t.Error(err)
 	}
 }
+
 func TestMinSlices_Eq(t *testing.T) {
 	a := make([]int, 1, 5)
 	b := make([]int, 1, 5)
@@ -242,6 +299,7 @@ func TestMinSlices_Eq(t *testing.T) {
 		t.Error(err)
 	}
 }
+
 func TestValidateParams_ErrKTooLarge(t *testing.T) {
 	n, k := 200, 200
 	err := validateParams(n, k)
@@ -254,6 +312,7 @@ func TestValidateParams_ErrKTooLarge(t *testing.T) {
 		t.Fail()
 	}
 }
+
 func TestValidateParams_ErrCollision(t *testing.T) {
 	n, k := 200, 200
 	err := validateParams(n, k)
@@ -261,6 +320,7 @@ func TestValidateParams_ErrCollision(t *testing.T) {
 		t.Fail()
 	}
 }
+
 func TestValidateParams(t *testing.T) {
 	n, k := 200, 90
 	err := validateParams(n, k)
@@ -275,6 +335,7 @@ func testXorEmptySlice(t *testing.T, a, b []byte) {
 		t.Errorf("r should be empty")
 	}
 }
+
 func TestXor_EmptySlices(t *testing.T) {
 	a, b := []byte{1, 2, 3, 4, 5}, []byte{}
 	testXorEmptySlice(t, a, b)
@@ -283,6 +344,7 @@ func TestXor_EmptySlices(t *testing.T) {
 	a, b = []byte{}, []byte{}
 	testXorEmptySlice(t, a, b)
 }
+
 func TestXor_NilSlices(t *testing.T) {
 	a := []byte{1, 2, 3, 4, 5}
 	var b []byte
@@ -301,6 +363,7 @@ func testXor(t *testing.T, a, b, exp []byte) {
 		t.Error(err)
 	}
 }
+
 func TestXor_Pass(t *testing.T) {
 	a, b := []byte{0, 1, 0, 1, 0, 1}, []byte{1, 0, 1, 0, 1, 0}
 	exp := []byte{1, 1, 1, 1, 1, 1}
@@ -315,6 +378,7 @@ func TestXor_Pass(t *testing.T) {
 	a, b = b, a
 	testXor(t, a, b, exp)
 }
+
 func TestXor_Fail(t *testing.T) {
 	a, b := []byte{0, 1, 0, 1}, []byte{0, 1, 0, 1}
 	exp := []byte{0, 0, 0, 0}
@@ -381,10 +445,6 @@ func hashKeyEq(x, y hashKey) bool {
 	return true
 }
 
-func TestEquihashVerification(t *testing.T) {
-	t.FailNow()
-}
-
 func solutionsEq(x, y [][]int) error {
 	if len(x) != len(y) {
 		return errors.New("incorrect solutions lengths")
@@ -402,7 +462,7 @@ func solutionEq(x, y []int) error {
 	return intSliceEq(x, y)
 }
 
-func TestExccPerson(t *testing.T) {
+func TestExccPerson_2(t *testing.T) {
 	p := exccPerson(N, K)
 	n := len(personPrefix)
 	err := byteSliceEq(p[:n], personPrefix)
@@ -421,6 +481,7 @@ func TestExccPerson(t *testing.T) {
 		t.FailNow()
 	}
 }
+
 func TestWriteU32(t *testing.T) {
 	exp := []byte{1, 0, 0, 0}
 	err := byteSliceEq(writeU32(1), exp)
@@ -428,6 +489,7 @@ func TestWriteU32(t *testing.T) {
 		t.Error(err)
 	}
 }
+
 func TestPutU32(t *testing.T) {
 	exp, act := []byte{1, 0, 0, 0}, make([]byte, 4)
 	putU32(act, 1)
@@ -450,6 +512,7 @@ func testHashKeys(n int) []hashKey {
 	}
 	return keys
 }
+
 func TestSortHashKeys(t *testing.T) {
 	n := 8
 	keys := testHashKeys(n)
@@ -491,13 +554,13 @@ func TestCopyHash(t *testing.T) {
 	}
 }
 
-func testCompressArray(t *testing.T, p expandCompressParams) error {
-	return errors.New("nyi")
-	/*
-		exp, outLen, bitLen, bytePad := decodeHex(p.out), len(p.out), p.bitLen, p.bytePad
-		act, err := compressArray(exp, outLen, bitLen, bytePad)
-	*/
-
+func testCompressArray(t *testing.T, p expandCompressTest) error {
+	bitLen, bytePad := p.bitLen, p.bytePad
+	act, err := compressArray(p.expanded, len(p.compact), bitLen, bytePad)
+	if err != nil {
+		t.Error(err)
+	}
+	return byteSliceEq(p.compact, act)
 }
 
 func TestCompressArray(t *testing.T) {
@@ -505,6 +568,99 @@ func TestCompressArray(t *testing.T) {
 		err := testCompressArray(t, p)
 		if err != nil {
 			t.Error(err)
+			t.FailNow()
 		}
 	}
+}
+
+func testExpandArray(t *testing.T, p expandCompressTest) error {
+	outLen, bitLen, bytePad := len(p.expanded), p.bitLen, p.bytePad
+	act, err := expandArray(p.compact, outLen, bitLen, bytePad)
+	if err != nil {
+		t.Error(err)
+	}
+	return byteSliceEq(p.expanded, act)
+}
+
+func TestExpandArray(t *testing.T) {
+	for _, p := range expandCompressTests {
+		err := testExpandArray(t, p)
+		if err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
+	}
+}
+
+func testValidateCalculationSolution(t *testing.T, m miningTest) error {
+	n, k := m.n, m.n
+	header := m.header()
+	person := exccPerson(n, k)
+	for _, solution := range m.solutions {
+		r, err := ValidateSolution(n, k, person, header, solution)
+		if err != nil {
+			return err
+		}
+		if !r {
+			t.Errorf("solution %v is not valid\n", solution)
+		}
+	}
+	return nil
+}
+
+func TestValidateCalculationSolution(t *testing.T) {
+	for _, test := range miningTests {
+		err := testValidateCalculationSolution(t, test)
+		if err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
+
+	}
+}
+
+func testSolveGBP(t *testing.T, test miningTest) error {
+	digest, err := test.createDigest()
+	if err != nil {
+		return err
+	}
+	n, k := test.n, test.k
+	solutions, err := gbp(digest, n, k)
+	if err != nil {
+		return err
+	}
+	for i, solution := range solutions {
+		err := solutionEq(solution, test.solutions[i])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func TestSolveGBP(t *testing.T) {
+	for _, test := range miningTests {
+		err := testSolveGBP(t, test)
+		if err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
+	}
+}
+
+func TestExccPerson(t *testing.T) {
+	person := exccPerson(N, K)
+	exp := []byte{90, 99, 97, 115, 104, 80, 111, 87, 96, 0, 0, 0, 5, 0, 0, 0}
+	if bytes.Compare(person, exp) != 0 {
+		t.Errorf("%v != %v\n", person, exp)
+	}
+}
+
+func TestCreateDigest(t *testing.T) {
+	_, err := createDigest(N, K, 0, i)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	t.FailNow()
 }
