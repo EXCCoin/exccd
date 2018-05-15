@@ -163,21 +163,19 @@ type miningResult struct {
 }
 
 func createDigest(n, k, nonce int, I []byte) (hash.Hash, error) {
-	//bytesPerWord := n / 8
-	//wordsPerWord := 512 / n
-	return nil, nil
-}
-
-func (mt *miningTest) createDigest() (hash.Hash, error) {
-	h, err := newHash(mt.n, mt.k)
+	h, err := newHash(n, k)
 	if err != nil {
 		return nil, err
 	}
-	err = writeHashU32(h, uint32(mt.nonce))
+	err = writeHashU32(h, uint32(nonce))
 	if err != nil {
 		return nil, err
 	}
 	return h, nil
+}
+
+func (mt *miningTest) createDigest() (hash.Hash, error) {
+	return createDigest(mt.n, mt.k, mt.nonce, exccPerson(n, k))
 }
 
 func (mt *miningTest) header() []byte {
@@ -570,8 +568,8 @@ func solutionEq(x, y []int) error {
 
 func TestExccPerson_2(t *testing.T) {
 	p := exccPerson(N, K)
-	n := len(personPrefix)
-	err := byteSliceEq(p[:n], personPrefix)
+	n := len(exccPrefix)
+	err := byteSliceEq(p[:n], []byte(exccPrefix))
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -688,6 +686,30 @@ func testExpandArray(t *testing.T, p expandCompressTest) error {
 	return byteSliceEq(p.expanded, act)
 }
 
+func TestCreateDigest(t *testing.T) {
+	in := []int{
+		30, -25, -102, -25, -110, 4, -19, -79, -95, -21, 73, 95, 107, 122, -65, -15, 121, 126,
+		113, -91, -112, -41, 89, -97, -110, 42, 73, 127, 89, 55, 112, -56, 21, 117, 80, 39, 66, -103, -36, -93, 21, 24,
+		76, 23, -91, -44, 36, -128, -73, 123, 65, -57, -39, -52, 38, 81, 74, -61, -31, -41,
+	}
+
+	exp := make([]byte, len(in))
+	for i, val := range in {
+		exp[i] = byte(val)
+	}
+	digest, err := createDigest(N, K, 0, []byte("block header"))
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	act := hashDigest(digest)
+	err = byteSliceEq(exp, act)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+}
+
 func TestExpandArray(t *testing.T) {
 	for _, p := range expandCompressTests {
 		err := testExpandArray(t, p)
@@ -754,11 +776,21 @@ func TestSolveGBP(t *testing.T) {
 	}
 }
 
-func TestExccPerson(t *testing.T) {
-	person := exccPerson(N, K)
+func TestPersonal(t *testing.T) {
+	p := person("ZcashPoW", N, K)
 	exp := []byte{90, 99, 97, 115, 104, 80, 111, 87, 96, 0, 0, 0, 5, 0, 0, 0}
-	if bytes.Compare(person, exp) != 0 {
-		t.Errorf("%v != %v\n", person, exp)
+	err := byteSliceEq(p, exp)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+}
+
+func TestExccPerson(t *testing.T) {
+	p := exccPerson(N, K)
+	exp := append([]byte(exccPrefix), []byte{96, 0, 0, 0, 5, 0, 0, 0}...)
+	if bytes.Compare(p, exp) != 0 {
+		t.FailNow()
 	}
 }
 
