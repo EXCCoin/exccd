@@ -481,8 +481,8 @@ func ValidateSolution(n, k int, person, header []byte, solutionIndices []int) (b
 	return words[0] == 0, nil
 }
 
-func newBlake2bHash(n, k int, prevHash []byte) (hash.Hash, error) {
-	return newHash(n, k)
+func newBlake2bHash(n, k int, prefix string, prevHash []byte) (hash.Hash, error) {
+	return newHash(n, k, prefix)
 }
 
 type MiningResult struct {
@@ -545,17 +545,17 @@ func writeHashBytes(h hash.Hash, b []byte) error {
 	return nil
 }
 
-func newHash(n, k int) (hash.Hash, error) {
+func newHash(n, k int, prefix string) (hash.Hash, error) {
 	h, err := blake2b.New(&blake2b.Config{
 		Key:    nil,
-		Person: exccPerson(n, k),
+		Person: person(prefix, n, k),
 		Size:   uint8(hashDigestSize(n)),
 	})
 	return h, err
 }
 
-func blockHash(n, k int, prevHash []byte, nonce int, soln []int) ([]byte, error) {
-	h, err := newHash(n, k)
+func blockHash(n, k int, prefix string, prevHash []byte, nonce int, soln []int) ([]byte, error) {
+	h, err := newHash(n, k, prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -572,7 +572,7 @@ func blockHash(n, k int, prevHash []byte, nonce int, soln []int) ([]byte, error)
 	}
 	hb := hashDigest(h)
 	// double hash
-	h, err = newHash(n, k)
+	h, err = newHash(n, k, prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -583,8 +583,8 @@ func blockHash(n, k int, prevHash []byte, nonce int, soln []int) ([]byte, error)
 	return hashDigest(h), nil
 }
 
-func difficultyFilter(n, k int, prevHash []byte, nonce int, soln []int, d int) bool {
-	h, err := blockHash(n, k, prevHash, nonce, soln)
+func difficultyFilter(n, k int, prefix string, prevHash []byte, nonce int, soln []int, d int) bool {
+	h, err := blockHash(n, k, prefix, prevHash, nonce, soln)
 	if err != nil {
 		return false
 	}
@@ -596,7 +596,7 @@ func hashDigestSize(n int) int {
 	return (512 / n) * n / 8
 }
 
-func Mine(n, k, d int) (MiningResult, error) {
+func Mine(n, k, d int, prefix string) (MiningResult, error) {
 	err := validateParams(n, k)
 	if err != nil {
 		return MiningResult{}, err
@@ -607,7 +607,7 @@ func Mine(n, k, d int) (MiningResult, error) {
 	var x []int
 	nonce := 0
 	for x == nil {
-		digest, err = newBlake2bHash(n, k, prevHash)
+		digest, err = newBlake2bHash(n, k, prefix, prevHash)
 		if err != nil {
 			return MiningResult{}, err
 		}
@@ -624,7 +624,7 @@ func Mine(n, k, d int) (MiningResult, error) {
 				return MiningResult{}, err
 			}
 			for _, soln := range solns {
-				if difficultyFilter(n, k, prevHash, nonce, soln, d) {
+				if difficultyFilter(n, k, prefix, prevHash, nonce, soln, d) {
 					x = soln
 					break
 				}
@@ -635,7 +635,7 @@ func Mine(n, k, d int) (MiningResult, error) {
 			nonce++
 		}
 	}
-	currHash, err := blockHash(n, k, prevHash, nonce, x)
+	currHash, err := blockHash(n, k, prefix, prevHash, nonce, x)
 	if err != nil {
 		return MiningResult{}, err
 	}
