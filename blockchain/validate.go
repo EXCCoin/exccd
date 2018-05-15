@@ -2199,9 +2199,9 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 		} else {
 			subsidyWork := CalcBlockWorkSubsidy(subsidyCache,
 				node.height, node.voters, b.chainParams)
-			subsidyTax := CalcBlockTaxSubsidy(subsidyCache,
-				node.height, node.voters, b.chainParams)
-			expAtomOut = subsidyWork + subsidyTax + totalFees
+			//subsidyTax := CalcBlockTaxSubsidy(subsidyCache,
+			//	node.height, node.voters, b.chainParams)
+			expAtomOut = subsidyWork + totalFees
 		}
 
 		// AmountIn for the input should be equal to the subsidy.
@@ -2333,13 +2333,6 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block, parent *exccutil.
 			node.parentHash))
 	}
 
-	// Check that the coinbase pays the tax, if applicable.
-	err := CoinbasePaysTax(b.subsidyCache, block.Transactions()[0], node.height,
-		node.voters, b.chainParams)
-	if err != nil {
-		return err
-	}
-
 	// Don't run scripts if this node is before the latest known good
 	// checkpoint since the validity is verified via the checkpoints (all
 	// transactions are included in the merkle root hash and any changes
@@ -2375,7 +2368,7 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block, parent *exccutil.
 		thisNodeRegularViewpoint = ViewpointPrevValidRegular
 
 		utxoView.SetStakeViewpoint(ViewpointPrevValidInitial)
-		err = utxoView.fetchInputUtxos(b.db, block, parent)
+		err := utxoView.fetchInputUtxos(b.db, block, parent)
 		if err != nil {
 			return err
 		}
@@ -2391,7 +2384,7 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block, parent *exccutil.
 
 	// TxTreeStake of current block.
 	utxoView.SetStakeViewpoint(thisNodeStakeViewpoint)
-	err = b.checkDupTxs(block.STransactions(), utxoView)
+	err := b.checkDupTxs(block.STransactions(), utxoView)
 	if err != nil {
 		log.Tracef("checkDupTxs failed for cur TxTreeStake: %v", err)
 		return err

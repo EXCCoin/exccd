@@ -16,7 +16,6 @@ import (
 
 	"github.com/EXCCoin/exccd/blockchain"
 	"github.com/EXCCoin/exccd/blockchain/chaingen"
-	"github.com/EXCCoin/exccd/chaincfg/chainec"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/exccec/secp256k1"
 	"github.com/EXCCoin/exccd/exccutil"
@@ -213,16 +212,6 @@ func additionalCoinbasePoW(amount exccutil.Amount) func(*wire.MsgBlock) {
 		// Increase the first proof-of-work coinbase subsidy by the
 		// provided amount.
 		b.Transactions[0].TxOut[2].Value += int64(amount)
-	}
-}
-
-// additionalCoinbaseDev returns a function that itself takes a block and
-// modifies it by adding the provided amount to the coinbase developer subsidy.
-func additionalCoinbaseDev(amount exccutil.Amount) func(*wire.MsgBlock) {
-	return func(b *wire.MsgBlock) {
-		// Increase the first proof-of-work coinbase subsidy by the
-		// provided amount.
-		b.Transactions[0].TxOut[0].Value += int64(amount)
 	}
 }
 
@@ -799,94 +788,14 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 		expectTipBlock("bpw5", bpw5),
 	})
 
-	// ---------------------------------------------------------------------
-	// Bad dev org output tests.
-	// ---------------------------------------------------------------------
-
-	// Create a block that does not generate a payment to the dev-org P2SH
-	// address.  Test this by trying to pay to a secp256k1 P2PKH address
-	// using the same HASH160.
-	//
-	//   ... -> bf5(2) -> bpw4(3) -> bpw5(4)
-	//   \                                  \-> bbadtaxscript(5)
-	//    \-> bf3(1) -> bf4(2)
-	g.SetTip("bpw5")
-	g.NextBlock("bbadtaxscript", outs[5], ticketOuts[5],
-		func(b *wire.MsgBlock) {
-			taxOutput := b.Transactions[0].TxOut[0]
-			_, addrs, _, _ := txscript.ExtractPkScriptAddrs(
-				g.Params().OrganizationPkScriptVersion,
-				taxOutput.PkScript, g.Params())
-			p2shTaxAddr := addrs[0].(*exccutil.AddressScriptHash)
-			p2pkhTaxAddr, err := exccutil.NewAddressPubKeyHash(
-				p2shTaxAddr.Hash160()[:], g.Params(),
-				chainec.ECTypeSecp256k1)
-			if err != nil {
-				panic(err)
-			}
-			p2pkhScript, err := txscript.PayToAddrScript(p2pkhTaxAddr)
-			if err != nil {
-				panic(err)
-			}
-			taxOutput.PkScript = p2pkhScript
-		})
-	rejected(blockchain.ErrNoTax)
-
-	// Create a block that uses a newer output script version than is
-	// supported for the dev-org tax output.
-	//
-	//   ... -> bf5(2) -> bpw4(3) -> bpw5(4)
-	//   \                                  \-> bbadtaxscriptversion(5)
-	//    \-> bf3(1) -> bf4(2)
-	g.SetTip("bpw5")
-	g.NextBlock("bbadtaxscriptversion", outs[5], ticketOuts[5],
-		func(b *wire.MsgBlock) {
-			b.Transactions[0].TxOut[0].Version = 1
-		})
-	rejected(blockchain.ErrNoTax)
-
-	// ---------------------------------------------------------------------
-	// Too much dev-org coinbase tests.
-	// ---------------------------------------------------------------------
-
-	// Create a block that generates too much dev-org coinbase.
-	//
-	//   ... -> bf5(2) -> bpw4(3) -> bpw5(4)
-	//   \                                  \-> bdc1(5)
-	//    \-> bf3(1) -> bf4(2)
-	g.SetTip("bpw5")
-	g.NextBlock("bdc1", outs[5], ticketOuts[5], additionalCoinbaseDev(1))
-	rejected(blockchain.ErrNoTax)
-
-	// Create a fork that ends with block that generates too much dev-org
-	// coinbase.
-	//
-	//   ... -> bf5(2) -> bpw4(3) -> bpw5(4)
-	//   \                       \-> bdc2(4) -> bdc3(5)
-	//    \-> bf3(1) -> bf4(2)
-	g.SetTip("bpw4")
-	g.NextBlock("bdc2", outs[4], ticketOuts[4], additionalCoinbaseDev(1))
-	acceptedToSideChainWithExpectedTip("bpw5")
-
-	g.NextBlock("bdc3", outs[5], ticketOuts[5], additionalCoinbaseDev(1))
-	rejected(blockchain.ErrNoTax)
-
-	// Create a fork that ends with block that generates too much dev-org
-	// coinbase as before, but with a valid fork first.
-	//
-	//   ... -> bf5(2) -> bpw4(3) -> bpw5(4)
-	//   \                       \-> bdc4(4) -> bdc5(5) -> bdc6(6)
-	//   |                           (bdc4 added last)
-	//    \-> bf3(1) -> bf4(2)
-	//
+	// TODO: you should consider remove/and refactor this
+	// This test is only for maintaining compatibility after Dev Tax removal
 	g.SetTip("bpw4")
 	bdc4 := g.NextBlock("bdc4", outs[4], ticketOuts[4])
 	bdc5 := g.NextBlock("bdc5", outs[5], ticketOuts[5])
-	bdc6 := g.NextBlock("bdc6", outs[6], ticketOuts[6], additionalCoinbaseDev(1))
 	tests = append(tests, []TestInstance{
 		acceptBlock("bdc5", bdc5, false, true),
-		acceptBlock("bdc6", bdc6, false, true),
-		rejectBlock("bdc4", bdc4, blockchain.ErrNoTax),
+		acceptBlock("bdc4", bdc4, false, false),
 		expectTipBlock("bdc5", bdc5),
 	})
 
@@ -2159,9 +2068,9 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 	//                  \-> bcb1(19)
 	g.SetTip("bsb2")
 	g.NextBlock("bcb1", outs[19], ticketOuts[19], func(b *wire.MsgBlock) {
-		b.Transactions[0].TxOut = b.Transactions[0].TxOut[0:1]
+		b.Transactions[0].TxOut = nil
 	})
-	rejected(blockchain.ErrFirstTxNotCoinbase)
+	rejected(blockchain.ErrNoTxOutputs)
 
 	// Create block with an invalid script type in the coinbase block
 	// commitment output.
@@ -2170,7 +2079,7 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 	//                  \-> bcb2(19)
 	g.SetTip("bsb2")
 	g.NextBlock("bcb2", outs[19], ticketOuts[19], func(b *wire.MsgBlock) {
-		b.Transactions[0].TxOut[1].PkScript = nil
+		b.Transactions[0].TxOut[0].PkScript = nil
 	})
 	rejected(blockchain.ErrFirstTxNotCoinbase)
 
@@ -2181,7 +2090,7 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 	g.SetTip("bsb2")
 	g.NextBlock("bcb3", outs[19], ticketOuts[19], func(b *wire.MsgBlock) {
 		script := opReturnScript(repeatOpcode(0x00, 3))
-		b.Transactions[0].TxOut[1].PkScript = script
+		b.Transactions[0].TxOut[0].PkScript = script
 	})
 	rejected(blockchain.ErrFirstTxNotCoinbase)
 
@@ -2192,7 +2101,7 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 	g.SetTip("bsb2")
 	g.NextBlock("bcb4", outs[19], ticketOuts[19], func(b *wire.MsgBlock) {
 		script := standardCoinbaseOpReturnScript(b.Header.Height - 1)
-		b.Transactions[0].TxOut[1].PkScript = script
+		b.Transactions[0].TxOut[0].PkScript = script
 	})
 	rejected(blockchain.ErrCoinbaseHeight)
 

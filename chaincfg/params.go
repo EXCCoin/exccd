@@ -502,9 +502,9 @@ var MainNetParams = Params{
 	MulSubsidy:               100,
 	DivSubsidy:               101,
 	SubsidyReductionInterval: 6144,
-	WorkRewardProportion:     6,
+	WorkRewardProportion:     7,
 	StakeRewardProportion:    3,
-	BlockTaxProportion:       1,
+	BlockTaxProportion:       0,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: []Checkpoint{},
@@ -669,9 +669,9 @@ var TestNet2Params = Params{
 	MulSubsidy:               100,
 	DivSubsidy:               101,
 	SubsidyReductionInterval: 2048,
-	WorkRewardProportion:     6,
+	WorkRewardProportion:     7,
 	StakeRewardProportion:    3,
-	BlockTaxProportion:       1,
+	BlockTaxProportion:       0,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: []Checkpoint{},
@@ -836,9 +836,9 @@ var SimNetParams = Params{
 	MulSubsidy:               100,
 	DivSubsidy:               101,
 	SubsidyReductionInterval: 128,
-	WorkRewardProportion:     6,
+	WorkRewardProportion:     7,
 	StakeRewardProportion:    3,
-	BlockTaxProportion:       1,
+	BlockTaxProportion:       0,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: nil,
@@ -1186,7 +1186,7 @@ func (p *Params) BlockOneSubsidy() int64 {
 // TotalSubsidyProportions is the sum of WorkReward, StakeReward, and BlockTax
 // proportions.
 func (p *Params) TotalSubsidyProportions() uint16 {
-	return p.WorkRewardProportion + p.StakeRewardProportion + p.BlockTaxProportion
+	return p.WorkRewardProportion + p.StakeRewardProportion
 }
 
 // LatestCheckpointHeight is the height of the latest checkpoint block in the
