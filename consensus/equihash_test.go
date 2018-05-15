@@ -16,23 +16,28 @@ import (
 
 const (
 	difficulty = 1
+	prefix     = "ZcashPoW"
 )
 
 var (
 	i                   = []byte("block header")
-	expandCompressTests = []expandCompressTest{
-		{decodeHex("ffffffffffffffffffffff"), decodeHex("07ff07ff07ff07ff07ff07ff07ff07ff"), 11, 0},
-		{decodeHex("aaaaad55556aaaab55555aaaaad55556aaaab55555"), decodeHex("155555155555155555155555155555155555155555155555"), 21, 0},
-		{decodeHex("000220000a7ffffe00123022b38226ac19bdf23456"), decodeHex("0000440000291fffff0001230045670089ab00cdef123456"), 21, 0},
-		{decodeHex("cccf333cccf333cccf333cccf333cccf333cccf333cccf333cccf333"), decodeHex("3333333333333333333333333333333333333333333333333333333333333333"), 14, 0},
-		{decodeHex("ffffffffffffffffffffff"), decodeHex("000007ff000007ff000007ff000007ff000007ff000007ff000007ff000007ff"), 11, 2},
-	}
-	miningTests        = createMiningTests()
-	n                  = N
-	k                  = K
-	miningResultHeader = []byte("Equihash is an asymmetric PoW based on the Generalised Birthday problem.")
-	miningResultTests  = createMiningResultTests()
+	expandCompressTests = createExpandCompressTests()
+	miningTests         = createMiningTests()
+	n                   = N
+	k                   = K
+	miningResultHeader  = []byte("Equihash is an asymmetric PoW based on the Generalised Birthday problem.")
+	miningResultTests   = createMiningResultTests()
 )
+
+func createExpandCompressTests() []expandCompressTest {
+	return []expandCompressTest{
+		{11, 0, decodeHex("ffffffffffffffffffffff"), decodeHex("07ff07ff07ff07ff07ff07ff07ff07ff")},
+		{21, 0, decodeHex("aaaaad55556aaaab55555aaaaad55556aaaab55555"), decodeHex("155555155555155555155555155555155555155555155555")},
+		{21, 0, decodeHex("000220000a7ffffe00123022b38226ac19bdf23456"), decodeHex("0000440000291fffff0001230045670089ab00cdef123456")},
+		{14, 0, decodeHex("cccf333cccf333cccf333cccf333cccf333cccf333cccf333cccf333"), decodeHex("3333333333333333333333333333333333333333333333333333333333333333")},
+		{11, 2, decodeHex("ffffffffffffffffffffff"), decodeHex("000007ff000007ff000007ff000007ff000007ff000007ff000007ff000007ff")},
+	}
+}
 
 func createMiningTests() []miningTest {
 	return []miningTest{
@@ -139,10 +144,10 @@ func createMiningResultTests() []miningResult {
 }
 
 type expandCompressTest struct {
-	compact  []byte
-	expanded []byte
 	bitLen   int
 	bytePad  int
+	compact  []byte
+	expanded []byte
 }
 
 type miningTest struct {
@@ -163,7 +168,7 @@ type miningResult struct {
 }
 
 func createDigest(n, k, nonce int, I []byte) (hash.Hash, error) {
-	h, err := newHash(n, k)
+	h, err := newHash(n, k, prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -174,8 +179,13 @@ func createDigest(n, k, nonce int, I []byte) (hash.Hash, error) {
 	return h, nil
 }
 
+func testPerson(n, k int) []byte {
+	return person(prefix, n, k)
+}
+
 func (mt *miningTest) createDigest() (hash.Hash, error) {
-	return createDigest(mt.n, mt.k, mt.nonce, exccPerson(n, k))
+	n, k := mt.n, mt.k
+	return createDigest(mt.n, mt.k, mt.nonce, testPerson(n, k))
 }
 
 func (mt *miningTest) header() []byte {
@@ -641,7 +651,7 @@ func randDigest(n int) []byte {
 }
 
 func TestCopyHash(t *testing.T) {
-	h, err := newHash(n, k)
+	h, err := newHash(n, k, prefix)
 	if err != nil {
 		t.Error(err)
 	}
@@ -777,7 +787,7 @@ func TestSolveGBP(t *testing.T) {
 }
 
 func TestPersonal(t *testing.T) {
-	p := person("ZcashPoW", N, K)
+	p := testPerson(N, K)
 	exp := []byte{90, 99, 97, 115, 104, 80, 111, 87, 96, 0, 0, 0, 5, 0, 0, 0}
 	err := byteSliceEq(p, exp)
 	if err != nil {
