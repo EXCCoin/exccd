@@ -84,7 +84,8 @@ func expandArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 	}
 	outWidth := (bitLen+7)/8 + bytePad
 	if outLen != 8*outWidth*len(in)/bitLen {
-		return nil, errors.New("outLen != 8*outWidth*len(in)/bitLen")
+		msg := "outLen != 8*outWidth*len(in)/bitLen"
+		return nil, errors.New(msg)
 	}
 
 	out, bitLenMask := make([]byte, outLen), (1<<uint(bitLen))-1
