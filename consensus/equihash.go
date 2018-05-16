@@ -364,22 +364,23 @@ func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 		return nil, errors.New("bitLen*len(in)/(8*inWidth)")
 	}
 	out := make([]byte, outLen)
-	bitLenMask, accBits, accVal, j := (1<<uint(bitLen))-1, 0, 0, 0
+	bitLenMask := (1 << uint(bitLen)) - 1
+	accBits, accVal, j := 0, 0, 0
 
 	for i := 0; i < outLen; i++ {
 		if accBits < 8 {
 			accVal = ((accVal << uint(bitLen)) & wordMask) | int(in[j])
 			for x := bytePad; x < inWidth; x++ {
 				v := int(in[j+x])
-				a := (bitLenMask >> uint(8*(inWidth-x-1))) & 0xFF
-				b := v & a << uint(8*(inWidth-x-1))
+				a1 := bitLenMask >> (uint(8 * (inWidth - x - 1)))
+				b := ((v & a1) & 0xFF) << uint(8*(inWidth-x-1))
 				accVal = accVal | int(b)
 			}
 			j += inWidth
 			accBits += bitLen
 		}
 		accBits -= 8
-		out[i] = byte((accVal << uint(accBits)) & 0xFF)
+		out[i] = byte((accVal >> uint(accBits)) & 0xFF)
 	}
 
 	return out, nil
