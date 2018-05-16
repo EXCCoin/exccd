@@ -2199,8 +2199,6 @@ func (b *BlockChain) checkTransactionsAndConnect(subsidyCache *SubsidyCache, inp
 		} else {
 			subsidyWork := CalcBlockWorkSubsidy(subsidyCache,
 				node.height, node.voters, b.chainParams)
-			//subsidyTax := CalcBlockTaxSubsidy(subsidyCache,
-			//	node.height, node.voters, b.chainParams)
 			expAtomOut = subsidyWork + totalFees
 		}
 

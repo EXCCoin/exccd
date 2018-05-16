@@ -347,10 +347,9 @@ var helpDescsEnUS = map[string]string{
 	"getblocksubsidy-voters":    "The number of voters",
 
 	// GetBlockSubsidyResult help.
-	"getblocksubsidyresult-developer": "The developer subsidy",
-	"getblocksubsidyresult-pos":       "The Proof-of-Stake subsidy",
-	"getblocksubsidyresult-pow":       "The Proof-of-Work subsidy",
-	"getblocksubsidyresult-total":     "The total subsidy",
+	"getblocksubsidyresult-pos":   "The Proof-of-Stake subsidy",
+	"getblocksubsidyresult-pow":   "The Proof-of-Work subsidy",
+	"getblocksubsidyresult-total": "The total subsidy",
 
 	// TemplateRequest help.
 	"templaterequest-mode":         "This is 'template', 'proposal', or omitted",

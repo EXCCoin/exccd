@@ -136,7 +136,6 @@ var simNetParams = &chaincfg.Params{
 	SubsidyReductionInterval: 128,
 	WorkRewardProportion:     7,
 	StakeRewardProportion:    3,
-	BlockTaxProportion:       0,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: nil,

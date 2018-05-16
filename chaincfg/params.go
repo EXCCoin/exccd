@@ -325,12 +325,6 @@ type Params struct {
 	// casting stake votes (collectively, per block).
 	StakeRewardProportion uint16
 
-	// BlockTaxProportion is the inverse of the percentage of funds for each
-	// block to allocate to the developer organization.
-	// e.g. 10% --> 10 (or 1 / (1/10))
-	// Special case: disable taxes with a value of 0
-	BlockTaxProportion uint16
-
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints []Checkpoint
 
@@ -504,7 +498,6 @@ var MainNetParams = Params{
 	SubsidyReductionInterval: 6144,
 	WorkRewardProportion:     7,
 	StakeRewardProportion:    3,
-	BlockTaxProportion:       0,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: []Checkpoint{},
@@ -671,7 +664,6 @@ var TestNet2Params = Params{
 	SubsidyReductionInterval: 2048,
 	WorkRewardProportion:     7,
 	StakeRewardProportion:    3,
-	BlockTaxProportion:       0,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: []Checkpoint{},
@@ -838,7 +830,6 @@ var SimNetParams = Params{
 	SubsidyReductionInterval: 128,
 	WorkRewardProportion:     7,
 	StakeRewardProportion:    3,
-	BlockTaxProportion:       0,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: nil,
@@ -1183,8 +1174,7 @@ func (p *Params) BlockOneSubsidy() int64 {
 	return sum
 }
 
-// TotalSubsidyProportions is the sum of WorkReward, StakeReward, and BlockTax
-// proportions.
+// TotalSubsidyProportions is the sum of WorkReward, StakeReward proportions.
 func (p *Params) TotalSubsidyProportions() uint16 {
 	return p.WorkRewardProportion + p.StakeRewardProportion
 }

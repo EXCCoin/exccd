@@ -167,40 +167,6 @@ func CalcStakeVoteSubsidy(subsidyCache *SubsidyCache, height int64, params *chai
 	return subsidy
 }
 
-// CalcBlockTaxSubsidy calculates the subsidy for the organization address in the
-// coinbase.
-//
-// Safe for concurrent access.
-func CalcBlockTaxSubsidy(subsidyCache *SubsidyCache, height int64, voters uint16, params *chaincfg.Params) int64 {
-	if params.BlockTaxProportion == 0 {
-		return 0
-	}
-
-	subsidy := subsidyCache.CalcBlockSubsidy(height)
-
-	proportionTax := int64(params.BlockTaxProportion)
-	proportions := int64(params.TotalSubsidyProportions())
-	subsidy *= proportionTax
-	subsidy /= proportions
-
-	// Assume all voters 'present' before stake voting is turned on.
-	if height < params.StakeValidationHeight {
-		voters = 5
-	}
-
-	// If there are no voters, subsidy is 0. The block will fail later anyway.
-	if voters == 0 && height >= params.StakeValidationHeight {
-		return 0
-	}
-
-	// Adjust for the number of voters. This shouldn't ever overflow if you start
-	// with 50 * 10^8 Atoms and voters and potentialVoters are uint16.
-	potentialVoters := params.TicketsPerBlock
-	adjusted := (int64(voters) * subsidy) / int64(potentialVoters)
-
-	return adjusted
-}
-
 // BlockOneCoinbasePaysTokens checks to see if the first block coinbase pays
 // out to the network initial token ledger.
 func BlockOneCoinbasePaysTokens(tx *exccutil.Tx, params *chaincfg.Params) error {
@@ -276,48 +242,6 @@ func BlockOneCoinbasePaysTokens(tx *exccutil.Tx, params *chaincfg.Params) error 
 				"amount; got %v, want %v", i, txout.Value, ledger[i].Amount)
 			return ruleError(ErrBlockOneOutputs, errStr)
 		}
-	}
-
-	return nil
-}
-
-// CoinbasePaysTax checks to see if a given block's coinbase correctly pays
-// tax to the developer organization.
-func CoinbasePaysTax(subsidyCache *SubsidyCache, tx *exccutil.Tx, height int64, voters uint16, params *chaincfg.Params) error {
-	// Taxes only apply from block 2 onwards.
-	if height <= 1 {
-		return nil
-	}
-
-	// Tax is disabled.
-	if params.BlockTaxProportion == 0 {
-		return nil
-	}
-
-	if len(tx.MsgTx().TxOut) == 0 {
-		errStr := fmt.Sprintf("invalid coinbase (no outputs)")
-		return ruleError(ErrNoTxOutputs, errStr)
-	}
-
-	taxOutput := tx.MsgTx().TxOut[0]
-	if taxOutput.Version != params.OrganizationPkScriptVersion {
-		return ruleError(ErrNoTax,
-			"coinbase tax output uses incorrect script version")
-	}
-	if !bytes.Equal(taxOutput.PkScript, params.OrganizationPkScript) {
-		return ruleError(ErrNoTax,
-			"coinbase tax output script does not match the "+
-				"required script")
-	}
-
-	// Get the amount of subsidy that should have been paid out to
-	// the organization, then check it.
-	orgSubsidy := CalcBlockTaxSubsidy(subsidyCache, height, voters, params)
-	if orgSubsidy != taxOutput.Value {
-		errStr := fmt.Sprintf("amount in output 0 has non matching org "+
-			"calculated amount; got %v, want %v", taxOutput.Value,
-			orgSubsidy)
-		return ruleError(ErrNoTax, errStr)
 	}
 
 	return nil

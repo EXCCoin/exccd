@@ -339,13 +339,12 @@ func standardCoinbaseOpReturnScript(blockHeight uint32) []byte {
 	return opReturnScript(data)
 }
 
-// TODO: remove devSubsidy paramter
 // addCoinbaseTxOutputs adds the following outputs to the provided transaction
 // which is assumed to be a coinbase transaction:
 // - First output is a standard provably prunable data-only coinbase output
 // - Second and subsequent outputs pay the pow subsidy portion to the generic
 //   OP_TRUE p2sh script hash
-func (g *Generator) addCoinbaseTxOutputs(tx *wire.MsgTx, blockHeight uint32, devSubsidy, powSubsidy exccutil.Amount) {
+func (g *Generator) addCoinbaseTxOutputs(tx *wire.MsgTx, blockHeight uint32, powSubsidy exccutil.Amount) {
 
 	// First output is a provably prunable data-only output that is used
 	// to ensure the coinbase is unique.
@@ -389,7 +388,7 @@ func (g *Generator) CreateCoinbaseTx(blockHeight uint32, numVotes uint16) *wire.
 		SignatureScript: coinbaseSigScript,
 	})
 
-	g.addCoinbaseTxOutputs(tx, blockHeight, 0, powSubsidy)
+	g.addCoinbaseTxOutputs(tx, blockHeight, powSubsidy)
 
 	return tx
 }
@@ -1480,7 +1479,7 @@ func (g *Generator) ReplaceWithNVotes(numVotes uint16) func(*wire.MsgBlock) {
 		cbTx := b.Transactions[0]
 		cbTx.TxIn[0].ValueIn = int64(powSubsidy)
 		cbTx.TxOut = nil
-		g.addCoinbaseTxOutputs(cbTx, height, 0, powSubsidy)
+		g.addCoinbaseTxOutputs(cbTx, height, powSubsidy)
 	}
 }
 
