@@ -14,7 +14,7 @@ import (
 
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
-	"github.com/decred/base58"
+	"github.com/EXCCoin/base58"
 )
 
 var (

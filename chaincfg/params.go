@@ -577,12 +577,17 @@ var MainNetParams = Params{
 	NetworkAddressPrefix: "2",
 	// In order to see actual prefixes, encoded string must consist of prefix mentioned below
 	// followed by zeros up to 26 bytes total length.
-	PubKeyAddrID:     [2]byte{0x21, 0xB9}, // starts with 22
-	PubKeyHashAddrID: [2]byte{0x3d, 0x21}, // starts with 2s
+
+	//---------------------------------------------------------------------------------------------
+	//TODO: cleanup!!!
+	//PubKeyAddrID:     [2]byte{0x3d, 0x21}, // starts with 2s	-- no such addresses should exist in RL
+	PubKeyAddrID:     [2]byte{0x02, 0xdc}, // starts with 2s	-- no such addresses should exist in RL
+	PubKeyHashAddrID: [2]byte{0x21, 0xB9}, // starts with 22
 	PKHEdwardsAddrID: [2]byte{0x35, 0xcf}, // starts with 2e
 	PKHSchnorrAddrID: [2]byte{0x2f, 0x0d}, // starts with 2S
 	ScriptHashAddrID: [2]byte{0x34, 0xAF}, // starts with 2c
 	PrivateKeyID:     [2]byte{0x80},       // starts with 4
+	//---------------------------------------------------------------------------------------------
 
 	// BIP32 hierarchical deterministic extended key magics
 	// In order to see actual prefixes, encoded string must consist of prefix mentioned below

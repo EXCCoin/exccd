@@ -3,6 +3,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/EXCCoin/base58"
+  packages = ["."]
+  revision = "e1a805ee5d9f5e64352b9b509d18413991cceffb"
+
+[[projects]]
+  branch = "master"
   name = "github.com/aead/siphash"
   packages = ["."]
   revision = "e404fcfc888570cadd1610538e2dbc89f66af814"
@@ -100,6 +106,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d190067efa8c61778ef133b4f695f26aa8e0333625b7f0172788009b68567f3d"
+  inputs-digest = "a4c5833cdc45dd9b229f558580ef5a06ed0b3ad5213b5e92350ef6f19b212fba"
   solver-name = "gps-cdcl"
   solver-version = 1
