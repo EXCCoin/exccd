@@ -821,6 +821,28 @@ func TestValidatePreparedSolutions(t *testing.T) {
 	}
 }
 
+func testValidateCalculationSolution(t *testing.T, m miningTest) {
+	n, k, I, nonce, solns := m.n, m.k, m.I, m.nonce, m.solutions
+	p, header := testPerson(n, k), testHeader(I, nonce)
+	for _, soln := range solns {
+		r, err := ValidateSolution(n, k, p, header, soln, prefix)
+		if err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
+		if !r {
+			t.FailNow()
+		}
+	}
+
+}
+
+func TestValidateCalculationSolutions(t *testing.T) {
+	for _, test := range miningTests {
+		testValidateCalculationSolution(t, test)
+	}
+}
+
 func testSolveGBP(t *testing.T, test miningTest) error {
 	digest, err := test.createDigest()
 	if err != nil {
