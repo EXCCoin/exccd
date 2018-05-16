@@ -168,15 +168,25 @@ type miningResult struct {
 }
 
 func createDigest(n, k, nonce int, I []byte) (hash.Hash, error) {
-	h, err := newHash(n, k, prefix)
+	bytesPerWord := n / 8
+	wordsPerHash := 512 / n
+	size := bytesPerWord * wordsPerHash
+	digest, err := blake2b.New(&blake2b.Config{
+		Size:   uint8(size),
+		Person: testPerson(n, k),
+	})
 	if err != nil {
 		return nil, err
 	}
-	err = writeHashU32(h, uint32(nonce))
+	err = writeHashBytes(digest, I)
 	if err != nil {
 		return nil, err
 	}
-	return h, nil
+	err = hashNonce(digest, nonce)
+	if err != nil {
+		return nil, err
+	}
+	return digest, nil
 }
 
 func testPerson(n, k int) []byte {
@@ -696,28 +706,17 @@ func testExpandArray(t *testing.T, p expandCompressTest) error {
 	return byteSliceEq(p.expanded, act)
 }
 
-func TestCreateDigest(t *testing.T) {
+func digestBytes() []byte {
 	in := []int{
 		30, -25, -102, -25, -110, 4, -19, -79, -95, -21, 73, 95, 107, 122, -65, -15, 121, 126,
 		113, -91, -112, -41, 89, -97, -110, 42, 73, 127, 89, 55, 112, -56, 21, 117, 80, 39, 66, -103, -36, -93, 21, 24,
 		76, 23, -91, -44, 36, -128, -73, 123, 65, -57, -39, -52, 38, 81, 74, -61, -31, -41,
 	}
-
-	exp := make([]byte, len(in))
+	out := make([]byte, len(in))
 	for i, val := range in {
-		exp[i] = byte(val)
+		out[i] = byte(val)
 	}
-	digest, err := createDigest(N, K, 0, []byte("block header"))
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-	act := hashDigest(digest)
-	err = byteSliceEq(exp, act)
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
+	return out
 }
 
 func TestExpandArray(t *testing.T) {
@@ -821,5 +820,23 @@ func TestBlake2bPerson(t *testing.T) {
 	exp := []byte{20, 36, 1, 103, 212, 8, 139, 129, 145, 123, 113, 170}
 	if bytes.Compare(hash, exp) != 0 {
 		fmt.Printf("%v != %v\n", hash, exp)
+	}
+}
+
+func TestMine(t *testing.T) {
+	n, k, d, p := N, K, 1, prefix
+	res, err := Mine(n, k, d, p)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	if res.nonce < 0 {
+		t.FailNow()
+	}
+	if len(res.currHash) == 0 {
+		t.FailNow()
+	}
+	if len(res.previousHash) == 0 {
+		t.FailNow()
 	}
 }
