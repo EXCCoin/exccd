@@ -22,22 +22,25 @@ const (
 )
 
 var (
-	errBadArg       = errors.New("invalid argument")
-	errWriteLen     = errors.New("didn't write full len")
-	errLen          = errors.New("slices not same len")
-	errBitLen       = errors.New("bit len < 8")
-	errOutWidth     = errors.New("incorrect outwidth size")
-	errKLarge       = errors.New("k should be less than n")
-	errCollisionLen = errors.New("collision length too big")
-	errHashLen      = errors.New("hash len is too small")
-	errHashStartPos = errors.New("hash len < start pos")
-	errHashEndPos   = errors.New("hash len < end pos")
-	errNonce        = errors.New("no valid nonce")
-	errStartEndEq   = errors.New("start and end positions equal")
-	errLenZero      = errors.New("len is 0")
-	errNil          = errors.New("unexpected nil pointer")
-	errEmptySlice   = errors.New("empty slice")
-	exccPrefix      = "excc"
+	errBadArg        = errors.New("invalid argument")
+	errWriteLen      = errors.New("didn't write full len")
+	errLen           = errors.New("slices not same len")
+	errBitLen        = errors.New("bit len < 8")
+	errOutWidth      = errors.New("incorrect outwidth size")
+	errKLarge        = errors.New("k should be less than n")
+	errCollisionLen  = errors.New("collision length too big")
+	errHashLen       = errors.New("hash len is too small")
+	errHashStartPos  = errors.New("hash len < start pos")
+	errHashEndPos    = errors.New("hash len < end pos")
+	errNonce         = errors.New("no valid nonce")
+	errStartEndEq    = errors.New("start and end positions equal")
+	errLenZero       = errors.New("len is 0")
+	errNil           = errors.New("unexpected nil pointer")
+	errEmptySlice    = errors.New("empty slice")
+	errSmallBitLen   = errors.New("bitLen < 8")
+	errSmallWordSize = errors.New("wordSize < 7+bitLen")
+	errBadOutLen     = errors.New("outLen != 8*outWidth*len(in)/bitLen")
+	exccPrefix       = "excc"
 )
 
 func person(prefix string, n, k int) []byte {
@@ -77,15 +80,14 @@ func hashDigest(h hash.Hash) []byte {
 
 func expandArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 	if bitLen < 8 {
-		return nil, errors.New("bitLen < 8")
+		return nil, errSmallBitLen
 	}
 	if wordSize < 7+bitLen {
-		return nil, errors.New("wordSize < 7+bitLen")
+		return nil, errSmallWordSize
 	}
 	outWidth := (bitLen+7)/8 + bytePad
 	if outLen != 8*outWidth*len(in)/bitLen {
-		msg := "outLen != 8*outWidth*len(in)/bitLen"
-		return nil, errors.New(msg)
+		return nil, errBadOutLen
 	}
 
 	out, bitLenMask := make([]byte, outLen), (1<<uint(bitLen))-1
@@ -178,7 +180,7 @@ func sortHashKeys(k []hashKey) {
 
 func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 	collisionLength := n / (k + 1)
-	hashLength := (k + 1) * (collisionLength + 7) / 8
+	hashLength := (k + 1) * ((collisionLength + 7) / 8)
 	indicesPeHashOutput := 512 / n
 
 	//  1) Generate list (X)
@@ -335,20 +337,25 @@ func copyHash(src hash.Hash) hash.Hash {
 	return elem.Addr().Interface().(hash.Hash)
 }
 
-func generateWord(n int, h hash.Hash, idx int) (int, error) {
-	bytesPerWord, wordsPerHash := n/8, 512/n
-	hidx, hrem := idx/wordsPerHash, idx%wordsPerHash
-	indexBytes := writeUint32(uint32(hidx))
-	ctx := copyHash(h)
-	err := writeBytesToHash(ctx, indexBytes)
+func generateWord(n int, digestWithoutIdx hash.Hash, idx int) (int, error) {
+	bytesPerWord := n / 8
+	wordsPerHash := 512 / n
+
+	hidx := idx / wordsPerHash
+	hrem := idx % wordsPerHash
+
+	idxdata := writeUint32(uint32(hidx))
+	ctx1 := copyHash(digestWithoutIdx)
+	err := writeBytesToHash(ctx1, idxdata)
 	if err != nil {
 		return 0, err
 	}
-	digest := ctx.Sum(nil)
+	digest := hashDigest(ctx1)
+
 	// fold word
 	word := 0
 	for i := hrem * bytesPerWord; i < hrem*bytesPerWord+bytesPerWord; i++ {
-		word = word<<8 | (int(digest[i]) & 0xFF)
+		word = (word << 8) | (int(digest[i]) & 0xFF)
 	}
 	return word, nil
 }
@@ -410,39 +417,46 @@ func joinBytes(a, b []byte) []byte {
 	return append(a, b...)
 }
 
-func ValidateSolution(n, k int, person, header []byte, solutionIndices []int) (bool, error) {
+func ValidateSolution(n, k int, person, header []byte, solutionIndices []int, prefix string) (bool, error) {
 	if n < 2 {
 		return false, errors.New("n < 2")
 	}
 	if k < 3 {
 		return false, errors.New("k < 3")
 	}
-	if n%8 != 0 {
+	if (n % 8) != 0 {
 		return false, errors.New("n%8 != 0")
 	}
-	if n%(k+1) != 0 {
+	if (n % (k + 1)) != 0 {
 		return false, errors.New("n%(k+1) != 0")
 	}
-
+	if len(person) == 0 {
+		return false, errors.New("empty person")
+	}
+	if len(header) == 0 {
+		return false, errors.New("empty header")
+	}
+	if len(solutionIndices) == 0 {
+		return false, errors.New("empty solution indices")
+	}
 	solutionLen := pow(k)
 	if len(solutionIndices) != solutionLen {
 		return false, errBadArg
 	}
-
 	if hasDuplicateIndices(solutionIndices) {
 		return false, nil
 	}
 
-	//bytesPerWord := n / 8
+	bytesPerWord := n / 8
 	wordsPerHash := 512 / n
-	//outLen := wordsPerHash * bytesPerWord
+	outLen := wordsPerHash * bytesPerWord
 
 	// create hash digest and words
 	digest, err := blake2b.New(&blake2b.Config{
 		Key:    nil,
-		Person: exccPerson(n, k),
+		Person: person,
 		Salt:   nil,
-		Size:   uint8(wordsPerHash),
+		Size:   uint8(outLen),
 		Tree:   nil,
 	})
 	if err != nil {
