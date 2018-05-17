@@ -537,6 +537,7 @@ func TestTicketDBLongChain(t *testing.T) {
 		}
 	*/
 }
+
 //TODO: once upon a time enable test and make it pass
 func TestTicketDBGeneral(t *testing.T) {
 	//Skip this test because it relies on binary data stored in file

@@ -16,8 +16,8 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/exccutil"
 
-	"golang.org/x/crypto/ripemd160"
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
+	"golang.org/x/crypto/ripemd160"
 )
 
 func TestAddresses(t *testing.T) {
@@ -265,7 +265,7 @@ func TestAddresses(t *testing.T) {
 			addr:    "Tso9sQD3ALqRsmEkAm7KvPrkGbeG2a5xrro",
 			encoded: "Tso9sQD3ALqRsmEkAm7KvPrkGbeG2a5xrro",
 
-			valid:   true,
+			valid: true,
 			result: exccutil.TstAddressPubKey(
 				[]byte{
 					0x02, 0x6a, 0x40, 0xc4, 0x03, 0xe7, 0x46, 0x70, 0xc4, 0xde,
