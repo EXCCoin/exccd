@@ -436,10 +436,10 @@ func standardCoinbaseOpReturn(height uint32, extraNonce uint64) ([]byte, error) 
 // not have the relevant output or the script is not large enough to perform the
 // extraction.
 func extractCoinbaseTxExtraNonce(coinbaseTx *wire.MsgTx) uint64 {
-	if len(coinbaseTx.TxOut) < 2 {
+	if len(coinbaseTx.TxOut) < 1 {
 		return 0
 	}
-	script := coinbaseTx.TxOut[1].PkScript
+	script := coinbaseTx.TxOut[0].PkScript
 	if len(script) < 14 {
 		return 0
 	}
@@ -473,7 +473,7 @@ func UpdateExtraNonce(msgBlock *wire.MsgBlock, blockHeight int64, extraNonce uin
 	if err != nil {
 		return err
 	}
-	msgBlock.Transactions[0].TxOut[1].PkScript = coinbaseOpReturn
+	msgBlock.Transactions[0].TxOut[0].PkScript = coinbaseOpReturn
 
 	// TODO(davec): A exccutil.Block should use saved in the state to avoid
 	// recalculating all of the other transaction hashes.
@@ -838,8 +838,8 @@ func handleTooFewVoters(subsidyCache *blockchain.SubsidyCache, nextHeight int64,
 				if err != nil {
 					return nil, err
 				}
-				coinbaseScript := make([]byte, len(coinbaseFlags)+2)
-				copy(coinbaseScript[2:], coinbaseFlags)
+				coinbaseScript := make([]byte, len(coinbaseFlags)+1)
+				copy(coinbaseScript[1:], coinbaseFlags)
 				opReturnPkScript, err :=
 					standardCoinbaseOpReturn(topBlock.MsgBlock().Header.Height,
 						rand)
@@ -1837,7 +1837,7 @@ mempoolLoop:
 		blockSize -= wire.MaxVarIntPayload -
 			uint32(wire.VarIntSerializeSize(uint64(len(blockTxnsRegular))+
 				uint64(len(blockTxnsStake))))
-		coinbaseTx.MsgTx().TxOut[2].Value += totalFees
+		coinbaseTx.MsgTx().TxOut[1].Value += totalFees
 		txFees[0] = -totalFees
 	}
 
