@@ -28,19 +28,8 @@ const (
 var (
 	errBadArg           = errors.New("invalid argument")
 	errWriteLen         = errors.New("didn't write full len")
-	errLen              = errors.New("slices not same len")
-	errBitLen           = errors.New("bit len < 8")
-	errOutWidth         = errors.New("incorrect outwidth size")
 	errKLarge           = errors.New("k should be less than n")
 	errCollisionLen     = errors.New("collision length too big")
-	errHashLen          = errors.New("hash len is too small")
-	errHashStartPos     = errors.New("hash len < start pos")
-	errHashEndPos       = errors.New("hash len < end pos")
-	errNonce            = errors.New("no valid nonce")
-	errStartEndEq       = errors.New("start and end positions equal")
-	errLenZero          = errors.New("len is 0")
-	errNil              = errors.New("unexpected nil pointer")
-	errEmptySlice       = errors.New("empty slice")
 	errSmallBitLen      = errors.New("bitLen < 8")
 	errSmallWordSize    = errors.New("wordSize < 7+bitLen")
 	errBadOutLen        = errors.New("outLen != 8*outWidth*len(in)/bitLen")
@@ -556,10 +545,6 @@ func writeU32(v uint32) []byte {
 //TODO(jaupe) optimize function by not making a deep copy
 func writeHashU32(h hash.Hash, v uint32) error {
 	return writeHashBytes(h, writeU32(v))
-}
-
-func writeHashStr(h hash.Hash, s string) error {
-	return writeHashBytes(h, []byte(s))
 }
 
 func writeHashBytes(h hash.Hash, b []byte) error {
