@@ -107,16 +107,16 @@ type CurrencyNet uint32
 // better idea to simply disconnect clients that are misbehaving over TCP.
 const (
 	// MainNet represents the main ExchangeCoin network.
-	MainNet CurrencyNet = 0xd9b400f9
+	MainNet CurrencyNet = 0x9917d7e1
 
 	// RegTest represents the regression test network.
-	RegTest CurrencyNet = 0xdab500fa
+	RegTest CurrencyNet = 0xeceb6037
 
 	// TestNet2 represents the 2nd test network.
-	TestNet2 CurrencyNet = 0x48e7a065
+	TestNet2 CurrencyNet = 0x5aa4752a
 
 	// SimNet represents the simulation test network.
-	SimNet CurrencyNet = 0x12141c16
+	SimNet CurrencyNet = 0xbc8776ff
 )
 
 // bnStrings is a map of ExchangeCoin networks back to their constant names for
