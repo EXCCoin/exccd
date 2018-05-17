@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"hash"
+	"math"
 	"math/big"
 	"reflect"
 	"sort"
@@ -642,7 +643,7 @@ func Mine(n, k, d int, prefix string) (*MiningResult, error) {
 		}
 		nonce = 0
 
-		for {
+		for nonce < math.MaxInt64 {
 			currDigest := copyHash(digest)
 			err = hashNonce(currDigest, nonce)
 			if err != nil {
