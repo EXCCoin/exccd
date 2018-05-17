@@ -195,44 +195,6 @@ func DecodeAddress(addr string) (Address, error) {
 	}
 }
 
-//TODO: cleanup
-func DecodeAddressNoCheckSum(addr string) (Address, error) {
-	// Switch on decoded length to determine the type.
-	decoded, netID, err := base58.NoCheckDecode(addr)
-	if err != nil {
-		if err == base58.ErrChecksum {
-			return nil, ErrChecksumMismatch
-		}
-		return nil, fmt.Errorf("decoded address is of unknown format: %v",
-			err.Error())
-	}
-
-	net, err := detectNetworkForAddress(addr)
-	if err != nil {
-		return nil, ErrUnknownAddressType
-	}
-
-	switch netID {
-	case net.PubKeyAddrID:
-		return NewAddressPubKey(decoded, net)
-
-	case net.PubKeyHashAddrID:
-		return NewAddressPubKeyHash(decoded, net, chainec.ECTypeSecp256k1)
-
-	case net.PKHEdwardsAddrID:
-		return NewAddressPubKeyHash(decoded, net, chainec.ECTypeEdwards)
-
-	case net.PKHSchnorrAddrID:
-		return NewAddressPubKeyHash(decoded, net, chainec.ECTypeSecSchnorr)
-
-	case net.ScriptHashAddrID:
-		return NewAddressScriptHashFromHash(decoded, net)
-
-	default:
-		return nil, ErrUnknownAddressType
-	}
-}
-
 // detectNetworkForAddress pops the first character from a string encoded
 // address and detects what network type it is for.
 func detectNetworkForAddress(addr string) (*chaincfg.Params, error) {

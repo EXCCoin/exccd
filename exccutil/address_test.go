@@ -406,14 +406,6 @@ func TestAddresses(t *testing.T) {
 		},
 	}
 
-	//TODO: cleanup
-	//fixedAddr1, _ := exccutil.DecodeAddressNoCheckSum("Sshw6S86G2bV6W32cbc7EhtFy8f93rU6pae");
-	//t.Errorf("Fixed address: %v", fixedAddr1)
-	//fixedAddr2, _ := exccutil.DecodeAddressNoCheckSum("SsjXRK6Xz6CFuBt6PugBvrkdAa4xGbcZ18w");
-	//t.Errorf("Fixed address: %v", fixedAddr2)
-	//fixedAddr3, _ := exccutil.DecodeAddressNoCheckSum("SsfXiYkYkCoo31CuVQw428N6wWKus2ZEw5X");
-	//t.Errorf("Fixed address: %v", fixedAddr3)
-
 	for _, test := range tests {
 		// Decode addr and compare error against valid.
 		decoded, err := exccutil.DecodeAddress(test.addr)
