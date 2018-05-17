@@ -78,6 +78,7 @@ func TestBlockValidationRules(t *testing.T) {
 	// Skipping this test until hash function in not changed to SHA256
 	// TODO: regenerate somehow testdata for this test
 	t.Skip()
+
 	// Update simnet parameters to reflect what is expected by the legacy
 	// data.
 	params := cloneParams(&chaincfg.SimNetParams)
@@ -519,48 +520,6 @@ func TestBlockValidationRules(t *testing.T) {
 	// It should be impossible for this to ever be triggered because of the
 	// paranoid around transaction inflation, but leave it in anyway just
 	// in case there is database corruption etc.
-
-	// ----------------------------------------------------------------------------
-	// ErrNoTax 1
-	// Tax output missing
-	taxMissing154 := new(wire.MsgBlock)
-	taxMissing154.FromBytes(block154Bytes)
-	taxMissing154.Transactions[0].TxOut[0] = taxMissing154.Transactions[0].TxOut[1]
-
-	recalculateMsgBlockMerkleRootsSize(taxMissing154)
-	b154test = exccutil.NewBlock(taxMissing154)
-
-	err = CheckWorklessBlockSanity(b154test, timeSource, params)
-	if err != nil {
-		t.Errorf("Got unexpected error for ErrNoTax "+
-			"test 1: %v", err)
-	}
-
-	err = chain.CheckConnectBlock(b154test, BFNoPoWCheck)
-	if err == nil || err.(RuleError).ErrorCode != ErrNoTax {
-		t.Errorf("Got no error or unexpected error for ErrNoTax "+
-			"test 1: %v", err)
-	}
-
-	// ErrNoTax 3
-	// Wrong amount paid
-	taxMissing154 = new(wire.MsgBlock)
-	taxMissing154.FromBytes(block154Bytes)
-	taxMissing154.Transactions[0].TxOut[0].Value--
-
-	recalculateMsgBlockMerkleRootsSize(taxMissing154)
-	b154test = exccutil.NewBlock(taxMissing154)
-
-	err = CheckWorklessBlockSanity(b154test, timeSource, params)
-	if err != nil {
-		t.Errorf("Got unexpected error for ErrNoTax test 3: %v", err)
-	}
-
-	err = chain.CheckConnectBlock(b154test, BFNoPoWCheck)
-	if err == nil || err.(RuleError).ErrorCode != ErrNoTax {
-		t.Errorf("Got no error or unexpected error for ErrNoTax "+
-			"test 3: %v", err)
-	}
 
 	// ----------------------------------------------------------------------------
 	// ErrScriptValidation Reg Tree

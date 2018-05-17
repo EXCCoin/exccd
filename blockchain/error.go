@@ -417,10 +417,6 @@ const (
 	// the ledger addresses correctly into the transaction's outputs.
 	ErrBlockOneOutputs
 
-	// ErrNoTax indicates that there was no tax present in the coinbase of a
-	// block after height 1.
-	ErrNoTax
-
 	// ErrExpiredTx indicates that the transaction is currently expired.
 	ErrExpiredTx
 
@@ -546,7 +542,6 @@ var errorCodeStrings = map[ErrorCode]string{
 	ErrBlockOneTx:             "ErrBlockOneTx",
 	ErrBlockOneInputs:         "ErrBlockOneInputs",
 	ErrBlockOneOutputs:        "ErrBlockOneOutputs",
-	ErrNoTax:                  "ErrNoTax",
 	ErrExpiredTx:              "ErrExpiredTx",
 	ErrExpiryTxSpentEarly:     "ErrExpiryTxSpentEarly",
 	ErrFraudAmountIn:          "ErrFraudAmountIn",
