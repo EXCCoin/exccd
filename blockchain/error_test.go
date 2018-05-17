@@ -102,7 +102,6 @@ func TestErrorCodeStringer(t *testing.T) {
 		{ErrBlockOneTx, "ErrBlockOneTx"},
 		{ErrBlockOneInputs, "ErrBlockOneInputs"},
 		{ErrBlockOneOutputs, "ErrBlockOneOutputs"},
-		{ErrNoTax, "ErrNoTax"},
 		{ErrExpiredTx, "ErrExpiredTx"},
 		{ErrExpiryTxSpentEarly, "ErrExpiryTxSpentEarly"},
 		{ErrFraudAmountIn, "ErrFraudAmountIn"},

@@ -325,12 +325,6 @@ type Params struct {
 	// casting stake votes (collectively, per block).
 	StakeRewardProportion uint16
 
-	// BlockTaxProportion is the inverse of the percentage of funds for each
-	// block to allocate to the developer organization.
-	// e.g. 10% --> 10 (or 1 / (1/10))
-	// Special case: disable taxes with a value of 0
-	BlockTaxProportion uint16
-
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints []Checkpoint
 
@@ -455,14 +449,6 @@ type Params struct {
 	StakeMajorityMultiplier int32
 	StakeMajorityDivisor    int32
 
-	// OrganizationPkScript is the output script for block taxes to be
-	// distributed to in every block's coinbase. It should ideally be a P2SH
-	// multisignature address.  OrganizationPkScriptVersion is the version
-	// of the output script.  Until PoS hardforking is implemented, this
-	// version must always match for a block to validate.
-	OrganizationPkScript        []byte
-	OrganizationPkScriptVersion uint16
-
 	// BlockOneLedger specifies the list of payouts in the coinbase of
 	// block height 1. If there are no payouts to be given, set this
 	// to an empty slice.
@@ -502,9 +488,8 @@ var MainNetParams = Params{
 	MulSubsidy:               100,
 	DivSubsidy:               101,
 	SubsidyReductionInterval: 6144,
-	WorkRewardProportion:     6,
+	WorkRewardProportion:     7,
 	StakeRewardProportion:    3,
-	BlockTaxProportion:       1,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: []Checkpoint{},
@@ -630,10 +615,7 @@ var MainNetParams = Params{
 	StakeMajorityDivisor:    4,
 
 	// ExchangeCoin organization related parameters
-	// Organization address is Dcur2mcGjmENx4DhNqDctW5wJCVyT3Qeqkx
-	OrganizationPkScript:        hexDecode("a914f5916158e3e2c4551c1796708db8367207ed13bb87"),
-	OrganizationPkScriptVersion: 0,
-	BlockOneLedger:              BlockOneLedgerMainNet,
+	BlockOneLedger: BlockOneLedgerMainNet,
 }
 
 // TestNet2Params defines the network parameters for the test currency network.
@@ -669,9 +651,8 @@ var TestNet2Params = Params{
 	MulSubsidy:               100,
 	DivSubsidy:               101,
 	SubsidyReductionInterval: 2048,
-	WorkRewardProportion:     6,
+	WorkRewardProportion:     7,
 	StakeRewardProportion:    3,
-	BlockTaxProportion:       1,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: []Checkpoint{},
@@ -795,10 +776,7 @@ var TestNet2Params = Params{
 	StakeMajorityDivisor:    4,
 
 	// ExchangeCoin organization related parameters.
-	// Organization address is TccTkqj8wFqrUemmHMRSx8SYEueQYLmuuFk
-	OrganizationPkScript:        hexDecode("4fa6cbd0dbe5ec407fe4c8ad374e667771fa0d44"),
-	OrganizationPkScriptVersion: 0,
-	BlockOneLedger:              BlockOneLedgerTestNet2,
+	BlockOneLedger: BlockOneLedgerTestNet2,
 }
 
 // SimNetParams defines the network parameters for the simulation test ExchangeCoin
@@ -836,9 +814,8 @@ var SimNetParams = Params{
 	MulSubsidy:               100,
 	DivSubsidy:               101,
 	SubsidyReductionInterval: 128,
-	WorkRewardProportion:     6,
+	WorkRewardProportion:     7,
 	StakeRewardProportion:    3,
-	BlockTaxProportion:       1,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: nil,
@@ -990,38 +967,7 @@ var SimNetParams = Params{
 	StakeMajorityDivisor:    4,
 
 	// ExchangeCoin organization related parameters
-	//
-	// "Dev org" address is a 3-of-3 P2SH going to wallet:
-	// aardvark adroitness aardvark adroitness
-	// aardvark adroitness aardvark adroitness
-	// aardvark adroitness aardvark adroitness
-	// aardvark adroitness aardvark adroitness
-	// aardvark adroitness aardvark adroitness
-	// aardvark adroitness aardvark adroitness
-	// aardvark adroitness aardvark adroitness
-	// aardvark adroitness aardvark adroitness
-	// briefcase
-	// (seed 0x00000000000000000000000000000000000000000000000000000000000000)
-	//
-	// This same wallet owns the three ledger outputs for simnet.
-	//
-	// P2SH details for simnet dev org is below.
-	//
-	// address: Scc4ZC844nzuZCXsCFXUBXTLks2mD6psWom
-	// redeemScript: 532103e8c60c7336744c8dcc7b85c27789950fc52aa4e48f895ebbfb
-	// ac383ab893fc4c2103ff9afc246e0921e37d12e17d8296ca06a8f92a07fbe7857ed1d4
-	// f0f5d94e988f21033ed09c7fa8b83ed53e6f2c57c5fa99ed2230c0d38edf53c0340d0f
-	// c2e79c725a53ae
-	//   (3-of-3 multisig)
-	// Pubkeys used:
-	//   SkQmxbeuEFDByPoTj41TtXat8tWySVuYUQpd4fuNNyUx51tF1csSs
-	//   SkQn8ervNvAUEX5Ua3Lwjc6BAuTXRznDoDzsyxgjYqX58znY7w9e4
-	//   SkQkfkHZeBbMW8129tZ3KspEh1XBFC1btbkgzs6cjSyPbrgxzsKqk
-	//
-	// Organization address is ScuQxvveKGfpG1ypt6u27F99Anf7EW3cqhq
-	OrganizationPkScript:        hexDecode("a914cbb08d6ca783b533b2c7d24a51fbca92d937bf9987"),
-	OrganizationPkScriptVersion: 0,
-	BlockOneLedger:              BlockOneLedgerSimNet,
+	BlockOneLedger: BlockOneLedgerSimNet,
 }
 
 var (
@@ -1183,10 +1129,9 @@ func (p *Params) BlockOneSubsidy() int64 {
 	return sum
 }
 
-// TotalSubsidyProportions is the sum of WorkReward, StakeReward, and BlockTax
-// proportions.
+// TotalSubsidyProportions is the sum of WorkReward, StakeReward proportions.
 func (p *Params) TotalSubsidyProportions() uint16 {
-	return p.WorkRewardProportion + p.StakeRewardProportion + p.BlockTaxProportion
+	return p.WorkRewardProportion + p.StakeRewardProportion
 }
 
 // LatestCheckpointHeight is the height of the latest checkpoint block in the

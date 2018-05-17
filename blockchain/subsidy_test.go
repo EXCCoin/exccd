@@ -36,12 +36,10 @@ func TestBlockSubsidy(t *testing.T) {
 				mainnet.TicketsPerBlock, mainnet)
 			stake := CalcStakeVoteSubsidy(subsidyCache, height,
 				mainnet) * int64(mainnet.TicketsPerBlock)
-			tax := CalcBlockTaxSubsidy(subsidyCache, height,
-				mainnet.TicketsPerBlock, mainnet)
-			if (work + stake + tax) == 0 {
+			if (work + stake) == 0 {
 				break
 			}
-			totalSubsidy += ((work + stake + tax) * numBlocks)
+			totalSubsidy += (work + stake) * numBlocks
 
 			// First reduction internal, subtract the stake subsidy for
 			// blocks before the staking system is enabled.
@@ -51,7 +49,8 @@ func TestBlockSubsidy(t *testing.T) {
 		}
 	}
 
-	if totalSubsidy != 2099999999800912 {
-		t.Errorf("Bad total subsidy; want 2099999999800912, got %v", totalSubsidy)
+	expectedSubsidy := int64(2100000004058704)
+	if totalSubsidy != expectedSubsidy {
+		t.Errorf("Bad total subsidy; want %v, got %v", expectedSubsidy, totalSubsidy)
 	}
 }

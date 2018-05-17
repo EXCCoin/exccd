@@ -354,7 +354,7 @@ func testMemWalletReorg(r *Harness, t *testing.T) {
 	defer harness.TearDown()
 
 	// Ensure the internal wallet has the expected balance.
-	expectedBalance := exccutil.Amount(5 * 300 * exccutil.AtomsPerCoin)
+	expectedBalance := exccutil.Amount(5 * 350 * exccutil.AtomsPerCoin)
 	walletBalance := harness.ConfirmedBalance()
 	if expectedBalance != walletBalance {
 		t.Fatalf("wallet balance incorrect: expected %v, got %v",
@@ -470,7 +470,7 @@ func TestMain(m *testing.M) {
 
 func TestHarness(t *testing.T) {
 	// We should have the expected amount of mature unspent outputs.
-	expectedBalance := exccutil.Amount(numMatureOutputs * 300 * exccutil.AtomsPerCoin)
+	expectedBalance := exccutil.Amount(numMatureOutputs * 350 * exccutil.AtomsPerCoin)
 	harnessBalance := mainHarness.ConfirmedBalance()
 	if harnessBalance != expectedBalance {
 		t.Fatalf("expected wallet balance of %v instead have %v",

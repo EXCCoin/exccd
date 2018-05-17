@@ -134,9 +134,8 @@ var simNetParams = &chaincfg.Params{
 	MulSubsidy:               100,
 	DivSubsidy:               101,
 	SubsidyReductionInterval: 128,
-	WorkRewardProportion:     6,
+	WorkRewardProportion:     7,
 	StakeRewardProportion:    3,
-	BlockTaxProportion:       1,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: nil,
@@ -285,8 +284,6 @@ var simNetParams = &chaincfg.Params{
 	StakeBaseSigScript:    []byte{0xde, 0xad, 0xbe, 0xef},
 
 	// ExchangeCoin organization related parameters
-	OrganizationPkScript:        fromHex("a914cbb08d6ca783b533b2c7d24a51fbca92d937bf9987"),
-	OrganizationPkScriptVersion: 0,
 	BlockOneLedger: []*chaincfg.TokenPayout{
 		{Address: "Sshw6S86G2bV6W32cbc7EhtFy8f93rU6pae", Amount: 100000 * 1e8},
 		{Address: "SsjXRK6Xz6CFuBt6PugBvrkdAa4xGbcZ18w", Amount: 100000 * 1e8},

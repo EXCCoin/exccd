@@ -22,12 +22,11 @@ import (
 // that the coinbase contains the height encoding to make coinbase hash collisions
 // impossible.
 func checkCoinbaseUniqueHeight(blockHeight int64, block *exccutil.Block) error {
-	// Coinbase TxOut[0] is always tax, TxOut[1] is always
-	// height + extranonce, so at least two outputs must
-	// exist.
-	if len(block.MsgBlock().Transactions[0].TxOut) < 2 {
+	// Coinbase TxOut[0] is always height + extranonce,
+	// so at least one output must exist.
+	if len(block.MsgBlock().Transactions[0].TxOut) < 1 {
 		str := fmt.Sprintf("block %v is missing necessary coinbase "+
-			"outputs", block.Hash())
+			"output", block.Hash())
 		return ruleError(ErrFirstTxNotCoinbase, str)
 	}
 
@@ -35,16 +34,17 @@ func checkCoinbaseUniqueHeight(blockHeight int64, block *exccutil.Block) error {
 	// encoded height of the block, so that every coinbase
 	// created has a unique transaction hash.
 	nullData, err := txscript.GetNullDataContent(
-		block.MsgBlock().Transactions[0].TxOut[1].Version,
-		block.MsgBlock().Transactions[0].TxOut[1].PkScript)
+		block.MsgBlock().Transactions[0].TxOut[0].Version,
+		block.MsgBlock().Transactions[0].TxOut[0].PkScript)
 	if err != nil {
-		str := fmt.Sprintf("block %v txOut 1 has wrong pkScript "+
+		str := fmt.Sprintf("block %v txOut 0 has wrong pkScript "+
 			"type", block.Hash())
+
 		return ruleError(ErrFirstTxNotCoinbase, str)
 	}
 
 	if len(nullData) < 4 {
-		str := fmt.Sprintf("block %v txOut 1 has too short nullData "+
+		str := fmt.Sprintf("block %v txOut 0 has too short nullData "+
 			"push to contain height", block.Hash())
 		return ruleError(ErrFirstTxNotCoinbase, str)
 	}
@@ -53,7 +53,7 @@ func checkCoinbaseUniqueHeight(blockHeight int64, block *exccutil.Block) error {
 	cbHeight := binary.LittleEndian.Uint32(nullData[0:4])
 	if cbHeight != uint32(blockHeight) {
 		prevBlock := block.MsgBlock().Header.PrevBlock
-		str := fmt.Sprintf("block %v txOut 1 has wrong height in "+
+		str := fmt.Sprintf("block %v txOut 0 has wrong height in "+
 			"coinbase; want %v, got %v; prevBlock %v, header height %v",
 			block.Hash(), blockHeight, cbHeight, prevBlock,
 			block.MsgBlock().Header.Height)

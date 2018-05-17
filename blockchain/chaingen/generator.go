@@ -319,25 +319,6 @@ func (g *Generator) calcPoSSubsidy(heightVotedOn uint32) exccutil.Amount {
 	return (fullSubsidy * posProportion) / totalProportions
 }
 
-// calcDevSubsidy returns the dev org subsidy portion from a given full subsidy.
-//
-// NOTE: This and the other subsidy calculation funcs intentionally are not
-// using the blockchain code since the intent is to be able to generate known
-// good tests which exercise that code, so it wouldn't make sense to use the
-// same code to generate them.
-func (g *Generator) calcDevSubsidy(fullSubsidy exccutil.Amount, blockHeight uint32, numVotes uint16) exccutil.Amount {
-	devProportion := exccutil.Amount(g.params.BlockTaxProportion)
-	totalProportions := exccutil.Amount(g.params.TotalSubsidyProportions())
-	devSubsidy := (fullSubsidy * devProportion) / totalProportions
-	if int64(blockHeight) < g.params.StakeValidationHeight {
-		return devSubsidy
-	}
-
-	// Reduce the subsidy according to the number of votes.
-	ticketsPerBlock := exccutil.Amount(g.params.TicketsPerBlock)
-	return (devSubsidy * exccutil.Amount(numVotes)) / ticketsPerBlock
-}
-
 // standardCoinbaseOpReturnScript returns a standard script suitable for use as
 // the second output of a standard coinbase transaction of a new block.  In
 // particular, the serialized data used with the OP_RETURN starts with the block
@@ -360,19 +341,12 @@ func standardCoinbaseOpReturnScript(blockHeight uint32) []byte {
 
 // addCoinbaseTxOutputs adds the following outputs to the provided transaction
 // which is assumed to be a coinbase transaction:
-// - First output pays the development subsidy portion to the dev org
-// - Second output is a standard provably prunable data-only coinbase output
-// - Third and subsequent outputs pay the pow subsidy portion to the generic
+// - First output is a standard provably prunable data-only coinbase output
+// - Second and subsequent outputs pay the pow subsidy portion to the generic
 //   OP_TRUE p2sh script hash
-func (g *Generator) addCoinbaseTxOutputs(tx *wire.MsgTx, blockHeight uint32, devSubsidy, powSubsidy exccutil.Amount) {
-	// First output is the developer subsidy.
-	tx.AddTxOut(&wire.TxOut{
-		Value:    int64(devSubsidy),
-		Version:  g.params.OrganizationPkScriptVersion,
-		PkScript: g.params.OrganizationPkScript,
-	})
+func (g *Generator) addCoinbaseTxOutputs(tx *wire.MsgTx, blockHeight uint32, powSubsidy exccutil.Amount) {
 
-	// Second output is a provably prunable data-only output that is used
+	// First output is a provably prunable data-only output that is used
 	// to ensure the coinbase is unique.
 	tx.AddTxOut(wire.NewTxOut(0, standardCoinbaseOpReturnScript(blockHeight)))
 
@@ -391,8 +365,7 @@ func (g *Generator) addCoinbaseTxOutputs(tx *wire.MsgTx, blockHeight uint32, dev
 }
 
 // CreateCoinbaseTx returns a coinbase transaction paying an appropriate
-// subsidy based on the passed block height and number of votes to the dev org
-// and proof-of-work miner.
+// subsidy based on the passed block height and number of votes to proof-of-work miner.
 //
 // See the addCoinbaseTxOutputs documentation for a breakdown of the outputs
 // the transaction contains.
@@ -400,7 +373,6 @@ func (g *Generator) CreateCoinbaseTx(blockHeight uint32, numVotes uint16) *wire.
 	// Calculate the subsidy proportions based on the block height and the
 	// number of votes the block will include.
 	fullSubsidy := g.calcFullSubsidy(blockHeight)
-	devSubsidy := g.calcDevSubsidy(fullSubsidy, blockHeight, numVotes)
 	powSubsidy := g.calcPoWSubsidy(fullSubsidy, blockHeight, numVotes)
 
 	tx := wire.NewMsgTx()
@@ -410,13 +382,13 @@ func (g *Generator) CreateCoinbaseTx(blockHeight uint32, numVotes uint16) *wire.
 		PreviousOutPoint: *wire.NewOutPoint(&chainhash.Hash{},
 			wire.MaxPrevOutIndex, wire.TxTreeRegular),
 		Sequence:        wire.MaxTxInSequenceNum,
-		ValueIn:         int64(devSubsidy + powSubsidy),
+		ValueIn:         int64(powSubsidy),
 		BlockHeight:     wire.NullBlockHeight,
 		BlockIndex:      wire.NullBlockIndex,
 		SignatureScript: coinbaseSigScript,
 	})
 
-	g.addCoinbaseTxOutputs(tx, blockHeight, devSubsidy, powSubsidy)
+	g.addCoinbaseTxOutputs(tx, blockHeight, powSubsidy)
 
 	return tx
 }
@@ -1503,12 +1475,11 @@ func (g *Generator) ReplaceWithNVotes(numVotes uint16) func(*wire.MsgBlock) {
 		// subsidy is accounted for.
 		height := b.Header.Height
 		fullSubsidy := g.calcFullSubsidy(height)
-		devSubsidy := g.calcDevSubsidy(fullSubsidy, height, numVotes)
 		powSubsidy := g.calcPoWSubsidy(fullSubsidy, height, numVotes)
 		cbTx := b.Transactions[0]
-		cbTx.TxIn[0].ValueIn = int64(devSubsidy + powSubsidy)
+		cbTx.TxIn[0].ValueIn = int64(powSubsidy)
 		cbTx.TxOut = nil
-		g.addCoinbaseTxOutputs(cbTx, height, devSubsidy, powSubsidy)
+		g.addCoinbaseTxOutputs(cbTx, height, powSubsidy)
 	}
 }
 
@@ -2076,14 +2047,14 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 
 		// Increase the PoW subsidy to account for any fees in the stake
 		// tree.
-		coinbaseTx.TxOut[2].Value += int64(stakeTreeFees)
+		coinbaseTx.TxOut[1].Value += int64(stakeTreeFees)
 
 		// Create a transaction to spend the provided utxo if needed.
 		if spend != nil {
 			// Create the transaction with a fee of 1 atom for the
 			// miner and increase the PoW subsidy accordingly.
 			fee := exccutil.Amount(1)
-			coinbaseTx.TxOut[2].Value += int64(fee)
+			coinbaseTx.TxOut[1].Value += int64(fee)
 
 			// Create a transaction that spends from the provided
 			// spendable output and includes an additional unique
@@ -2285,12 +2256,12 @@ func (g *Generator) NumSpendableCoinbaseOuts() int {
 // passed block to the list of spendable outputs.
 func (g *Generator) saveCoinbaseOuts(b *wire.MsgBlock) {
 	g.spendableOuts = append(g.spendableOuts, []SpendableOut{
+		MakeSpendableOut(b, 0, 1),
 		MakeSpendableOut(b, 0, 2),
 		MakeSpendableOut(b, 0, 3),
 		MakeSpendableOut(b, 0, 4),
 		MakeSpendableOut(b, 0, 5),
 		MakeSpendableOut(b, 0, 6),
-		MakeSpendableOut(b, 0, 7),
 	})
 	g.prevCollectedHash = b.BlockHash()
 }
