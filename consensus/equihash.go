@@ -380,7 +380,7 @@ func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 				v := int(in[j+x])
 				a1 := bitLenMask >> (uint(8 * (inWidth - x - 1)))
 				b := ((v & a1) & 0xFF) << uint(8*(inWidth-x-1))
-				accVal = accVal | int(b)
+				accVal = accVal | b
 			}
 			j += inWidth
 			accBits += bitLen
