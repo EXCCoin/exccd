@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"hash"
 	"math"
+	"math/big"
 	"math/rand"
 	"strconv"
 	"testing"
@@ -796,6 +796,17 @@ func TestHasDuplicateIndices_Fail(t *testing.T) {
 	}
 }
 
+func TestIsWordZero(t *testing.T) {
+	word := big.NewInt(0)
+	if !isBigIntZero(word) {
+		t.FailNow()
+	}
+	word = big.NewInt(1)
+	if isBigIntZero(word) {
+		t.FailNow()
+	}
+}
+
 func testValidatePreparedSolution(t *testing.T, v validationTest) error {
 	n, k := v.n, v.k
 	header := testHeader(v.I, v.nonce)
@@ -806,7 +817,7 @@ func testValidatePreparedSolution(t *testing.T, v validationTest) error {
 		return err
 	}
 	if r != v.valid {
-		t.Errorf("expected solution %v to be %v\n", solution, v.valid)
+		return errors.New("expected solution")
 	}
 	return nil
 }
@@ -834,7 +845,6 @@ func testValidateCalculationSolution(t *testing.T, m miningTest) {
 			t.FailNow()
 		}
 	}
-
 }
 
 func TestValidateCalculationSolutions(t *testing.T) {
@@ -894,7 +904,7 @@ func TestBlake2bPerson(t *testing.T) {
 	size := N / 8
 	c := &blake2b.Config{
 		Key:    nil,
-		Person: exccPerson(N, K),
+		Person: testPerson(N, K),
 		Salt:   nil,
 		Size:   uint8(size),
 	}
@@ -905,8 +915,10 @@ func TestBlake2bPerson(t *testing.T) {
 	}
 	hash := hashDigest(h)
 	exp := []byte{20, 36, 1, 103, 212, 8, 139, 129, 145, 123, 113, 170}
-	if bytes.Compare(hash, exp) != 0 {
-		fmt.Printf("%v != %v\n", hash, exp)
+	err = byteSliceEq(hash, exp)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
 	}
 }
 
