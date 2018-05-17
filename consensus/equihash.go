@@ -18,8 +18,10 @@ const (
 	wordMask = (1 << wordSize) - 1
 	byteMask = 0xFF
 	hashSize = 64
-	N        = 96
-	K        = 5
+	// N is the number of hash digests used to find a mining solution
+	N = 96
+	// K is the exponent for xor'ing 2^k hash digests for solution
+	K = 5
 )
 
 var (
@@ -423,6 +425,7 @@ func joinBytes(a, b []byte) []byte {
 	return append(a, b...)
 }
 
+// ValidateSolution validates that a mining solution is correct
 func ValidateSolution(n, k int, person, header []byte, solutionIndices []int, prefix string) (bool, error) {
 	if n < 2 {
 		return false, errors.New("n < 2")
@@ -508,6 +511,7 @@ func newBlake2bHash(n, k int, prefix string, prevHash []byte) (hash.Hash, error)
 	return newHash(n, k, prefix)
 }
 
+// MiningResult provides the details of the mining result
 type MiningResult struct {
 	previousHash []byte
 	currHash     []byte
@@ -619,10 +623,12 @@ func hashDigestSize(n int) int {
 	return (512 / n) * n / 8
 }
 
-func Mine(n, k, d int, prefix string) (MiningResult, error) {
+// Mine mines for equihash solution based on N number of hashes digests.
+// It finds 2^k indices of hash digest that equal 0 when xor'd
+func Mine(n, k, d int, prefix string) (*MiningResult, error) {
 	err := validateParams(n, k)
 	if err != nil {
-		return MiningResult{}, err
+		return nil, err
 	}
 
 	digest := sha256.New()
@@ -632,7 +638,7 @@ func Mine(n, k, d int, prefix string) (MiningResult, error) {
 	for x == nil {
 		digest, err = newBlake2bHash(n, k, prefix, prevHash)
 		if err != nil {
-			return MiningResult{}, err
+			return nil, err
 		}
 		nonce = 0
 
@@ -640,11 +646,11 @@ func Mine(n, k, d int, prefix string) (MiningResult, error) {
 			currDigest := copyHash(digest)
 			err = hashNonce(currDigest, nonce)
 			if err != nil {
-				return MiningResult{}, err
+				return nil, err
 			}
 			solns, err := gbp(currDigest, n, k)
 			if err != nil {
-				return MiningResult{}, err
+				return nil, err
 			}
 			for _, soln := range solns {
 				if difficultyFilter(n, k, prefix, prevHash, nonce, soln, d) {
@@ -660,7 +666,7 @@ func Mine(n, k, d int, prefix string) (MiningResult, error) {
 	}
 	currHash, err := blockHash(n, k, prefix, prevHash, nonce, x)
 	if err != nil {
-		return MiningResult{}, err
+		return nil, err
 	}
-	return MiningResult{prevHash, currHash, nonce}, nil
+	return &MiningResult{prevHash, currHash, nonce}, nil
 }
