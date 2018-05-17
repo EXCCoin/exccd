@@ -24,8 +24,7 @@ func TestBasicPRNG(t *testing.T) {
 		prng.Hash256Rand()
 	}
 
-	lastHashExp, _ := chainhash.NewHashFromStr("24f1cd72aefbfc85a9d3e21e2eb" +
-		"732615688d3634bf94499af5a81e0eb45c4e4")
+	lastHashExp, _ := chainhash.NewHashFromStr("65018e342de6f25662d6deb8b904b1a48675172da03c8dfbdc97d777032f522e")
 	lastHash := prng.StateHash()
 	if *lastHashExp != lastHash {
 		t.Errorf("expected final state of %v, got %v", lastHashExp, lastHash)
@@ -85,7 +84,7 @@ func TestLotteryNumSelection(t *testing.T) {
 	if err != nil {
 		t.Errorf("got unexpected error for FindTicketIdxs 1 test")
 	}
-	ticketsExp := []int{34850, 8346, 27636, 54482, 25482}
+	ticketsExp := []int{29480, 49418, 26518, 23712, 15920}
 	if !reflect.DeepEqual(ticketsExp, tickets) {
 		t.Errorf("Unexpected tickets selected; got %v, want %v", tickets,
 			ticketsExp)
@@ -97,14 +96,13 @@ func TestLotteryNumSelection(t *testing.T) {
 	if err != nil {
 		t.Errorf("got unexpected error for FindTicketIdxs 2 test")
 	}
-	ticketsExp = []int{3, 0, 4, 2, 1}
+	ticketsExp = []int{2, 4, 0, 3, 1}
 	if !reflect.DeepEqual(ticketsExp, tickets) {
 		t.Errorf("Unexpected tickets selected; got %v, want %v", tickets,
 			ticketsExp)
 	}
 
-	lastHashExp, _ := chainhash.NewHashFromStr("e97ce54aea63a883a82871e752c" +
-		"6ec3c5731fffc63dafc3767c06861b0b2fa65")
+	lastHashExp, _ := chainhash.NewHashFromStr("78a6aa986aebc6d30e9e754f5593570e08391f612225a21d17dc21ee6fc86194")
 	lastHash := prng.StateHash()
 	if *lastHashExp != lastHash {
 		t.Errorf("expected final state of %v, got %v", lastHashExp, lastHash)

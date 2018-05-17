@@ -37,7 +37,7 @@ func TestBlock(t *testing.T) {
 	}
 
 	// Hash for block 100,000.
-	wantHashStr := "142c5f5b6f868b0e70172b78cea2cff21e6580612b3a360cf6bb2a5976e25ed1"
+	wantHashStr := "7d9a8e69628f913086b35130524769b0e2eaff0fcdac97345e28ef7055a7767e"
 	wantHash, err := chainhash.NewHashFromStr(wantHashStr)
 	if err != nil {
 		t.Errorf("NewHashFromStr: %v", err)
@@ -54,10 +54,10 @@ func TestBlock(t *testing.T) {
 
 	// Hashes for the transactions in Block100000.
 	wantTxHashes := []string{
-		"1cbd9fe1a143a265cc819ff9d8132a7cbc4ca48eb68c0de39cfdf7ecf42cbbd1",
-		"f3f9bc9473b6fe18d66e3ac2a1a95b6317b280f4e6687a074075b56aebf1eb53",
-		"ba2ed6210a561a4dab34ec8668ad61ec97f126826dae893719dff7383b9d6928",
-		"c5dde35b55b856cf73b2d85737c68b0dcfdaad01d0271ee509f3a7efacc025b3",
+		"f455a7dee02a8af236ead1c6812a6b0e08290a4385513264f449b02c93f73238",
+		"d63ddb43f394236dd810c5eed13b2eeb1016649a7274a8519424cb68eb581226",
+		"93acc68ce1864e891f62f4643f1087efba5611cdbeef7581d9b75c9f5044cb7f",
+		"cda7de52169b05599acb2f4e661e3885c687407eebe734eb6529cde550489346",
 	}
 
 	// Create a new block to nuke all cached data.

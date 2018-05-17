@@ -140,7 +140,7 @@ func TestTx(t *testing.T) {
 // TestTxHash tests the ability to generate the hash of a transaction accurately.
 func TestTxHash(t *testing.T) {
 	// Hash of first transaction from block 113875.
-	hashStr := "4538fc1618badd058ee88fd020984451024858796be0a1ed111877f887e1bd53"
+	hashStr := "1cc7d871e65acac617d0cc9e01a49bc3a5fb31d2c222c65b6b041caa6e1aff47"
 	wantHash, err := chainhash.NewHashFromStr(hashStr)
 	if err != nil {
 		t.Errorf("NewHashFromStr: %v", err)

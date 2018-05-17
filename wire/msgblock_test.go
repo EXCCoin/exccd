@@ -112,7 +112,7 @@ func TestBlock(t *testing.T) {
 // hashes from a block accurately.
 func TestBlockTxHashes(t *testing.T) {
 	// Block 1, transaction 1 hash.
-	hashStr := "55a25248c04dd8b6599ca2a708413c00d79ae90ce075c54e8a967a647d7e4bea"
+	hashStr := "ee7825879836e2d9ed082fe81ed272c3bc6ae40750eaabf34fcb78e7c51a2aea"
 	wantHash, err := chainhash.NewHashFromStr(hashStr)
 	if err != nil {
 		t.Errorf("NewHashFromStr: %v", err)
@@ -131,7 +131,7 @@ func TestBlockTxHashes(t *testing.T) {
 // transaction hashes from a block accurately.
 func TestBlockSTxHashes(t *testing.T) {
 	// Block 1, transaction 1 hash.
-	hashStr := "ae208a69f3ee088d0328126e3d9bef7652b108d1904f27b166c5999233a801d4"
+	hashStr := "e8352e77297f313d0fc87cfc0d5de7cc86d2bd47db1479656aae3432944b93c2"
 	wantHash, err := chainhash.NewHashFromStr(hashStr)
 	if err != nil {
 		t.Errorf("NewHashFromStr: %v", err)
@@ -149,7 +149,7 @@ func TestBlockSTxHashes(t *testing.T) {
 // TestBlockHash tests the ability to generate the hash of a block accurately.
 func TestBlockHash(t *testing.T) {
 	// Block 1 hash.
-	hashStr := "6b73b6f6faebbfd6a541f38820593e43c50ce1abf64602ab8ac7d5502991c37f"
+	hashStr := "8f4c207542a793e7a8ba51d0011b74afea2a8ea4b9c3aa5d8f886e6e0e73348d"
 	wantHash, err := chainhash.NewHashFromStr(hashStr)
 	if err != nil {
 		t.Errorf("NewHashFromStr: %v", err)
