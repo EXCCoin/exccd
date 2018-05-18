@@ -460,11 +460,7 @@ var MainNetParams = Params{
 	Name:        "mainnet",
 	Net:         wire.MainNet,
 	DefaultPort: "9666",
-	DNSSeeds: []DNSSeed{
-		{"188.166.147.21", false},
-		{"139.59.147.139", false},
-		{"174.138.47.202", false},
-	},
+	DNSSeeds:    []DNSSeed{},
 
 	// Chain parameters
 	GenesisBlock:             &genesisBlock,
@@ -628,9 +624,7 @@ var TestNet2Params = Params{
 	Name:        "testnet2",
 	Net:         wire.TestNet2,
 	DefaultPort: "11999",
-	DNSSeeds: []DNSSeed{
-		{"188.166.147.21", false},
-	},
+	DNSSeeds:    []DNSSeed{},
 
 	// Chain parameters
 	GenesisBlock:             &testNet2GenesisBlock,
