@@ -15,7 +15,7 @@ package exccutil
 
 import (
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
-	"github.com/decred/base58"
+	"github.com/EXCCoin/base58"
 
 	"golang.org/x/crypto/ripemd160"
 )

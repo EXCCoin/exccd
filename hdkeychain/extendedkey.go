@@ -24,7 +24,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/exccutil"
-	"github.com/decred/base58"
+	"github.com/EXCCoin/base58"
 )
 
 const (

@@ -13,7 +13,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/decred/base58"
+	"github.com/EXCCoin/base58"
 )
 
 // ErrMalformedPrivateKey describes an error where a WIF-encoded private
