@@ -50,50 +50,42 @@ func Example_signMessage() {
 // This example demonstrates verifying a secp256k1 signature against a public
 // key that is first parsed from raw bytes.  The signature is also parsed from
 // raw bytes.
-//TODO: enable test and make it working
-// Note that this test need to be commented out instead of just skipped (adding appropriate parameter
-// makes test non-compilable.
+func Example_verifySignature() {
+	// Decode hex-encoded serialized public key.
+	pubKeyBytes, err := hex.DecodeString("02f90e79cec51feff025f56cf071354c10716d6360fcfc53a543589c2d775e2fd1")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	pubKey, err := secp256k1.ParsePubKey(pubKeyBytes)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-//func Example_verifySignature() {
-//	// For some reason verifying signature is failing
-//
-//	// Decode hex-encoded serialized public key.
-//	pubKeyBytes, err := hex.DecodeString("02a673638cb9587cb68ea08dbef685c" +
-//		"6f2d2a751a8b3c6f2a7e9a4999e6e4bfaf5")
-//	if err != nil {
-//		fmt.Println(err)
-//		return
-//	}
-//	pubKey, err := secp256k1.ParsePubKey(pubKeyBytes)
-//	if err != nil {
-//		fmt.Println(err)
-//		return
-//	}
-//
-//	// Decode hex-encoded serialized signature.
-//	sigBytes, err := hex.DecodeString("3045022100fcc0a8768cfbcefcf2cadd7cfb0" +
-//		"fb18ed08dd2e2ae84bef1a474a3d351b26f0302200fc1a350b45f46fa0010139130" +
-//		"2818d748c2b22615511a3ffd5bb638bd777207")
-//
-//	if err != nil {
-//		fmt.Println(err)
-//		return
-//	}
-//	signature, err := secp256k1.ParseSignature(sigBytes, secp256k1.S256())
-//	if err != nil {
-//		fmt.Println(err)
-//		return
-//	}
-//
-//	// Verify the signature for the message using the public key.
-//	message := "test message"
-//	messageHash := chainhash.HashB([]byte(message))
-//	verified := signature.Verify(messageHash, pubKey)
-//	fmt.Println("Signature Verified?", verified)
-//
-//	// Output:
-//	// Signature Verified? true
-//}
+	// Decode hex-encoded serialized signature.
+	sigBytes, err := hex.DecodeString("30450221009f6b38672f1d3228833567be33699339d2b146fd7a2b8a21e1ed8c8ed939e" +
+		"34f022072d895d130a9c683013dcb103fab1bd6025e9c2260f02c504abfd0a48e7a8274")
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	signature, err := secp256k1.ParseSignature(sigBytes, secp256k1.S256())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Verify the signature for the message using the public key.
+	message := "test message"
+	messageHash := chainhash.HashB([]byte(message))
+	verified := signature.Verify(messageHash, pubKey)
+	fmt.Println("Signature Verified?", verified)
+
+	// Output:
+	// Signature Verified? true
+}
 
 // This example demonstrates encrypting a message for a public key that is first
 // parsed from raw bytes, then decrypting it using the corresponding private key.
