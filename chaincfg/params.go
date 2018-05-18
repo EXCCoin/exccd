@@ -38,6 +38,9 @@ var (
 	simNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
 
 	VoteBitsNotFound = fmt.Errorf("vote bits not found")
+	// defaultTargetTimePerBlock is the ideal ExchangeCoin block time.
+	// It is the value of 2.5 minute.
+	defaultTargetTimePerBlock = time.Second * (60 * 2.5)
 )
 
 // SigHashOptimization is an optimization for verification of transactions that
@@ -472,11 +475,11 @@ var MainNetParams = Params{
 	GenerateSupported:        false,
 	MaximumBlockSizes:        []int{393216},
 	MaxTxSize:                393216,
-	TargetTimePerBlock:       time.Minute * 5,
+	TargetTimePerBlock:       defaultTargetTimePerBlock,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       144,
 	WorkDiffWindows:          20,
-	TargetTimespan:           time.Minute * (2.5 * 144), // TimePerBlock * WindowSize
+	TargetTimespan:           defaultTargetTimePerBlock * 144, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
@@ -636,11 +639,11 @@ var TestNet2Params = Params{
 	GenerateSupported:        true,
 	MaximumBlockSizes:        []int{1310720},
 	MaxTxSize:                1000000,
-	TargetTimePerBlock:       time.Minute * 2,
+	TargetTimePerBlock:       defaultTargetTimePerBlock,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       144,
 	WorkDiffWindows:          20,
-	TargetTimespan:           time.Minute * 2 * 144, // TimePerBlock * WindowSize
+	TargetTimespan:           defaultTargetTimePerBlock * 144, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
