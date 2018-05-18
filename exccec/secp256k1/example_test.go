@@ -43,7 +43,7 @@ func Example_signMessage() {
 	fmt.Printf("Signature Verified? %v\n", verified)
 
 	// Output:
-	// Serialized Signature: 3045022100fcc0a8768cfbcefcf2cadd7cfb0fb18ed08dd2e2ae84bef1a474a3d351b26f0302200fc1a350b45f46fa00101391302818d748c2b22615511a3ffd5bb638bd777207
+	// Serialized Signature: 3045022100fa7cdbd9243b99889b033e88ae2ddf55cc189efd5ae64dfa77655f01fc48e8000220045ec2f0dfebc7891d31b40d1ed686ca0e33c7c1b1b693e0fb305e6fc4d84a6a
 	// Signature Verified? true
 }
 
@@ -52,8 +52,7 @@ func Example_signMessage() {
 // raw bytes.
 func Example_verifySignature() {
 	// Decode hex-encoded serialized public key.
-	pubKeyBytes, err := hex.DecodeString("02a673638cb9587cb68ea08dbef685c" +
-		"6f2d2a751a8b3c6f2a7e9a4999e6e4bfaf5")
+	pubKeyBytes, err := hex.DecodeString("02f90e79cec51feff025f56cf071354c10716d6360fcfc53a543589c2d775e2fd1")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -65,9 +64,8 @@ func Example_verifySignature() {
 	}
 
 	// Decode hex-encoded serialized signature.
-	sigBytes, err := hex.DecodeString("3045022100fcc0a8768cfbcefcf2cadd7cfb0" +
-		"fb18ed08dd2e2ae84bef1a474a3d351b26f0302200fc1a350b45f46fa0010139130" +
-		"2818d748c2b22615511a3ffd5bb638bd777207")
+	sigBytes, err := hex.DecodeString("30450221009f6b38672f1d3228833567be33699339d2b146fd7a2b8a21e1ed8c8ed939e" +
+		"34f022072d895d130a9c683013dcb103fab1bd6025e9c2260f02c504abfd0a48e7a8274")
 
 	if err != nil {
 		fmt.Println(err)

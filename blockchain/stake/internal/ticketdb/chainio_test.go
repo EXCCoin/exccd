@@ -164,7 +164,7 @@ func TestBestChainStateSerialization(t *testing.T) {
 				PerBlock:    5,
 				NextWinners: []chainhash.Hash{hash1, hash2, hash3, hash4, hash5},
 			},
-			serialized: hexToBytes("6fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d619000000000023300000d7720000b0018511000000008520da140000000005000ce8d4ef4dd7cd8d62dfded9d4edb0a774ae6a41929a74da23109e8f11139c874a6c419a1e25c85327115c4ace586decddfe2990ed8f3d4d801871158338501d49af37ab5270015fe25276ea5a3bb159d852943df23919522a202205fb7d175cb706d561742ad3671703c247eb927ee8a386369c79644131cdeb2c5c26bf6c5d4c6eb9e38415034f4c93d3304d10bef38bf0ad420eefd0f72f940f11c5857786"),
+			serialized: hexToBytes("6fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d619000000000023300000d7720000b0018511000000008520da140000000005006e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459adbc1b4c900ffe48d575b5da5c638040125f65db0fe3e24494b76ea986457d986084fed08b978af4d7d196a7446a86b58009e636b611db16211b65a9aadff29c5e52d9c508c502347344d8c07ad91cbd6068afc75ff6292f062a09ca381c89e71"),
 		},
 	}
 
@@ -173,7 +173,7 @@ func TestBestChainStateSerialization(t *testing.T) {
 		gotBytes := serializeBestChainState(test.state)
 		if !bytes.Equal(gotBytes, test.serialized) {
 			t.Errorf("serializeBestChainState #%d (%s): mismatched "+
-				"bytes - got %x, want %x", i, test.name,
+				"bytes,\ngot  %x,\nwant %x", i, test.name,
 				gotBytes, test.serialized)
 			continue
 		}
@@ -258,7 +258,7 @@ func TestBlockUndoDataSerializing(t *testing.T) {
 				Spent:        true,
 				Expired:      false,
 			}},
-			serialized: hexToBytes("0ce8d4ef4dd7cd8d62dfded9d4edb0a774ae6a41929a74da23109e8f11139c8740e20100094a6c419a1e25c85327115c4ace586decddfe2990ed8f3d4d801871158338501d6edd010006"),
+			serialized: hexToBytes("6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d40e20100094bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a6edd010006"),
 		},
 	}
 
@@ -267,7 +267,7 @@ func TestBlockUndoDataSerializing(t *testing.T) {
 		gotBytes := serializeBlockUndoData(test.utds)
 		if !bytes.Equal(gotBytes, test.serialized) {
 			t.Errorf("serializeBlockUndoData #%d (%s): mismatched "+
-				"bytes - got %x, want %x", i, test.name,
+				"bytes,\ngot  %x,\nwant %x", i, test.name,
 				gotBytes, test.serialized)
 			continue
 		}
@@ -348,7 +348,7 @@ func TestTicketHashesSerializing(t *testing.T) {
 				hash1,
 				hash2,
 			},
-			serialized: hexToBytes("0ce8d4ef4dd7cd8d62dfded9d4edb0a774ae6a41929a74da23109e8f11139c874a6c419a1e25c85327115c4ace586decddfe2990ed8f3d4d801871158338501d"),
+			serialized: hexToBytes("6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"),
 		},
 	}
 
@@ -357,7 +357,7 @@ func TestTicketHashesSerializing(t *testing.T) {
 		gotBytes := serializeTicketHashes(test.ths)
 		if !bytes.Equal(gotBytes, test.serialized) {
 			t.Errorf("serializeBlockUndoData #%d (%s): mismatched "+
-				"bytes - got %x, want %x", i, test.name,
+				"bytes,\ngot  %x,\nwant %x", i, test.name,
 				gotBytes, test.serialized)
 			continue
 		}

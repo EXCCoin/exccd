@@ -361,7 +361,8 @@ func TestBlockHeaderHashing(t *testing.T) {
 		"0008b990956000000000000000000000000000000000000000000000000000000000000" +
 		"0000000000000000ABCD"
 	// This hash has reversed endianness compared to what chainhash spits out.
-	hashStr := "0d40d58703482d81d711be0ffc1b313788d3c3937e1617e4876661d33a8c4c41"
+	hashStr := "6aa01e97b222e98e412eb51d8b658788b62a35ec022cd03cec3222fc4fd3791d"
+
 	hashB, _ := hex.DecodeString(hashStr)
 	hash, _ := chainhash.NewHash(hashB)
 

@@ -3,6 +3,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/EXCCoin/base58"
+  packages = ["."]
+  revision = "e1a805ee5d9f5e64352b9b509d18413991cceffb"
+
+[[projects]]
+  branch = "master"
   name = "github.com/aead/siphash"
   packages = ["."]
   revision = "e404fcfc888570cadd1610538e2dbc89f66af814"
@@ -62,12 +68,6 @@
   revision = "dee3fe6eb0e98dc774a94fc231f85baf7c29d360"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/decred/base58"
-  packages = ["."]
-  revision = "56c501706f00d9e1cfacee19a27117e12da24734"
-
-[[projects]]
   name = "github.com/jessevdk/go-flags"
   packages = ["."]
   revision = "96dc06278ce32a0e9d957d590bb987c81ee66407"
@@ -100,6 +100,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d190067efa8c61778ef133b4f695f26aa8e0333625b7f0172788009b68567f3d"
+  inputs-digest = "f365e1e0ee2079ba986d61e8e1fc4d446fddd183d7fe5521b05dcb13dcbb44b9"
   solver-name = "gps-cdcl"
   solver-version = 1
