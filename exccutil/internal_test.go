@@ -14,8 +14,8 @@ interface. The functions are only exported while the tests are being run.
 package exccutil
 
 import (
-	"github.com/EXCCoin/exccd/chaincfg/chainec"
 	"github.com/EXCCoin/base58"
+	"github.com/EXCCoin/exccd/chaincfg/chainec"
 
 	"golang.org/x/crypto/ripemd160"
 )
