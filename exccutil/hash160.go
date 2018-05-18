@@ -23,5 +23,4 @@ func calcHash(buf []byte, hasher hash.Hash) []byte {
 // Hash160 calculates the hash ripemd160(hash256(b)).
 func Hash160(buf []byte) []byte {
 	return calcHash(calcHash(buf, sha256.New()), ripemd160.New())
-	//return calcHash(chainhash.HashB(buf), ripemd160.New())
 }
