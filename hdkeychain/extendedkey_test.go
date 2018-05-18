@@ -19,7 +19,6 @@ import (
 	"bytes"
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/hdkeychain"
-	"bytes"
 )
 
 // TestBIP0032Vectors tests the vectors provided by [BIP32] to ensure the
