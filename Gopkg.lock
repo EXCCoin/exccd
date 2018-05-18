@@ -16,7 +16,10 @@
 [[projects]]
   branch = "master"
   name = "github.com/agl/ed25519"
-  packages = [".","edwards25519"]
+  packages = [
+    ".",
+    "edwards25519"
+  ]
   revision = "5312a61534124124185d41f09206b9fef1d88403"
 
 [[projects]]
@@ -34,7 +37,20 @@
 [[projects]]
   branch = "master"
   name = "github.com/btcsuite/goleveldb"
-  packages = ["leveldb","leveldb/cache","leveldb/comparer","leveldb/errors","leveldb/filter","leveldb/iterator","leveldb/journal","leveldb/memdb","leveldb/opt","leveldb/storage","leveldb/table","leveldb/util"]
+  packages = [
+    "leveldb",
+    "leveldb/cache",
+    "leveldb/comparer",
+    "leveldb/errors",
+    "leveldb/filter",
+    "leveldb/iterator",
+    "leveldb/journal",
+    "leveldb/memdb",
+    "leveldb/opt",
+    "leveldb/storage",
+    "leveldb/table",
+    "leveldb/util"
+  ]
   revision = "7834afc9e8cd15233b6c3d97e12674a31ca24602"
 
 [[projects]]
@@ -52,7 +68,13 @@
 [[projects]]
   branch = "master"
   name = "github.com/btcsuite/winsvc"
-  packages = ["eventlog","mgr","registry","svc","winapi"]
+  packages = [
+    "eventlog",
+    "mgr",
+    "registry",
+    "svc",
+    "winapi"
+  ]
   revision = "f8fb11f83f7e860e3769a08e6811d1b399a43722"
 
 [[projects]]
@@ -87,19 +109,31 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/minio/blake2b-simd"
+  packages = ["."]
+  revision = "3f5f724cb5b182a5c278d6d3d55b40e7f8c2efb4"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["ripemd160","ssh/terminal"]
+  packages = [
+    "ripemd160",
+    "ssh/terminal"
+  ]
   revision = "88942b9c40a4c9d203b82b3731787b672d6e809b"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix","windows"]
+  packages = [
+    "unix",
+    "windows"
+  ]
   revision = "13d03a9a82fba647c21a0ef8fba44a795d0f0835"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f365e1e0ee2079ba986d61e8e1fc4d446fddd183d7fe5521b05dcb13dcbb44b9"
+  inputs-digest = "3bc4f7b210683766f5c6081199c4acb5979b45f530fd40c8b7ad680740be2240"
   solver-name = "gps-cdcl"
   solver-version = 1
