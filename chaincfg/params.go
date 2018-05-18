@@ -9,7 +9,6 @@ package chaincfg
 import (
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"math"
 	"math/big"
 	"time"
@@ -37,7 +36,6 @@ var (
 	// can have for the simulation test network.  It is the value 2^255 - 1.
 	simNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
 
-	VoteBitsNotFound = fmt.Errorf("vote bits not found")
 	// defaultTargetTimePerBlock is the ideal ExchangeCoin block time.
 	// It is the value of 2.5 minute.
 	defaultTargetTimePerBlock = time.Second * (60 * 2.5)
