@@ -26,7 +26,7 @@ var (
 
 	// mainPowLimit is the highest proof of work value a ExchangeCoin block can
 	// have for the main network.  It is the value 2^224 - 1.
-	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 224), bigOne)
+	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
 
 	// testNetPowLimit is the highest proof of work value a ExchangeCoin block
 	// can have for the test network.  It is the value 2^232 - 1.
@@ -467,9 +467,9 @@ var MainNetParams = Params{
 	GenesisBlock:             &genesisBlock,
 	GenesisHash:              &genesisHash,
 	PowLimit:                 mainPowLimit,
-	PowLimitBits:             0x1d00ffff,
-	ReduceMinDifficulty:      false,
-	MinDiffReductionTime:     0, // Does not apply since ReduceMinDifficulty false
+	PowLimitBits:             0x207fffff,
+	ReduceMinDifficulty:      true,
+	MinDiffReductionTime:     defaultTargetTimePerBlock * 2,
 	GenerateSupported:        false,
 	MaximumBlockSizes:        []int{393216},
 	MaxTxSize:                393216,
