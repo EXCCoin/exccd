@@ -186,7 +186,7 @@ func createSpendingTx(sigScript, pkScript []byte) *wire.MsgTx {
 // as expected.
 //TODO: enable test and make it working
 func TestScriptInvalidTests(t *testing.T) {
-	//Depends on enternal files with binary data (encoded)
+	// Depends on external files with binary data (encoded)
 	t.SkipNow()
 	file, err := ioutil.ReadFile("data/script_invalid.json")
 	if err != nil {
