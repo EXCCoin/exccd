@@ -538,11 +538,7 @@ func randByteSliceSlice(i int, maxLen int, src int) [][]byte {
 // TestForVMFailure feeds random scripts to the VMs to check and see if it
 // crashes. Try increasing the number of iterations or the length of the
 // byte string to sample a greater space.
-//TODO: enable test and make it working
 func TestForVMFailure(t *testing.T) {
-	//This test causes GoLand hang along with entire PC. Disable it for now and decide when we can do to solve it
-	t.SkipNow()
-
 	numTests := 2
 	bsLength := 11
 
