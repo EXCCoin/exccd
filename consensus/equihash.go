@@ -15,9 +15,11 @@ import (
 )
 
 const (
+	// size of word
 	wordSize = 32
 	wordMask = (1 << wordSize) - 1
 	byteMask = 0xFF
+	// size of each hash key
 	hashSize = 64
 	// N is the number of hash digests used to find a mining solution
 	N = 96
@@ -40,41 +42,52 @@ var (
 	bigZero             = big.NewInt(0)
 )
 
+// the generic person prefix encoder; which encodes the prefix and gbp parameters
 func person(prefix string, n, k int) []byte {
 	nb, kb := writeUint32(uint32(n)), writeUint32(uint32(k))
 	return append([]byte(prefix), append(nb, kb...)...)
 }
 
+// returns the encoded excc person
 func exccPerson(n, k int) []byte {
 	return person(exccPrefix, n, k)
 }
 
+// bytesCmp compares two byte slices and returns true if x is less than y
 func bytesCmp(x, y []byte) bool {
 	return bytes.Compare(x, y) < 0
 }
 
+// hashKeys represents a slice of hashKeys; used for creating a type for sorting hash keys
 type hashKeys []hashKey
 
+// returns the length of hash keys for sorting
 func (k hashKeys) Len() int {
 	return len(k)
 }
 
+// returns true if the ith hash is less than the jth hash
 func (k hashKeys) Less(i, j int) bool {
 	return bytesCmp(k[i].hash, k[j].hash)
 }
 
+// swaps the hash keys at the ith and jth position in the slice
 func (k hashKeys) Swap(i, j int) {
 	k[i], k[j] = k[j], k[i]
 }
 
+// encodes the solution position to the hash
 func hashXi(h hash.Hash, xi int) error {
 	return writeUint32ToHash(h, uint32(xi))
 }
 
+// creates and returns the hash digest
 func hashDigest(h hash.Hash) []byte {
 	return h.Sum(nil)
 }
 
+// expands the hash array based on its parameters
+// TODO(jaupe) provide better description
 func expandArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 	if bitLen < 8 {
 		return nil, errSmallBitLen
@@ -107,22 +120,27 @@ func expandArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 	return out, nil
 }
 
+// a better descriptive type to represent a equihash solution; that is a list of indices that xor to 0
 type equihashSolution []int
 
+// hashKey contains the xor'd hash and the indices that we're used to xor
 type hashKey struct {
 	hash    []byte
 	indices []int
 }
 
-func minLen(x, y int) int {
+// minInt returns the minimum int used to determing the smallest slice length
+func minInt(x, y int) int {
 	if x <= y {
 		return x
 	}
 	return y
 }
 
+// xor  performs xor against two byte slices component-wise and
+// returns a new slice with the xor result
 func xor(a, b []byte) []byte {
-	n := minLen(len(a), len(b))
+	n := minInt(len(a), len(b))
 	x := make([]byte, n)
 	for i := 0; i < n; i++ {
 		x[i] = a[i] ^ b[i]
@@ -130,6 +148,8 @@ func xor(a, b []byte) []byte {
 	return x
 }
 
+// hasCollision returns true if there's a hash collision between
+// both x and y slices and the given bit position (i)
 func hasCollision(x, y []byte, i, length int) bool {
 	start, end := (i-1)*length/8, i*length/8
 	for j := start; j < end; j++ {
@@ -140,6 +160,7 @@ func hasCollision(x, y []byte, i, length int) bool {
 	return false
 }
 
+// collisionOffset returns the offset between the last hash (n-1)
 func collisionOffset(tuples []hashKey, i, collisionLen int) int {
 	n := len(tuples)
 	last := tuples[n-1]
@@ -153,7 +174,9 @@ func collisionOffset(tuples []hashKey, i, collisionLen int) int {
 	return n
 }
 
-func distinctIndices(a, b []int) bool {
+// hasDistinctIndices returns true if the indices are unique between
+// two lists of indices; returns false if not unique
+func hasDistinctIndices(a, b []int) bool {
 	for _, av := range a {
 		for _, bv := range b {
 			if av == bv {
@@ -164,6 +187,7 @@ func distinctIndices(a, b []int) bool {
 	return true
 }
 
+// concatenates the solution indices of two disjoint indices list
 func concatIndices(x, y []int) []int {
 	if x[0] < y[0] {
 		return append(x, y...)
@@ -171,10 +195,17 @@ func concatIndices(x, y []int) []int {
 	return append(y, x...)
 }
 
+// sorts the hash keys in-place and in ascending order
 func sortHashKeys(k []hashKey) {
 	sort.Sort(hashKeys(k))
 }
 
+// gbp is the general birthday problem - which is the cryptopuzzle used for mining
+// digest is the hash to copy that is already pre-populated
+// n is the number of hashes to used to solve the problem; the more hashes, the more time it takes to solve
+// k is the number used to select 2^k hashes at a time to see if - when xor'd - equals 0;
+// the higher the number; the probability to find a solution increases.
+// it returns the indices of the N hashes that solve the gbp puzzle
 func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 	collisionLength := n / (k + 1)
 	hashLength := (k + 1) * ((collisionLength + 7) / 8)
@@ -216,7 +247,7 @@ func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 			for l := 0; l < j-1; l++ {
 				for m := l + 1; m < l; m++ {
 					x1l, x1m := X[xSize-1-l], X[xSize-1-m]
-					if distinctIndices(x1l.indices, x1m.indices) {
+					if hasDistinctIndices(x1l.indices, x1m.indices) {
 						concat := concatIndices(x1l.indices, x1m.indices)
 						a, b := x1l.hash, x1m.hash
 						xc = append(xc, hashKey{xor(a, b), concat})
@@ -241,7 +272,7 @@ func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 				a, b := X[xn-1-l], X[xn-1-m]
 				res := xor(a.hash, b.hash)
 				f1 := countZeros(res) == 8*hashLength
-				f2 := distinctIndices(a.indices, b.indices)
+				f2 := hasDistinctIndices(a.indices, b.indices)
 				if f1 && f2 {
 					indices := concatIndices(a.indices, b.indices)
 					solns = append(solns, indices)
@@ -267,6 +298,7 @@ func countZeros(h []byte) int {
 	return len(h) * 8
 }
 
+// returns the first index of second index that doesn't collide with the first hash
 func solutionOffset(x []hashKey, k, collisionLen int) int {
 	xSize := len(x)
 	for j := 1; j < xSize; j++ {
@@ -287,6 +319,8 @@ func pow(k int) int {
 	return 1 << uint(k)
 }
 
+// hasDuplicateIndices checks for duplicate indices within the same slice
+// returns true if there are duplicate numbers (indices)
 func hasDuplicateIndices(indices []int) bool {
 	if len(indices) <= 1 {
 		return false
@@ -301,6 +335,9 @@ func hasDuplicateIndices(indices []int) bool {
 	return false
 }
 
+// writes a bytes slice to a hash from start to end of the slice (full slice)
+//TODO(jaupe) rewrite when slice is partiall written to hash,
+// by re-writing what was not written
 func writeBytesToHash(h hash.Hash, b []byte) error {
 	n, err := h.Write(b)
 	if err != nil {
@@ -312,16 +349,19 @@ func writeBytesToHash(h hash.Hash, b []byte) error {
 	return nil
 }
 
+// write a 32-bit unsigned int using little endian to the hash
 func writeUint32ToHash(h hash.Hash, v uint32) error {
 	return writeBytesToHash(h, writeUint32(v))
 }
 
+// encodes a 32-bit unsigned int to an allocated byte slice
 func writeUint32(v uint32) []byte {
 	b := make([]byte, 4)
 	binary.LittleEndian.PutUint32(b, v)
 	return b
 }
 
+// copyHash does a deep copy of a hash and returns the deep copy
 func copyHash(src hash.Hash) hash.Hash {
 	typ := reflect.TypeOf(src)
 	val := reflect.ValueOf(src)
@@ -334,6 +374,7 @@ func copyHash(src hash.Hash) hash.Hash {
 	return elem.Addr().Interface().(hash.Hash)
 }
 
+// generateWord generates a word to create a slice of words for validating a solution
 func generateWord(n int, digestWithoutIdx hash.Hash, idx int) (*big.Int, error) {
 	bytesPerWord := n / 8
 	wordsPerHash := 512 / n
@@ -358,6 +399,8 @@ func generateWord(n int, digestWithoutIdx hash.Hash, idx int) (*big.Int, error) 
 	return word, nil
 }
 
+//compressArray compresses (shrinks) an array
+// it is the reverse function of expandArray
 func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 	if bitLen < 8 {
 		return nil, errors.New("bitLen < 8")
@@ -392,6 +435,7 @@ func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 	return out, nil
 }
 
+// generates a slice of words used for validating a solution
 func generateWords(n, solutionLen int, indices []int, h hash.Hash) ([]*big.Int, error) {
 	words := []*big.Int{}
 	for i := 0; i < solutionLen; i++ {
@@ -404,6 +448,9 @@ func generateWords(n, solutionLen int, indices []int, h hash.Hash) ([]*big.Int, 
 	return words, nil
 }
 
+// minSlices returens an ordered tuple based on slice length
+// the first object in the tuple is the smallest, followed by the largest
+// if both a and b have same length, the parameter order is preserved
 func minSlices(a, b []int) ([]int, []int) {
 	if len(a) <= len(b) {
 		return a, b
@@ -411,6 +458,8 @@ func minSlices(a, b []int) ([]int, []int) {
 	return b, a
 }
 
+// joinBytes appends two slices together
+// b is appended to a and returns the concatented slice
 func joinBytes(a, b []byte) []byte {
 	return append(a, b...)
 }
@@ -493,10 +542,13 @@ func ValidateSolution(n, k int, person, header []byte, solutionIndices []int, pr
 	return isBigIntZero(words[0]), nil
 }
 
+// isBigIntZero returns true if the big int (arbitrary sized int) equals zero.
+// returns false if not equal to zero.
 func isBigIntZero(w *big.Int) bool {
 	return w.Cmp(bigZero) == 0
 }
 
+// newBlake2bHash creates a blake2b hash with provided person prefix
 func newBlake2bHash(n, k int, prefix string, prevHash []byte) (hash.Hash, error) {
 	return newHash(n, k, prefix)
 }
@@ -508,6 +560,7 @@ type MiningResult struct {
 	nonce        int
 }
 
+// validateParams validates the two main paramaters of equihash
 func validateParams(n, k int) error {
 	if k >= n {
 		return errKLarge
@@ -518,10 +571,12 @@ func validateParams(n, k int) error {
 	return nil
 }
 
+// collisionLen returns the number of bits used for detecting collision length
 func collisionLen(n, k int) int {
 	return n / (k + 1)
 }
 
+// hashNonce writes the nonce to the underlying hash
 func hashNonce(h hash.Hash, nonce int) error {
 	for i := 0; i < 8; i++ {
 		err := writeHashU32(h, uint32(i))
@@ -532,21 +587,25 @@ func hashNonce(h hash.Hash, nonce int) error {
 	return nil
 }
 
+// putu32 encodes an unsigned 32 bit number (v) to the provided byte slice (b)
 func putU32(b []byte, v uint32) {
 	binary.LittleEndian.PutUint32(b, v)
 }
 
+// writeU32 allocates a byte slice, encodes an unsigned int to it then returns it.
 func writeU32(v uint32) []byte {
 	b := make([]byte, 4)
 	putU32(b, v)
 	return b
 }
 
-//TODO(jaupe) optimize function by not making a deep copy
+// writeHashU32 writes an unsigned 32-bit int (v) to the underlying hash (h)
+//TODO(jaupe) optimize function by making it allocation-free
 func writeHashU32(h hash.Hash, v uint32) error {
 	return writeHashBytes(h, writeU32(v))
 }
 
+// writeHashBytes writes a byte slice (b) to the underlying hash (h)
 func writeHashBytes(h hash.Hash, b []byte) error {
 	n, err := h.Write(b)
 	if err != nil {
@@ -558,6 +617,7 @@ func writeHashBytes(h hash.Hash, b []byte) error {
 	return nil
 }
 
+// newHash creates a blake2b hash using the equihash params (n, k) and the person prefix
 func newHash(n, k int, prefix string) (hash.Hash, error) {
 	h, err := blake2b.New(&blake2b.Config{
 		Key:    nil,
@@ -567,6 +627,7 @@ func newHash(n, k int, prefix string) (hash.Hash, error) {
 	return h, err
 }
 
+// blockHash creates the block header hash
 func blockHash(n, k int, prefix string, prevHash []byte, nonce int, soln []int) ([]byte, error) {
 	h, err := newHash(n, k, prefix)
 	if err != nil {
@@ -596,6 +657,8 @@ func blockHash(n, k int, prefix string, prevHash []byte, nonce int, soln []int) 
 	return hashDigest(h), nil
 }
 
+// difficulutyFilters filters out solutions that passes the difficulty factors
+// returns true if it passes the difficulty level (less than d) and false otherwise
 func difficultyFilter(n, k int, prefix string, prevHash []byte, nonce int, soln []int, d int) bool {
 	h, err := blockHash(n, k, prefix, prevHash, nonce, soln)
 	if err != nil {
@@ -605,6 +668,7 @@ func difficultyFilter(n, k int, prefix string, prevHash []byte, nonce int, soln 
 	return d < count
 }
 
+// hashDigestSize returns the hash digest size
 func hashDigestSize(n int) int {
 	return (512 / n) * n / 8
 }
