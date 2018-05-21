@@ -241,17 +241,17 @@ func TestExpandCompressArrays(t *testing.T) {
 func TestDistinctIndices(t *testing.T) {
 	a := []int{0, 1, 2, 3, 4, 5}
 	b := []int{0, 1, 2, 3, 4, 5}
-	r := distinctIndices(a, b)
+	r := hasDistinctIndices(a, b)
 	if r {
 		t.Error()
 	}
 	b = []int{6, 7, 8, 9, 10}
-	r = distinctIndices(a, b)
+	r = hasDistinctIndices(a, b)
 	if !r {
 		t.Error()
 	}
 	a = []int{7, 8, 9, 10, 11}
-	r = distinctIndices(a, b)
+	r = hasDistinctIndices(a, b)
 	if r {
 		t.Error()
 	}
