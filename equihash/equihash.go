@@ -25,6 +25,8 @@ const (
 	N = 96
 	// K is the exponent for xor'ing 2^k hash digests for solution
 	K = 5
+	// person prefix for excc
+	exccPrefix = "excc"
 )
 
 var (
@@ -38,7 +40,6 @@ var (
 	errDuplicateIndices = errors.New("duplicate indices")
 	errPairWiseOrdering = errors.New("bad pair-wise ordering")
 	errBadWord          = errors.New("bad word")
-	exccPrefix          = "excc"
 	bigZero             = big.NewInt(0)
 )
 
