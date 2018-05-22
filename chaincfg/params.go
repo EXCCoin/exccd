@@ -25,7 +25,8 @@ var (
 	bigOne = big.NewInt(1)
 
 	// mainPowLimit is the highest proof of work value a ExchangeCoin block can
-	// have for the main network.  It is the value 2^224 - 1.
+	// have for the main network.  It is the value 2^555 - 1.
+	// TODO: Restore original pow limit for mainnet: 2^224 - 1.
 	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
 
 	// testNetPowLimit is the highest proof of work value a ExchangeCoin block
@@ -464,9 +465,10 @@ var MainNetParams = Params{
 	DNSSeeds:    []DNSSeed{},
 
 	// Chain parameters
-	GenesisBlock:             &genesisBlock,
-	GenesisHash:              &genesisHash,
-	PowLimit:                 mainPowLimit,
+	GenesisBlock: &genesisBlock,
+	GenesisHash:  &genesisHash,
+	PowLimit:     mainPowLimit,
+	// TODO: Restore original pow limit bits: 0x1d00ffff and disable min difficulty reduction
 	PowLimitBits:             0x207fffff,
 	ReduceMinDifficulty:      true,
 	MinDiffReductionTime:     defaultTargetTimePerBlock * 2,
