@@ -22,7 +22,7 @@ const (
 	// size of each hash key
 	hashSize = 64
 	// N is the number of hash digests used to find a mining solution
-	N = 96
+	N = 200
 	// K is the exponent for xor'ing 2^k hash digests for solution
 	K = 5
 )

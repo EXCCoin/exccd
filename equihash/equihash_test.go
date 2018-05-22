@@ -736,7 +736,7 @@ func TestSolveGBP(t *testing.T) {
 
 func TestPersonal(t *testing.T) {
 	p := testPerson(N, K)
-	exp := []byte{90, 99, 97, 115, 104, 80, 111, 87, 96, 0, 0, 0, 5, 0, 0, 0}
+	exp := []byte{90, 99, 97, 115, 104, 80, 111, 87, 200, 0, 0, 0, 5, 0, 0, 0}
 	err := byteSliceEq(p, exp)
 	if err != nil {
 		t.Error(err)
@@ -746,7 +746,7 @@ func TestPersonal(t *testing.T) {
 
 func TestExccPerson(t *testing.T) {
 	p := exccPerson(N, K)
-	exp := append([]byte(exccPrefix), []byte{96, 0, 0, 0, 5, 0, 0, 0}...)
+	exp := append([]byte(exccPrefix), []byte{200, 0, 0, 0, 5, 0, 0, 0}...)
 	if !bytes.Equal(p, exp) {
 		t.FailNow()
 	}
@@ -766,7 +766,10 @@ func TestBlake2bPerson(t *testing.T) {
 		t.FailNow()
 	}
 	hash := hashDigest(h)
-	exp := []byte{20, 36, 1, 103, 212, 8, 139, 129, 145, 123, 113, 170}
+	exp := []byte{97, 16, 39, 209, 126, 132, 90, 168, 83, 77, 84, 138,
+		116, 153, 183, 177, 187, 95, 49, 131, 100, 153, 26, 163,
+		70}
+
 	err = byteSliceEq(hash, exp)
 	if err != nil {
 		t.Error(err)
