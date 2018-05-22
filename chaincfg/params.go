@@ -9,7 +9,6 @@ package chaincfg
 import (
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"math"
 	"math/big"
 	"time"
@@ -26,8 +25,9 @@ var (
 	bigOne = big.NewInt(1)
 
 	// mainPowLimit is the highest proof of work value a ExchangeCoin block can
-	// have for the main network.  It is the value 2^224 - 1.
-	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 224), bigOne)
+	// have for the main network.  It is the value 2^555 - 1.
+	// TODO: Restore original pow limit for mainnet: 2^224 - 1.
+	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
 
 	// testNetPowLimit is the highest proof of work value a ExchangeCoin block
 	// can have for the test network.  It is the value 2^232 - 1.
@@ -37,7 +37,9 @@ var (
 	// can have for the simulation test network.  It is the value 2^255 - 1.
 	simNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
 
-	VoteBitsNotFound = fmt.Errorf("vote bits not found")
+	// defaultTargetTimePerBlock is the ideal ExchangeCoin block time.
+	// It is the value of 2.5 minute.
+	defaultTargetTimePerBlock = time.Second * (60 * 2.5)
 )
 
 // SigHashOptimization is an optimization for verification of transactions that
@@ -460,27 +462,24 @@ var MainNetParams = Params{
 	Name:        "mainnet",
 	Net:         wire.MainNet,
 	DefaultPort: "9666",
-	DNSSeeds: []DNSSeed{
-		{"188.166.147.21", false},
-		{"139.59.147.139", false},
-		{"174.138.47.202", false},
-	},
+	DNSSeeds:    []DNSSeed{},
 
 	// Chain parameters
-	GenesisBlock:             &genesisBlock,
-	GenesisHash:              &genesisHash,
-	PowLimit:                 mainPowLimit,
-	PowLimitBits:             0x1d00ffff,
-	ReduceMinDifficulty:      false,
-	MinDiffReductionTime:     0, // Does not apply since ReduceMinDifficulty false
+	GenesisBlock: &genesisBlock,
+	GenesisHash:  &genesisHash,
+	PowLimit:     mainPowLimit,
+	// TODO: Restore original pow limit bits: 0x1d00ffff and disable min difficulty reduction
+	PowLimitBits:             0x207fffff,
+	ReduceMinDifficulty:      true,
+	MinDiffReductionTime:     defaultTargetTimePerBlock * 2,
 	GenerateSupported:        false,
 	MaximumBlockSizes:        []int{393216},
 	MaxTxSize:                393216,
-	TargetTimePerBlock:       time.Minute * 5,
+	TargetTimePerBlock:       defaultTargetTimePerBlock,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       144,
 	WorkDiffWindows:          20,
-	TargetTimespan:           time.Minute * (2.5 * 144), // TimePerBlock * WindowSize
+	TargetTimespan:           defaultTargetTimePerBlock * 144, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
@@ -628,9 +627,7 @@ var TestNet2Params = Params{
 	Name:        "testnet2",
 	Net:         wire.TestNet2,
 	DefaultPort: "11999",
-	DNSSeeds: []DNSSeed{
-		{"188.166.147.21", false},
-	},
+	DNSSeeds:    []DNSSeed{},
 
 	// Chain parameters
 	GenesisBlock:             &testNet2GenesisBlock,
@@ -642,11 +639,11 @@ var TestNet2Params = Params{
 	GenerateSupported:        true,
 	MaximumBlockSizes:        []int{1310720},
 	MaxTxSize:                1000000,
-	TargetTimePerBlock:       time.Minute * 2,
+	TargetTimePerBlock:       defaultTargetTimePerBlock,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       144,
 	WorkDiffWindows:          20,
-	TargetTimespan:           time.Minute * 2 * 144, // TimePerBlock * WindowSize
+	TargetTimespan:           defaultTargetTimePerBlock * 144, // TimePerBlock * WindowSize
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
