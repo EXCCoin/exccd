@@ -574,7 +574,10 @@ func blockHash(n, k int, prefix string, prevHash []byte, nonce int, soln []int) 
 	if err != nil {
 		return nil, err
 	}
-	hashNonce(h, nonce)
+	err = hashNonce(h, nonce)
+	if err != nil {
+		return nil, err
+	}
 	for _, xi := range soln {
 		err := hashXi(h, xi)
 		if err != nil {
