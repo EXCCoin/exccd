@@ -256,6 +256,7 @@ func reduceHashKeys(n, k int, X []hashKey) []hashKey {
 
 // find solutions based on the reduced hash keys
 func findSolutions(n, k int, keys []hashKey) []equihashSolution {
+	// ensure keys are sorted after reduction
 	sort.Sort(hashKeys(keys))
 	//find solutions
 	var solns []equihashSolution
@@ -411,8 +412,13 @@ func generateWord(n int, digestWithoutIdx hash.Hash, idx int) (*big.Int, error) 
 	return word, nil
 }
 
+func solutionLength(k int) int {
+	return powOf2(k)
+}
+
 // generates a slice of words used for validating a solution
-func generateWords(n, solutionLen int, indices []int, h hash.Hash) ([]*big.Int, error) {
+func generateWords(n, k int, indices []int, h hash.Hash) ([]*big.Int, error) {
+	solutionLen := solutionLength(k)
 	var words []*big.Int
 	for i := 0; i < solutionLen; i++ {
 		word, err := generateWord(n, h, indices[i])
@@ -424,70 +430,76 @@ func generateWords(n, solutionLen int, indices []int, h hash.Hash) ([]*big.Int, 
 	return words, nil
 }
 
-// ValidateSolution validates that a mining solution is correct
-func ValidateSolution(n, k int, person, header []byte, solutionIndices []int, prefix string) (bool, error) {
+//TODO(jaupe) reduce cyclo complexity of validateSolutionParams
+func validateSolutionParams(n, k int, person, header []byte, solutionIndices []int, prefix string) error {
 	if n < 2 {
-		return false, errors.New("n < 2")
+		return errors.New("n < 2")
 	}
 	if k < 3 {
-		return false, errors.New("k < 3")
+		return errors.New("k < 3")
 	}
 	if (n % 8) != 0 {
-		return false, errors.New("n%8 != 0")
+		return errors.New("n%8 != 0")
 	}
 	if (n % (k + 1)) != 0 {
-		return false, errors.New("n%(k+1) != 0")
+		return errors.New("n%(k+1) != 0")
 	}
 	if len(person) == 0 {
-		return false, errors.New("empty person")
+		return errors.New("empty person")
 	}
 	if len(header) == 0 {
-		return false, errors.New("empty header")
+		return errors.New("empty header")
 	}
 	if len(solutionIndices) == 0 {
-		return false, errors.New("empty solution indices")
+		return errors.New("empty solution indices")
+	}
+	if len(prefix) == 0 {
+		return errors.New("empty prefix")
 	}
 	solutionLen := powOf2(k)
 	if len(solutionIndices) != solutionLen {
-		return false, errBadArg
+		return errBadArg
 	}
 	if hasDuplicateIndices(solutionIndices) {
-		return false, errDuplicateIndices
+		return errDuplicateIndices
 	}
+	return nil
+}
 
+func newValidateHash(n int, person, header []byte) (hash.Hash, error) {
 	bytesPerWord := n / 8
 	wordsPerHash := 512 / n
 	outLen := wordsPerHash * bytesPerWord
 
-	// create hash digest and words
-	digest, err := blake2b.New(&blake2b.Config{
+	h, err := blake2b.New(&blake2b.Config{
 		Person: person,
 		Size:   uint8(outLen),
 	})
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	err = writeBytesToHash(digest, header)
+	err = writeBytesToHash(h, header)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
+	return h, nil
+}
 
-	// check pair-wise ordering of solution indices
+func validateSolutionOrdering(k int, indices []int) error {
+	solutionLen := powOf2(k)
 	for s := 0; s < k; s++ {
 		d := 1 << uint(s)
 		for i := 0; i < solutionLen; i += 2 * d {
-			if solutionIndices[i] >= solutionIndices[i+d] {
-				return false, errPairWiseOrdering
+			if indices[i] >= indices[i+d] {
+				return errPairWiseOrdering
 			}
 		}
 	}
+	return nil
+}
 
-	words, err := generateWords(n, solutionLen, solutionIndices, digest)
-	if err != nil {
-		return false, err
-	}
-
-	// check XOR conditions
+func validateWords(n, k int, words []*big.Int) (bool, error) {
+	solutionLen := powOf2(k)
 	bitsPerStage := n / (k + 1)
 	for s := 0; s < k; s++ {
 		d := 1 << uint(s)
@@ -500,6 +512,37 @@ func ValidateSolution(n, k int, person, header []byte, solutionIndices []int, pr
 		}
 	}
 	return isBigIntZero(words[0]), nil
+}
+
+func validateIndices(n, k int, indices []int, digest hash.Hash) (bool, error) {
+	// check pair-wise ordering of solution indices
+	err := validateSolutionOrdering(k, indices)
+	if err != nil {
+		return false, err
+	}
+
+	words, err := generateWords(n, k, indices, digest)
+	if err != nil {
+		return false, err
+	}
+
+	return validateWords(n,k, words)
+}
+
+// ValidateSolution validates that a mining solution is correct
+func ValidateSolution(n, k int, person, header []byte, solutionIndices []int, prefix string) (bool, error) {
+	err := validateSolutionParams(n, k, person, header, solutionIndices, prefix)
+	if err != nil {
+		return false, err
+	}
+
+	// create hash digest and words
+	digest, err := newValidateHash(n, person, header)
+	if err != nil {
+		return false, err
+	}
+
+	return validateIndices(n, k, solutionIndices, digest)
 }
 
 // isBigIntZero returns true if the big int (arbitrary sized int) equals zero.
