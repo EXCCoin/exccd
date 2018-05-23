@@ -526,7 +526,7 @@ func validateIndices(n, k int, indices []int, digest hash.Hash) (bool, error) {
 		return false, err
 	}
 
-	return validateWords(n,k, words)
+	return validateWords(n, k, words)
 }
 
 // ValidateSolution validates that a mining solution is correct
