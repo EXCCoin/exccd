@@ -208,7 +208,7 @@ func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 	indicesPeHashOutput := 512 / n
 
 	//  1) Generate list (X)
-	X := []hashKey{}
+	var X []hashKey
 	var tmpHash []byte
 	for i := 0; i < pow(collisionLength+1); i++ {
 		r := i % indicesPeHashOutput
@@ -233,7 +233,7 @@ func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 		// sort tuples by hash
 		sort.Sort(hashKeys(X))
 
-		xc := []hashKey{}
+		var xc []hashKey
 		for len(X) > 0 {
 			// 2b) Find next set of unordered pairs with collisions on first n/(k+1) bits
 			xSize := len(X)
@@ -259,7 +259,7 @@ func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 
 	sort.Sort(hashKeys(X))
 	//find solutions
-	solns := []equihashSolution{}
+	var solns []equihashSolution
 	for len(X) > 0 {
 		xn := len(X)
 		j := solutionOffset(X, k, collisionLength)
@@ -433,7 +433,7 @@ func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 
 // generates a slice of words used for validating a solution
 func generateWords(n, solutionLen int, indices []int, h hash.Hash) ([]*big.Int, error) {
-	words := []*big.Int{}
+	var words []*big.Int
 	for i := 0; i < solutionLen; i++ {
 		word, err := generateWord(n, h, indices[i])
 		if err != nil {
