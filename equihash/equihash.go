@@ -294,7 +294,6 @@ func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 
 	keys = reduceHashKeys(n, k, keys)
 
-
 	return findSolutions(n, k, keys), nil
 }
 
