@@ -191,11 +191,6 @@ func concatIndices(x, y []int) []int {
 	return append(y, x...)
 }
 
-// sorts the hash keys in-place and in ascending order
-func sortHashKeys(k []hashKey) {
-	sort.Sort(hashKeys(k))
-}
-
 // gbp is the general birthday problem - which is the cryptopuzzle used for mining
 // digest is the hash to copy that is already pre-populated
 // n is the number of hashes to used to solve the problem; the more hashes, the more time it takes to solve
