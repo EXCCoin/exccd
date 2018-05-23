@@ -27,6 +27,42 @@ var (
 	validationTests     = createValidationTests()
 )
 
+//compressArray compresses (shrinks) an array
+// it is the reverse function of expandArray
+func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
+	if bitLen < 8 {
+		return nil, errors.New("bitLen < 8")
+	}
+	if wordSize < 7+bitLen {
+		return nil, errors.New("wordSize < 7+bitLen")
+	}
+	inWidth := (bitLen+7)/8 + bytePad
+	if outLen != bitLen*len(in)/(8*inWidth) {
+		return nil, errors.New("bitLen*len(in)/(8*inWidth)")
+	}
+	out := make([]byte, outLen)
+	bitLenMask := (1 << uint(bitLen)) - 1
+	accBits, accVal, j := 0, 0, 0
+
+	for i := 0; i < outLen; i++ {
+		if accBits < 8 {
+			accVal = ((accVal << uint(bitLen)) & wordMask) | int(in[j])
+			for x := bytePad; x < inWidth; x++ {
+				v := int(in[j+x])
+				a1 := bitLenMask >> (uint(8 * (inWidth - x - 1)))
+				b := ((v & a1) & 0xFF) << uint(8*(inWidth-x-1))
+				accVal = accVal | b
+			}
+			j += inWidth
+			accBits += bitLen
+		}
+		accBits -= 8
+		out[i] = byte((accVal >> uint(accBits)) & 0xFF)
+	}
+
+	return out, nil
+}
+
 func createExpandCompressTests() []expandCompressTest {
 	return []expandCompressTest{
 		{11, 0, decodeHex("ffffffffffffffffffffff"), decodeHex("07ff07ff07ff07ff07ff07ff07ff07ff")},
@@ -452,12 +488,6 @@ func TestXor_Fail(t *testing.T) {
 	testXor(t, a, b, exp)
 	a, b = []byte{1, 1, 1, 1}, []byte{1, 1, 1, 1}
 	testXor(t, a, b, exp)
-}
-
-func TestHashSize(t *testing.T) {
-	if 64 != hashSize {
-		t.Errorf("hashSize should equal 64 and not %v\n", hashSize)
-	}
 }
 
 type testCountZerosParams struct {
