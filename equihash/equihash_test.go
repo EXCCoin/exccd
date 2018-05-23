@@ -8,6 +8,7 @@ import (
 	"math"
 	"math/big"
 	"math/rand"
+	"sort"
 	"strconv"
 	"testing"
 
@@ -552,7 +553,7 @@ func testHashKeys(n int) []hashKey {
 func TestSortHashKeys(t *testing.T) {
 	n := 8
 	keys := testHashKeys(n)
-	sortHashKeys(keys)
+	sort.Sort(hashKeys(keys))
 	for i := 0; i < len(keys)-1; i++ {
 		for j := i + 1; j < len(keys); j++ {
 			x, y := keys[i].hash, keys[j].hash
