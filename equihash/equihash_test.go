@@ -516,15 +516,6 @@ func testCountZeros(t *testing.T, p testCountZerosParams) {
 	}
 }
 
-func TestJoinBytes(t *testing.T) {
-	a, b := []byte{1, 2, 3, 4}, []byte{5, 6, 7, 8}
-	act, exp := joinBytes(a, b), []byte{1, 2, 3, 4, 5, 6, 7, 8}
-	err := byteSliceEq(act, exp)
-	if err != nil {
-		t.Error(err)
-	}
-}
-
 func solutionEq(x, y []int) error {
 	return intSliceEq(x, y)
 }

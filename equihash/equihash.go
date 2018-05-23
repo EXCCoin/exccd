@@ -411,12 +411,6 @@ func minSlices(a, b []int) ([]int, []int) {
 	return b, a
 }
 
-// joinBytes appends two slices together
-// b is appended to a and returns the concatented slice
-func joinBytes(a, b []byte) []byte {
-	return append(a, b...)
-}
-
 // ValidateSolution validates that a mining solution is correct
 func ValidateSolution(n, k int, person, header []byte, solutionIndices []int, prefix string) (bool, error) {
 	if n < 2 {
