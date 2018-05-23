@@ -198,16 +198,16 @@ func concatIndices(x, y []int) []int {
 func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 	collisionLength := n / (k + 1)
 	hashLength := (k + 1) * ((collisionLength + 7) / 8)
-	indicesPeHashOutput := 512 / n
+	indicesPerHashOutput := 512 / n
 
 	//  1) Generate list (X)
 	var X []hashKey
 	var tmpHash []byte
 	for i := 0; i < powOf2(collisionLength+1); i++ {
-		r := i % indicesPeHashOutput
+		r := i % indicesPerHashOutput
 		if r == 0 {
 			currDigest := copyHash(digest)
-			err := hashXi(currDigest, i/indicesPeHashOutput)
+			err := hashXi(currDigest, i/indicesPerHashOutput)
 			if err != nil {
 				return nil, err
 			}
