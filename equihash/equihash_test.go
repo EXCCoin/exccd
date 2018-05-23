@@ -292,7 +292,7 @@ func TestHasCollision_HashLen(t *testing.T) {
 func TestPow(t *testing.T) {
 	exp := 1
 	for i := 0; i < 64; i++ {
-		val := pow(i)
+		val := powOf2(i)
 		if exp != val {
 			t.Errorf("binPowInt(%v) == %v and not %v\n", i, val, exp)
 		}
@@ -303,7 +303,7 @@ func TestPow(t *testing.T) {
 func TestBinPowInt_NegIndices(t *testing.T) {
 	for i := 0; i < 64; i++ {
 		k := -1 - i
-		if pow(k) != 1 {
+		if powOf2(k) != 1 {
 			t.Errorf("binPowInt(%v) != 1\n", k)
 		}
 	}
