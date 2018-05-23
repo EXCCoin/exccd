@@ -2,16 +2,14 @@ package consensus
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/binary"
 	"errors"
 	"hash"
-	"math"
 	"math/big"
 	"reflect"
 	"sort"
 
-	blake2b "github.com/minio/blake2b-simd"
+	"github.com/minio/blake2b-simd"
 )
 
 const (
@@ -189,39 +187,43 @@ func concatIndices(x, y []int) []int {
 	return append(y, x...)
 }
 
-// gbp is the general birthday problem - which is the cryptopuzzle used for mining
-// digest is the hash to copy that is already pre-populated
-// n is the number of hashes to used to solve the problem; the more hashes, the more time it takes to solve
-// k is the number used to select 2^k hashes at a time to see if - when xor'd - equals 0;
-// the higher the number; the probability to find a solution increases.
-// it returns the indices of the N hashes that solve the gbp puzzle
-func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
-	collisionLength := n / (k + 1)
-	hashLength := (k + 1) * ((collisionLength + 7) / 8)
-	indicesPerHashOutput := 512 / n
+func indicesPerHashOutput(n int) int {
+	return 512 / n
+}
 
-	//  1) Generate list (X)
-	var X []hashKey
+func hashLength(n, k int) int {
+	return (k + 1) * ((collisionLength(n, k) + 7) / 8)
+}
+
+// Generate hash keys based on equihash params and pre-populated hash digest
+func generateHashKeys(n, k int, digest hash.Hash) ([]hashKey, error) {
+	var keys []hashKey
 	var tmpHash []byte
-	for i := 0; i < powOf2(collisionLength+1); i++ {
-		r := i % indicesPerHashOutput
+	collisionLen, indicesPerHash := collisionLength(n, k), indicesPerHashOutput(n)
+	hashLen := hashLength(n, k)
+	for i := 0; i < powOf2(collisionLen+1); i++ {
+		r := i % indicesPerHash
 		if r == 0 {
 			currDigest := copyHash(digest)
-			err := hashXi(currDigest, i/indicesPerHashOutput)
+			err := hashXi(currDigest, i/indicesPerHash)
 			if err != nil {
 				return nil, err
 			}
 			tmpHash = hashDigest(currDigest)
 		}
 		d := tmpHash[r*n/8 : (r+1)*n/8]
-		expanded, err := expandArray(d, hashLength, collisionLength, 0)
+		expanded, err := expandArray(d, hashLen, collisionLen, 0)
 		if err != nil {
 			return nil, errors.New("expandArray err: " + err.Error() + "\n")
 		}
-		X = append(X, hashKey{expanded, []int{i}})
+		keys = append(keys, hashKey{expanded, []int{i}})
 	}
+	return keys, nil
+}
 
-	// 3) Repeat step 2 until 2n/(k+1) bits remain
+// reduces the hash keys based on the parameters (n and k)
+func reduceHashKeys(n, k int, X []hashKey) []hashKey {
+	collisionLen := collisionLength(n, k)
 	for i := 1; i < k; i++ {
 		// sort tuples by hash
 		sort.Sort(hashKeys(X))
@@ -230,7 +232,7 @@ func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 		for len(X) > 0 {
 			// 2b) Find next set of unordered pairs with collisions on first n/(k+1) bits
 			xSize := len(X)
-			j := collisionOffset(X, i, collisionLength)
+			j := collisionOffset(X, i, collisionLen)
 
 			//2c) Store tuples (X_i ^ X_j, (i, j)) on the table
 			for l := 0; l < j-1; l++ {
@@ -249,18 +251,23 @@ func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 		// 2e) replace previous list with new list
 		X = xc
 	}
+	return X
+}
 
-	sort.Sort(hashKeys(X))
+// find solutions based on the reduced hash keys
+func findSolutions(n, k int, keys []hashKey) []equihashSolution {
+	sort.Sort(hashKeys(keys))
 	//find solutions
 	var solns []equihashSolution
-	for len(X) > 0 {
-		xn := len(X)
-		j := solutionOffset(X, k, collisionLength)
+	collisionLen, hashLen := collisionLength(n, k), hashLength(n, k)
+	for len(keys) > 0 {
+		xn := len(keys)
+		j := solutionOffset(keys, k, collisionLen)
 		for l := 0; l < j-1; l++ {
 			for m := l + 1; m < j; m++ {
-				a, b := X[xn-1-l], X[xn-1-m]
+				a, b := keys[xn-1-l], keys[xn-1-m]
 				res := xor(a.hash, b.hash)
-				f1 := countZeros(res) == 8*hashLength
+				f1 := countZeros(res) == 8*hashLen
 				f2 := hasDistinctIndices(a.indices, b.indices)
 				if f1 && f2 {
 					indices := concatIndices(a.indices, b.indices)
@@ -268,10 +275,27 @@ func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 				}
 			}
 		}
-		X = X[:len(X)-j]
+		keys = keys[:len(keys)-j]
+	}
+	return solns
+}
+
+// gbp is the general birthday problem - which is the cryptopuzzle used for mining
+// digest is the hash to copy that is already pre-populated
+// n is the number of hashes to used to solve the problem; the more hashes, the more time it takes to solve
+// k is the number used to select 2^k hashes at a time to see if - when xor'd - equals 0;
+// the higher the number; the probability to find a solution increases.
+// it returns the indices of the N hashes that solve the gbp puzzle
+func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
+	keys, err := generateHashKeys(n, k, digest)
+	if err != nil {
+		return nil, err
 	}
 
-	return solns, nil
+	keys = reduceHashKeys(n, k, keys)
+
+
+	return findSolutions(n, k, keys), nil
 }
 
 // countZeros counts leading zero bits in byte array
@@ -485,11 +509,6 @@ func isBigIntZero(w *big.Int) bool {
 	return w.Cmp(bigZero) == 0
 }
 
-// newBlake2bHash creates a blake2b hash with provided person prefix
-func newBlake2bHash(n, k int, prefix string, prevHash []byte) (hash.Hash, error) {
-	return newHash(n, k, prefix)
-}
-
 // MiningResult provides the details of the mining result
 type MiningResult struct {
 	previousHash []byte
@@ -502,14 +521,14 @@ func validateParams(n, k int) error {
 	if k >= n {
 		return errKLarge
 	}
-	if collisionLen(n, k)+1 >= 32 {
+	if collisionLength(n, k)+1 >= 32 {
 		return errCollisionLen
 	}
 	return nil
 }
 
-// collisionLen returns the number of bits used for detecting collision length
-func collisionLen(n, k int) int {
+// collisionLength returns the number of bits used for detecting collision length
+func collisionLength(n, k int) int {
 	return n / (k + 1)
 }
 
@@ -611,52 +630,4 @@ func difficultyFilter(n, k int, prefix string, prevHash []byte, nonce int, soln 
 // hashDigestSize returns the hash digest size
 func hashDigestSize(n int) int {
 	return (512 / n) * n / 8
-}
-
-// Mine mines for equihash solution based on N number of hashes digests.
-// It finds 2^k indices of hash digest that equal 0 when xor'd
-func Mine(n, k, d int, prefix string) (*MiningResult, error) {
-	err := validateParams(n, k)
-	if err != nil {
-		return nil, err
-	}
-
-	digest := sha256.New()
-	prevHash := hashDigest(digest)
-	var x []int
-	nonce := 0
-	for x == nil {
-		digest, err = newBlake2bHash(n, k, prefix, prevHash)
-		if err != nil {
-			return nil, err
-		}
-		nonce = 0
-
-		for nonce < math.MaxInt64 {
-			currDigest := copyHash(digest)
-			err = hashNonce(currDigest, nonce)
-			if err != nil {
-				return nil, err
-			}
-			solns, err := gbp(currDigest, n, k)
-			if err != nil {
-				return nil, err
-			}
-			for _, soln := range solns {
-				if difficultyFilter(n, k, prefix, prevHash, nonce, soln, d) {
-					x = soln
-					break
-				}
-			}
-			if x != nil {
-				break
-			}
-			nonce++
-		}
-	}
-	currHash, err := blockHash(n, k, prefix, prevHash, nonce, x)
-	if err != nil {
-		return nil, err
-	}
-	return &MiningResult{prevHash, currHash, nonce}, nil
 }
