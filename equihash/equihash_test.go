@@ -301,7 +301,8 @@ func TestHasCollision(t *testing.T) {
 }
 
 func TestHasCollision_AStartPos(t *testing.T) {
-	ha, hb := []byte{}, []byte{1, 2, 3, 4, 5}
+	var ha []byte
+	hb := []byte{1, 2, 3, 4, 5}
 	r := hasCollision(ha, hb, 1, 0)
 	if r {
 		t.Errorf("r = %v\n", r)
@@ -309,7 +310,8 @@ func TestHasCollision_AStartPos(t *testing.T) {
 }
 
 func TestHasCollision_BStartPos(t *testing.T) {
-	hb, ha := []byte{}, []byte{1, 2, 3, 4, 5}
+	var hb []byte
+	ha := []byte{1, 2, 3, 4, 5}
 	r := hasCollision(ha, hb, 1, 0)
 	if r {
 		t.Errorf("r = %v\n", r)
@@ -317,7 +319,8 @@ func TestHasCollision_BStartPos(t *testing.T) {
 }
 
 func TestHasCollision_HashLen(t *testing.T) {
-	hb, ha := []byte{}, []byte{1, 2, 3, 4, 5}
+	var hb []byte
+	ha := []byte{1, 2, 3, 4, 5}
 	r := hasCollision(ha, hb, 1, 0)
 	if r {
 		t.Fail()
@@ -394,7 +397,8 @@ func testXorEmptySlice(t *testing.T, a, b []byte) {
 }
 
 func TestXor_EmptySlices(t *testing.T) {
-	a, b := []byte{1, 2, 3, 4, 5}, []byte{}
+	var b []byte
+	a := []byte{1, 2, 3, 4, 5}
 	testXorEmptySlice(t, a, b)
 	b, a = a, b
 	testXorEmptySlice(t, a, b)
@@ -604,7 +608,7 @@ func TestHasDuplicateIndices_EmptySlice(t *testing.T) {
 }
 
 func TestHasDuplicateIndices_Pass(t *testing.T) {
-	in := []int{}
+	var in []int
 	for i := 0; i <= 10; i++ {
 		in = append(in, i)
 		if hasDuplicateIndices(in) {
@@ -614,7 +618,7 @@ func TestHasDuplicateIndices_Pass(t *testing.T) {
 }
 
 func TestHasDuplicateIndices_Fail(t *testing.T) {
-	in := []int{}
+	var in []int
 	for i := 0; i <= 10; i++ {
 		for j := 0; j < 2; j++ {
 			in = append(in, i)
@@ -752,7 +756,10 @@ func TestBlake2bPerson(t *testing.T) {
 }
 
 func TestValidateSolution_SmallN(t *testing.T) {
-	k, person, header, solns := 5, []byte{}, []byte{}, []int{}
+	var person []byte
+	var header []byte
+	var solns []int
+	k := 5
 	for n := 0; n < 2; n++ {
 		_, err := ValidateSolution(n, k, person, header, solns, prefix)
 		if err == nil {
@@ -762,7 +769,10 @@ func TestValidateSolution_SmallN(t *testing.T) {
 }
 
 func TestValidateSolution_SmallK(t *testing.T) {
-	n, person, header, solns := 96, []byte{}, []byte{}, []int{}
+	var person []byte
+	var header []byte
+	var solns []int
+	n := 96
 	for k := 0; n < 3; n++ {
 		_, err := ValidateSolution(n, k, person, header, solns, prefix)
 		if err == nil {
@@ -772,7 +782,10 @@ func TestValidateSolution_SmallK(t *testing.T) {
 }
 
 func TestValidateSolution_NMod8(t *testing.T) {
-	n, person, header, solns := 96, []byte{}, []byte{}, []int{}
+	var person []byte
+	var header []byte
+	var solns []int
+	n := 96
 	for _, k := range []int{4, 8, 16, 32, 64} {
 		_, err := ValidateSolution(n, k, person, header, solns, prefix)
 		if err == nil {
@@ -782,7 +795,10 @@ func TestValidateSolution_NMod8(t *testing.T) {
 }
 
 func TestValidateSolution_NModK(t *testing.T) {
-	n, person, header, solns := 96, []byte{}, []byte{}, []int{}
+	var person []byte
+	var header []byte
+	var solns []int
+	n := 96
 	for _, k := range []int{3, 7, 15, 31, 63} {
 		_, err := ValidateSolution(n, k, person, header, solns, prefix)
 		if err == nil {
@@ -793,7 +809,8 @@ func TestValidateSolution_NModK(t *testing.T) {
 
 func TestValidateSolution_EmptySolutionSize(t *testing.T) {
 	I := []byte("block header")
-	n, k, person, header, solns := N, K, testPerson(N, K), testHeader(I, 1), []int{}
+	var solns []int
+	n, k, person, header := N, K, testPerson(N, K), testHeader(I, 1)
 	_, err := ValidateSolution(n, k, person, header, solns, prefix)
 	if err == nil {
 		t.FailNow()
