@@ -44,12 +44,6 @@ func TestBlockSubsidy(t *testing.T) {
 				break
 			}
 			totalSubsidy += (work + stake) * numBlocks
-
-			// First reduction internal, subtract the stake subsidy for
-			// blocks before the staking system is enabled.
-			if i == mainnet.SubsidyReductionInterval {
-				totalSubsidy -= stake * (mainnet.StakeValidationHeight - 2)
-			}
 		}
 	}
 
