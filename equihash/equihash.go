@@ -54,11 +54,6 @@ func exccPerson(n, k int) []byte {
 	return person(exccPrefix, n, k)
 }
 
-// bytesCmp compares two byte slices and returns true if x is less than y
-func bytesCmp(x, y []byte) bool {
-	return bytes.Compare(x, y) < 0
-}
-
 // hashKeys represents a slice of hashKeys; used for creating a type for sorting hash keys
 type hashKeys []hashKey
 
@@ -69,7 +64,7 @@ func (k hashKeys) Len() int {
 
 // returns true if the ith hash is less than the jth hash
 func (k hashKeys) Less(i, j int) bool {
-	return bytesCmp(k[i].hash, k[j].hash)
+	return bytes.Compare(k[i].hash, k[j].hash) < 0
 }
 
 // swaps the hash keys at the ith and jth position in the slice
