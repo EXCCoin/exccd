@@ -123,7 +123,7 @@ type hashKey struct {
 	indices []int
 }
 
-// minInt returns the minimum int used to determing the smallest slice length
+// minInt returns the smallest number between the two arguments
 func minInt(x, y int) int {
 	if x <= y {
 		return x
@@ -325,7 +325,7 @@ func hasDuplicateIndices(indices []int) bool {
 }
 
 // writes a bytes slice to a hash from start to end of the slice (full slice)
-//TODO(jaupe) rewrite when slice is partiall written to hash,
+// TODO(jaupe) rewrite when slice is partially written to hash,
 // by re-writing what was not written
 func writeBytesToHash(h hash.Hash, b []byte) error {
 	n, err := h.Write(b)
@@ -497,7 +497,7 @@ type MiningResult struct {
 	nonce        int
 }
 
-// validateParams validates the two main paramaters of equihash
+// validateParams validates the two main parameters of equihash
 func validateParams(n, k int) error {
 	if k >= n {
 		return errKLarge
@@ -597,7 +597,7 @@ func blockHash(n, k int, prefix string, prevHash []byte, nonce int, soln []int) 
 	return hashDigest(h), nil
 }
 
-// difficulutyFilters filters out solutions that passes the difficulty factors
+// difficultyFilter filters out solutions that passes the difficulty factors
 // returns true if it passes the difficulty level (less than d) and false otherwise
 func difficultyFilter(n, k int, prefix string, prevHash []byte, nonce int, soln []int, d int) bool {
 	h, err := blockHash(n, k, prefix, prevHash, nonce, soln)
