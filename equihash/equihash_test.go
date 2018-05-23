@@ -22,8 +22,6 @@ const (
 var (
 	expandCompressTests = createExpandCompressTests()
 	miningTests         = createMiningTests()
-	n                   = N
-	k                   = K
 	validationTests     = createValidationTests()
 )
 
@@ -544,7 +542,7 @@ func TestSortHashKeys(t *testing.T) {
 }
 
 func TestCopyHash(t *testing.T) {
-	h, err := newHash(n, k, prefix)
+	h, err := newHash(N, K, prefix)
 	if err != nil {
 		t.Error(err)
 	}
