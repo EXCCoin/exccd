@@ -401,16 +401,6 @@ func generateWords(n, solutionLen int, indices []int, h hash.Hash) ([]*big.Int, 
 	return words, nil
 }
 
-// minSlices returens an ordered tuple based on slice length
-// the first object in the tuple is the smallest, followed by the largest
-// if both a and b have same length, the parameter order is preserved
-func minSlices(a, b []int) ([]int, []int) {
-	if len(a) <= len(b) {
-		return a, b
-	}
-	return b, a
-}
-
 // ValidateSolution validates that a mining solution is correct
 func ValidateSolution(n, k int, person, header []byte, solutionIndices []int, prefix string) (bool, error) {
 	if n < 2 {

@@ -359,48 +359,6 @@ func TestCollisionLen(t *testing.T) {
 	}
 }
 
-func TestMinSlices_A(t *testing.T) {
-	a := make([]int, 1, 5)
-	b := make([]int, 1, 10)
-	small, large := minSlices(a, b)
-	err := intSliceEq(a, small)
-	if err != nil {
-		t.Error(err)
-	}
-	err = intSliceEq(b, large)
-	if err != nil {
-		t.Error(err)
-	}
-}
-
-func TestMinSlices_B(t *testing.T) {
-	a := make([]int, 1, 10)
-	b := make([]int, 1, 5)
-	small, large := minSlices(a, b)
-	err := intSliceEq(b, small)
-	if err != nil {
-		t.Error(err)
-	}
-	err = intSliceEq(a, large)
-	if err != nil {
-		t.Error(err)
-	}
-}
-
-func TestMinSlices_Eq(t *testing.T) {
-	a := make([]int, 1, 5)
-	b := make([]int, 1, 5)
-	small, large := minSlices(a, b)
-	err := intSliceEq(a, small)
-	if err != nil {
-		t.Error(err)
-	}
-	err = intSliceEq(b, large)
-	if err != nil {
-		t.Error(err)
-	}
-}
-
 func TestValidateParams_ErrKTooLarge(t *testing.T) {
 	n, k := 200, 200
 	err := validateParams(n, k)
