@@ -19,8 +19,6 @@ const (
 	wordSize = 32
 	wordMask = (1 << wordSize) - 1
 	byteMask = 0xFF
-	// size of each hash key
-	hashSize = 64
 	// N is the number of hash digests used to find a mining solution
 	N = 96
 	// K is the exponent for xor'ing 2^k hash digests for solution
@@ -388,42 +386,6 @@ func generateWord(n int, digestWithoutIdx hash.Hash, idx int) (*big.Int, error) 
 		word = word.Or(word, big.NewInt(int64(digest[i])&0xFF))
 	}
 	return word, nil
-}
-
-//compressArray compresses (shrinks) an array
-// it is the reverse function of expandArray
-func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
-	if bitLen < 8 {
-		return nil, errors.New("bitLen < 8")
-	}
-	if wordSize < 7+bitLen {
-		return nil, errors.New("wordSize < 7+bitLen")
-	}
-	inWidth := (bitLen+7)/8 + bytePad
-	if outLen != bitLen*len(in)/(8*inWidth) {
-		return nil, errors.New("bitLen*len(in)/(8*inWidth)")
-	}
-	out := make([]byte, outLen)
-	bitLenMask := (1 << uint(bitLen)) - 1
-	accBits, accVal, j := 0, 0, 0
-
-	for i := 0; i < outLen; i++ {
-		if accBits < 8 {
-			accVal = ((accVal << uint(bitLen)) & wordMask) | int(in[j])
-			for x := bytePad; x < inWidth; x++ {
-				v := int(in[j+x])
-				a1 := bitLenMask >> (uint(8 * (inWidth - x - 1)))
-				b := ((v & a1) & 0xFF) << uint(8*(inWidth-x-1))
-				accVal = accVal | b
-			}
-			j += inWidth
-			accBits += bitLen
-		}
-		accBits -= 8
-		out[i] = byte((accVal >> uint(accBits)) & 0xFF)
-	}
-
-	return out, nil
 }
 
 // generates a slice of words used for validating a solution
