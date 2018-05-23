@@ -346,12 +346,12 @@ func TestBinPowInt_NegIndices(t *testing.T) {
 
 func TestCollisionLen(t *testing.T) {
 	n, k := 90, 2
-	r := collisionLen(n, k)
+	r := collisionLength(n, k)
 	if r != 30 {
 		t.FailNow()
 	}
 	n, k = 200, 90
-	r = collisionLen(n, k)
+	r = collisionLength(n, k)
 	if r != 2 {
 		t.Fail()
 	}
@@ -513,7 +513,7 @@ func TestPutU32(t *testing.T) {
 	}
 }
 
-func generateHashKeys(n int) []hashKey {
+func generateRandomHashKeys(n int) []hashKey {
 	keys := make([]hashKey, 0, n)
 	hashLen := 4
 	for i := 0; i < n; i++ {
@@ -529,7 +529,7 @@ func generateHashKeys(n int) []hashKey {
 
 func TestSortHashKeys(t *testing.T) {
 	n := 8
-	keys := generateHashKeys(n)
+	keys := generateRandomHashKeys(n)
 	sort.Sort(hashKeys(keys))
 	for i := 0; i < len(keys)-1; i++ {
 		for j := i + 1; j < len(keys); j++ {
