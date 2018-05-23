@@ -513,7 +513,7 @@ func TestPutU32(t *testing.T) {
 	}
 }
 
-func testHashKeys(n int) []hashKey {
+func generateHashKeys(n int) []hashKey {
 	keys := make([]hashKey, 0, n)
 	hashLen := 4
 	for i := 0; i < n; i++ {
@@ -529,7 +529,7 @@ func testHashKeys(n int) []hashKey {
 
 func TestSortHashKeys(t *testing.T) {
 	n := 8
-	keys := testHashKeys(n)
+	keys := generateHashKeys(n)
 	sort.Sort(hashKeys(keys))
 	for i := 0; i < len(keys)-1; i++ {
 		for j := i + 1; j < len(keys); j++ {
