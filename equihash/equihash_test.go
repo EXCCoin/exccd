@@ -557,8 +557,7 @@ func TestSortHashKeys(t *testing.T) {
 	for i := 0; i < len(keys)-1; i++ {
 		for j := i + 1; j < len(keys); j++ {
 			x, y := keys[i].hash, keys[j].hash
-			cmp := bytes.Compare(x, y)
-			if cmp != -1 {
+			if bytes.Compare(x, y) != -1 {
 				t.Errorf("%v >= %v\n", x, y)
 			}
 		}
