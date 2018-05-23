@@ -210,7 +210,7 @@ func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 	//  1) Generate list (X)
 	var X []hashKey
 	var tmpHash []byte
-	for i := 0; i < pow(collisionLength+1); i++ {
+	for i := 0; i < powOf2(collisionLength+1); i++ {
 		r := i % indicesPeHashOutput
 		if r == 0 {
 			currDigest := copyHash(digest)
@@ -308,7 +308,7 @@ func solutionOffset(x []hashKey, k, collisionLen int) int {
 }
 
 // pow returns pow of base 2 for only positive k
-func pow(k int) int {
+func powOf2(k int) int {
 	if k < 1 {
 		return 1
 	}
@@ -483,7 +483,7 @@ func ValidateSolution(n, k int, person, header []byte, solutionIndices []int, pr
 	if len(solutionIndices) == 0 {
 		return false, errors.New("empty solution indices")
 	}
-	solutionLen := pow(k)
+	solutionLen := powOf2(k)
 	if len(solutionIndices) != solutionLen {
 		return false, errBadArg
 	}
