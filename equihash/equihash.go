@@ -70,7 +70,7 @@ func (k hashKeys) Swap(i, j int) {
 
 // encodes the solution position to the hash
 func hashXi(h hash.Hash, xi int) error {
-	return writeUint32ToHash(h, uint32(xi))
+	return writeU32ToHash(h, uint32(xi))
 }
 
 // creates and returns the hash digest
@@ -363,7 +363,7 @@ func writeBytesToHash(h hash.Hash, b []byte) error {
 }
 
 // write a 32-bit unsigned int using little endian to the hash
-func writeUint32ToHash(h hash.Hash, v uint32) error {
+func writeU32ToHash(h hash.Hash, v uint32) error {
 	return writeBytesToHash(h, writeUint32(v))
 }
 
@@ -390,7 +390,7 @@ func copyHash(src hash.Hash) hash.Hash {
 // generateWord generates a word to create a slice of words for validating a solution
 func generateWord(n int, digestWithoutIdx hash.Hash, idx int) (*big.Int, error) {
 	bytesPerWord := n / 8
-	wordsPerHash := 512 / n
+	wordsPerHash := indicesPerHashOutput(n)
 
 	hidx := idx / wordsPerHash
 	hrem := idx % wordsPerHash
@@ -430,22 +430,6 @@ func generateWords(n, k int, indices []int, h hash.Hash) ([]*big.Int, error) {
 	return words, nil
 }
 
-func validateEquihashSolutionParams(n, k int) error {
-	if n < 2 {
-		return errors.New("n < 2")
-	}
-	if k < 3 {
-		return errors.New("k < 3")
-	}
-	if (n % 8) != 0 {
-		return errors.New("n%8 != 0")
-	}
-	if (n % (k + 1)) != 0 {
-		return errors.New("n%(k+1) != 0")
-	}
-	return nil
-}
-
 func validateNonEmptySolutionParams(person, header []byte, solutionIndices []int, prefix string) error {
 	if len(person) == 0 {
 		return errors.New("empty person")
@@ -462,29 +446,34 @@ func validateNonEmptySolutionParams(person, header []byte, solutionIndices []int
 	return nil
 }
 
-//TODO(jaupe) reduce cyclo complexity of validateSolutionParams
-func validateSolutionParams(n, k int, person, header []byte, solutionIndices []int, prefix string) error {
-	err := validateEquihashSolutionParams(n, k)
-	if err != nil {
-		return err
-	}
-	err = validateNonEmptySolutionParams(person, header, solutionIndices, prefix)
-	if err != nil {
-		return err
-	}
+func validateSolutionIndices(k int, indices []int) error {
 	solutionLen := powOf2(k)
-	if len(solutionIndices) != solutionLen {
+	if len(indices) != solutionLen {
 		return errBadArg
 	}
-	if hasDuplicateIndices(solutionIndices) {
+	if hasDuplicateIndices(indices) {
 		return errDuplicateIndices
 	}
 	return nil
 }
 
+func validateSolutionParams(n, k int, person, header []byte, indices []int, prefix string) error {
+	err := validateEquihashParams(n, k)
+	if err != nil {
+		return err
+	}
+
+	err = validateNonEmptySolutionParams(person, header, indices, prefix)
+	if err != nil {
+		return err
+	}
+
+	return validateSolutionIndices(k, indices)
+}
+
 func newValidateHash(n int, person, header []byte) (hash.Hash, error) {
 	bytesPerWord := n / 8
-	wordsPerHash := 512 / n
+	wordsPerHash := indicesPerHashOutput(n)
 	outLen := wordsPerHash * bytesPerWord
 
 	h, err := blake2b.New(&blake2b.Config{
@@ -567,9 +556,21 @@ func isBigIntZero(w *big.Int) bool {
 	return w.Cmp(bigZero) == 0
 }
 
-// validateParams validates the two main parameters of equihash
-func validateParams(n, k int) error {
-	if k >= n {
+// validateEquihashParams validates the two main parameters of equihash
+func validateEquihashParams(n, k int) error {
+	if n < 2 {
+		return errors.New("n < 2")
+	}
+	if k < 3 {
+		return errors.New("k < 3")
+	}
+	if (n % 8) != 0 {
+		return errors.New("n%8 != 0")
+	}
+	if (n % (k + 1)) != 0 {
+		return errors.New("n%(k+1) != 0")
+	}
+	if k > 64 || k >= n {
 		return errKLarge
 	}
 	if collisionLength(n, k)+1 >= 32 {
@@ -581,104 +582,4 @@ func validateParams(n, k int) error {
 // collisionLength returns the number of bits used for detecting collision length
 func collisionLength(n, k int) int {
 	return n / (k + 1)
-}
-
-// hashNonce writes the nonce to the underlying hash
-func hashNonce(h hash.Hash, nonce int) error {
-	for i := 0; i < 8; i++ {
-		err := writeHashU32(h, uint32(i))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// putu32 encodes an unsigned 32 bit number (v) to the provided byte slice (b)
-func putU32(b []byte, v uint32) {
-	binary.LittleEndian.PutUint32(b, v)
-}
-
-// writeU32 allocates a byte slice, encodes an unsigned int to it then returns it.
-func writeU32(v uint32) []byte {
-	b := make([]byte, 4)
-	putU32(b, v)
-	return b
-}
-
-// writeHashU32 writes an unsigned 32-bit int (v) to the underlying hash (h)
-//TODO(jaupe) optimize function by making it allocation-free
-func writeHashU32(h hash.Hash, v uint32) error {
-	return writeHashBytes(h, writeU32(v))
-}
-
-// writeHashBytes writes a byte slice (b) to the underlying hash (h)
-func writeHashBytes(h hash.Hash, b []byte) error {
-	n, err := h.Write(b)
-	if err != nil {
-		return err
-	}
-	if n != len(b) {
-		return errWriteLen
-	}
-	return nil
-}
-
-// newHash creates a blake2b hash using the equihash params (n, k) and the person prefix
-func newHash(n, k int, prefix string) (hash.Hash, error) {
-	h, err := blake2b.New(&blake2b.Config{
-		Key:    nil,
-		Person: person(prefix, n, k),
-		Size:   uint8(hashDigestSize(n)),
-	})
-	return h, err
-}
-
-// blockHash creates the block header hash
-func blockHash(n, k int, prefix string, prevHash []byte, nonce int, soln []int) ([]byte, error) {
-	h, err := newHash(n, k, prefix)
-	if err != nil {
-		return nil, err
-	}
-	err = writeHashBytes(h, prevHash)
-	if err != nil {
-		return nil, err
-	}
-	err = hashNonce(h, nonce)
-	if err != nil {
-		return nil, err
-	}
-	for _, xi := range soln {
-		err = hashXi(h, xi)
-		if err != nil {
-			return nil, err
-		}
-	}
-	hb := hashDigest(h)
-	// double hash
-	h, err = newHash(n, k, prefix)
-	if err != nil {
-		return nil, err
-	}
-	err = writeHashBytes(h, hb)
-	if err != nil {
-		return nil, err
-	}
-	return hashDigest(h), nil
-}
-
-// difficultyFilter filters out solutions that passes the difficulty factors
-// returns true if it passes the difficulty level (less than d) and false otherwise
-func difficultyFilter(n, k int, prefix string, prevHash []byte, nonce int, soln []int, d int) bool {
-	h, err := blockHash(n, k, prefix, prevHash, nonce, soln)
-	if err != nil {
-		return false
-	}
-	count := countZeros(h)
-	return d < count
-}
-
-// hashDigestSize returns the hash digest size
-func hashDigestSize(n int) int {
-	return (512 / n) * n / 8
 }
