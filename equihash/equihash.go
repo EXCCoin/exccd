@@ -430,8 +430,7 @@ func generateWords(n, k int, indices []int, h hash.Hash) ([]*big.Int, error) {
 	return words, nil
 }
 
-//TODO(jaupe) reduce cyclo complexity of validateSolutionParams
-func validateSolutionParams(n, k int, person, header []byte, solutionIndices []int, prefix string) error {
+func validateEquihashSolutionParams(n, k int) error {
 	if n < 2 {
 		return errors.New("n < 2")
 	}
@@ -444,6 +443,10 @@ func validateSolutionParams(n, k int, person, header []byte, solutionIndices []i
 	if (n % (k + 1)) != 0 {
 		return errors.New("n%(k+1) != 0")
 	}
+	return nil
+}
+
+func validateNonEmptySolutionParams(person, header []byte, solutionIndices []int, prefix string) error {
 	if len(person) == 0 {
 		return errors.New("empty person")
 	}
@@ -455,6 +458,19 @@ func validateSolutionParams(n, k int, person, header []byte, solutionIndices []i
 	}
 	if len(prefix) == 0 {
 		return errors.New("empty prefix")
+	}
+	return nil
+}
+
+//TODO(jaupe) reduce cyclo complexity of validateSolutionParams
+func validateSolutionParams(n, k int, person, header []byte, solutionIndices []int, prefix string) error {
+	err := validateEquihashSolutionParams(n, k)
+	if err != nil {
+		return err
+	}
+	err = validateNonEmptySolutionParams(person, header, solutionIndices, prefix)
+	if err != nil {
+		return err
 	}
 	solutionLen := powOf2(k)
 	if len(solutionIndices) != solutionLen {
@@ -549,13 +565,6 @@ func ValidateSolution(n, k int, person, header []byte, solutionIndices []int, pr
 // returns false if not equal to zero.
 func isBigIntZero(w *big.Int) bool {
 	return w.Cmp(bigZero) == 0
-}
-
-// MiningResult provides the details of the mining result
-type MiningResult struct {
-	previousHash []byte
-	currHash     []byte
-	nonce        int
 }
 
 // validateParams validates the two main parameters of equihash
