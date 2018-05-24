@@ -2,11 +2,9 @@ package consensus
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/binary"
 	"errors"
 	"hash"
-	"math"
 	"math/big"
 	"reflect"
 	"sort"
@@ -19,8 +17,6 @@ const (
 	wordSize = 32
 	wordMask = (1 << wordSize) - 1
 	byteMask = 0xFF
-	// size of each hash key
-	hashSize = 64
 	// N is the number of hash digests used to find a mining solution
 	N = 200
 	// K is the exponent for xor'ing 2^k hash digests for solution
@@ -42,7 +38,6 @@ var (
 	errDuplicateIndices = errors.New("duplicate indices")
 	errPairWiseOrdering = errors.New("bad pair-wise ordering")
 	errBadWord          = errors.New("bad word")
-	exccPrefix          = "excc"
 	bigZero             = big.NewInt(0)
 )
 
@@ -50,11 +45,6 @@ var (
 func person(n, k int) []byte {
 	nb, kb := writeUint32(uint32(n)), writeUint32(uint32(k))
 	return append([]byte(defaultPrefix), append(nb, kb...)...)
-}
-
-// bytesCmp compares two byte slices and returns true if x is less than y
-func bytesCmp(x, y []byte) bool {
-	return bytes.Compare(x, y) < 0
 }
 
 // hashKeys represents a slice of hashKeys; used for creating a type for sorting hash keys
@@ -67,7 +57,7 @@ func (k hashKeys) Len() int {
 
 // returns true if the ith hash is less than the jth hash
 func (k hashKeys) Less(i, j int) bool {
-	return bytesCmp(k[i].hash, k[j].hash)
+	return bytes.Compare(k[i].hash, k[j].hash) < 0
 }
 
 // swaps the hash keys at the ith and jth position in the slice
@@ -128,7 +118,7 @@ type hashKey struct {
 	indices []int
 }
 
-// minInt returns the minimum int used to determing the smallest slice length
+// minInt returns the smallest number between the two arguments
 func minInt(x, y int) int {
 	if x <= y {
 		return x
@@ -194,53 +184,52 @@ func concatIndices(x, y []int) []int {
 	return append(y, x...)
 }
 
-// sorts the hash keys in-place and in ascending order
-func sortHashKeys(k []hashKey) {
-	sort.Sort(hashKeys(k))
+func indicesPerHashOutput(n int) int {
+	return 512 / n
 }
 
-// gbp is the general birthday problem - which is the cryptopuzzle used for mining
-// digest is the hash to copy that is already pre-populated
-// n is the number of hashes to used to solve the problem; the more hashes, the more time it takes to solve
-// k is the number used to select 2^k hashes at a time to see if - when xor'd - equals 0;
-// the higher the number; the probability to find a solution increases.
-// it returns the indices of the N hashes that solve the gbp puzzle
-func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
-	collisionLength := n / (k + 1)
-	hashLength := (k + 1) * ((collisionLength + 7) / 8)
-	indicesPeHashOutput := 512 / n
+func hashLength(n, k int) int {
+	return (k + 1) * ((collisionLength(n, k) + 7) / 8)
+}
 
-	//  1) Generate list (X)
-	X := []hashKey{}
+// Generate hash keys based on equihash params and pre-populated hash digest
+func generateHashKeys(n, k int, digest hash.Hash) ([]hashKey, error) {
+	var keys []hashKey
 	var tmpHash []byte
-	for i := 0; i < pow(collisionLength+1); i++ {
-		r := i % indicesPeHashOutput
+	collisionLen, indicesPerHash := collisionLength(n, k), indicesPerHashOutput(n)
+	hashLen := hashLength(n, k)
+	for i := 0; i < powOf2(collisionLen+1); i++ {
+		r := i % indicesPerHash
 		if r == 0 {
 			currDigest := copyHash(digest)
-			err := hashXi(currDigest, i/indicesPeHashOutput)
+			err := hashXi(currDigest, i/indicesPerHash)
 			if err != nil {
 				return nil, err
 			}
 			tmpHash = hashDigest(currDigest)
 		}
 		d := tmpHash[r*n/8 : (r+1)*n/8]
-		expanded, err := expandArray(d, hashLength, collisionLength, 0)
+		expanded, err := expandArray(d, hashLen, collisionLen, 0)
 		if err != nil {
 			return nil, errors.New("expandArray err: " + err.Error() + "\n")
 		}
-		X = append(X, hashKey{expanded, []int{i}})
+		keys = append(keys, hashKey{expanded, []int{i}})
 	}
+	return keys, nil
+}
 
-	// 3) Repeat step 2 until 2n/(k+1) bits remain
+// reduces the hash keys based on the parameters (n and k)
+func reduceHashKeys(n, k int, X []hashKey) []hashKey {
+	collisionLen := collisionLength(n, k)
 	for i := 1; i < k; i++ {
 		// sort tuples by hash
 		sort.Sort(hashKeys(X))
 
-		xc := []hashKey{}
+		var xc []hashKey
 		for len(X) > 0 {
 			// 2b) Find next set of unordered pairs with collisions on first n/(k+1) bits
 			xSize := len(X)
-			j := collisionOffset(X, i, collisionLength)
+			j := collisionOffset(X, i, collisionLen)
 
 			//2c) Store tuples (X_i ^ X_j, (i, j)) on the table
 			for l := 0; l < j-1; l++ {
@@ -259,18 +248,24 @@ func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 		// 2e) replace previous list with new list
 		X = xc
 	}
+	return X
+}
 
-	sort.Sort(hashKeys(X))
+// find solutions based on the reduced hash keys
+func findSolutions(n, k int, keys []hashKey) []equihashSolution {
+	// ensure keys are sorted after reduction
+	sort.Sort(hashKeys(keys))
 	//find solutions
-	solns := []equihashSolution{}
-	for len(X) > 0 {
-		xn := len(X)
-		j := solutionOffset(X, k, collisionLength)
+	var solns []equihashSolution
+	collisionLen, hashLen := collisionLength(n, k), hashLength(n, k)
+	for len(keys) > 0 {
+		xn := len(keys)
+		j := solutionOffset(keys, k, collisionLen)
 		for l := 0; l < j-1; l++ {
 			for m := l + 1; m < j; m++ {
-				a, b := X[xn-1-l], X[xn-1-m]
+				a, b := keys[xn-1-l], keys[xn-1-m]
 				res := xor(a.hash, b.hash)
-				f1 := countZeros(res) == 8*hashLength
+				f1 := countZeros(res) == 8*hashLen
 				f2 := hasDistinctIndices(a.indices, b.indices)
 				if f1 && f2 {
 					indices := concatIndices(a.indices, b.indices)
@@ -278,10 +273,26 @@ func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
 				}
 			}
 		}
-		X = X[:len(X)-j]
+		keys = keys[:len(keys)-j]
+	}
+	return solns
+}
+
+// gbp is the general birthday problem - which is the cryptopuzzle used for mining
+// digest is the hash to copy that is already pre-populated
+// n is the number of hashes to used to solve the problem; the more hashes, the more time it takes to solve
+// k is the number used to select 2^k hashes at a time to see if - when xor'd - equals 0;
+// the higher the number; the probability to find a solution increases.
+// it returns the indices of the N hashes that solve the gbp puzzle
+func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
+	keys, err := generateHashKeys(n, k, digest)
+	if err != nil {
+		return nil, err
 	}
 
-	return solns, nil
+	keys = reduceHashKeys(n, k, keys)
+
+	return findSolutions(n, k, keys), nil
 }
 
 // countZeros counts leading zero bits in byte array
@@ -311,7 +322,7 @@ func solutionOffset(x []hashKey, k, collisionLen int) int {
 }
 
 // pow returns pow of base 2 for only positive k
-func pow(k int) int {
+func powOf2(k int) int {
 	if k < 1 {
 		return 1
 	}
@@ -335,7 +346,7 @@ func hasDuplicateIndices(indices []int) bool {
 }
 
 // writes a bytes slice to a hash from start to end of the slice (full slice)
-//TODO(jaupe) rewrite when slice is partiall written to hash,
+// TODO(jaupe) rewrite when slice is partially written to hash,
 // by re-writing what was not written
 func writeBytesToHash(h hash.Hash, b []byte) error {
 	n, err := h.Write(b)
@@ -398,45 +409,14 @@ func generateWord(n int, digestWithoutIdx hash.Hash, idx int) (*big.Int, error) 
 	return word, nil
 }
 
-//compressArray compresses (shrinks) an array
-// it is the reverse function of expandArray
-func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
-	if bitLen < 8 {
-		return nil, errors.New("bitLen < 8")
-	}
-	if wordSize < 7+bitLen {
-		return nil, errors.New("wordSize < 7+bitLen")
-	}
-	inWidth := (bitLen+7)/8 + bytePad
-	if outLen != bitLen*len(in)/(8*inWidth) {
-		return nil, errors.New("bitLen*len(in)/(8*inWidth)")
-	}
-	out := make([]byte, outLen)
-	bitLenMask := (1 << uint(bitLen)) - 1
-	accBits, accVal, j := 0, 0, 0
-
-	for i := 0; i < outLen; i++ {
-		if accBits < 8 {
-			accVal = ((accVal << uint(bitLen)) & wordMask) | int(in[j])
-			for x := bytePad; x < inWidth; x++ {
-				v := int(in[j+x])
-				a1 := bitLenMask >> (uint(8 * (inWidth - x - 1)))
-				b := ((v & a1) & 0xFF) << uint(8*(inWidth-x-1))
-				accVal = accVal | b
-			}
-			j += inWidth
-			accBits += bitLen
-		}
-		accBits -= 8
-		out[i] = byte((accVal >> uint(accBits)) & 0xFF)
-	}
-
-	return out, nil
+func solutionLength(k int) int {
+	return powOf2(k)
 }
 
 // generates a slice of words used for validating a solution
-func generateWords(n, solutionLen int, indices []int, h hash.Hash) ([]*big.Int, error) {
-	words := []*big.Int{}
+func generateWords(n, k int, indices []int, h hash.Hash) ([]*big.Int, error) {
+	solutionLen := solutionLength(k)
+	var words []*big.Int
 	for i := 0; i < solutionLen; i++ {
 		word, err := generateWord(n, h, indices[i])
 		if err != nil {
@@ -447,78 +427,65 @@ func generateWords(n, solutionLen int, indices []int, h hash.Hash) ([]*big.Int, 
 	return words, nil
 }
 
-// minSlices returens an ordered tuple based on slice length
-// the first object in the tuple is the smallest, followed by the largest
-// if both a and b have same length, the parameter order is preserved
-func minSlices(a, b []int) ([]int, []int) {
-	if len(a) <= len(b) {
-		return a, b
-	}
-	return b, a
-}
-
-// joinBytes appends two slices together
-// b is appended to a and returns the concatented slice
-func joinBytes(a, b []byte) []byte {
-	return append(a, b...)
-}
-
-// ValidateSolution validates that a mining solution is correct
-func ValidateSolution(n, k int, header []byte, solutionIndices []int) (bool, error) {
+//TODO(jaupe) reduce cyclo complexity of validateSolutionParams
+func validateSolutionParams(n, k int, header []byte, solutionIndices []int) error {
 	if n < 2 {
-		return false, errors.New("n < 2")
+		return errors.New("n < 2")
 	}
 	if k < 3 {
-		return false, errors.New("k < 3")
+		return errors.New("k < 3")
 	}
 	if (n % 8) != 0 {
-		return false, errors.New("n%8 != 0")
+		return errors.New("n%8 != 0")
 	}
 	if (n % (k + 1)) != 0 {
-		return false, errors.New("n%(k+1) != 0")
+		return errors.New("n%(k+1) != 0")
 	}
 
 	if len(header) == 0 {
-		return false, errors.New("empty header")
+		return errors.New("empty header")
 	}
 	if len(solutionIndices) == 0 {
-		return false, errors.New("empty solution indices")
+		return errors.New("empty solution indices")
 	}
-	solutionLen := pow(k)
+	solutionLen := powOf2(k)
 	if len(solutionIndices) != solutionLen {
-		return false, errBadArg
+		return errBadArg
 	}
 	if hasDuplicateIndices(solutionIndices) {
-		return false, errDuplicateIndices
+		return errDuplicateIndices
 	}
+	return nil
+}
 
-	// create hash digest and words
-	digest, err := newHash(n, k);
+func newValidateHash(n, k int, header []byte) (hash.Hash, error) {
+	h, err := newHash(n, k)
 
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	err = writeBytesToHash(digest, header)
+	err = writeBytesToHash(h, header)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
+	return h, nil
+}
 
-	// check pair-wise ordering of solution indices
+func validateSolutionOrdering(k int, indices []int) error {
+	solutionLen := powOf2(k)
 	for s := 0; s < k; s++ {
 		d := 1 << uint(s)
 		for i := 0; i < solutionLen; i += 2 * d {
-			if solutionIndices[i] >= solutionIndices[i+d] {
-				return false, errPairWiseOrdering
+			if indices[i] >= indices[i+d] {
+				return errPairWiseOrdering
 			}
 		}
 	}
+	return nil
+}
 
-	words, err := generateWords(n, solutionLen, solutionIndices, digest)
-	if err != nil {
-		return false, err
-	}
-
-	// check XOR conditions
+func validateWords(n, k int, words []*big.Int) (bool, error) {
+	solutionLen := powOf2(k)
 	bitsPerStage := n / (k + 1)
 	for s := 0; s < k; s++ {
 		d := 1 << uint(s)
@@ -533,15 +500,41 @@ func ValidateSolution(n, k int, header []byte, solutionIndices []int) (bool, err
 	return isBigIntZero(words[0]), nil
 }
 
+func validateIndices(n, k int, indices []int, digest hash.Hash) (bool, error) {
+	// check pair-wise ordering of solution indices
+	err := validateSolutionOrdering(k, indices)
+	if err != nil {
+		return false, err
+	}
+
+	words, err := generateWords(n, k, indices, digest)
+	if err != nil {
+		return false, err
+	}
+
+	return validateWords(n, k, words)
+}
+
+// ValidateSolution validates that a mining solution is correct
+func ValidateSolution(n, k int, header []byte, solutionIndices []int) (bool, error) {
+	err := validateSolutionParams(n, k, header, solutionIndices)
+	if err != nil {
+		return false, err
+	}
+
+	// create hash digest and words
+	digest, err := newValidateHash(n, k, header)
+	if err != nil {
+		return false, err
+	}
+
+	return validateIndices(n, k, solutionIndices, digest)
+}
+
 // isBigIntZero returns true if the big int (arbitrary sized int) equals zero.
 // returns false if not equal to zero.
 func isBigIntZero(w *big.Int) bool {
 	return w.Cmp(bigZero) == 0
-}
-
-// newBlake2bHash creates a blake2b hash with provided person prefix
-func newBlake2bHash(n, k int, prevHash []byte) (hash.Hash, error) {
-	return newHash(n, k)
 }
 
 // MiningResult provides the details of the mining result
@@ -551,19 +544,19 @@ type MiningResult struct {
 	nonce        int
 }
 
-// validateParams validates the two main paramaters of equihash
+// validateParams validates the two main parameters of equihash
 func validateParams(n, k int) error {
 	if k >= n {
 		return errKLarge
 	}
-	if collisionLen(n, k)+1 >= 32 {
+	if collisionLength(n, k)+1 >= 32 {
 		return errCollisionLen
 	}
 	return nil
 }
 
-// collisionLen returns the number of bits used for detecting collision length
-func collisionLen(n, k int) int {
+// collisionLength returns the number of bits used for detecting collision length
+func collisionLength(n, k int) int {
 	return n / (k + 1)
 }
 
@@ -627,9 +620,12 @@ func blockHash(n, k int, prevHash []byte, nonce int, soln []int) ([]byte, error)
 	if err != nil {
 		return nil, err
 	}
-	hashNonce(h, nonce)
+	err = hashNonce(h, nonce)
+	if err != nil {
+		return nil, err
+	}
 	for _, xi := range soln {
-		err := hashXi(h, xi)
+		err = hashXi(h, xi)
 		if err != nil {
 			return nil, err
 		}
@@ -647,7 +643,7 @@ func blockHash(n, k int, prevHash []byte, nonce int, soln []int) ([]byte, error)
 	return hashDigest(h), nil
 }
 
-// difficulutyFilters filters out solutions that passes the difficulty factors
+// difficultyFilter filters out solutions that passes the difficulty factors
 // returns true if it passes the difficulty level (less than d) and false otherwise
 func difficultyFilter(n, k int, prevHash []byte, nonce int, soln []int, d int) bool {
 	h, err := blockHash(n, k, prevHash, nonce, soln)
@@ -661,52 +657,4 @@ func difficultyFilter(n, k int, prevHash []byte, nonce int, soln []int, d int) b
 // hashDigestSize returns the hash digest size
 func hashDigestSize(n int) int {
 	return (512 / n) * n / 8
-}
-
-// Mine mines for equihash solution based on N number of hashes digests.
-// It finds 2^k indices of hash digest that equal 0 when xor'd
-func Mine(n, k, d int) (*MiningResult, error) {
-	err := validateParams(n, k)
-	if err != nil {
-		return nil, err
-	}
-
-	digest := sha256.New()
-	prevHash := hashDigest(digest)
-	var x []int
-	nonce := 0
-	for x == nil {
-		digest, err = newBlake2bHash(n, k, prevHash)
-		if err != nil {
-			return nil, err
-		}
-		nonce = 0
-
-		for nonce < math.MaxInt64 {
-			currDigest := copyHash(digest)
-			err = hashNonce(currDigest, nonce)
-			if err != nil {
-				return nil, err
-			}
-			solns, err := gbp(currDigest, n, k)
-			if err != nil {
-				return nil, err
-			}
-			for _, soln := range solns {
-				if difficultyFilter(n, k, prevHash, nonce, soln, d) {
-					x = soln
-					break
-				}
-			}
-			if x != nil {
-				break
-			}
-			nonce++
-		}
-	}
-	currHash, err := blockHash(n, k, prevHash, nonce, x)
-	if err != nil {
-		return nil, err
-	}
-	return &MiningResult{prevHash, currHash, nonce}, nil
 }

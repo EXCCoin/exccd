@@ -8,6 +8,7 @@ import (
 	"math"
 	"math/big"
 	"math/rand"
+	"sort"
 	"strconv"
 	"testing"
 
@@ -17,10 +18,44 @@ import (
 var (
 	expandCompressTests = createExpandCompressTests()
 	miningTests         = createMiningTests()
-	n                   = N
-	k                   = K
 	validationTests     = createValidationTests()
 )
+
+//compressArray compresses (shrinks) an array
+// it is the reverse function of expandArray
+func compressArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
+	if bitLen < 8 {
+		return nil, errors.New("bitLen < 8")
+	}
+	if wordSize < 7+bitLen {
+		return nil, errors.New("wordSize < 7+bitLen")
+	}
+	inWidth := (bitLen+7)/8 + bytePad
+	if outLen != bitLen*len(in)/(8*inWidth) {
+		return nil, errors.New("bitLen*len(in)/(8*inWidth)")
+	}
+	out := make([]byte, outLen)
+	bitLenMask := (1 << uint(bitLen)) - 1
+	accBits, accVal, j := 0, 0, 0
+
+	for i := 0; i < outLen; i++ {
+		if accBits < 8 {
+			accVal = ((accVal << uint(bitLen)) & wordMask) | int(in[j])
+			for x := bytePad; x < inWidth; x++ {
+				v := int(in[j+x])
+				a1 := bitLenMask >> (uint(8 * (inWidth - x - 1)))
+				b := ((v & a1) & 0xFF) << uint(8*(inWidth-x-1))
+				accVal = accVal | b
+			}
+			j += inWidth
+			accBits += bitLen
+		}
+		accBits -= 8
+		out[i] = byte((accVal >> uint(accBits)) & 0xFF)
+	}
+
+	return out, nil
+}
 
 func createExpandCompressTests() []expandCompressTest {
 	return []expandCompressTest{
@@ -252,7 +287,8 @@ func TestHasCollision(t *testing.T) {
 }
 
 func TestHasCollision_AStartPos(t *testing.T) {
-	ha, hb := []byte{}, []byte{1, 2, 3, 4, 5}
+	var ha []byte
+	hb := []byte{1, 2, 3, 4, 5}
 	r := hasCollision(ha, hb, 1, 0)
 	if r {
 		t.Errorf("r = %v\n", r)
@@ -260,7 +296,8 @@ func TestHasCollision_AStartPos(t *testing.T) {
 }
 
 func TestHasCollision_BStartPos(t *testing.T) {
-	hb, ha := []byte{}, []byte{1, 2, 3, 4, 5}
+	var hb []byte
+	ha := []byte{1, 2, 3, 4, 5}
 	r := hasCollision(ha, hb, 1, 0)
 	if r {
 		t.Errorf("r = %v\n", r)
@@ -268,7 +305,8 @@ func TestHasCollision_BStartPos(t *testing.T) {
 }
 
 func TestHasCollision_HashLen(t *testing.T) {
-	hb, ha := []byte{}, []byte{1, 2, 3, 4, 5}
+	var hb []byte
+	ha := []byte{1, 2, 3, 4, 5}
 	r := hasCollision(ha, hb, 1, 0)
 	if r {
 		t.Fail()
@@ -278,7 +316,7 @@ func TestHasCollision_HashLen(t *testing.T) {
 func TestPow(t *testing.T) {
 	exp := 1
 	for i := 0; i < 64; i++ {
-		val := pow(i)
+		val := powOf2(i)
 		if exp != val {
 			t.Errorf("binPowInt(%v) == %v and not %v\n", i, val, exp)
 		}
@@ -289,7 +327,7 @@ func TestPow(t *testing.T) {
 func TestBinPowInt_NegIndices(t *testing.T) {
 	for i := 0; i < 64; i++ {
 		k := -1 - i
-		if pow(k) != 1 {
+		if powOf2(k) != 1 {
 			t.Errorf("binPowInt(%v) != 1\n", k)
 		}
 	}
@@ -297,56 +335,14 @@ func TestBinPowInt_NegIndices(t *testing.T) {
 
 func TestCollisionLen(t *testing.T) {
 	n, k := 90, 2
-	r := collisionLen(n, k)
+	r := collisionLength(n, k)
 	if r != 30 {
 		t.FailNow()
 	}
 	n, k = 200, 90
-	r = collisionLen(n, k)
+	r = collisionLength(n, k)
 	if r != 2 {
 		t.Fail()
-	}
-}
-
-func TestMinSlices_A(t *testing.T) {
-	a := make([]int, 1, 5)
-	b := make([]int, 1, 10)
-	small, large := minSlices(a, b)
-	err := intSliceEq(a, small)
-	if err != nil {
-		t.Error(err)
-	}
-	err = intSliceEq(b, large)
-	if err != nil {
-		t.Error(err)
-	}
-}
-
-func TestMinSlices_B(t *testing.T) {
-	a := make([]int, 1, 10)
-	b := make([]int, 1, 5)
-	small, large := minSlices(a, b)
-	err := intSliceEq(b, small)
-	if err != nil {
-		t.Error(err)
-	}
-	err = intSliceEq(a, large)
-	if err != nil {
-		t.Error(err)
-	}
-}
-
-func TestMinSlices_Eq(t *testing.T) {
-	a := make([]int, 1, 5)
-	b := make([]int, 1, 5)
-	small, large := minSlices(a, b)
-	err := intSliceEq(a, small)
-	if err != nil {
-		t.Error(err)
-	}
-	err = intSliceEq(b, large)
-	if err != nil {
-		t.Error(err)
 	}
 }
 
@@ -387,7 +383,8 @@ func testXorEmptySlice(t *testing.T, a, b []byte) {
 }
 
 func TestXor_EmptySlices(t *testing.T) {
-	a, b := []byte{1, 2, 3, 4, 5}, []byte{}
+	var b []byte
+	a := []byte{1, 2, 3, 4, 5}
 	testXorEmptySlice(t, a, b)
 	b, a = a, b
 	testXorEmptySlice(t, a, b)
@@ -439,12 +436,6 @@ func TestXor_Fail(t *testing.T) {
 	testXor(t, a, b, exp)
 }
 
-func TestHashSize(t *testing.T) {
-	if 64 != hashSize {
-		t.Errorf("hashSize should equal 64 and not %v\n", hashSize)
-	}
-}
-
 type testCountZerosParams struct {
 	h        []byte
 	expected int
@@ -468,15 +459,6 @@ func testCountZeros(t *testing.T, p testCountZerosParams) {
 	r := countZeros(p.h)
 	if r != p.expected {
 		t.Error("Should be equal, actual:", r, "expected", p.expected)
-	}
-}
-
-func TestJoinBytes(t *testing.T) {
-	a, b := []byte{1, 2, 3, 4}, []byte{5, 6, 7, 8}
-	act, exp := joinBytes(a, b), []byte{1, 2, 3, 4, 5, 6, 7, 8}
-	err := byteSliceEq(act, exp)
-	if err != nil {
-		t.Error(err)
 	}
 }
 
@@ -521,7 +503,7 @@ func TestPutU32(t *testing.T) {
 	}
 }
 
-func testHashKeys(n int) []hashKey {
+func generateRandomHashKeys(n int) []hashKey {
 	keys := make([]hashKey, 0, n)
 	hashLen := 4
 	for i := 0; i < n; i++ {
@@ -537,13 +519,12 @@ func testHashKeys(n int) []hashKey {
 
 func TestSortHashKeys(t *testing.T) {
 	n := 8
-	keys := testHashKeys(n)
-	sortHashKeys(keys)
+	keys := generateRandomHashKeys(n)
+	sort.Sort(hashKeys(keys))
 	for i := 0; i < len(keys)-1; i++ {
 		for j := i + 1; j < len(keys); j++ {
 			x, y := keys[i].hash, keys[j].hash
-			cmp := bytes.Compare(x, y)
-			if cmp != -1 {
+			if bytes.Compare(x, y) != -1 {
 				t.Errorf("%v >= %v\n", x, y)
 			}
 		}
@@ -551,7 +532,7 @@ func TestSortHashKeys(t *testing.T) {
 }
 
 func TestCopyHash(t *testing.T) {
-	h, err := newHash(n, k)
+	h, err := newHash(N, K)
 	if err != nil {
 		t.Error(err)
 	}
@@ -613,7 +594,7 @@ func TestHasDuplicateIndices_EmptySlice(t *testing.T) {
 }
 
 func TestHasDuplicateIndices_Pass(t *testing.T) {
-	in := []int{}
+	var in []int
 	for i := 0; i <= 10; i++ {
 		in = append(in, i)
 		if hasDuplicateIndices(in) {
@@ -623,7 +604,7 @@ func TestHasDuplicateIndices_Pass(t *testing.T) {
 }
 
 func TestHasDuplicateIndices_Fail(t *testing.T) {
-	in := []int{}
+	var in []int
 	for i := 0; i <= 10; i++ {
 		for j := 0; j < 2; j++ {
 			in = append(in, i)
@@ -760,7 +741,9 @@ func TestBlake2bPerson(t *testing.T) {
 }
 
 func TestValidateSolution_SmallN(t *testing.T) {
-	k, header, solns := 5, []byte{}, []int{}
+	var header []byte
+	var solns []int
+	k := 5
 	for n := 0; n < 2; n++ {
 		_, err := ValidateSolution(n, k, header, solns)
 		if err == nil {
@@ -770,7 +753,9 @@ func TestValidateSolution_SmallN(t *testing.T) {
 }
 
 func TestValidateSolution_SmallK(t *testing.T) {
-	n, header, solns := 96, []byte{}, []int{}
+	var header []byte
+	var solns []int
+	n := 96
 	for k := 0; n < 3; n++ {
 		_, err := ValidateSolution(n, k, header, solns)
 		if err == nil {
@@ -780,7 +765,9 @@ func TestValidateSolution_SmallK(t *testing.T) {
 }
 
 func TestValidateSolution_NMod8(t *testing.T) {
-	n, header, solns := 96, []byte{}, []int{}
+	var header []byte
+	var solns []int
+	n := 96
 	for _, k := range []int{4, 8, 16, 32, 64} {
 		_, err := ValidateSolution(n, k, header, solns)
 		if err == nil {
@@ -790,7 +777,9 @@ func TestValidateSolution_NMod8(t *testing.T) {
 }
 
 func TestValidateSolution_NModK(t *testing.T) {
-	n, header, solns := 96, []byte{}, []int{}
+	var header []byte
+	var solns []int
+	n := 96
 	for _, k := range []int{3, 7, 15, 31, 63} {
 		_, err := ValidateSolution(n, k, header, solns)
 		if err == nil {
@@ -801,7 +790,8 @@ func TestValidateSolution_NModK(t *testing.T) {
 
 func TestValidateSolution_EmptySolutionSize(t *testing.T) {
 	I := []byte("block header")
-	n, k, header, solns := N, K, testHeader(I, 1), []int{}
+	var solns []int
+	n, k, header := N, K, testHeader(I, 1)
 	_, err := ValidateSolution(n, k, header, solns)
 	if err == nil {
 		t.FailNow()
