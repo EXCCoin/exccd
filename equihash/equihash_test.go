@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"testing"
 
+	"encoding/binary"
 	"github.com/minio/blake2b-simd"
 )
 
@@ -186,7 +187,7 @@ func createDigest(n, k, nonce int, I []byte) (hash.Hash, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = writeHashBytes(digest, I)
+	err = writeBytesToHash(digest, I)
 	if err != nil {
 		return nil, err
 	}
@@ -195,6 +196,22 @@ func createDigest(n, k, nonce int, I []byte) (hash.Hash, error) {
 		return nil, err
 	}
 	return digest, nil
+}
+
+// hashNonce writes the nonce to the underlying hash
+func hashNonce(h hash.Hash, nonce int) error {
+	for i := 0; i < 8; i++ {
+		err := writeU32ToHash(h, uint32(i))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// putu32 encodes an unsigned 32 bit number (v) to the provided byte slice (b)
+func putU32(b []byte, v uint32) {
+	binary.LittleEndian.PutUint32(b, v)
 }
 
 func testPerson(n, k int) []byte {
@@ -360,30 +377,30 @@ func TestCollisionLen(t *testing.T) {
 	}
 }
 
-func TestValidateParams_ErrKTooLarge(t *testing.T) {
+func TestValidateEquihashParams_ErrKTooLarge(t *testing.T) {
 	n, k := 200, 200
-	err := validateParams(n, k)
+	err := validateEquihashParams(n, k)
 	if err == nil {
 		t.Fail()
 	}
 	n, k = 200, 201
-	err = validateParams(n, k)
+	err = validateEquihashParams(n, k)
 	if err == nil {
 		t.Fail()
 	}
 }
 
-func TestValidateParams_ErrCollision(t *testing.T) {
+func TestValidateEquihashParams_ErrCollision(t *testing.T) {
 	n, k := 200, 200
-	err := validateParams(n, k)
+	err := validateEquihashParams(n, k)
 	if err == nil {
 		t.Fail()
 	}
 }
 
-func TestValidateParams(t *testing.T) {
+func TestValidateEquihashParams(t *testing.T) {
 	n, k := 200, 90
-	err := validateParams(n, k)
+	err := validateEquihashParams(n, k)
 	if err != nil {
 		t.Error(err)
 	}
@@ -551,7 +568,7 @@ func TestCopyHash(t *testing.T) {
 		t.Error(err)
 	}
 	b := []byte{1, 2, 3, 4}
-	err = writeHashBytes(h, b)
+	err = writeBytesToHash(h, b)
 	if err != nil {
 		t.Error(err)
 	}
@@ -797,10 +814,10 @@ func TestValidateSolution_NMod8(t *testing.T) {
 func TestValidateSolution_NModK(t *testing.T) {
 	var person []byte
 	var header []byte
-	var solns []int
+	var solutions []int
 	n := 96
 	for _, k := range []int{3, 7, 15, 31, 63} {
-		_, err := ValidateSolution(n, k, person, header, solns, prefix)
+		_, err := ValidateSolution(n, k, person, header, solutions, prefix)
 		if err == nil {
 			t.FailNow()
 		}
@@ -815,4 +832,26 @@ func TestValidateSolution_EmptySolutionSize(t *testing.T) {
 	if err == nil {
 		t.FailNow()
 	}
+}
+
+// newHash creates a blake2b hash using the equihash params (n, k) and the person prefix
+func newHash(n, k int, prefix string) (hash.Hash, error) {
+	h, err := blake2b.New(&blake2b.Config{
+		Key:    nil,
+		Person: person(prefix, n, k),
+		Size:   uint8(hashDigestSize(n)),
+	})
+	return h, err
+}
+
+// hashDigestSize returns the hash digest size
+func hashDigestSize(n int) int {
+	return (512 / n) * n / 8
+}
+
+// writeU32 allocates a byte slice, encodes an unsigned int to it then returns it.
+func writeU32(v uint32) []byte {
+	b := make([]byte, 4)
+	putU32(b, v)
+	return b
 }
