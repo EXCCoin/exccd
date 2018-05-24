@@ -205,8 +205,9 @@ func nodesEqual(a *Node, b *Node) error {
 	return nil
 }
 
+//TODO: once upon a time enable test and make it pass
 func TestTicketDBLongChain(t *testing.T) {
-	// TODO: regenerate test data for this test
+	//Relies on external binary data
 	t.SkipNow()
 	// Declare some useful variables.
 	params := &chaincfg.SimNetParams
@@ -537,9 +538,11 @@ func TestTicketDBLongChain(t *testing.T) {
 	*/
 }
 
+//TODO: once upon a time enable test and make it pass
 func TestTicketDBGeneral(t *testing.T) {
-	// TODO: regenerate test data for this test
+	//Skip this test because it relies on binary data stored in file
 	t.SkipNow()
+
 	// Declare some useful variables.
 	params := &chaincfg.SimNetParams
 	testBCHeight := int64(168)

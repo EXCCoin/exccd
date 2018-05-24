@@ -37,10 +37,11 @@ func cloneParams(params *chaincfg.Params) *chaincfg.Params {
 
 // TestBlockchainFunction tests the various blockchain API to ensure proper
 // functionality.
+//TODO: once upon a time enable test and make it pass
 func TestBlockchainFunctions(t *testing.T) {
-	// Skipping this test until hash function in not changed to SHA256
-	// TODO: regenerate somehow testdata for this test
-	t.Skip()
+	//Skip this test for now since it relies on binary files
+	t.SkipNow()
+
 	// Update simnet parameters to reflect what is expected by the legacy
 	// data.
 	params := cloneParams(&chaincfg.SimNetParams)

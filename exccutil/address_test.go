@@ -14,9 +14,9 @@ import (
 	"testing"
 
 	"github.com/EXCCoin/exccd/chaincfg"
-	"github.com/EXCCoin/exccd/chaincfg/chainec"
 	"github.com/EXCCoin/exccd/exccutil"
 
+	"github.com/EXCCoin/exccd/chaincfg/chainec"
 	"golang.org/x/crypto/ripemd160"
 )
 
@@ -34,19 +34,18 @@ func TestAddresses(t *testing.T) {
 		// Positive P2PKH tests.
 		{
 			name:    "mainnet p2pkh",
-			addr:    "2sZtkGxesQHNs1C3tuGfP7vz4XfyhGEZg3jS",
-			encoded: "2sZtkGxesQHNs1C3tuGfP7vz4XfyhGEZg3jS",
+			addr:    "22trrTsiGrEHUijZWM8rTUmMZridbfXGcjzk",
+			encoded: "22trrTsiGrEHUijZWM8rTUmMZridbfXGcjzk",
 			valid:   true,
 			result: exccutil.TstAddressPubKeyHash(
 				[ripemd160.Size]byte{
-					0x27, 0x89, 0xd5, 0x8c, 0xfa, 0x09, 0x57, 0xd2, 0x06, 0xf0,
-					0x25, 0xc2, 0xaf, 0x05, 0x6f, 0xc8, 0xa7, 0x7c, 0xeb, 0xb0},
-
+					0x4d, 0x02, 0x1b, 0xca, 0xad, 0x14, 0xe2, 0x4d, 0xe9, 0x04,
+					0x78, 0xe7, 0x69, 0x52, 0xe3, 0xac, 0xdb, 0xd8, 0x08, 0x36},
 				chaincfg.MainNetParams.PubKeyHashAddrID),
 			f: func() (exccutil.Address, error) {
 				pkHash := []byte{
-					0x27, 0x89, 0xd5, 0x8c, 0xfa, 0x09, 0x57, 0xd2, 0x06, 0xf0,
-					0x25, 0xc2, 0xaf, 0x05, 0x6f, 0xc8, 0xa7, 0x7c, 0xeb, 0xb0}
+					0x4d, 0x02, 0x1b, 0xca, 0xad, 0x14, 0xe2, 0x4d, 0xe9, 0x04,
+					0x78, 0xe7, 0x69, 0x52, 0xe3, 0xac, 0xdb, 0xd8, 0x08, 0x36}
 				return exccutil.NewAddressPubKeyHash(pkHash,
 					&chaincfg.MainNetParams, chainec.ECTypeSecp256k1)
 			},
@@ -54,18 +53,18 @@ func TestAddresses(t *testing.T) {
 		},
 		{
 			name:    "mainnet p2pkh 2",
-			addr:    "2sZtJGcXf9dSUCKBq85WrCRK9f2P4KkUSass",
-			encoded: "2sZtJGcXf9dSUCKBq85WrCRK9f2P4KkUSass",
+			addr:    "22tzVXtrxb5zkHq4w3K43ZxBRSN5QpgWWimZ",
+			encoded: "22tzVXtrxb5zkHq4w3K43ZxBRSN5QpgWWimZ",
 			valid:   true,
 			result: exccutil.TstAddressPubKeyHash(
 				[ripemd160.Size]byte{
-					0x22, 0x9e, 0xba, 0xc3, 0x0e, 0xfd, 0x6a, 0x69, 0xee, 0xc9,
-					0xc1, 0xa4, 0x8e, 0x04, 0x8b, 0x7c, 0x97, 0x5c, 0x25, 0xf2},
+					0xa0, 0xcd, 0xbc, 0x36, 0xf1, 0xcd, 0x3f, 0x16, 0x3d, 0x20,
+					0xc3, 0x8e, 0xcd, 0xca, 0x8c, 0xf2, 0x40, 0x0f, 0x2e, 0x25},
 				chaincfg.MainNetParams.PubKeyHashAddrID),
 			f: func() (exccutil.Address, error) {
 				pkHash := []byte{
-					0x22, 0x9e, 0xba, 0xc3, 0x0e, 0xfd, 0x6a, 0x69, 0xee, 0xc9,
-					0xc1, 0xa4, 0x8e, 0x04, 0x8b, 0x7c, 0x97, 0x5c, 0x25, 0xf2}
+					0xa0, 0xcd, 0xbc, 0x36, 0xf1, 0xcd, 0x3f, 0x16, 0x3d, 0x20,
+					0xc3, 0x8e, 0xcd, 0xca, 0x8c, 0xf2, 0x40, 0x0f, 0x2e, 0x25}
 				return exccutil.NewAddressPubKeyHash(pkHash,
 					&chaincfg.MainNetParams, chainec.ECTypeSecp256k1)
 			},
@@ -73,8 +72,8 @@ func TestAddresses(t *testing.T) {
 		},
 		{
 			name:    "testnet p2pkh",
-			addr:    "Tso2MVTUeVrjHTBFedFhiyM7yVTbieqp91h",
-			encoded: "Tso2MVTUeVrjHTBFedFhiyM7yVTbieqp91h",
+			addr:    "Tso2MVTUeVrjHTBFedFhiyM7yVTbifRSmQJ",
+			encoded: "Tso2MVTUeVrjHTBFedFhiyM7yVTbifRSmQJ",
 			valid:   true,
 			result: exccutil.TstAddressPubKeyHash(
 				[ripemd160.Size]byte{
@@ -115,17 +114,14 @@ func TestAddresses(t *testing.T) {
 
 		// Positive P2SH tests.
 		{
-			// Taken from transactions:
-			// output: 3c9018e8d5615c306d72397f8f5eef44308c98fb576a88e030c25456b4f3a7ac
-			// input:  837dea37ddc8b1e3ce646f1a656e79bbd8cc7f558ac56a169626d649ebe2a3ba.
 			name:    "mainnet p2sh",
-			addr:    "2ca34vFLoksDcDTz2aU2RTKZU9vyeQshAx7K",
-			encoded: "2ca34vFLoksDcDTz2aU2RTKZU9vyeQshAx7K",
+			addr:    "22ttV4rFyJVYMHn5G5fbeTWxHStR3fyw8daM",
+			encoded: "22ttV4rFyJVYMHn5G5fbeTWxHStR3fyw8daM",
 			valid:   true,
 			result: exccutil.TstAddressScriptHash(
 				[ripemd160.Size]byte{
-					0xf0, 0xb4, 0xe8, 0x51, 0x00, 0xae, 0xe1, 0xa9, 0x96, 0xf2,
-					0x29, 0x15, 0xeb, 0x3c, 0x3f, 0x76, 0x4d, 0x53, 0x77, 0x9a},
+					0x8d, 0x59, 0x23, 0x97, 0x36, 0x51, 0xab, 0xb5, 0x70, 0x9a,
+					0x15, 0x20, 0x3f, 0x7f, 0x60, 0x3d, 0x33, 0x7d, 0x01, 0x62},
 				chaincfg.MainNetParams.ScriptHashAddrID),
 			f: func() (exccutil.Address, error) {
 				txscript := []byte{
@@ -138,12 +134,9 @@ func TestAddresses(t *testing.T) {
 			net: &chaincfg.MainNetParams,
 		},
 		{
-			// Taken from transactions:
-			// output: b0539a45de13b3e0403909b8bd1a555b8cbe45fd4e3f3fda76f3a5f52835c29d
-			// input: (not yet redeemed at time test was written)
 			name:    "mainnet p2sh 2",
-			addr:    "2caCdriUF5h2pv9Emw5mtcSA4SNfbiDbhUZr",
-			encoded: "2caCdriUF5h2pv9Emw5mtcSA4SNfbiDbhUZr",
+			addr:    "22u441KPQdKMZzTL1SHM7cdYsjL6zyPBaaZP",
+			encoded: "22u441KPQdKMZzTL1SHM7cdYsjL6zyPBaaZP",
 			valid:   true,
 			result: exccutil.TstAddressScriptHash(
 				[ripemd160.Size]byte{
@@ -161,8 +154,8 @@ func TestAddresses(t *testing.T) {
 		{
 			// Taken from bitcoind base58_keys_valid.
 			name:    "testnet p2sh",
-			addr:    "TccWLgcquqvwrfBocq5mcK5kBiyw8MvyvCi",
-			encoded: "TccWLgcquqvwrfBocq5mcK5kBiyw8MvyvCi",
+			addr:    "TccWLgcquqvwrfBocq5mcK5kBiyw8S5DsVb",
+			encoded: "TccWLgcquqvwrfBocq5mcK5kBiyw8S5DsVb",
 			valid:   true,
 			result: exccutil.TstAddressScriptHash(
 				[ripemd160.Size]byte{
@@ -196,8 +189,8 @@ func TestAddresses(t *testing.T) {
 		// Positive P2PK tests.
 		{
 			name:    "mainnet p2pk compressed (0x02)",
-			addr:    "2sZsEZDgmRNjuQpyoETXY5JuZgVC2E7q6tfk",
-			encoded: "2sZsEZDgmRNjuQpyoETXY5JuZgVC2E7q6tfk",
+			addr:    "22tmvd3qW5y2pD1ybSk4e37Dv6i2Q6EDQraj",
+			encoded: "22tmvd3qW5y2pD1ybSk4e37Dv6i2Q6EDQraj",
 			valid:   true,
 			result: exccutil.TstAddressPubKey(
 				[]byte{
@@ -218,8 +211,8 @@ func TestAddresses(t *testing.T) {
 		},
 		{
 			name:    "mainnet p2pk compressed (0x03)",
-			addr:    "2sa5tY2pc92kqCMofELgBcGAkRqErnV3MK1S",
-			encoded: "2sa5tY2pc92kqCMofELgBcGAkRqErnV3MK1S",
+			addr:    "22tzabryLod3jzYoTSdDHa4V6r45EebLybze",
+			encoded: "22tzabryLod3jzYoTSdDHa4V6r45EebLybze",
 			valid:   true,
 			result: exccutil.TstAddressPubKey(
 				[]byte{
@@ -238,41 +231,41 @@ func TestAddresses(t *testing.T) {
 			},
 			net: &chaincfg.MainNetParams,
 		},
-		//{	// Seems not going to work. Do we support uncompressed addresses?
-		//	name:    "mainnet p2pk uncompressed (0x04)",
-		//	//addr:    "DkM3EyZ546GghVSkvzb6J47PvGDyntqiDtFgipQhNj78Xm2mUYRpf",
-		//	addr:    "guvtCfU2Nhck7F1pZKd82Ms2Uz4nhMwmukbawecqjTjGPkgT5q9s4",
-		//	encoded: "DsfFjaADsV8c5oHWx85ZqfxCZy74K8RFuhK",
-		//	valid:   true,
-		//	saddr:   "0264c44653d6567eff5753c5d24a682ddc2b2cadfe1b0c6433b16374dace6778f0",
-		//	result: exccutil.TstAddressPubKey(
-		//		[]byte{
-		//			0x04, 0x64, 0xc4, 0x46, 0x53, 0xd6, 0x56, 0x7e, 0xff, 0x57,
-		//			0x53, 0xc5, 0xd2, 0x4a, 0x68, 0x2d, 0xdc, 0x2b, 0x2c, 0xad,
-		//			0xfe, 0x1b, 0x0c, 0x64, 0x33, 0xb1, 0x63, 0x74, 0xda, 0xce,
-		//			0x67, 0x78, 0xf0, 0xb8, 0x7c, 0xa4, 0x27, 0x9b, 0x56, 0x5d,
-		//			0x21, 0x30, 0xce, 0x59, 0xf7, 0x5b, 0xfb, 0xb2, 0xb8, 0x8d,
-		//			0xa7, 0x94, 0x14, 0x3d, 0x7c, 0xfd, 0x3e, 0x80, 0x80, 0x8a,
-		//			0x1f, 0xa3, 0x20, 0x39, 0x04},
-		//		exccutil.PKFUncompressed, chaincfg.MainNetParams.PubKeyHashAddrID),
-		//	f: func() (exccutil.Address, error) {
-		//		serializedPubKey := []byte{
-		//			0x04, 0x64, 0xc4, 0x46, 0x53, 0xd6, 0x56, 0x7e, 0xff, 0x57,
-		//			0x53, 0xc5, 0xd2, 0x4a, 0x68, 0x2d, 0xdc, 0x2b, 0x2c, 0xad,
-		//			0xfe, 0x1b, 0x0c, 0x64, 0x33, 0xb1, 0x63, 0x74, 0xda, 0xce,
-		//			0x67, 0x78, 0xf0, 0xb8, 0x7c, 0xa4, 0x27, 0x9b, 0x56, 0x5d,
-		//			0x21, 0x30, 0xce, 0x59, 0xf7, 0x5b, 0xfb, 0xb2, 0xb8, 0x8d,
-		//			0xa7, 0x94, 0x14, 0x3d, 0x7c, 0xfd, 0x3e, 0x80, 0x80, 0x8a,
-		//			0x1f, 0xa3, 0x20, 0x39, 0x04}
-		//		return exccutil.NewAddressSecpPubKey(serializedPubKey, &chaincfg.MainNetParams)
-		//	},
-		//	net: &chaincfg.MainNetParams,
-		//},
+		{
+			name:    "mainnet p2pk uncompressed (0x04)",
+			addr:    "2sHTKu5sVGULAXvFymMGbsdpAaevydey5ReEhkahW5n4Cav6jxEAT",
+			encoded: "22tqrJXxZdPQfZn4z8qDut3DvCY9tZHVoC5s",
+			valid:   true,
+			saddr:   "0264c44653d6567eff5753c5d24a682ddc2b2cadfe1b0c6433b16374dace6778f0",
+			result: exccutil.TstAddressPubKey(
+				[]byte{
+					0x04, 0x64, 0xc4, 0x46, 0x53, 0xd6, 0x56, 0x7e, 0xff, 0x57,
+					0x53, 0xc5, 0xd2, 0x4a, 0x68, 0x2d, 0xdc, 0x2b, 0x2c, 0xad,
+					0xfe, 0x1b, 0x0c, 0x64, 0x33, 0xb1, 0x63, 0x74, 0xda, 0xce,
+					0x67, 0x78, 0xf0, 0xb8, 0x7c, 0xa4, 0x27, 0x9b, 0x56, 0x5d,
+					0x21, 0x30, 0xce, 0x59, 0xf7, 0x5b, 0xfb, 0xb2, 0xb8, 0x8d,
+					0xa7, 0x94, 0x14, 0x3d, 0x7c, 0xfd, 0x3e, 0x80, 0x80, 0x8a,
+					0x1f, 0xa3, 0x20, 0x39, 0x04},
+				exccutil.PKFUncompressed, chaincfg.MainNetParams.PubKeyHashAddrID),
+			f: func() (exccutil.Address, error) {
+				serializedPubKey := []byte{
+					0x04, 0x64, 0xc4, 0x46, 0x53, 0xd6, 0x56, 0x7e, 0xff, 0x57,
+					0x53, 0xc5, 0xd2, 0x4a, 0x68, 0x2d, 0xdc, 0x2b, 0x2c, 0xad,
+					0xfe, 0x1b, 0x0c, 0x64, 0x33, 0xb1, 0x63, 0x74, 0xda, 0xce,
+					0x67, 0x78, 0xf0, 0xb8, 0x7c, 0xa4, 0x27, 0x9b, 0x56, 0x5d,
+					0x21, 0x30, 0xce, 0x59, 0xf7, 0x5b, 0xfb, 0xb2, 0xb8, 0x8d,
+					0xa7, 0x94, 0x14, 0x3d, 0x7c, 0xfd, 0x3e, 0x80, 0x80, 0x8a,
+					0x1f, 0xa3, 0x20, 0x39, 0x04}
+				return exccutil.NewAddressSecpPubKey(serializedPubKey, &chaincfg.MainNetParams)
+			},
+			net: &chaincfg.MainNetParams,
+		},
 		{
 			name:    "testnet p2pk compressed (0x02)",
-			addr:    "Tso9sQD3ALqRsmEkAm7KvPrkGbeG2Vun7Kv",
-			encoded: "Tso9sQD3ALqRsmEkAm7KvPrkGbeG2Vun7Kv",
-			valid:   true,
+			addr:    "Tso9sQD3ALqRsmEkAm7KvPrkGbeG2a5xrro",
+			encoded: "Tso9sQD3ALqRsmEkAm7KvPrkGbeG2a5xrro",
+
+			valid: true,
 			result: exccutil.TstAddressPubKey(
 				[]byte{
 					0x02, 0x6a, 0x40, 0xc4, 0x03, 0xe7, 0x46, 0x70, 0xc4, 0xde,
@@ -292,8 +285,8 @@ func TestAddresses(t *testing.T) {
 		},
 		{
 			name:    "testnet p2pk compressed (0x03)",
-			addr:    "TsWZ1EzypJfMwBKAEDYKuyHRGctqGAxMje2",
-			encoded: "TsWZ1EzypJfMwBKAEDYKuyHRGctqGAxMje2",
+			addr:    "TsWZ1EzypJfMwBKAEDYKuyHRGctqGCNrAue",
+			encoded: "TsWZ1EzypJfMwBKAEDYKuyHRGctqGCNrAue",
 			valid:   true,
 			result: exccutil.TstAddressPubKey(
 				[]byte{
@@ -314,8 +307,8 @@ func TestAddresses(t *testing.T) {
 		},
 		{
 			name:    "testnet p2pk uncompressed (0x04)",
-			addr:    "TkKmMiY5iDh4U3KkSopYgkU1AzhAcQZiSoVhYhFymZHGMi9LM9Fdt",
-			encoded: "Tso9sQD3ALqRsmEkAm7KvPrkGbeG2Vun7Kv",
+			addr:    "TkKmMiY5iDh4U3KkSopYgkU1AzhAcQZiSoVhYhFymZHGMi9JQkuDP",
+			encoded: "Tsj6oJ9faVHo1b9k9m7kHUJpHeyJ3BPtGJJ",
 			valid:   true,
 			saddr:   "026a40c403e74670c4de7656a09caa2353d4b383a9ce66eef51e1220eacf4be06e",
 			result: exccutil.TstAddressPubKey(

@@ -3412,17 +3412,9 @@ func TestUnparsingInvalidOpcodes(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name: "OP_BLAKE256",
+			name: "OP_SHA256 long",
 			pop: &parsedOpcode{
-				opcode: &opcodeArray[OP_BLAKE256],
-				data:   nil,
-			},
-			expectedErr: nil,
-		},
-		{
-			name: "OP_BLAKE256 long",
-			pop: &parsedOpcode{
-				opcode: &opcodeArray[OP_BLAKE256],
+				opcode: &opcodeArray[OP_SHA256],
 				data:   make([]byte, 1),
 			},
 			expectedErr: ErrStackInvalidOpcode,
