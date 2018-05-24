@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"testing"
 
-	blake2b "github.com/minio/blake2b-simd"
+	"github.com/minio/blake2b-simd"
 )
 
 const (
@@ -816,23 +816,3 @@ func TestValidateSolution_EmptySolutionSize(t *testing.T) {
 		t.FailNow()
 	}
 }
-
-/*
-func TestMine(t *testing.T) {
-	n, k, d, p := N, K, 1, prefix
-	res, err := Mine(n, k, d, p)
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-	if res.nonce < 0 {
-		t.FailNow()
-	}
-	if len(res.currHash) == 0 {
-		t.FailNow()
-	}
-	if len(res.previousHash) == 0 {
-		t.FailNow()
-	}
-}
-*/
