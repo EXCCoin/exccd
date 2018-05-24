@@ -878,7 +878,8 @@ func TestBlockchainSpendJournal(t *testing.T) {
 	}
 
 	// Load up the short chain
-	finalIdx1 := 179
+	//finalIdx1 := 179
+	finalIdx1 := wire.MaxBlockHeaderPayload - 1
 	for i := 1; i < finalIdx1+1; i++ {
 		bl, err := exccutil.NewBlockFromBytes(blockChain[int64(i)])
 		if err != nil {
