@@ -87,15 +87,15 @@ func TestEncodeDecodeWIF(t *testing.T) {
 			}{
 				{
 					wif1,
-					"2SaK6sPt88Z6kTPRWW9DUmvCAemUvH6zhEAyeTJdN7L5FekA5wFkE4",
+					"2SaK6sPt88Z6kTPRWW9DUmvCAemUvH6zhEAyeTJdN7L5FekA343hrp",
 				},
 				{
 					wif2,
-					"PtWVDUidYaiiNT5e2Sfb1Ah4evbaSopZJkkpFBuzkJYcYteugvdFg",
+					"PtWVDUidYaiiNT5e2Sfb1Ah4evbaSopZJkkpFBuzkJYcYtetndyqj",
 				},
 				{
 					wif3,
-					"PsURoUb7FMeJQdTYea8pkbUQFBZAsxtfDcfTLGja5sCLZvLZWRtjK",
+					"PsURoUb7FMeJQdTYea8pkbUQFBZAsxtfDcfTLGja5sCLZvLVpvcnU",
 				},
 			}
 		case chainec.ECTypeEdwards:
@@ -105,15 +105,15 @@ func TestEncodeDecodeWIF(t *testing.T) {
 			}{
 				{
 					wif1,
-					"2SaK8p94MaaxB8cZL5r84Pv9VFYQ2tpeQ53mHXQsWoE4uf8ehuXrgW",
+					"2SaK8p94MaaxB8cZL5r84Pv9VFYQ2tpeQ53mHXQsWoE4uf8ee18hdW",
 				},
 				{
 					wif2,
-					"PtWVaBGeCfbFQfgqFew8YvdrSH5TH439K7rvpo3aWnSfDvyK8ijbK",
+					"PtWVaBGeCfbFQfgqFew8YvdrSH5TH439K7rvpo3aWnSfDvyKh8zEG",
 				},
 				{
 					wif3,
-					"PsUSAB97uSWqSr4jsnQNJMRC2Y33iD7FDymZuss9rM6PExexSPyTQ",
+					"PsUSAB97uSWqSr4jsnQNJMRC2Y33iD7FDymZuss9rM6PExexj7Byr",
 				},
 			}
 		case chainec.ECTypeSecSchnorr:
@@ -123,15 +123,15 @@ func TestEncodeDecodeWIF(t *testing.T) {
 			}{
 				{
 					wif1,
-					"2SaKAktEb2coboqh9fZ2e1v6orKK9WYJ6uvYvbX7fV84ZfX9JmnrAQ",
+					"2SaKAktEb2coboqh9fZ2e1v6orKK9WYJ6uvYvbX7fV84ZfX9GRfd1N",
 				},
 				{
 					wif2,
-					"PtWZ6y56SeRZiuMHBrUkFAbhrURogF7xzWL6PQQJ86XvZfeE3jf1a",
+					"PtWZ6y56SeRZiuMHBrUkFAbhrURogF7xzWL6PQQJ86XvZfe8mYSQ4",
 				},
 				{
 					wif3,
-					"PsUVgxwa9RM9m5jBoywyzbP3SjPQ7QC4uNEjUVDsTfBeahKkmETvQ",
+					"PsUVgxwa9RM9m5jBoywyzbP3SjPQ7QC4uNEjUVDsTfBeahKkpNFux",
 				},
 			}
 		}

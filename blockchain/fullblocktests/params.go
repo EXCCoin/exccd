@@ -285,8 +285,8 @@ var simNetParams = &chaincfg.Params{
 
 	// ExchangeCoin organization related parameters
 	BlockOneLedger: []*chaincfg.TokenPayout{
-		{Address: "Sshw6S86G2bV6W32cbc7EhtFy8f93rU6pae", Amount: 100000 * 1e8},
-		{Address: "SsjXRK6Xz6CFuBt6PugBvrkdAa4xGbcZ18w", Amount: 100000 * 1e8},
-		{Address: "SsfXiYkYkCoo31CuVQw428N6wWKus2ZEw5X", Amount: 100000 * 1e8},
+		{Address: "Sshw6S86G2bV6W32cbc7EhtFy8f93r17iV7", Amount: 100000 * 1e8},
+		{Address: "SsjXRK6Xz6CFuBt6PugBvrkdAa4xGdJz4J8", Amount: 100000 * 1e8},
+		{Address: "SsfXiYkYkCoo31CuVQw428N6wWKus5NVqMC", Amount: 100000 * 1e8},
 	},
 }

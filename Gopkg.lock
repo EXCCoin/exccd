@@ -3,6 +3,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/EXCCoin/base58"
+  packages = ["."]
+  revision = "e1a805ee5d9f5e64352b9b509d18413991cceffb"
+
+[[projects]]
+  branch = "master"
   name = "github.com/aead/siphash"
   packages = ["."]
   revision = "e404fcfc888570cadd1610538e2dbc89f66af814"
@@ -82,12 +88,6 @@
   name = "github.com/dchest/blake256"
   packages = ["."]
   revision = "dee3fe6eb0e98dc774a94fc231f85baf7c29d360"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/decred/base58"
-  packages = ["."]
-  revision = "56c501706f00d9e1cfacee19a27117e12da24734"
 
 [[projects]]
   name = "github.com/jessevdk/go-flags"
