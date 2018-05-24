@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"github.com/minio/blake2b-simd"
 	"hash"
 	"math/big"
 	"reflect"
 	"sort"
-
-	blake2b "github.com/minio/blake2b-simd"
 )
 
 const (
@@ -38,12 +37,15 @@ var (
 	errDuplicateIndices = errors.New("duplicate indices")
 	errPairWiseOrdering = errors.New("bad pair-wise ordering")
 	errBadWord          = errors.New("bad word")
+	errNullHash         = errors.New("empty hash")
+	errEmptyKeys        = errors.New("empty keys")
+	errEmptyIndices     = errors.New("empty indices")
 	bigZero             = big.NewInt(0)
 )
 
 // the generic person prefix encoder; which encodes the prefix and gbp parameters
 func person(n, k int) []byte {
-	nb, kb := writeUint32(uint32(n)), writeUint32(uint32(k))
+	nb, kb := writeU32(uint32(n)), writeU32(uint32(k))
 	return append([]byte(defaultPrefix), append(nb, kb...)...)
 }
 
@@ -67,12 +69,24 @@ func (k hashKeys) Swap(i, j int) {
 
 // encodes the solution position to the hash
 func hashXi(h hash.Hash, xi int) error {
-	return writeUint32ToHash(h, uint32(xi))
+	if h == nil {
+		return errNullHash
+	}
+	return writeU32ToHash(h, uint32(xi))
 }
 
 // creates and returns the hash digest
 func hashDigest(h hash.Hash) []byte {
 	return h.Sum(nil)
+}
+
+// newHash creates a blake2b hash using the equihash params (n, k) and the person prefix
+func newHash(n, k int) (hash.Hash, error) {
+	h, err := blake2b.New(&blake2b.Config{
+		Person: person(n, k),
+		Size:   uint8((512 / n) * n / 8),
+	})
+	return h, err
 }
 
 // expands the hash array based on its parameters
@@ -150,12 +164,15 @@ func hasCollision(x, y []byte, i, length int) bool {
 }
 
 // collisionOffset returns the offset between the last hash (n-1)
-func collisionOffset(tuples []hashKey, i, collisionLen int) int {
-	n := len(tuples)
-	last := tuples[n-1]
+func collisionOffset(keys []hashKey, i, collisionLen int) int {
+	n := len(keys)
+	if n == 0 {
+		return -1
+	}
+	last := keys[n-1]
 	ha := last.hash
 	for j := 1; j < n; j++ {
-		hb := tuples[n-1-j].hash
+		hb := keys[n-1-j].hash
 		if !hasCollision(ha, hb, i, collisionLen) {
 			return j
 		}
@@ -178,6 +195,12 @@ func hasDistinctIndices(a, b []int) bool {
 
 // concatenates the solution indices of two disjoint indices list
 func concatIndices(x, y []int) []int {
+	if len(x) == 0 {
+		return y
+	}
+	if len(y) == 0 {
+		return x
+	}
 	if x[0] < y[0] {
 		return append(x, y...)
 	}
@@ -194,6 +217,13 @@ func hashLength(n, k int) int {
 
 // Generate hash keys based on equihash params and pre-populated hash digest
 func generateHashKeys(n, k int, digest hash.Hash) ([]hashKey, error) {
+	err := validateEquihashParams(n, k)
+	if err != nil {
+		return nil, err
+	}
+	if digest == nil {
+		return nil, errNullHash
+	}
 	var keys []hashKey
 	var tmpHash []byte
 	collisionLen, indicesPerHash := collisionLength(n, k), indicesPerHashOutput(n)
@@ -219,22 +249,29 @@ func generateHashKeys(n, k int, digest hash.Hash) ([]hashKey, error) {
 }
 
 // reduces the hash keys based on the parameters (n and k)
-func reduceHashKeys(n, k int, X []hashKey) []hashKey {
+func reduceHashKeys(n, k int, keys []hashKey) ([]hashKey, error) {
+	err := validateEquihashParams(n, k)
+	if err != nil {
+		return nil, err
+	}
+	if len(keys) == 0 {
+		return nil, errEmptyKeys
+	}
 	collisionLen := collisionLength(n, k)
 	for i := 1; i < k; i++ {
 		// sort tuples by hash
-		sort.Sort(hashKeys(X))
+		sort.Sort(hashKeys(keys))
 
 		var xc []hashKey
-		for len(X) > 0 {
+		for len(keys) > 0 {
 			// 2b) Find next set of unordered pairs with collisions on first n/(k+1) bits
-			xSize := len(X)
-			j := collisionOffset(X, i, collisionLen)
+			xSize := len(keys)
+			j := collisionOffset(keys, i, collisionLen)
 
 			//2c) Store tuples (X_i ^ X_j, (i, j)) on the table
 			for l := 0; l < j-1; l++ {
 				for m := l + 1; m < l; m++ {
-					x1l, x1m := X[xSize-1-l], X[xSize-1-m]
+					x1l, x1m := keys[xSize-1-l], keys[xSize-1-m]
 					if hasDistinctIndices(x1l.indices, x1m.indices) {
 						concat := concatIndices(x1l.indices, x1m.indices)
 						a, b := x1l.hash, x1m.hash
@@ -243,24 +280,28 @@ func reduceHashKeys(n, k int, X []hashKey) []hashKey {
 				}
 			}
 			// 2d) drop this set
-			X = X[:len(X)-j]
+			keys = keys[:len(keys)-j]
 		}
 		// 2e) replace previous list with new list
-		X = xc
+		keys = xc
 	}
-	return X
+	return keys, nil
 }
 
 // find solutions based on the reduced hash keys
-func findSolutions(n, k int, keys []hashKey) []equihashSolution {
+func findSolutions(n, k int, keys []hashKey) ([]equihashSolution, error) {
+	err := validateEquihashParams(n, k)
+	if err != nil {
+		return nil, err
+	}
 	// ensure keys are sorted after reduction
 	sort.Sort(hashKeys(keys))
 	//find solutions
-	var solns []equihashSolution
-	collisionLen, hashLen := collisionLength(n, k), hashLength(n, k)
+	var solutions []equihashSolution
+	hashLen := hashLength(n, k)
 	for len(keys) > 0 {
 		xn := len(keys)
-		j := solutionOffset(keys, k, collisionLen)
+		j := solutionOffset(keys, n, k)
 		for l := 0; l < j-1; l++ {
 			for m := l + 1; m < j; m++ {
 				a, b := keys[xn-1-l], keys[xn-1-m]
@@ -269,30 +310,41 @@ func findSolutions(n, k int, keys []hashKey) []equihashSolution {
 				f2 := hasDistinctIndices(a.indices, b.indices)
 				if f1 && f2 {
 					indices := concatIndices(a.indices, b.indices)
-					solns = append(solns, indices)
+					solutions = append(solutions, indices)
 				}
 			}
 		}
 		keys = keys[:len(keys)-j]
 	}
-	return solns
+	return solutions, nil
 }
 
-// gbp is the general birthday problem - which is the cryptopuzzle used for mining
+// equihash is the general birthday problem - which is the cryptopuzzle used for mining
 // digest is the hash to copy that is already pre-populated
 // n is the number of hashes to used to solve the problem; the more hashes, the more time it takes to solve
 // k is the number used to select 2^k hashes at a time to see if - when xor'd - equals 0;
 // the higher the number; the probability to find a solution increases.
-// it returns the indices of the N hashes that solve the gbp puzzle
-func gbp(digest hash.Hash, n, k int) ([]equihashSolution, error) {
+// it returns the indices of the N hashes that solve the equihash puzzle
+func equihash(digest hash.Hash, n, k int) ([]equihashSolution, error) {
+	//validateEquihashArgs
+	if digest == nil {
+		return nil, errNullHash
+	}
+	err := validateEquihashParams(n, k)
+	if err != nil {
+		return nil, err
+	}
 	keys, err := generateHashKeys(n, k, digest)
 	if err != nil {
 		return nil, err
 	}
 
-	keys = reduceHashKeys(n, k, keys)
+	keys, err = reduceHashKeys(n, k, keys)
+	if err != nil {
+		return nil, err
+	}
 
-	return findSolutions(n, k, keys), nil
+	return findSolutions(n, k, keys)
 }
 
 // countZeros counts leading zero bits in byte array
@@ -308,20 +360,21 @@ func countZeros(h []byte) int {
 	return len(h) * 8
 }
 
-// returns the first index of second index that doesn't collide with the first hash
-func solutionOffset(x []hashKey, k, collisionLen int) int {
-	xSize := len(x)
-	for j := 1; j < xSize; j++ {
-		lc := hasCollision(x[xSize-1].hash, x[xSize-1-j].hash, k, collisionLen)
-		rc := hasCollision(x[xSize-1].hash, x[xSize-1-j].hash, k+1, collisionLen)
+// returns the first index of offset index that doesn't collide with the first hash
+func solutionOffset(keys []hashKey, n, k int) int {
+	keysLen, collLen := len(keys), collisionLength(n, k)
+	for j := 1; j < keysLen; j++ {
+		lc := hasCollision(keys[keysLen-1].hash, keys[keysLen-1-j].hash, k, collLen)
+		rc := hasCollision(keys[keysLen-1].hash, keys[keysLen-1-j].hash, k+1, collLen)
 		if !(lc && rc) {
 			return j
 		}
 	}
-	return xSize
+	return keysLen
 }
 
 // pow returns pow of base 2 for only positive k
+// TODO(jaupe) look into handling overflow
 func powOf2(k int) int {
 	if k < 1 {
 		return 1
@@ -360,12 +413,12 @@ func writeBytesToHash(h hash.Hash, b []byte) error {
 }
 
 // write a 32-bit unsigned int using little endian to the hash
-func writeUint32ToHash(h hash.Hash, v uint32) error {
-	return writeBytesToHash(h, writeUint32(v))
+func writeU32ToHash(h hash.Hash, v uint32) error {
+	return writeBytesToHash(h, writeU32(v))
 }
 
 // encodes a 32-bit unsigned int to an allocated byte slice
-func writeUint32(v uint32) []byte {
+func writeU32(v uint32) []byte {
 	b := make([]byte, 4)
 	binary.LittleEndian.PutUint32(b, v)
 	return b
@@ -373,6 +426,9 @@ func writeUint32(v uint32) []byte {
 
 // copyHash does a deep copy of a hash and returns the deep copy
 func copyHash(src hash.Hash) hash.Hash {
+	if src == nil {
+		return nil
+	}
 	typ := reflect.TypeOf(src)
 	val := reflect.ValueOf(src)
 	if typ.Kind() == reflect.Ptr {
@@ -385,15 +441,19 @@ func copyHash(src hash.Hash) hash.Hash {
 }
 
 // generateWord generates a word to create a slice of words for validating a solution
-func generateWord(n int, digestWithoutIdx hash.Hash, idx int) (*big.Int, error) {
+func generateWord(n int, h hash.Hash, idx int) (*big.Int, error) {
+	if h == nil {
+		return nil, errNullHash
+	}
+
 	bytesPerWord := n / 8
-	wordsPerHash := 512 / n
+	wordsPerHash := indicesPerHashOutput(n)
 
 	hidx := idx / wordsPerHash
 	hrem := idx % wordsPerHash
 
-	idxdata := writeUint32(uint32(hidx))
-	ctx1 := copyHash(digestWithoutIdx)
+	idxdata := writeU32(uint32(hidx))
+	ctx1 := copyHash(h)
 	err := writeBytesToHash(ctx1, idxdata)
 	if err != nil {
 		return nil, err
@@ -415,6 +475,12 @@ func solutionLength(k int) int {
 
 // generates a slice of words used for validating a solution
 func generateWords(n, k int, indices []int, h hash.Hash) ([]*big.Int, error) {
+	if h == nil {
+		return nil, errNullHash
+	}
+	if len(indices) == 0 {
+		return nil, errEmptyIndices
+	}
 	solutionLen := solutionLength(k)
 	var words []*big.Int
 	for i := 0; i < solutionLen; i++ {
@@ -427,35 +493,39 @@ func generateWords(n, k int, indices []int, h hash.Hash) ([]*big.Int, error) {
 	return words, nil
 }
 
-//TODO(jaupe) reduce cyclo complexity of validateSolutionParams
-func validateSolutionParams(n, k int, header []byte, solutionIndices []int) error {
-	if n < 2 {
-		return errors.New("n < 2")
-	}
-	if k < 3 {
-		return errors.New("k < 3")
-	}
-	if (n % 8) != 0 {
-		return errors.New("n%8 != 0")
-	}
-	if (n % (k + 1)) != 0 {
-		return errors.New("n%(k+1) != 0")
-	}
-
+func validateNonEmptySolutionParams(header []byte, solutionIndices []int) error {
 	if len(header) == 0 {
 		return errors.New("empty header")
 	}
 	if len(solutionIndices) == 0 {
 		return errors.New("empty solution indices")
 	}
+	return nil
+}
+
+func validateSolutionIndices(k int, indices []int) error {
 	solutionLen := powOf2(k)
-	if len(solutionIndices) != solutionLen {
+	if len(indices) != solutionLen {
 		return errBadArg
 	}
-	if hasDuplicateIndices(solutionIndices) {
+	if hasDuplicateIndices(indices) {
 		return errDuplicateIndices
 	}
 	return nil
+}
+
+func validateSolutionParams(n, k int, header []byte, indices []int) error {
+	err := validateEquihashParams(n, k)
+	if err != nil {
+		return err
+	}
+
+	err = validateNonEmptySolutionParams(header, indices)
+	if err != nil {
+		return err
+	}
+
+	return validateSolutionIndices(k, indices)
 }
 
 func newValidateHash(n, k int, header []byte) (hash.Hash, error) {
@@ -537,15 +607,20 @@ func isBigIntZero(w *big.Int) bool {
 	return w.Cmp(bigZero) == 0
 }
 
-// MiningResult provides the details of the mining result
-type MiningResult struct {
-	previousHash []byte
-	currHash     []byte
-	nonce        int
-}
-
-// validateParams validates the two main parameters of equihash
-func validateParams(n, k int) error {
+// validateEquihashParams validates the two main parameters of equihash
+func validateEquihashParams(n, k int) error {
+	if n < 2 {
+		return errors.New("n < 2")
+	}
+	if k < 3 {
+		return errors.New("k < 3")
+	}
+	if (n % 8) != 0 {
+		return errors.New("n%8 != 0")
+	}
+	if (n % (k + 1)) != 0 {
+		return errors.New("n%(k+1) != 0")
+	}
 	if k >= n {
 		return errKLarge
 	}
@@ -558,103 +633,4 @@ func validateParams(n, k int) error {
 // collisionLength returns the number of bits used for detecting collision length
 func collisionLength(n, k int) int {
 	return n / (k + 1)
-}
-
-// hashNonce writes the nonce to the underlying hash
-func hashNonce(h hash.Hash, nonce int) error {
-	for i := 0; i < 8; i++ {
-		err := writeHashU32(h, uint32(i))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// putu32 encodes an unsigned 32 bit number (v) to the provided byte slice (b)
-func putU32(b []byte, v uint32) {
-	binary.LittleEndian.PutUint32(b, v)
-}
-
-// writeU32 allocates a byte slice, encodes an unsigned int to it then returns it.
-func writeU32(v uint32) []byte {
-	b := make([]byte, 4)
-	putU32(b, v)
-	return b
-}
-
-// writeHashU32 writes an unsigned 32-bit int (v) to the underlying hash (h)
-//TODO(jaupe) optimize function by making it allocation-free
-func writeHashU32(h hash.Hash, v uint32) error {
-	return writeHashBytes(h, writeU32(v))
-}
-
-// writeHashBytes writes a byte slice (b) to the underlying hash (h)
-func writeHashBytes(h hash.Hash, b []byte) error {
-	n, err := h.Write(b)
-	if err != nil {
-		return err
-	}
-	if n != len(b) {
-		return errWriteLen
-	}
-	return nil
-}
-
-// newHash creates a blake2b hash using the equihash params (n, k) and the person prefix
-func newHash(n, k int) (hash.Hash, error) {
-	h, err := blake2b.New(&blake2b.Config{
-		Person: person(n, k),
-		Size:   uint8(hashDigestSize(n)),
-	})
-	return h, err
-}
-
-// blockHash creates the block header hash
-func blockHash(n, k int, prevHash []byte, nonce int, soln []int) ([]byte, error) {
-	h, err := newHash(n, k)
-	if err != nil {
-		return nil, err
-	}
-	err = writeHashBytes(h, prevHash)
-	if err != nil {
-		return nil, err
-	}
-	err = hashNonce(h, nonce)
-	if err != nil {
-		return nil, err
-	}
-	for _, xi := range soln {
-		err = hashXi(h, xi)
-		if err != nil {
-			return nil, err
-		}
-	}
-	hb := hashDigest(h)
-	// double hash
-	h, err = newHash(n, k)
-	if err != nil {
-		return nil, err
-	}
-	err = writeHashBytes(h, hb)
-	if err != nil {
-		return nil, err
-	}
-	return hashDigest(h), nil
-}
-
-// difficultyFilter filters out solutions that passes the difficulty factors
-// returns true if it passes the difficulty level (less than d) and false otherwise
-func difficultyFilter(n, k int, prevHash []byte, nonce int, soln []int, d int) bool {
-	h, err := blockHash(n, k, prevHash, nonce, soln)
-	if err != nil {
-		return false
-	}
-	count := countZeros(h)
-	return d < count
-}
-
-// hashDigestSize returns the hash digest size
-func hashDigestSize(n int) int {
-	return (512 / n) * n / 8
 }

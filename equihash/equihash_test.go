@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"testing"
 
+	"crypto/sha256"
 	blake2b "github.com/minio/blake2b-simd"
 )
 
@@ -177,7 +178,7 @@ func createDigest(n, k, nonce int, I []byte) (hash.Hash, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = writeHashBytes(digest, I)
+	err = writeBytesToHash(digest, I)
 	if err != nil {
 		return nil, err
 	}
@@ -186,6 +187,16 @@ func createDigest(n, k, nonce int, I []byte) (hash.Hash, error) {
 		return nil, err
 	}
 	return digest, nil
+}
+// hashNonce writes the nonce to the underlying hash
+func hashNonce(h hash.Hash, nonce int) error {
+	for i := 0; i < 8; i++ {
+		err := writeU32ToHash(h, uint32(i))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (mt *miningTest) createDigest() (hash.Hash, error) {
@@ -346,30 +357,29 @@ func TestCollisionLen(t *testing.T) {
 	}
 }
 
-func TestValidateParams_ErrKTooLarge(t *testing.T) {
+func TestValidateEquihashParams_ErrKTooLarge(t *testing.T) {
 	n, k := 200, 200
-	err := validateParams(n, k)
+	err := validateEquihashParams(n, k)
 	if err == nil {
 		t.Fail()
 	}
 	n, k = 200, 201
-	err = validateParams(n, k)
+	err = validateEquihashParams(n, k)
 	if err == nil {
 		t.Fail()
 	}
 }
 
-func TestValidateParams_ErrCollision(t *testing.T) {
+func TestValidateEquihashParams_ErrCollision(t *testing.T) {
 	n, k := 200, 200
-	err := validateParams(n, k)
+	err := validateEquihashParams(n, k)
 	if err == nil {
 		t.Fail()
 	}
 }
 
-func TestValidateParams(t *testing.T) {
-	n, k := 200, 90
-	err := validateParams(n, k)
+func TestValidateEquihashParams(t *testing.T) {
+	err := validateEquihashParams(N, K)
 	if err != nil {
 		t.Error(err)
 	}
@@ -486,23 +496,6 @@ func TestDefaultPerson_2(t *testing.T) {
 	}
 }
 
-func TestWriteU32(t *testing.T) {
-	exp := []byte{1, 0, 0, 0}
-	err := byteSliceEq(writeU32(1), exp)
-	if err != nil {
-		t.Error(err)
-	}
-}
-
-func TestPutU32(t *testing.T) {
-	exp, act := []byte{1, 0, 0, 0}, make([]byte, 4)
-	putU32(act, 1)
-	err := byteSliceEq(act, exp)
-	if err != nil {
-		t.Error(err)
-	}
-}
-
 func generateRandomHashKeys(n int) []hashKey {
 	keys := make([]hashKey, 0, n)
 	hashLen := 4
@@ -537,7 +530,7 @@ func TestCopyHash(t *testing.T) {
 		t.Error(err)
 	}
 	b := []byte{1, 2, 3, 4}
-	err = writeHashBytes(h, b)
+	err = writeBytesToHash(h, b)
 	if err != nil {
 		t.Error(err)
 	}
@@ -677,7 +670,7 @@ func testSolveGBP(t *testing.T, test miningTest) error {
 		return err
 	}
 	n, k := test.n, test.k
-	solutions, err := gbp(digest, n, k)
+	solutions, err := equihash(digest, n, k)
 	if err != nil {
 		return err
 	}
@@ -752,12 +745,27 @@ func TestValidateSolution_SmallN(t *testing.T) {
 	}
 }
 
+func TestValidateEquihashParams_KOver64(t *testing.T) {
+	err := validateEquihashParams(N, 65)
+	if err == nil {
+		t.FailNow()
+	}
+}
+
+func TestValidateEquihashParams_KLargerThanN(t *testing.T) {
+	n, k := 63, 64
+	err := validateEquihashParams(n, k)
+	if err == nil {
+		t.FailNow()
+	}
+}
+
 func TestValidateSolution_SmallK(t *testing.T) {
 	var header []byte
-	var solns []int
+	var solutions []int
 	n := 96
 	for k := 0; n < 3; n++ {
-		_, err := ValidateSolution(n, k, header, solns)
+		_, err := ValidateSolution(n, k, header, solutions)
 		if err == nil {
 			t.FailNow()
 		}
@@ -766,10 +774,10 @@ func TestValidateSolution_SmallK(t *testing.T) {
 
 func TestValidateSolution_NMod8(t *testing.T) {
 	var header []byte
-	var solns []int
+	var solutions []int
 	n := 96
 	for _, k := range []int{4, 8, 16, 32, 64} {
-		_, err := ValidateSolution(n, k, header, solns)
+		_, err := ValidateSolution(n, k, header, solutions)
 		if err == nil {
 			t.FailNow()
 		}
@@ -778,10 +786,10 @@ func TestValidateSolution_NMod8(t *testing.T) {
 
 func TestValidateSolution_NModK(t *testing.T) {
 	var header []byte
-	var solns []int
+	var solutions []int
 	n := 96
 	for _, k := range []int{3, 7, 15, 31, 63} {
-		_, err := ValidateSolution(n, k, header, solns)
+		_, err := ValidateSolution(n, k, header, solutions)
 		if err == nil {
 			t.FailNow()
 		}
@@ -790,30 +798,327 @@ func TestValidateSolution_NModK(t *testing.T) {
 
 func TestValidateSolution_EmptySolutionSize(t *testing.T) {
 	I := []byte("block header")
-	var solns []int
+	var solutions []int
 	n, k, header := N, K, testHeader(I, 1)
-	_, err := ValidateSolution(n, k, header, solns)
+	_, err := ValidateSolution(n, k, header, solutions)
 	if err == nil {
 		t.FailNow()
 	}
 }
 
-/*
-func TestMine(t *testing.T) {
-	n, k, d, p := N, K, 1, prefix
-	res, err := Mine(n, k, d, p)
+func TestIndicesPerHashOutput(t *testing.T) {
+	n := 90
+	v := indicesPerHashOutput(n)
+	if 5 != v {
+		t.FailNow()
+	}
+}
+
+func TestConcatIndices_XToY(t *testing.T) {
+	x, y := []int{1, 2, 3, 4}, []int{5, 6, 7, 8}
+	exp := []int{1, 2, 3, 4, 5, 6, 7, 8}
+	act := concatIndices(x, y)
+	err := intSliceEq(exp, act)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
 	}
-	if res.nonce < 0 {
-		t.FailNow()
-	}
-	if len(res.currHash) == 0 {
-		t.FailNow()
-	}
-	if len(res.previousHash) == 0 {
+}
+
+func TestConcatIndices_YToX(t *testing.T) {
+	y, x := []int{1, 2, 3, 4}, []int{5, 6, 7, 8}
+	exp := []int{1, 2, 3, 4, 5, 6, 7, 8}
+	act := concatIndices(x, y)
+	err := intSliceEq(exp, act)
+	if err != nil {
+		t.Error(err)
 		t.FailNow()
 	}
 }
-*/
+
+func TestConcatIndices_XNil(t *testing.T) {
+	var x []int
+	y := []int{5, 6, 7, 8}
+	exp := []int{5, 6, 7, 8}
+	act := concatIndices(x, y)
+	err := intSliceEq(exp, act)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+}
+
+func TestConcatIndices_YNil(t *testing.T) {
+	var y []int
+	x := []int{1, 2, 3, 4}
+	exp := []int{1, 2, 3, 4}
+	act := concatIndices(x, y)
+	err := intSliceEq(exp, act)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+}
+
+func TestHashLength(t *testing.T) {
+	n, k := 96, 5
+	r := hashLength(n, k)
+	if r != 12 {
+		t.FailNow()
+	}
+}
+
+func TestHashXi_NullHashThrows(t *testing.T) {
+	var h hash.Hash
+	xi := 10
+	err := hashXi(h, xi)
+	if err == nil {
+		t.FailNow()
+	}
+}
+
+func TestHashXi(t *testing.T) {
+	// expected digest
+	h := sha256.New()
+	h.Write([]byte{1, 0, 0, 0}) //write le 1
+	exp := hashDigest(h)
+
+	// actual digest
+	h = sha256.New()
+	hashXi(h, 1)
+	act := hashDigest(h)
+
+	err := byteSliceEq(act, exp)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+}
+
+func TestHashDigest(t *testing.T) {
+	// expected digest
+	h := sha256.New()
+	exp := h.Sum(nil)
+
+	// actual digest
+	h = sha256.New()
+	act := hashDigest(h)
+
+	err := byteSliceEq(act, exp)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+}
+
+func TestMinInt_PosPos(t *testing.T) {
+	x, y := 1, 2
+	if x != minInt(x, y) {
+		t.FailNow()
+	}
+	x, y = 100, 5
+	if y != minInt(x, y) {
+		t.FailNow()
+	}
+}
+
+func TestMinInt_NegPos(t *testing.T) {
+	x, y := -1, 2
+	if x != minInt(x, y) {
+		t.FailNow()
+	}
+	x, y = 100, -5
+	if y != minInt(x, y) {
+		t.FailNow()
+	}
+}
+
+func TestMinInt_NegNeg(t *testing.T) {
+	x, y := -100, -5
+	if x != minInt(x, y) {
+		t.FailNow()
+	}
+	x, y = -100, -500
+	if y != minInt(x, y) {
+		t.FailNow()
+	}
+}
+
+func TestCollisionOffset_EmptyKeys(t *testing.T) {
+	var keys []hashKey
+	offset := collisionOffset(keys, 0, 1)
+	if offset != -1 {
+		t.FailNow()
+	}
+}
+
+func TestGenerateHashKeys_BadParams(t *testing.T) {
+	n, k := 0, 0
+	var h hash.Hash
+	_, err := generateHashKeys(n, k, h)
+	if err == nil {
+		t.FailNow()
+	}
+}
+
+func TestGenerateHashKeys_NullHash(t *testing.T) {
+	var h hash.Hash
+	_, err := generateHashKeys(N, K, h)
+	if err == nil {
+		t.FailNow()
+	}
+}
+
+func TestReduceHashKeys_EmptyKeys(t *testing.T) {
+	var keys []hashKey
+	_, err := reduceHashKeys(N, K, keys)
+	if err == nil {
+		t.FailNow()
+	}
+}
+
+func TestReduceHashKeys_BadParams(t *testing.T) {
+	var keys []hashKey
+	_, err := reduceHashKeys(0, 0, keys)
+	if err == nil {
+		t.FailNow()
+	}
+}
+
+func TestFindSolutions_EmptyKeys(t *testing.T) {
+	var keys []hashKey
+	solutions, err := findSolutions(N, K, keys)
+	if err != nil {
+		t.FailNow()
+	}
+	if len(solutions) != 0 {
+		t.FailNow()
+	}
+}
+
+func TestFindSolutions_BadParams(t *testing.T) {
+	var keys []hashKey
+	_, err := reduceHashKeys(0, 0, keys)
+	if err == nil {
+		t.FailNow()
+	}
+}
+
+func TestEquihash_NullHash(t *testing.T) {
+	var h hash.Hash
+	_, err := equihash(h, N, K)
+	if err != errNullHash {
+		t.FailNow()
+	}
+}
+
+func TestEquihash_BadParams(t *testing.T) {
+	h, err := newHash(N, K)
+	if err != nil {
+		t.FailNow()
+	}
+	n, k := 0, 0
+	_, err = equihash(h, n, k)
+	if err == nil {
+		t.FailNow()
+	}
+}
+
+func TestSolutionOffset_EmptyKeys(t *testing.T) {
+	var keys []hashKey
+	offset := solutionOffset(keys, N, K)
+	if offset != 0 {
+		t.FailNow()
+	}
+}
+
+func TestWriteBytesToHash(t *testing.T) {
+	// expected digest
+	b := []byte{1, 2, 3, 4}
+	h := sha256.New()
+	h.Write(b)
+	exp := h.Sum(nil)
+
+	h = sha256.New()
+	err := writeBytesToHash(h, b)
+	if err != nil {
+		t.FailNow()
+	}
+	act := h.Sum(nil)
+
+	err = byteSliceEq(exp, act)
+	if err != nil {
+		t.FailNow()
+	}
+}
+
+func TestWriteU32ToHash(t *testing.T) {
+	b := []byte{1, 0, 0, 0}
+	h := sha256.New()
+	h.Write(b)
+	exp := h.Sum(nil)
+
+	h = sha256.New()
+	writeU32ToHash(h, 1)
+	act := h.Sum(nil)
+
+	err := byteSliceEq(exp, act)
+	if err != nil {
+		t.FailNow()
+	}
+}
+
+func TestWriteU32(t *testing.T) {
+	exp := []byte{1, 0, 0, 0}
+	act := writeU32(1)
+	err := byteSliceEq(exp, act)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+}
+
+func TestCopyHash_NullHash(t *testing.T) {
+	var h hash.Hash
+	r := copyHash(h)
+	if r != nil {
+		t.FailNow()
+	}
+}
+
+func TestGenerateWord_NullHash(t *testing.T) {
+	var h hash.Hash
+	_, err := generateWord(N, h, 1)
+	if err == nil {
+		t.FailNow()
+	}
+}
+
+func TestSolutionLength(t *testing.T) {
+	val := 1
+
+	for k := 0; k < 64; k++ {
+		if solutionLength(k) != val {
+			t.FailNow()
+		}
+		val *= 2
+	}
+}
+
+func TestGenerateWords_NullHash(t *testing.T) {
+	var h hash.Hash
+	indices := []int{1, 2, 3, 4}
+	_, err := generateWords(N, K, indices, h)
+	if err != errNullHash {
+		t.FailNow()
+	}
+}
+
+func TestGenerateWords_NullIndices(t *testing.T) {
+	h := sha256.New()
+	var indices []int
+	_, err := generateWords(N, K, indices, h)
+	if err != errEmptyIndices {
+		t.FailNow()
+	}
+}
