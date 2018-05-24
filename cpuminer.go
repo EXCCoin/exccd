@@ -193,6 +193,8 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 // This function will return early with false when conditions that trigger a
 // stale block such as a new block showing up or periodically when there are
 // new transactions and enough time has elapsed without finding a solution.
+
+//TODO: replace part of this function with Equihash solver
 func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit chan struct{}) bool {
 	// Choose a random extra nonce offset for this block template and
 	// worker.

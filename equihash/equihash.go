@@ -24,7 +24,11 @@ const (
 	// N is the number of hash digests used to find a mining solution
 	N = 200
 	// K is the exponent for xor'ing 2^k hash digests for solution
-	K = 5
+	K = 9
+	defaultPrefix = "ZcashPoW"
+
+	CollisionBitLength = N/(K+1)
+	SolutionWidth = (1 << K)*(CollisionBitLength+1)/8
 )
 
 var (
@@ -43,14 +47,9 @@ var (
 )
 
 // the generic person prefix encoder; which encodes the prefix and gbp parameters
-func person(prefix string, n, k int) []byte {
+func person(n, k int) []byte {
 	nb, kb := writeUint32(uint32(n)), writeUint32(uint32(k))
-	return append([]byte(prefix), append(nb, kb...)...)
-}
-
-// returns the encoded excc person
-func exccPerson(n, k int) []byte {
-	return person(exccPrefix, n, k)
+	return append([]byte(defaultPrefix), append(nb, kb...)...)
 }
 
 // bytesCmp compares two byte slices and returns true if x is less than y
@@ -465,7 +464,7 @@ func joinBytes(a, b []byte) []byte {
 }
 
 // ValidateSolution validates that a mining solution is correct
-func ValidateSolution(n, k int, person, header []byte, solutionIndices []int, prefix string) (bool, error) {
+func ValidateSolution(n, k int, header []byte, solutionIndices []int) (bool, error) {
 	if n < 2 {
 		return false, errors.New("n < 2")
 	}
@@ -478,9 +477,7 @@ func ValidateSolution(n, k int, person, header []byte, solutionIndices []int, pr
 	if (n % (k + 1)) != 0 {
 		return false, errors.New("n%(k+1) != 0")
 	}
-	if len(person) == 0 {
-		return false, errors.New("empty person")
-	}
+
 	if len(header) == 0 {
 		return false, errors.New("empty header")
 	}
@@ -495,15 +492,9 @@ func ValidateSolution(n, k int, person, header []byte, solutionIndices []int, pr
 		return false, errDuplicateIndices
 	}
 
-	bytesPerWord := n / 8
-	wordsPerHash := 512 / n
-	outLen := wordsPerHash * bytesPerWord
-
 	// create hash digest and words
-	digest, err := blake2b.New(&blake2b.Config{
-		Person: person,
-		Size:   uint8(outLen),
-	})
+	digest, err := newHash(n, k);
+
 	if err != nil {
 		return false, err
 	}
@@ -549,8 +540,8 @@ func isBigIntZero(w *big.Int) bool {
 }
 
 // newBlake2bHash creates a blake2b hash with provided person prefix
-func newBlake2bHash(n, k int, prefix string, prevHash []byte) (hash.Hash, error) {
-	return newHash(n, k, prefix)
+func newBlake2bHash(n, k int, prevHash []byte) (hash.Hash, error) {
+	return newHash(n, k)
 }
 
 // MiningResult provides the details of the mining result
@@ -618,18 +609,17 @@ func writeHashBytes(h hash.Hash, b []byte) error {
 }
 
 // newHash creates a blake2b hash using the equihash params (n, k) and the person prefix
-func newHash(n, k int, prefix string) (hash.Hash, error) {
+func newHash(n, k int) (hash.Hash, error) {
 	h, err := blake2b.New(&blake2b.Config{
-		Key:    nil,
-		Person: person(prefix, n, k),
+		Person: person(n, k),
 		Size:   uint8(hashDigestSize(n)),
 	})
 	return h, err
 }
 
 // blockHash creates the block header hash
-func blockHash(n, k int, prefix string, prevHash []byte, nonce int, soln []int) ([]byte, error) {
-	h, err := newHash(n, k, prefix)
+func blockHash(n, k int, prevHash []byte, nonce int, soln []int) ([]byte, error) {
+	h, err := newHash(n, k)
 	if err != nil {
 		return nil, err
 	}
@@ -646,7 +636,7 @@ func blockHash(n, k int, prefix string, prevHash []byte, nonce int, soln []int) 
 	}
 	hb := hashDigest(h)
 	// double hash
-	h, err = newHash(n, k, prefix)
+	h, err = newHash(n, k)
 	if err != nil {
 		return nil, err
 	}
@@ -659,8 +649,8 @@ func blockHash(n, k int, prefix string, prevHash []byte, nonce int, soln []int) 
 
 // difficulutyFilters filters out solutions that passes the difficulty factors
 // returns true if it passes the difficulty level (less than d) and false otherwise
-func difficultyFilter(n, k int, prefix string, prevHash []byte, nonce int, soln []int, d int) bool {
-	h, err := blockHash(n, k, prefix, prevHash, nonce, soln)
+func difficultyFilter(n, k int, prevHash []byte, nonce int, soln []int, d int) bool {
+	h, err := blockHash(n, k, prevHash, nonce, soln)
 	if err != nil {
 		return false
 	}
@@ -675,7 +665,7 @@ func hashDigestSize(n int) int {
 
 // Mine mines for equihash solution based on N number of hashes digests.
 // It finds 2^k indices of hash digest that equal 0 when xor'd
-func Mine(n, k, d int, prefix string) (*MiningResult, error) {
+func Mine(n, k, d int) (*MiningResult, error) {
 	err := validateParams(n, k)
 	if err != nil {
 		return nil, err
@@ -686,7 +676,7 @@ func Mine(n, k, d int, prefix string) (*MiningResult, error) {
 	var x []int
 	nonce := 0
 	for x == nil {
-		digest, err = newBlake2bHash(n, k, prefix, prevHash)
+		digest, err = newBlake2bHash(n, k, prevHash)
 		if err != nil {
 			return nil, err
 		}
@@ -703,7 +693,7 @@ func Mine(n, k, d int, prefix string) (*MiningResult, error) {
 				return nil, err
 			}
 			for _, soln := range solns {
-				if difficultyFilter(n, k, prefix, prevHash, nonce, soln, d) {
+				if difficultyFilter(n, k, prevHash, nonce, soln, d) {
 					x = soln
 					break
 				}
@@ -714,7 +704,7 @@ func Mine(n, k, d int, prefix string) (*MiningResult, error) {
 			nonce++
 		}
 	}
-	currHash, err := blockHash(n, k, prefix, prevHash, nonce, x)
+	currHash, err := blockHash(n, k, prevHash, nonce, x)
 	if err != nil {
 		return nil, err
 	}

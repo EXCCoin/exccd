@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	equihash "github.com/EXCCoin/exccd/equihash"
 )
 
 // MaxBlockHeaderPayload is the maximum number of bytes a block header can be.
@@ -21,7 +22,10 @@ import (
 // + Height 4 bytes + Size 4 bytes + Timestamp 4 bytes + Nonce 4 bytes +
 // ExtraData 32 bytes + StakeVersion 4 bytes.
 // --> Total 180 bytes.
-const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3)
+// + equihash.SolutionWidth
+// --> Total 1524
+const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + equihash.SolutionWidth
+const EquihashSolutionWidth = equihash.SolutionWidth
 
 // BlockHeader defines information about a block and is used in the ExchangeCoin
 // block (MsgBlock) and headers (MsgHeaders) messages.
@@ -37,6 +41,9 @@ type BlockHeader struct {
 
 	// Merkle tree reference to hash of all stake transactions for the block.
 	StakeRoot chainhash.Hash
+
+	// EquihashSolution is used to store Equihash solution for block
+	EquihashSolution [EquihashSolutionWidth]byte
 
 	// Votes on the previous merkleroot and yet undecided parameters.
 	VoteBits uint16
@@ -86,7 +93,7 @@ type BlockHeader struct {
 
 // blockHeaderLen is a constant that represents the number of bytes for a block
 // header.
-const blockHeaderLen = 180
+const blockHeaderLen = MaxBlockHeaderPayload
 
 // BlockHash computes the block identifier hash for the given block header.
 func (h *BlockHeader) BlockHash() chainhash.Hash {
@@ -191,7 +198,7 @@ func NewBlockHeader(version int32, prevHash *chainhash.Hash,
 // decoding from the wire.
 func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
 	return readElements(r, &bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
-		&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.Voters,
+		&bh.StakeRoot, &bh.EquihashSolution, &bh.VoteBits, &bh.FinalState, &bh.Voters,
 		&bh.FreshStake, &bh.Revocations, &bh.PoolSize, &bh.Bits,
 		&bh.SBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
 		&bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
@@ -203,7 +210,7 @@ func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
 func writeBlockHeader(w io.Writer, pver uint32, bh *BlockHeader) error {
 	sec := uint32(bh.Timestamp.Unix())
 	return writeElements(w, bh.Version, &bh.PrevBlock, &bh.MerkleRoot,
-		&bh.StakeRoot, bh.VoteBits, bh.FinalState, bh.Voters,
+		&bh.StakeRoot, &bh.EquihashSolution, bh.VoteBits, bh.FinalState, bh.Voters,
 		bh.FreshStake, bh.Revocations, bh.PoolSize, bh.Bits, bh.SBits,
 		bh.Height, bh.Size, sec, bh.Nonce, bh.ExtraData,
 		bh.StakeVersion)

@@ -14,10 +14,6 @@ import (
 	blake2b "github.com/minio/blake2b-simd"
 )
 
-const (
-	prefix = "ZcashPoW"
-)
-
 var (
 	expandCompressTests = createExpandCompressTests()
 	miningTests         = createMiningTests()
@@ -141,13 +137,8 @@ type validationTest struct {
 }
 
 func createDigest(n, k, nonce int, I []byte) (hash.Hash, error) {
-	bytesPerWord := n / 8
-	wordsPerHash := 512 / n
-	size := bytesPerWord * wordsPerHash
-	digest, err := blake2b.New(&blake2b.Config{
-		Size:   uint8(size),
-		Person: testPerson(n, k),
-	})
+	digest, err := newHash(n, k);
+
 	if err != nil {
 		return nil, err
 	}
@@ -162,13 +153,8 @@ func createDigest(n, k, nonce int, I []byte) (hash.Hash, error) {
 	return digest, nil
 }
 
-func testPerson(n, k int) []byte {
-	return person(prefix, n, k)
-}
-
 func (mt *miningTest) createDigest() (hash.Hash, error) {
-	n, k := mt.n, mt.k
-	return createDigest(mt.n, mt.k, mt.nonce, testPerson(n, k))
+	return createDigest(mt.n, mt.k, mt.nonce, person(mt.n, mt.k))
 }
 
 func testHeader(I []byte, nonce int) []byte {
@@ -498,10 +484,10 @@ func solutionEq(x, y []int) error {
 	return intSliceEq(x, y)
 }
 
-func TestExccPerson_2(t *testing.T) {
-	p := exccPerson(N, K)
-	n := len(exccPrefix)
-	err := byteSliceEq(p[:n], []byte(exccPrefix))
+func TestDefaultPerson_2(t *testing.T) {
+	p := person(N, K)
+	n := len(defaultPrefix)
+	err := byteSliceEq(p[:n], []byte(defaultPrefix))
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -565,7 +551,7 @@ func TestSortHashKeys(t *testing.T) {
 }
 
 func TestCopyHash(t *testing.T) {
-	h, err := newHash(n, k, prefix)
+	h, err := newHash(n, k)
 	if err != nil {
 		t.Error(err)
 	}
@@ -662,9 +648,8 @@ func TestIsWordZero(t *testing.T) {
 func testValidatePreparedSolution(t *testing.T, v validationTest) error {
 	n, k := v.n, v.k
 	header := testHeader(v.I, v.nonce)
-	person := testPerson(n, k)
 	solution := v.solution
-	r, err := ValidateSolution(n, k, person, header, solution, prefix)
+	r, err := ValidateSolution(n, k, header, solution)
 	if err != nil {
 		return err
 	}
@@ -686,9 +671,9 @@ func TestValidatePreparedSolutions(t *testing.T) {
 
 func testValidateCalculationSolution(t *testing.T, m miningTest) {
 	n, k, I, nonce, solns := m.n, m.k, m.I, m.nonce, m.solutions
-	p, header := testPerson(n, k), testHeader(I, nonce)
+	header := testHeader(I, nonce)
 	for _, soln := range solns {
-		r, err := ValidateSolution(n, k, p, header, soln, prefix)
+		r, err := ValidateSolution(n, k, header, soln)
 		if err != nil {
 			t.Error(err)
 			t.FailNow()
@@ -735,8 +720,8 @@ func TestSolveGBP(t *testing.T) {
 }
 
 func TestPersonal(t *testing.T) {
-	p := testPerson(N, K)
-	exp := []byte{90, 99, 97, 115, 104, 80, 111, 87, 200, 0, 0, 0, 5, 0, 0, 0}
+	p := person(N, K)
+	exp := []byte{90, 99, 97, 115, 104, 80, 111, 87, 200, 0, 0, 0, 9, 0, 0, 0}
 	err := byteSliceEq(p, exp)
 	if err != nil {
 		t.Error(err)
@@ -745,8 +730,8 @@ func TestPersonal(t *testing.T) {
 }
 
 func TestExccPerson(t *testing.T) {
-	p := exccPerson(N, K)
-	exp := append([]byte(exccPrefix), []byte{200, 0, 0, 0, 5, 0, 0, 0}...)
+	p := person(N, K)
+	exp := append([]byte(defaultPrefix), []byte{200, 0, 0, 0, 9, 0, 0, 0}...)
 	if !bytes.Equal(p, exp) {
 		t.FailNow()
 	}
@@ -755,9 +740,7 @@ func TestExccPerson(t *testing.T) {
 func TestBlake2bPerson(t *testing.T) {
 	size := N / 8
 	c := &blake2b.Config{
-		Key:    nil,
-		Person: testPerson(N, K),
-		Salt:   nil,
+		Person: person(N, K),
 		Size:   uint8(size),
 	}
 	h, err := blake2b.New(c)
@@ -766,9 +749,8 @@ func TestBlake2bPerson(t *testing.T) {
 		t.FailNow()
 	}
 	hash := hashDigest(h)
-	exp := []byte{97, 16, 39, 209, 126, 132, 90, 168, 83, 77, 84, 138,
-		116, 153, 183, 177, 187, 95, 49, 131, 100, 153, 26, 163,
-		70}
+	exp := []byte{66, 193, 68, 16, 145, 78, 101, 81, 78, 93, 95, 1,
+		30, 7, 97, 203, 235, 122, 47, 130, 44, 120, 59, 253, 138}
 
 	err = byteSliceEq(hash, exp)
 	if err != nil {
@@ -778,9 +760,9 @@ func TestBlake2bPerson(t *testing.T) {
 }
 
 func TestValidateSolution_SmallN(t *testing.T) {
-	k, person, header, solns := 5, []byte{}, []byte{}, []int{}
+	k, header, solns := 5, []byte{}, []int{}
 	for n := 0; n < 2; n++ {
-		_, err := ValidateSolution(n, k, person, header, solns, prefix)
+		_, err := ValidateSolution(n, k, header, solns)
 		if err == nil {
 			t.FailNow()
 		}
@@ -788,9 +770,9 @@ func TestValidateSolution_SmallN(t *testing.T) {
 }
 
 func TestValidateSolution_SmallK(t *testing.T) {
-	n, person, header, solns := 96, []byte{}, []byte{}, []int{}
+	n, header, solns := 96, []byte{}, []int{}
 	for k := 0; n < 3; n++ {
-		_, err := ValidateSolution(n, k, person, header, solns, prefix)
+		_, err := ValidateSolution(n, k, header, solns)
 		if err == nil {
 			t.FailNow()
 		}
@@ -798,9 +780,9 @@ func TestValidateSolution_SmallK(t *testing.T) {
 }
 
 func TestValidateSolution_NMod8(t *testing.T) {
-	n, person, header, solns := 96, []byte{}, []byte{}, []int{}
+	n, header, solns := 96, []byte{}, []int{}
 	for _, k := range []int{4, 8, 16, 32, 64} {
-		_, err := ValidateSolution(n, k, person, header, solns, prefix)
+		_, err := ValidateSolution(n, k, header, solns)
 		if err == nil {
 			t.FailNow()
 		}
@@ -808,9 +790,9 @@ func TestValidateSolution_NMod8(t *testing.T) {
 }
 
 func TestValidateSolution_NModK(t *testing.T) {
-	n, person, header, solns := 96, []byte{}, []byte{}, []int{}
+	n, header, solns := 96, []byte{}, []int{}
 	for _, k := range []int{3, 7, 15, 31, 63} {
-		_, err := ValidateSolution(n, k, person, header, solns, prefix)
+		_, err := ValidateSolution(n, k, header, solns)
 		if err == nil {
 			t.FailNow()
 		}
@@ -819,8 +801,8 @@ func TestValidateSolution_NModK(t *testing.T) {
 
 func TestValidateSolution_EmptySolutionSize(t *testing.T) {
 	I := []byte("block header")
-	n, k, person, header, solns := N, K, testPerson(N, K), testHeader(I, 1), []int{}
-	_, err := ValidateSolution(n, k, person, header, solns, prefix)
+	n, k, header, solns := N, K, testHeader(I, 1), []int{}
+	_, err := ValidateSolution(n, k, header, solns)
 	if err == nil {
 		t.FailNow()
 	}
