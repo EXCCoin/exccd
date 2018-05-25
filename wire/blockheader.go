@@ -21,7 +21,9 @@ import (
 // + Height 4 bytes + Size 4 bytes + Timestamp 4 bytes + Nonce 4 bytes +
 // ExtraData 32 bytes + StakeVersion 4 bytes.
 // --> Total 180 bytes.
-const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3)
+// + Equihash solution (always 1344 bytes, for N = 200, K = 9)
+// --> Total 1524 bytes
+const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + 1344
 
 // BlockHeader defines information about a block and is used in the ExchangeCoin
 // block (MsgBlock) and headers (MsgHeaders) messages.
@@ -82,11 +84,10 @@ type BlockHeader struct {
 
 	// StakeVersion used for voting.
 	StakeVersion uint32
-}
 
-// blockHeaderLen is a constant that represents the number of bytes for a block
-// header.
-const blockHeaderLen = 180
+	// Equihash solution bytes
+	EquihashSolution [1344]byte
+}
 
 // BlockHash computes the block identifier hash for the given block header.
 func (h *BlockHeader) BlockHash() chainhash.Hash {
@@ -194,7 +195,7 @@ func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
 		&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.Voters,
 		&bh.FreshStake, &bh.Revocations, &bh.PoolSize, &bh.Bits,
 		&bh.SBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
-		&bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
+		&bh.Nonce, &bh.ExtraData, &bh.StakeVersion, &bh.EquihashSolution)
 }
 
 // writeBlockHeader writes a ExchangeCoin block header to w.  See Serialize for
@@ -206,5 +207,5 @@ func writeBlockHeader(w io.Writer, pver uint32, bh *BlockHeader) error {
 		&bh.StakeRoot, bh.VoteBits, bh.FinalState, bh.Voters,
 		bh.FreshStake, bh.Revocations, bh.PoolSize, bh.Bits, bh.SBits,
 		bh.Height, bh.Size, sec, bh.Nonce, bh.ExtraData,
-		bh.StakeVersion)
+		bh.StakeVersion, &bh.EquihashSolution)
 }
