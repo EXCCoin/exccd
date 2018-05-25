@@ -124,23 +124,23 @@ func TestBlockHeaderWire(t *testing.T) {
 	// baseBlockHdr is used in the various tests as a baseline BlockHeader.
 	bits := uint32(0x1d00ffff)
 	baseBlockHdr := &BlockHeader{
-		Version:      1,
-		PrevBlock:    mainNetGenesisHash,
-		MerkleRoot:   mainNetGenesisMerkleRoot,
-		StakeRoot:    mainNetGenesisMerkleRoot,
-		VoteBits:     uint16(0x0000),
-		FinalState:   [6]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-		Voters:       uint16(0x0000),
-		FreshStake:   uint8(0x00),
-		Revocations:  uint8(0x00),
-		PoolSize:     uint32(0x00000000),
-		Timestamp:    time.Unix(0x495fab29, 0), // 2009-01-03 12:15:05 -0600 CST
-		Bits:         bits,
-		SBits:        int64(0x0000000000000000),
-		Nonce:        nonce,
-		StakeVersion: uint32(0x0ddba110),
-		Height:       uint32(0),
-		Size:         uint32(0),
+		Version:          1,
+		PrevBlock:        mainNetGenesisHash,
+		MerkleRoot:       mainNetGenesisMerkleRoot,
+		StakeRoot:        mainNetGenesisMerkleRoot,
+		VoteBits:         uint16(0x0000),
+		FinalState:       [6]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		Voters:           uint16(0x0000),
+		FreshStake:       uint8(0x00),
+		Revocations:      uint8(0x00),
+		PoolSize:         uint32(0x00000000),
+		Timestamp:        time.Unix(0x495fab29, 0), // 2009-01-03 12:15:05 -0600 CST
+		Bits:             bits,
+		SBits:            int64(0x0000000000000000),
+		Nonce:            nonce,
+		StakeVersion:     uint32(0x0ddba110),
+		Height:           uint32(0),
+		Size:             uint32(0),
 		EquihashSolution: [1344]byte{0x00},
 	}
 
