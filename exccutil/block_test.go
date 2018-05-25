@@ -37,7 +37,7 @@ func TestBlock(t *testing.T) {
 	}
 
 	// Hash for block 100,000.
-	wantHashStr := "7d9a8e69628f913086b35130524769b0e2eaff0fcdac97345e28ef7055a7767e"
+	wantHashStr := "6091977adaf44a9999206fc1dfbee43d538c973b7143fd5e52efcdb6431a2af0"
 	wantHash, err := chainhash.NewHashFromStr(wantHashStr)
 	if err != nil {
 		t.Errorf("NewHashFromStr: %v", err)
@@ -147,10 +147,10 @@ func TestBlock(t *testing.T) {
 
 	// Transaction offsets and length for the transaction in Block100000.
 	wantTxLocs := []wire.TxLoc{
-		{TxStart: 181, TxLen: 159},
-		{TxStart: 340, TxLen: 285},
-		{TxStart: 625, TxLen: 283},
-		{TxStart: 908, TxLen: 249},
+		{TxStart: 1525, TxLen: 159},
+		{TxStart: 1684, TxLen: 285},
+		{TxStart: 1969, TxLen: 283},
+		{TxStart: 2252, TxLen: 249},
 	}
 
 	// Ensure the transaction location information is accurate.
