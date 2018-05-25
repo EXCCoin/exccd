@@ -753,20 +753,20 @@ var testBlock = MsgBlock{
 			0x7b, 0xa1, 0xa3, 0xc3, 0x54, 0x0b, 0xf7, 0xb1,
 			0xcd, 0xb6, 0x06, 0xe8, 0x57, 0x23, 0x3e, 0x0e,
 		}),
-		VoteBits:     uint16(0x0000),
-		FinalState:   [6]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-		Voters:       uint16(0x0000),
-		FreshStake:   uint8(0x00),
-		Revocations:  uint8(0x00),
-		PoolSize:     uint32(0x00000000), // Poolsize
-		Bits:         0x1d00ffff,         // 486604799
-		SBits:        int64(0x0000000000000000),
-		Height:       uint32(1),
-		Size:         uint32(1),
-		Timestamp:    time.Unix(0x4966bc61, 0), // 2009-01-08 20:54:25 -0600 CST
-		Nonce:        0x9962e301,               // 2573394689
-		ExtraData:    [32]byte{},
-		StakeVersion: uint32(0x5ca1ab1e),
+		VoteBits:         uint16(0x0000),
+		FinalState:       [6]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		Voters:           uint16(0x0000),
+		FreshStake:       uint8(0x00),
+		Revocations:      uint8(0x00),
+		PoolSize:         uint32(0x00000000), // Poolsize
+		Bits:             0x1d00ffff,         // 486604799
+		SBits:            int64(0x0000000000000000),
+		Height:           uint32(1),
+		Size:             uint32(1),
+		Timestamp:        time.Unix(0x4966bc61, 0), // 2009-01-08 20:54:25 -0600 CST
+		Nonce:            0x9962e301,               // 2573394689
+		ExtraData:        [32]byte{},
+		StakeVersion:     uint32(0x5ca1ab1e),
 		EquihashSolution: [1344]byte{0x00},
 	},
 	Transactions: []*MsgTx{
