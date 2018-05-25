@@ -17,7 +17,7 @@ import (
 	"github.com/EXCCoin/exccd/wire"
 )
 
-//TODO: once upon a time enable test and make it pass
+// TODO: once upon a time enable test and make it pass
 func TestMerkleBlock3(t *testing.T) {
 	// Test relies on encoded binary data
 	t.SkipNow()

@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"github.com/minio/blake2b-simd"
 	"hash"
 	"math/big"
 	"reflect"
 	"sort"
-
-	"github.com/minio/blake2b-simd"
 )
 
 const (
@@ -18,11 +17,13 @@ const (
 	wordMask = (1 << wordSize) - 1
 	byteMask = 0xFF
 	// N is the number of hash digests used to find a mining solution
-	N = 96
+	N = 200
 	// K is the exponent for xor'ing 2^k hash digests for solution
-	K = 5
-	// person prefix for excc
-	exccPrefix = "excc"
+	K             = 9
+	defaultPrefix = "ZcashPoW"
+
+	CollisionBitLength = N / (K + 1)
+	SolutionWidth      = (1 << K) * (CollisionBitLength + 1) / 8
 )
 
 var (
@@ -42,15 +43,10 @@ var (
 	bigZero             = big.NewInt(0)
 )
 
-// the generic person prefix encoder; which encodes the prefix and equihash parameters
-func person(prefix string, n, k int) []byte {
+// the generic person prefix encoder; which encodes the prefix and gbp parameters
+func person(n, k int) []byte {
 	nb, kb := writeU32(uint32(n)), writeU32(uint32(k))
-	return append([]byte(prefix), append(nb, kb...)...)
-}
-
-// returns the encoded excc person
-func exccPerson(n, k int) []byte {
-	return person(exccPrefix, n, k)
+	return append([]byte(defaultPrefix), append(nb, kb...)...)
 }
 
 // hashKeys represents a slice of hashKeys; used for creating a type for sorting hash keys
@@ -82,6 +78,15 @@ func hashXi(h hash.Hash, xi int) error {
 // creates and returns the hash digest
 func hashDigest(h hash.Hash) []byte {
 	return h.Sum(nil)
+}
+
+// newHash creates a blake2b hash using the equihash params (n, k) and the person prefix
+func newHash(n, k int) (hash.Hash, error) {
+	h, err := blake2b.New(&blake2b.Config{
+		Person: person(n, k),
+		Size:   uint8((512 / n) * n / 8),
+	})
+	return h, err
 }
 
 // expands the hash array based on its parameters
@@ -263,7 +268,7 @@ func reduceHashKeys(n, k int, keys []hashKey) ([]hashKey, error) {
 			xSize := len(keys)
 			j := collisionOffset(keys, i, collisionLen)
 
-			//2c) Store tuples (X_i ^ X_j, (i, j)) on the table
+			// 2c) Store tuples (X_i ^ X_j, (i, j)) on the table
 			for l := 0; l < j-1; l++ {
 				for m := l + 1; m < l; m++ {
 					x1l, x1m := keys[xSize-1-l], keys[xSize-1-m]
@@ -291,7 +296,7 @@ func findSolutions(n, k int, keys []hashKey) ([]equihashSolution, error) {
 	}
 	// ensure keys are sorted after reduction
 	sort.Sort(hashKeys(keys))
-	//find solutions
+	// find solutions
 	var solutions []equihashSolution
 	hashLen := hashLength(n, k)
 	for len(keys) > 0 {
@@ -321,7 +326,7 @@ func findSolutions(n, k int, keys []hashKey) ([]equihashSolution, error) {
 // the higher the number; the probability to find a solution increases.
 // it returns the indices of the N hashes that solve the equihash puzzle
 func equihash(digest hash.Hash, n, k int) ([]equihashSolution, error) {
-	//validateEquihashArgs
+	// validateEquihashArgs
 	if digest == nil {
 		return nil, errNullHash
 	}
@@ -488,18 +493,12 @@ func generateWords(n, k int, indices []int, h hash.Hash) ([]*big.Int, error) {
 	return words, nil
 }
 
-func validateNonEmptySolutionParams(person, header []byte, solutionIndices []int, prefix string) error {
-	if len(person) == 0 {
-		return errors.New("empty person")
-	}
+func validateNonEmptySolutionParams(header []byte, solutionIndices []int) error {
 	if len(header) == 0 {
 		return errors.New("empty header")
 	}
 	if len(solutionIndices) == 0 {
 		return errors.New("empty solution indices")
-	}
-	if len(prefix) == 0 {
-		return errors.New("empty prefix")
 	}
 	return nil
 }
@@ -515,13 +514,13 @@ func validateSolutionIndices(k int, indices []int) error {
 	return nil
 }
 
-func validateSolutionParams(n, k int, person, header []byte, indices []int, prefix string) error {
+func validateSolutionParams(n, k int, header []byte, indices []int) error {
 	err := validateEquihashParams(n, k)
 	if err != nil {
 		return err
 	}
 
-	err = validateNonEmptySolutionParams(person, header, indices, prefix)
+	err = validateNonEmptySolutionParams(header, indices)
 	if err != nil {
 		return err
 	}
@@ -529,15 +528,9 @@ func validateSolutionParams(n, k int, person, header []byte, indices []int, pref
 	return validateSolutionIndices(k, indices)
 }
 
-func newValidateHash(n int, person, header []byte) (hash.Hash, error) {
-	bytesPerWord := n / 8
-	wordsPerHash := indicesPerHashOutput(n)
-	outLen := wordsPerHash * bytesPerWord
+func newValidateHash(n, k int, header []byte) (hash.Hash, error) {
+	h, err := newHash(n, k)
 
-	h, err := blake2b.New(&blake2b.Config{
-		Person: person,
-		Size:   uint8(outLen),
-	})
 	if err != nil {
 		return nil, err
 	}
@@ -593,14 +586,14 @@ func validateIndices(n, k int, indices []int, digest hash.Hash) (bool, error) {
 }
 
 // ValidateSolution validates that a mining solution is correct
-func ValidateSolution(n, k int, person, header []byte, solutionIndices []int, prefix string) (bool, error) {
-	err := validateSolutionParams(n, k, person, header, solutionIndices, prefix)
+func ValidateSolution(n, k int, header []byte, solutionIndices []int) (bool, error) {
+	err := validateSolutionParams(n, k, header, solutionIndices)
 	if err != nil {
 		return false, err
 	}
 
 	// create hash digest and words
-	digest, err := newValidateHash(n, person, header)
+	digest, err := newValidateHash(n, k, header)
 	if err != nil {
 		return false, err
 	}

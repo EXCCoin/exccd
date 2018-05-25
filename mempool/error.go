@@ -78,11 +78,11 @@ func extractRejectCode(err error) (wire.RejectCode, bool) {
 		case blockchain.ErrDuplicateBlock:
 			code = wire.RejectDuplicate
 
-		// Rejected due to obsolete version.
+			// Rejected due to obsolete version.
 		case blockchain.ErrBlockVersionTooOld:
 			code = wire.RejectObsolete
 
-		// Rejected due to checkpoint.
+			// Rejected due to checkpoint.
 		case blockchain.ErrCheckpointTimeTooOld:
 			fallthrough
 		case blockchain.ErrDifficultyTooLow:
@@ -92,7 +92,7 @@ func extractRejectCode(err error) (wire.RejectCode, bool) {
 		case blockchain.ErrForkTooOld:
 			code = wire.RejectCheckpoint
 
-		// Everything else is due to the block or transaction being invalid.
+			// Everything else is due to the block or transaction being invalid.
 		default:
 			code = wire.RejectInvalid
 		}

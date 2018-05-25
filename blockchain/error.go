@@ -450,6 +450,9 @@ const (
 	// failed validation.
 	ErrInvalidAncestorBlock
 
+	// ErrInvalidEquihash indicates that block does not passes equihash solution validation
+	ErrInvalidEquihash
+
 	// numErrorCodes is the maximum error code number used in tests.
 	numErrorCodes
 )
@@ -551,6 +554,7 @@ var errorCodeStrings = map[ErrorCode]string{
 	ErrInvalidEarlyVoteBits:   "ErrInvalidEarlyVoteBits",
 	ErrInvalidEarlyFinalState: "ErrInvalidEarlyFinalState",
 	ErrInvalidAncestorBlock:   "ErrInvalidAncestorBlock",
+	ErrInvalidEquihash:        "ErrInvalidEquihash",
 }
 
 // String returns the ErrorCode as a human-readable name.
