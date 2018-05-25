@@ -254,7 +254,7 @@ func readElement(r io.Reader, element interface{}) error {
 		}
 		return nil
 
-	// Unix timestamp encoded as a uint32.
+		// Unix timestamp encoded as a uint32.
 	case *uint32Time:
 		rv, err := binarySerializer.Uint32(r, binary.LittleEndian)
 		if err != nil {
@@ -263,7 +263,7 @@ func readElement(r io.Reader, element interface{}) error {
 		*e = uint32Time(time.Unix(int64(rv), 0))
 		return nil
 
-	// Unix timestamp encoded as an int64.
+		// Unix timestamp encoded as an int64.
 	case *int64Time:
 		rv, err := binarySerializer.Uint64(r, binary.LittleEndian)
 		if err != nil {
@@ -272,7 +272,7 @@ func readElement(r io.Reader, element interface{}) error {
 		*e = int64Time(time.Unix(int64(rv), 0))
 		return nil
 
-	// Message header checksum.
+		// Message header checksum.
 	case *[4]byte:
 		_, err := io.ReadFull(r, e[:])
 		if err != nil {
@@ -287,7 +287,7 @@ func readElement(r io.Reader, element interface{}) error {
 		}
 		return nil
 
-	// Message header command.
+		// Message header command.
 	case *[CommandSize]uint8:
 		_, err := io.ReadFull(r, e[:])
 		if err != nil {
@@ -295,7 +295,7 @@ func readElement(r io.Reader, element interface{}) error {
 		}
 		return nil
 
-	// IP address.
+		// IP address.
 	case *[16]byte:
 		_, err := io.ReadFull(r, e[:])
 		if err != nil {
@@ -420,7 +420,7 @@ func writeElement(w io.Writer, element interface{}) error {
 		}
 		return nil
 
-	// Message header checksum.
+		// Message header checksum.
 	case [4]byte:
 		_, err := w.Write(e[:])
 		if err != nil {
@@ -428,7 +428,7 @@ func writeElement(w io.Writer, element interface{}) error {
 		}
 		return nil
 
-	// Message header command.
+		// Message header command.
 	case [CommandSize]uint8:
 		_, err := w.Write(e[:])
 		if err != nil {
@@ -436,7 +436,7 @@ func writeElement(w io.Writer, element interface{}) error {
 		}
 		return nil
 
-	// IP address.
+		// IP address.
 	case [16]byte:
 		_, err := w.Write(e[:])
 		if err != nil {
