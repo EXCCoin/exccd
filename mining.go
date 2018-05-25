@@ -1081,9 +1081,9 @@ func NewBlockTemplate(policy *mining.Policy, server *server, payToAddress exccut
 	// hashes.
 	// 2. Create a map of [blockHeaderHash] --> [mempoolTxnList].
 	// 3. for blockHeaderHash in candidateBlocks:
-	//		if mempoolTx.StakeDesc == SSGen &&
-	//			mempoolTx.SSGenParseBlockHeader() == blockHeaderHash:
-	//			map[blockHeaderHash].append(mempoolTx)
+	// 		if mempoolTx.StakeDesc == SSGen &&
+	// 			mempoolTx.SSGenParseBlockHeader() == blockHeaderHash:
+	// 			map[blockHeaderHash].append(mempoolTx)
 	// 4. Check len of each map entry and store.
 	// 5. Query the ticketdb and check how many eligible ticket holders there are
 	//    for the given block you are voting on.

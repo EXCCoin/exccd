@@ -245,9 +245,9 @@ func TestFilterInsertKey(t *testing.T) {
 	}
 }
 
-//TODO: once upon a time enable test and make it pass
+// TODO: once upon a time enable test and make it pass
 func TestFilterBloomMatch(t *testing.T) {
-	//A lot of unclear (yet) hash transformations/matching. Ignore for now
+	// A lot of unclear (yet) hash transformations/matching. Ignore for now
 	t.SkipNow()
 
 	// tx 2 from blk 10000
@@ -482,9 +482,9 @@ func TestFilterInsertUpdateNone(t *testing.T) {
 	}
 }
 
-//TODO: once upon a time enable test and make it pass
+// TODO: once upon a time enable test and make it pass
 func TestFilterInsertP2PubKeyOnly(t *testing.T) {
-	//A lot of unclear (yet) hash transformations/matching. Ignore for now
+	// A lot of unclear (yet) hash transformations/matching. Ignore for now
 	t.SkipNow()
 
 	blockStr := "000000003ffad804971ce6b8a13c8162287222d91395fa77b6bea6b4" +

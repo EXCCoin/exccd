@@ -1733,8 +1733,8 @@ out:
 			}
 			waiting = true
 
-		// This channel is notified when a notification has been sent
-		// across the network socket.
+			// This channel is notified when a notification has been sent
+			// across the network socket.
 		case <-ntfnSentChan:
 			// No longer waiting if there are no more messages in
 			// the pending messages queue.
