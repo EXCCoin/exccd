@@ -80,7 +80,11 @@ func hashDigest(h hash.Hash) []byte {
 	return h.Sum(nil)
 }
 
-// newHash creates a blake2b hash using the equihash params (n, k) and the person prefix
+func NewHash() (hash.Hash, error) {
+	return newHash(N, K)
+}
+
+// newHash creates a blake2b hash using the equihash params (n, k)
 func newHash(n, k int) (hash.Hash, error) {
 	h, err := blake2b.New(&blake2b.Config{
 		Person: person(n, k),
@@ -124,7 +128,7 @@ func expandArray(in []byte, outLen, bitLen, bytePad int) ([]byte, error) {
 }
 
 // a better descriptive type to represent a equihash solution; that is a list of indices that xor to 0
-type equihashSolution []int
+type EquihashSolution []int
 
 // hashKey contains the xor'd hash and the indices that we're used to xor
 type hashKey struct {
@@ -289,7 +293,7 @@ func reduceHashKeys(n, k int, keys []hashKey) ([]hashKey, error) {
 }
 
 // find solutions based on the reduced hash keys
-func findSolutions(n, k int, keys []hashKey) ([]equihashSolution, error) {
+func findSolutions(n, k int, keys []hashKey) ([]EquihashSolution, error) {
 	err := validateEquihashParams(n, k)
 	if err != nil {
 		return nil, err
@@ -297,7 +301,7 @@ func findSolutions(n, k int, keys []hashKey) ([]equihashSolution, error) {
 	// ensure keys are sorted after reduction
 	sort.Sort(hashKeys(keys))
 	// find solutions
-	var solutions []equihashSolution
+	var solutions []EquihashSolution
 	hashLen := hashLength(n, k)
 	for len(keys) > 0 {
 		xn := len(keys)
@@ -325,7 +329,7 @@ func findSolutions(n, k int, keys []hashKey) ([]equihashSolution, error) {
 // k is the number used to select 2^k hashes at a time to see if - when xor'd - equals 0;
 // the higher the number; the probability to find a solution increases.
 // it returns the indices of the N hashes that solve the equihash puzzle
-func equihash(digest hash.Hash, n, k int) ([]equihashSolution, error) {
+func SolveEquihash(digest hash.Hash, n, k int) ([]EquihashSolution, error) {
 	// validateEquihashArgs
 	if digest == nil {
 		return nil, errNullHash

@@ -670,7 +670,7 @@ func testSolveGBP(t *testing.T, test miningTest) error {
 		return err
 	}
 	n, k := test.n, test.k
-	solutions, err := equihash(digest, n, k)
+	solutions, err := SolveEquihash(digest, n, k)
 	if err != nil {
 		return err
 	}
@@ -1006,7 +1006,7 @@ func TestFindSolutions_BadParams(t *testing.T) {
 
 func TestEquihash_NullHash(t *testing.T) {
 	var h hash.Hash
-	_, err := equihash(h, N, K)
+	_, err := SolveEquihash(h, N, K)
 	if err != errNullHash {
 		t.FailNow()
 	}
@@ -1018,7 +1018,7 @@ func TestEquihash_BadParams(t *testing.T) {
 		t.FailNow()
 	}
 	n, k := 0, 0
-	_, err = equihash(h, n, k)
+	_, err = SolveEquihash(h, n, k)
 	if err == nil {
 		t.FailNow()
 	}

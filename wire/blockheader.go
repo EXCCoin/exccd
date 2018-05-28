@@ -155,11 +155,26 @@ func (h *BlockHeader) Bytes() ([]byte, error) {
 }
 
 // TODO: add tests
-func (h *BlockHeader) DeserializeHeaderBytes() ([]byte, error) {
+func (h *BlockHeader) SerializeAllHeaderBytes() ([]byte, error) {
 	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
 
 	sec := uint32(h.Timestamp.Unix())
-	err := writeElements(buf, h.Version, &h.PrevBlock, &h.MerkleRoot, sec, h.Nonce, h.ExtraData, h.Bits)
+	// Note that order of header elements here and in SerializeHeaderBytes() must match
+	err := writeElements(buf, h.Version, &h.PrevBlock, &h.MerkleRoot, h.Bits, sec, h.ExtraData, h.Nonce)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+// TODO: add tests
+func (h *BlockHeader) SerializeMiningHeaderBytes() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
+
+	sec := uint32(h.Timestamp.Unix())
+	err := writeElements(buf, h.Version, &h.PrevBlock, &h.MerkleRoot, h.Bits, sec)
 
 	if err != nil {
 		return nil, err
@@ -192,6 +207,30 @@ func (h *BlockHeader) DeserializeSolution() ([]int, error) {
 	}
 
 	return result, nil
+}
+
+// TODO: add tests
+func (h *BlockHeader) SerializeSolution(solution []int) (error) {
+	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
+
+	size := uint64(len(solution))
+	err := WriteVarInt(buf, 0, size)
+
+	if err != nil {
+		return err
+	}
+
+	for i := uint64(0); i < size; i++ {
+		err := WriteVarInt(buf, 0, uint64(solution[i]))
+
+		if err != nil {
+			return err
+		}
+	}
+
+	copy(h.EquihashSolution[:], buf.Bytes())
+
+	return nil
 }
 
 // NewBlockHeader returns a new BlockHeader using the provided previous block
