@@ -390,7 +390,7 @@ func checkProofOfWork(header *wire.BlockHeader, powLimit *big.Int, flags Behavio
 //TODO: (siy) pass net parameters as parameter instead of using hardcoded mainnet
 // Validate equihash solution for given block
 func validateEquihashSolution(header *wire.BlockHeader) error {
-	headerBytes, err := header.DeserializeHeaderBytes()
+	headerBytes, err := header.SerializeAllHeaderBytes()
 	if err != nil {
 		return ruleError(ErrInvalidEquihash, "unable to deserialize required header fields")
 	}
