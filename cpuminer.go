@@ -218,7 +218,7 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 
 	if err != nil {
 		minrLog.Errorf("Unexpected error while generating header hash: %v ", err)
-		return false;
+		return false
 	}
 
 	// Note that the entire extra nonce range is iterated and the offset is
