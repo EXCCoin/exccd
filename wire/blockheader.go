@@ -210,7 +210,7 @@ func (h *BlockHeader) DeserializeSolution() ([]int, error) {
 }
 
 // TODO: add tests
-func (h *BlockHeader) SerializeSolution(solution []int) (error) {
+func (h *BlockHeader) SerializeSolution(solution []int) error {
 	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
 
 	size := uint64(len(solution))
