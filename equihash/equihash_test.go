@@ -1,4 +1,4 @@
-package consensus
+package equihash
 
 import (
 	"bytes"
@@ -14,6 +14,7 @@ import (
 
 	"crypto/sha256"
 	blake2b "github.com/minio/blake2b-simd"
+	"fmt"
 )
 
 var (
@@ -674,8 +675,15 @@ func testSolveGBP(t *testing.T, test miningTest) error {
 	if err != nil {
 		return err
 	}
+
+	if len(solutions) != len(test.solutions) {
+		return errors.New(fmt.Sprintf("Solutions length %d does not match fixture solutions size %d",
+			len(solutions), len(test.solutions)))
+	}
+
 	for i, solution := range solutions {
 		err := solutionEq(solution, test.solutions[i])
+
 		if err != nil {
 			return err
 		}
