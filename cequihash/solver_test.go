@@ -1,3 +1,7 @@
+// Copyright (c) 2018 The ExchangeCoin team
+// Use of this source code is governed by an ISC
+// license that can be found in the LICENSE file.
+
 package cequihash
 
 import (
@@ -7,6 +11,15 @@ import (
 type solverTest struct {
 	n         int
 	k         int
+	I         []byte
+	nonce     int
+	solutions [][]int
+}
+
+type validatorTest struct {
+	n         int
+	k         int
+	valid     bool
 	I         []byte
 	nonce     int
 	solutions [][]int
@@ -63,6 +76,49 @@ var solverTests = []solverTest{
 	}},
 }
 
+var validatorTests = []validatorTest {
+	// Original valid solution
+	{96, 5, 	true, []byte("Equihash is an asymmetric PoW based on the Generalised Birthday problem."), 1,[][]int{
+		{2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568},
+	}},
+	// Change one index
+	{ 96, 5, false, []byte("Equihash is an asymmetric PoW based on the Generalised Birthday problem."), 1,[][]int{
+		{2262, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568},
+	}},
+	// Swap two arbitrary indices
+	{96, 5, false, []byte("Equihash is an asymmetric PoW based on the Generalised Birthday problem."), 1, [][]int{
+		{45858, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 2261, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568},
+	}},
+	// Reverse the first pair of indices
+	{96, 5, false, []byte("Equihash is an asymmetric PoW based on the Generalised Birthday problem."), 1, [][]int{
+		{15185, 2261, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568},
+	}},
+	// Swap the first and second pairs of indices
+	{96, 5, false, []byte("Equihash is an asymmetric PoW based on the Generalised Birthday problem."), 1, [][]int{
+		{36112, 104243, 2261, 15185, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568},
+	}},
+	// Swap the second-to-last and last pairs of indices
+	{96, 5, false, []byte("Equihash is an asymmetric PoW based on the Generalised Birthday problem."), 1, [][]int{
+		{2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 104973, 122568, 69567, 114474},
+	}},
+	// Swap the first half and second half
+	{96, 5, false, []byte("Equihash is an asymmetric PoW based on the Generalised Birthday problem."), 1, [][]int{
+		{15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568, 2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026},
+	}},
+	// Sort the indices
+	{96, 5, false, []byte("Equihash is an asymmetric PoW based on the Generalised Birthday problem."), 1, [][]int{
+		{2261, 15185, 15972, 23460, 23779, 32642, 36112, 45858, 49807, 52426, 68190, 69567, 69878, 76925, 80080, 80391, 81830, 85191, 90330, 91132, 92842, 104243, 104973, 111026, 114474, 115059, 116805, 118332, 118390, 122568, 122819, 130041},
+	}},
+	// Duplicate indices
+	{96, 5, false, []byte("Equihash is an asymmetric PoW based on the Generalised Birthday problem."), 1, [][]int{
+		{2261, 2261, 15185, 15185, 36112, 36112, 104243, 104243, 23779, 23779, 118390, 118390, 118332, 118332, 130041, 130041, 32642, 32642, 69878, 69878, 76925, 76925, 80080, 80080, 45858, 45858, 116805, 116805, 92842, 92842, 111026, 111026},
+	}},
+	// Duplicate first half
+	{96, 5, false, []byte("Equihash is an asymmetric PoW based on the Generalised Birthday problem."), 1, [][]int{
+		{2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026, 2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026},
+	}},
+}
+
 func testSingleSolution(t *testing.T, test solverTest) {
 	data := SolutionAppenderData{
 		n: test.n,
@@ -94,8 +150,29 @@ func testSingleSolution(t *testing.T, test solverTest) {
 	}
 }
 
+func testSingleValidation(t *testing.T, test validatorTest) {
+	solution := compressIndices(test.solutions)
+	result := ValidateEquihash(test.n, test.k, test.I, solution)
+
+	if result != test.valid {
+		t.Fatalf("Validation result does not match: want %v, got %v", test.valid, result)
+	}
+}
+
+func compressIndices(solution [][]int) []byte {
+	return []byte{}
+}
+
 func TestSolveEquihash(t *testing.T) {
 	for _, test := range solverTests {
 		testSingleSolution(t, test)
+	}
+}
+
+//TODO: finish it
+func TestValidateEquihash(t *testing.T) {
+	t.SkipNow()
+	for _, test := range validatorTests {
+		testSingleValidation(t, test)
 	}
 }
