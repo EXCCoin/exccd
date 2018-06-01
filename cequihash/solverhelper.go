@@ -4,7 +4,7 @@ package cequihash
 #cgo CFLAGS: -O3 -I./implementation -march=native -std=c99
 
 #include <stdlib.h>
-void* ExpandArray(int, int, void*);
+#include "cequihash.h"
  */
 import "C"
 import (
@@ -13,18 +13,20 @@ import (
 	"unsafe"
 )
 
-func expandArray(n, k int, solution []byte) []int {
-	ptr := C.ExpandArray(C.int(n), C.int(k), C.CBytes(solution))
+func expandArray(n, k int, solution unsafe.Pointer) []int {
+	ptr := C.GetIndices(C.int(n), C.int(k), solution)
 	defer C.free(ptr)
 
-	buf := bytes.NewBuffer(solution)
+	indexCount := 1 << uint32(k)
+
+	buf := bytes.NewBuffer(C.GoBytes(ptr, C.int(indexCount * 4)))
 	var tmp [4]byte
 	var result []int
 
 	num_read, _ := buf.Read(tmp[:])
 
 	for num_read > 0 {
-		index := binary.LittleEndian.Uint32(tmp[:])
+		index := binary.BigEndian.Uint32(tmp[:])
 		result = append(result, int(index))
 		num_read, _ = buf.Read(tmp[:])
 	}
@@ -32,16 +34,18 @@ func expandArray(n, k int, solution []byte) []int {
 	return result
 }
 
-type SolutionAppenderData struct {
-	EquihashCallback
-	n int
-	k int
+type SolutionHolder struct {
 	fullSolution [][]int
 }
 
-func (data SolutionAppenderData)solutionAppender(solution unsafe.Pointer) int {
-	equihashSolutionSize := (1 << uint(data.k)) * (data.n / (data.k + 1) + 1) / 8;
-	solutionBytes := C.GoBytes(solution, C.int(equihashSolutionSize))
-	data.fullSolution = append(data.fullSolution, expandArray(data.n, data.k, solutionBytes))
+type SolutionAppenderData struct {
+	n int
+	k int
+	solution *SolutionHolder
+}
+
+func (data SolutionAppenderData) Validate(solution unsafe.Pointer) int {
+	solutionIndexes := expandArray(data.n, data.k, solution)
+	data.solution.fullSolution = append(data.solution.fullSolution, solutionIndexes)
 	return 0
 }

@@ -27,6 +27,16 @@
 #define BLAKE2_LOCAL_INLINE(type) static inline type
 #endif
 
+#ifndef CRYPTO_ALIGN
+//# if defined(__INTEL_COMPILER) || defined(_MSC_VER)
+//#  define CRYPTO_ALIGN(x) __declspec(align(x))
+//# else
+//#  define CRYPTO_ALIGN(x) __attribute__ ((aligned(x)))
+//# endif
+#define CRYPTO_ALIGN(x)
+#endif
+
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -49,7 +59,7 @@ extern "C" {
     BLAKE2B_PERSONALBYTES = 16
   };
 
-  typedef struct __blake2s_state
+  typedef CRYPTO_ALIGN(64) struct __blake2s_state
   {
     uint32_t h[8];
     uint32_t t[2];
@@ -59,17 +69,17 @@ extern "C" {
     uint8_t  last_node;
   } blake2s_state;
 
-  typedef struct __blake2b_state
+  typedef CRYPTO_ALIGN(64) struct __blake2b_state
   {
-    uint64_t h[8];
-    uint64_t t[2];
-    uint64_t f[2];
-    uint8_t  buf[2 * BLAKE2B_BLOCKBYTES];
-    size_t   buflen;
-    uint8_t  last_node;
+    uint64_t h[8]; //+8*8 = +64 => 64
+    uint64_t t[2]; //+2*8 = +16 => 80
+    uint64_t f[2]; //+2*8 = +16 => 96
+    uint8_t  buf[2 * BLAKE2B_BLOCKBYTES]; // +2*128 = +256 => 352
+    size_t   buflen; // +8 = +8 => 360
+    uint8_t  last_node; //+1 = +1 => 361
   } blake2b_state;
 
-  typedef struct __blake2sp_state
+  typedef CRYPTO_ALIGN(64) struct __blake2sp_state
   {
     blake2s_state S[8][1];
     blake2s_state R[1];
@@ -77,7 +87,7 @@ extern "C" {
     size_t  buflen;
   } blake2sp_state;
 
-  typedef struct __blake2bp_state
+  typedef CRYPTO_ALIGN(64) struct __blake2bp_state
   {
     blake2b_state S[4][1];
     blake2b_state R[1];
