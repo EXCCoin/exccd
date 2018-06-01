@@ -17,11 +17,11 @@ import (
 	"github.com/EXCCoin/exccd/blockchain"
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	equihash "github.com/EXCCoin/exccd/equihash"
+	equihash "github.com/EXCCoin/exccd/cequihash"
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/mining"
 	"github.com/EXCCoin/exccd/wire"
-	"hash"
+	"unsafe"
 )
 
 const (
@@ -186,6 +186,26 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 	return true
 }
 
+type solutionValidatorData struct {
+	n int
+	k int
+	header *wire.BlockHeader
+}
+
+func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
+	bytes := equihash.ExtractSolution(data.n, data.k, solution)
+
+	copy(data.header.EquihashSolution[:], bytes)
+
+	hash := data.header.BlockHash()
+
+	if (blockchain.HashToBig(&hash).Cmp(blockchain.CompactToBig(data.header.Bits)) <= 0) {
+		return 1
+	} else {
+		return 0
+	}
+}
+
 // solveBlock attempts to find some combination of a nonce, extra nonce, and
 // current timestamp which makes the passed block hash to a value less than the
 // target difficulty.  The timestamp is updated periodically and the passed
@@ -207,19 +227,20 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 
 	// Create a couple of convenience variables.
 	header := &msgBlock.Header
-	targetDifficulty := blockchain.CompactToBig(header.Bits)
 
 	// Initial state.
 	lastGenerated := time.Now()
 	lastTxUpdate := m.txSource.LastUpdated()
 	hashesCompleted := uint64(0)
 
-	headerHash, err := buildNewHash(header)
+	headerData, err := header.SerializeMiningHeaderBytes()
 
 	if err != nil {
-		minrLog.Errorf("Unexpected error while generating header hash: %v ", err)
+		minrLog.Errorf("Unexpected error while serializing header: %v ", err)
 		return false
 	}
+
+	validator := solutionValidatorData{chaincfg.MainNetParams.N, chaincfg.MainNetParams.K,header}
 
 	// Note that the entire extra nonce range is iterated and the offset is
 	// added relying on the fact that overflow will wrap around 0 as
@@ -230,7 +251,7 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 		littleEndian.PutUint64(header.ExtraData[:], extraNonce+enOffset)
 
 		// Update current hash value with new extra nonce
-		extraNonceHeaderHash := updateHashWithExtraNonce(&headerHash, header)
+		extraNonceBytes := appendExtraNonce(headerData, header)
 
 		// Search through the entire nonce range for a solution while
 		// periodically checking for early quit and stale block
@@ -263,42 +284,28 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 					return false
 				}
 
-				// Rebuild all hashes
-				headerHash, err = buildNewHash(header)
+				// Rebuild all input data
+				headerData, err = header.SerializeMiningHeaderBytes()
 
 				if err != nil {
-					minrLog.Warnf("CPU miner unable to rebuild hash for updated block template "+
+					minrLog.Warnf("CPU miner unable to rebuild header data for updated block template "+
 						"time: %v", err)
 					return false
 				}
 
-				extraNonceHeaderHash = updateHashWithExtraNonce(&headerHash, header)
+				extraNonceBytes = appendExtraNonce(headerData, header)
 
 			default:
 				// Non-blocking select to fall through
 			}
 
 			header.Nonce = i
-			currentHeaderHash := updateHashWithNonce(&extraNonceHeaderHash, header)
 
-			solutions, err := equihash.SolveEquihash(currentHeaderHash, chaincfg.MainNetParams.N, chaincfg.MainNetParams.K)
+			err := equihash.SolveEquihash(chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, extraNonceBytes, i, validator)
 
 			if err != nil {
 				minrLog.Warnf("CPU miner unable to find equihash solution: %v", err)
 				continue
-			}
-
-			// Choose valid solution among found ones
-			for _, solution := range solutions {
-				header.SerializeSolution(solution)
-				hash := header.BlockHash()
-
-				// The block is solved when the new block hash is less
-				// than the target difficulty.  Yay!
-				if blockchain.HashToBig(&hash).Cmp(targetDifficulty) <= 0 {
-					m.updateHashes <- hashesCompleted
-					return true
-				}
 			}
 
 			hashesCompleted++
@@ -308,37 +315,12 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 	return false
 }
 
-func updateHashWithNonce(inputHash *hash.Hash, header *wire.BlockHeader) hash.Hash {
-	bs := make([]byte, 4)
-	binary.LittleEndian.PutUint32(bs, header.Nonce)
-	currentHeaderHash := *inputHash
-	currentHeaderHash.Write(bs)
+func appendExtraNonce(headerData []byte, header *wire.BlockHeader) []byte {
+	result := make([]byte, len(headerData) + 32)
+	copy(result, headerData)
+	result = append(result, header.ExtraData[:]...)
 
-	return currentHeaderHash
-}
-
-func updateHashWithExtraNonce(headerHash *hash.Hash, header *wire.BlockHeader) hash.Hash {
-	extraNonceHeaderHash := *headerHash
-	extraNonceHeaderHash.Write(header.ExtraData[:])
-	return extraNonceHeaderHash
-}
-
-func buildNewHash(header *wire.BlockHeader) (hash.Hash, error) {
-	hash, err := equihash.NewHash()
-
-	if err != nil {
-		return nil, err
-	}
-
-	bytes, err := header.SerializeMiningHeaderBytes()
-
-	if err != nil {
-		return nil, err
-	}
-
-	hash.Write(bytes)
-
-	return hash, nil
+	return result
 }
 
 // generateBlocks is a worker that is controlled by the miningWorkerController.

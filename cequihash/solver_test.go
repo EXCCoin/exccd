@@ -12,7 +12,7 @@ type solverTest struct {
 	n         int
 	k         int
 	I         []byte
-	nonce     int
+	nonce     uint32
 	solutions [][]int
 }
 
@@ -21,7 +21,7 @@ type validatorTest struct {
 	k         int
 	valid     bool
 	I         []byte
-	nonce     int
+	nonce     uint32
 	solutions [][]int
 }
 

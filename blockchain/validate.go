@@ -17,7 +17,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/database"
-	equihash "github.com/EXCCoin/exccd/equihash"
+	equihash "github.com/EXCCoin/exccd/cequihash"
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
@@ -395,12 +395,7 @@ func validateEquihashSolution(header *wire.BlockHeader) error {
 		return ruleError(ErrInvalidEquihash, "unable to deserialize required header fields")
 	}
 
-	solution, err := header.DeserializeSolution()
-	if err != nil {
-		return ruleError(ErrInvalidEquihash, "unable to deserialize equihash solution from block header")
-	}
-
-	result, err := equihash.ValidateSolution(chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, headerBytes, solution)
+	result := equihash.ValidateEquihash(chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, headerBytes, header.EquihashSolution[:])
 
 	if err != nil {
 		return ruleError(ErrInvalidEquihash, "invalid equihash data")

@@ -183,56 +183,6 @@ func (h *BlockHeader) SerializeMiningHeaderBytes() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// TODO: add tests
-func (h *BlockHeader) DeserializeSolution() ([]int, error) {
-	buf := bytes.NewBuffer(h.EquihashSolution[:])
-
-	numindexes, err := ReadVarInt(buf, 0)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var result []int
-
-	for i := uint64(0); i < numindexes; i++ {
-		var value int32
-		err := readElement(buf, value)
-
-		if err != nil {
-			return nil, err
-		}
-
-		result = append(result, int(value))
-	}
-
-	return result, nil
-}
-
-// TODO: add tests
-func (h *BlockHeader) SerializeSolution(solution []int) error {
-	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
-
-	size := uint64(len(solution))
-	err := WriteVarInt(buf, 0, size)
-
-	if err != nil {
-		return err
-	}
-
-	for i := uint64(0); i < size; i++ {
-		err := WriteVarInt(buf, 0, uint64(solution[i]))
-
-		if err != nil {
-			return err
-		}
-	}
-
-	copy(h.EquihashSolution[:], buf.Bytes())
-
-	return nil
-}
-
 // NewBlockHeader returns a new BlockHeader using the provided previous block
 // hash, merkle root hash, difficulty bits, and nonce used to generate the
 // block with defaults for the remaining fields.
