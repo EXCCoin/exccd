@@ -93,12 +93,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/minio/blake2b-simd"
-  packages = ["."]
-  revision = "3f5f724cb5b182a5c278d6d3d55b40e7f8c2efb4"
-
-[[projects]]
-  branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ripemd160","ssh/terminal"]
   revision = "88942b9c40a4c9d203b82b3731787b672d6e809b"
@@ -112,6 +106,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "51254b6ddb4f318166bdce49826146074a029847c8610d257b19cee486733cbe"
+  inputs-digest = "de19e5ca873b85c3ccefeed31f13d76f66630cfd38ded3b09aa95f9edaff27a2"
   solver-name = "gps-cdcl"
   solver-version = 1

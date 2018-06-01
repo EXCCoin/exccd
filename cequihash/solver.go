@@ -30,7 +30,13 @@ func equihash_proxy(callback_data unsafe.Pointer, extra_data unsafe.Pointer) C.i
 	return C.int((*callback).Validate(extra_data))
 }
 
-func SolveEquihash(n, k int, input []byte, nonce int, callback EquihashCallback) error {
+func ExtractSolution(n, k int, solptr unsafe.Pointer) []byte {
+	size := EquihashSolutionSize(n, k)
+
+	return C.GoBytes(solptr, C.int(size))
+}
+
+func SolveEquihash(n, k int, input []byte, nonce uint32, callback EquihashCallback) error {
 	callbackptr := cptr.Save(&callback)
 	defer cptr.Unref(callbackptr)
 
@@ -40,8 +46,7 @@ func SolveEquihash(n, k int, input []byte, nonce int, callback EquihashCallback)
 }
 
 func ValidateEquihash(n, k int, input []byte, solution []byte) bool {
-	pow2K := 1 << uint32(k)
-	equihashSolutionSize := pow2K * (n / (k + 1) + 1) / 8
+	equihashSolutionSize := EquihashSolutionSize(n, k)
 
 	if len(solution) != equihashSolutionSize {
 		return false
@@ -49,4 +54,8 @@ func ValidateEquihash(n, k int, input []byte, solution []byte) bool {
 
 	return C.EquihashValidate(C.int(n), C.int(k), unsafe.Pointer(C.CBytes(input)), C.int(len(input)),
 		unsafe.Pointer(C.CBytes(solution))) != 0
+}
+
+func EquihashSolutionSize(n, k int) int {
+	return 1 << uint32(k) * (n/(k+1) + 1) / 8
 }
