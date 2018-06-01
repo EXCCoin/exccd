@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright (c) 2016 abc at openwall dot com
  * Copyright (c) 2016 Jack Grigg
  * Copyright (c) 2016 The Zcash developers
@@ -16,7 +16,10 @@
 #include <endian.h>
 #include <stdint.h>
 #ifdef __INCLUDE_MAIN__
+#define D(x...)  fprintf(stderr, x)
 #include <stdio.h>
+#else
+#define D(x...)
 #endif
 #include <stdlib.h>
 #include <stdbool.h>
@@ -76,6 +79,7 @@ static void generateHash(blake2b_state *S, const uint32_t g, uint8_t *hash, cons
 static void expandArray(const unsigned char *in, const size_t in_len,
                         unsigned char *out, const size_t out_len,
                         const size_t bit_len, const size_t byte_pad) {
+
     assert(bit_len >= 8);
     assert(8 * sizeof(uint32_t) >= 7 + bit_len);
 
@@ -94,19 +98,24 @@ static void expandArray(const unsigned char *in, const size_t in_len,
         acc_value = (acc_value << 8) | in[i];
         acc_bits += 8;
 
-        // When we have bit_len or more bits in the accumulator, write the next
-        // output element.
-        if (acc_bits >= bit_len) {
-            acc_bits -= bit_len;
-            for (size_t x = 0; x < byte_pad; x++) {
-                out[j + x] = 0;
-            }
-            for (size_t x = byte_pad; x < out_width; x++) {
-                out[j + x] = (acc_value >> (acc_bits + (8 * (out_width - x - 1))))
-                        & ((bit_len_mask >> (8 * (out_width - x - 1))) & 0xFF);
-            }
-            j += out_width;
-        }
+	// When we have bit_len or more bits in the accumulator, write the next
+	// output element.
+	if (acc_bits >= bit_len) {
+	    acc_bits -= bit_len;
+	    for (size_t x = 0; x < byte_pad; x++) {
+		out[j + x] = 0;
+	    }
+	    for (size_t x = byte_pad; x < out_width; x++) {
+		out[j + x] = (
+		    // Big-endian
+		    acc_value >> (acc_bits + (8 * (out_width - x - 1)))
+		) & (
+		    // Apply bit_len_mask across byte boundaries
+		    (bit_len_mask >> (8 * (out_width - x - 1))) & 0xFF
+		);
+	    }
+	    j += out_width;
+	}
     }
 }
 
@@ -128,20 +137,23 @@ static void compressArray(const unsigned char *in, const size_t in_len,
 
     size_t j = 0;
     for (size_t i = 0; i < out_len; i++) {
-        // When we have fewer than 8 bits left in the accumulator, read the next
-        // input element.
-        if (acc_bits < 8) {
-            acc_value = acc_value << bit_len;
-            for (size_t x = byte_pad; x < in_width; x++) {
-                acc_value = acc_value |
-                        ((in[j + x] & ((bit_len_mask >> (8 * (in_width - x - 1))) & 0xFF)) << (8 * (in_width - x - 1)));
-            }
-            j += in_width;
-            acc_bits += bit_len;
-        }
+	// When we have fewer than 8 bits left in the accumulator, read the next
+	// input element.
+	if (acc_bits < 8) {
+	    acc_value = acc_value << bit_len;
+	    for (size_t x = byte_pad; x < in_width; x++) {
+		acc_value = acc_value | (
+		    (
+			 // Apply bit_len_mask across byte boundaries
+			 in[j + x] & ((bit_len_mask >> (8 * (in_width - x - 1))) & 0xFF)
+		    ) << (8 * (in_width - x - 1))); // Big-endian
+	    }
+	    j += in_width;
+	    acc_bits += bit_len;
+	}
 
-        acc_bits -= 8;
-        out[i] = (acc_value >> acc_bits) & 0xFF;
+	acc_bits -= 8;
+	out[i] = (acc_value >> acc_bits) & 0xFF;
     }
 }
 
@@ -149,23 +161,16 @@ static int compareSR(const void *p1, const void *p2, void *arg) {
     return memcmp(p1, p2, *(int *) arg) < 0;
 }
 
-static int distinctSortedArrays(const uint32_t *a, const uint32_t *b, const size_t len) {
-    int i = len - 1, j = len - 1;
-    uint32_t prev;
-
-    prev = (a[i] >= b[j]) ? a[i--] : b[j--];
-    while (j >= 0 && i >= 0) {
-        uint32_t acc = (a[i] >= b[j]) ? a[i--] : b[j--];
-        if (acc == prev)
-            return 0;
-        prev = acc;
-    }
-    return 1;
-}
-
 // Checks if the intersection of a.indices and b.indices is empty
 static int distinctIndices(const uint8_t *a, const uint8_t *b, const size_t len, const size_t lenIndices) {
-    return distinctSortedArrays((uint32_t *) (a + len), (uint32_t *) (b + len), lenIndices / sizeof(uint32_t));
+    for (size_t i = 0; i < lenIndices; i += sizeof(uint32_t)) {
+		for (size_t j = 0; j < lenIndices; j += sizeof(uint32_t)) {
+			if (memcmp(a + len + i, b + len + j, sizeof(uint32_t)) == 0) {
+				return 0;
+			}
+		}
+	}
+    return 1;
 }
 
 static int hasCollision(const uint8_t *a, const uint8_t *b, const size_t len) {
@@ -179,26 +184,29 @@ static int getIndices(const uint8_t *hash, size_t len, size_t lenIndices, size_t
     size_t bytePad = sizeof(uint32_t) - ((cBitLen + 1) + 7) / 8;
     if (minLen > maxLen)
         return -1;
-    if (data)
+    if (data) {
         compressArray(hash + len, lenIndices, data, minLen, cBitLen + 1, bytePad);
+
+    }
     return minLen;
 }
 
-static void joinSortedArrays(uint32_t *dst, const uint32_t *a, const uint32_t *b, const size_t len) {
-    int i = len - 1, j = len - 1, k = len * 2;
-
-    while (k > 0)
-        dst[--k] = (j < 0 || (i >= 0 && a[i] >= b[j])) ? a[i--] : b[j--];
+static int indicesBefore(const uint8_t *a, const uint8_t *b, const size_t len, const size_t lenIndices) {
+    return memcmp(a + len, b + len, lenIndices) < 0;
 }
 
 static void combineRows(uint8_t *hash, const uint8_t *a, const uint8_t *b,
                         const size_t len, const size_t lenIndices, const int trim) {
-    for (int i = trim; i < len; i++)
-        hash[i - trim] = a[i] ^ b[i];
-
-    joinSortedArrays((uint32_t *) (hash + len - trim),
-                     (uint32_t *) (a + len), (uint32_t *) (b + len),
-                     lenIndices / sizeof(uint32_t));
+    for (int i = trim; i < len; i++) {
+		hash[i - trim] = a[i] ^ b[i];
+	}
+    if (indicesBefore(a, b, len, lenIndices)) {
+	    memcpy(hash + len - trim,              a + len, lenIndices);
+	    memcpy(hash + len - trim + lenIndices, b + len, lenIndices);
+    } else {
+	    memcpy(hash + len - trim,              b + len, lenIndices);
+	    memcpy(hash + len - trim + lenIndices, a + len, lenIndices);
+    }
 }
 
 static int isZero(const uint8_t *hash, size_t len) {
@@ -223,21 +231,17 @@ static int basicSolve(blake2b_state *digest,
     const int equihashSolutionSize = (1 << k) * (n / (k + 1) + 1) / 8;
 
     uint8_t hash[fullWidth];
-    size_t x_room = initSize * sizeof(hash);
-    size_t xc_room = initSize * sizeof(hash);
-    uint8_t *x = malloc(x_room);
-    uint8_t *xc = malloc(xc_room); // merge array
+    size_t x_room  = initSize;
+    size_t xc_room = initSize;
+    uint8_t *x  = malloc(x_room  * sizeof(hash));
+    uint8_t *xc = malloc(xc_room * sizeof(hash)); // merge list
     assert(x);
     assert(xc);
-#define X(y)  (x  + (hashLen                       + lenIndices)     * (y))
-#define Xc(y) (xc + (hashLen - collisionByteLength + lenIndices * 2) * (y))
+#define X(y)  (x  + sizeof(hash) * (y))
+#define Xc(y) (xc + sizeof(hash) * (y))
 
     uint8_t tmpHash[hashOutput];
     uint32_t x_size = 0, xc_size = 0;
-    size_t hashLen = hashLength;       /* Offset of indices array;
-					     shortens linearly by collisionByteLength. */
-    size_t lenIndices = sizeof(uint32_t); /* Byte length of indices array;
-					     doubles with every round. */
 
     for (uint32_t g = 0; x_size < initSize; g++) {
         generateHash(digest, g, tmpHash, hashOutput);
@@ -247,15 +251,19 @@ static int basicSolve(blake2b_state *digest,
                         hash, hashLength,
                         collisionBitLength, 0);
             ehIndexToArray(g * indicesPerHashOutput + i, hash + hashLength);
-            memcpy(X(x_size), hash, hashLen + lenIndices);
+            memcpy(X(x_size), hash, hashLength + sizeof(uint32_t));
             ++x_size;
         }
     }
 
+    size_t hashLen    = hashLength;       /* Offset of indices array;
+					     shortens linearly by collisionByteLength. */
+    size_t lenIndices = sizeof(uint32_t); /* Byte length of indices array;
+					     doubles with every round. */
     for (int r = 1; r < k && x_size > 0; r++) {
-        qsort_r(x, x_size, hashLen + lenIndices, compareSR, (int *) &collisionByteLength);
+        qsort_r(x, x_size, sizeof(hash), compareSR, (int *)&collisionByteLength);
 
-        for (int i = 0; i < x_size - 1;) {
+        for (int i = 0; i < x_size - 1; ) {
             // 2b) Find next set of unordered pairs with collisions on the next n/(k+1) bits
             int j = 1;
             while (i + j < x_size && hasCollision(X(i), X(i + j), collisionByteLength)) {
@@ -269,9 +277,9 @@ static int basicSolve(blake2b_state *digest,
                     if (distinctIndices(X(i + l), X(i + m), hashLen, lenIndices)) {
                         combineRows(Xc(xc_size), X(i + l), X(i + m), hashLen, lenIndices, collisionByteLength);
                         ++xc_size;
-                        if (Xc(xc_size) >= (xc + xc_room)) {
-                            xc_room += 100000000;
-                            xc = realloc(xc, xc_room);
+                        if (xc_size >= xc_room) {
+                            xc_room += 100000000 / sizeof(hash);
+                            xc = realloc(xc, xc_room * sizeof(hash));
                             assert(xc);
                         }
                     }
@@ -295,48 +303,49 @@ static int basicSolve(blake2b_state *digest,
     // k+1) Find a collision on last 2n(k+1) bits
     int solnr = 0;
     if (x_size > 1) {
-        qsort_r(x, x_size, (hashLen + lenIndices), compareSR, (int *) &hashLen);
-        for (int i = 0; i < x_size - 1;) {
-            int j = 1;
-            while (i + j < x_size && hasCollision(X(i), X(i + j), hashLen)) {
-                j++;
-            }
+		qsort_r(x, x_size, sizeof(hash), compareSR, (int *) &hashLen);
+		for (int i = 0; i < x_size - 1;) {
+			int j = 1;
+			while (i + j < x_size && hasCollision(X(i), X(i + j), hashLen)) {
+				j++;
+			}
 
-            for (int l = 0; l < j - 1; l++) {
-                for (int m = l + 1; m < j; m++) {
-                    combineRows(Xc(xc_size), X(i + l), X(i + m), hashLen, lenIndices, 0);
-                    if (isZero(Xc(xc_size), hashLen) && distinctIndices(X(i + l), X(i + m), hashLen, lenIndices)) {
-                        uint8_t soln[equihashSolutionSize];
-                        int ssize = getIndices(Xc(xc_size), hashLen, 2 * lenIndices, collisionBitLength, soln,
-                                               sizeof(soln));
-                        ++solnr;
+			for (int l = 0; l < j - 1; l++) {
+				for (int m = l + 1; m < j; m++) {
+					combineRows(Xc(xc_size), X(i + l), X(i + m), hashLen, lenIndices, 0);
+					if (isZero(Xc(xc_size), hashLen) &&
+						distinctIndices(X(i + l), X(i + m), hashLen, lenIndices)) {
+						uint8_t soln[equihashSolutionSize];
 
-                        assert(equihashSolutionSize == ssize);
+						int ssize = getIndices(Xc(xc_size), hashLen, 2 * lenIndices, collisionBitLength,
+											   soln, sizeof(soln));
+						++solnr;
 
-                        if (validBlockData && equihash_proxy(validBlockData, soln)) {
-                                return solnr;
-                        }
-                    }
-                    ++xc_size;
-                    assert(xc_size < xc_room);
-                }
-            }
-            i += j;
-        }
-    }
+						assert(equihashSolutionSize == ssize);
+#ifdef __INCLUDE_MAIN__
+                        D("+ collision of size %d (%d)\n", equihashSolutionSize, ssize);
+                                for (int y = 0; y < 2 * lenIndices; y += sizeof(uint32_t))
+                                    D(" %u", arrayToEhIndex(Xc(xc_size) + hashLen + y));
+                                D("\n");
+#endif
+						if (validBlockData && equihash_proxy(validBlockData, soln)) {
+							return solnr;
+						}
+					}
+					++xc_size;
+					assert(xc_size < xc_room);
+				}
+			}
+			i += j;
+		}
+	}
+
     free(x);
     free(xc);
     return solnr;
 }
 
-struct validData {
-    int n;
-    int k;
-    blake2b_state *digest;
-};
-
-int EquihashValidate(int n, int k, void* hash, void* soln) {
-    blake2b_state *digest = (blake2b_state*) hash;
+int basicValidate(int n, int k, blake2b_state* digest, void* soln) {
     const int collisionBitLength = n / (k + 1);
     const int collisionByteLength = (collisionBitLength + 7) / 8;
     const int hashLength = (k + 1) * collisionByteLength;
@@ -365,44 +374,67 @@ int EquihashValidate(int n, int k, void* hash, void* soln) {
     return isZero(vHash, sizeof(vHash));
 }
 
-void* ExpandArray(int n, int k, void* soln) {
-    const int solnr = 1 << k;
+int EquihashValidate(int n, int k, void* input, int len, void* soln) {
+    blake2b_state digest[1];
+    digestInit(digest, n, k);
+    blake2b_update(digest, (uint8_t *)input, len);
+
+    return basicValidate(n, k, digest, soln);
+}
+
+void* GetIndices(int n, int k, void* soln) {
     const int equihashSolutionSize = (1 << k) * (n / (k + 1) + 1) / 8;
     const int collisionBitLength = n / (k + 1);
+    const int lenIndices = 8*sizeof(uint32_t)*equihashSolutionSize/(collisionBitLength + 1);
+    const int bytePad = sizeof(uint32_t) - ((collisionBitLength+1)+7)/8;
 
-    uint32_t indices[solnr];
+    const int solnr = 1 << k;
+    unsigned char indices_array[lenIndices];
+    uint32_t* indices = (uint32_t*)indices_array;
 
-    expandArray(soln, equihashSolutionSize, (unsigned char *) &indices, sizeof(indices), collisionBitLength + 1, 1);
+    expandArray(soln, equihashSolutionSize, indices_array, lenIndices, collisionBitLength + 1, bytePad);
 
-    void* result = malloc(sizeof(indices));
-    memcpy(result, indices, sizeof(indices));
+    void* result = malloc(lenIndices);
+    memcpy(result, indices, lenIndices);
 
     return result;
 }
 
-int basicValidator(void *data, void *soln) {
-    const struct validData *v = data;
-    const int n = v->n;
-    const int k = v->k;
-    return EquihashValidate(v->n, v->k, v->digest, soln);
+static void hashNonce(blake2b_state *S, uint32_t nonce) {
+    uint32_t expandedNonce[8] = {0};
+    expandedNonce[0] = htole32(nonce);
+
+    blake2b_update(S, (uint8_t *) &expandedNonce, sizeof(expandedNonce));
 }
 
-int EquihashSolve(void *input, void *validBlockData, int n, int k) {
-    //TODO: probably this should be moved somewhere?
+int EquihashSolve(void *input, int len, int nonce, void *validBlockData, int n, int k) {
     blake2b_state digest[1];
     digestInit(digest, n, k);
-    blake2b_update(digest, (const uint8_t *)input, 140);
+    blake2b_update(digest, (const uint8_t *)input, len);
+
+    if (nonce >= 0) {
+        hashNonce(digest, (uint32_t) nonce);
+    }
 
     return basicSolve(digest, n, k, validBlockData);
 }
 
 #ifdef __INCLUDE_MAIN__
 
-static void hashNonce(blake2b_state *S, uint32_t nonce) {
-    for (int i = 0; i < 8; i++) {
-        uint32_t le = i == 0 ? htole32(nonce) : 0;
-        blake2b_update(S, (uint8_t *) &le, sizeof(le));
-    }
+int equihash_proxy(void* userData, void* soln) {
+    struct validData* data = (struct validData*)userData;
+    return 0;
+}
+
+struct validData {
+    int n;
+    int k;
+    blake2b_state *digest;
+    int (*validator)(struct validData *v, void *);
+};
+
+int basicValidator(struct validData *v, void *soln) {
+    return basicValidate(v->n, v->k, v->digest, soln);
 }
 
 int main(int argc, char **argv) {
@@ -465,15 +497,16 @@ int main(int argc, char **argv) {
         }
         close(fd);
 
-        int ret = EquihashSolve(block_header, NULL, NULL, n, k);
+        int ret = EquihashSolve(block_header, i, -1, NULL, n, k);
         exit(ret < 0);
     } else {
         blake2b_state digest[1];
-        struct validData valData = {.n = n, .k = k, .digest = digest};
         digestInit(digest, n, k);
         blake2b_update(digest, (uint8_t *) ii, strlen(ii));
         hashNonce(digest, nn);
-        basicSolve(digest, n, k, basicValidator, &valData);
+
+        struct validData valData = {.n = n, .k = k, .digest = digest, .validator = basicValidator};
+        basicSolve(digest, n, k, &valData);
     }
 }
 #endif
