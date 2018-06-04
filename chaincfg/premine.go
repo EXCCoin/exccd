@@ -8,8 +8,12 @@ package chaincfg
 
 // BlockOneLedgerMainNet is the block one output ledger for the main
 // network.
-// Created from snapshot of legacy chain up to block no. 73106
 var BlockOneLedgerMainNet = []*TokenPayout{
+	// TODO: remove test addresses
+	{"22tv7nd31sMmD8BpcVRJAWQLqYCjaCuqpWpz", 10000000000},
+	{"22u4VtFDzXDT517DFfCLRM8i5t814pZXePBK", 20000000000},
+
+	// Created from snapshot of legacy chain up to block no. 73106
 	{"22tp745xd1uRGJzX61i94yfrC1u57nwj7tTT", 3800000000},
 	{"22u6K8YMaguiSetaeDqSxeNs3kviJxEZQr6H", 3800000000},
 	{"22tvXG9H8Mm8zH63uDYBPYSAZuY8odz2iHN9", 133333330000},
