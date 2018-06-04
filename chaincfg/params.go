@@ -594,7 +594,7 @@ var MainNetParams = Params{
 
 	// BIP44 coin type used in the hierarchical deterministic path for
 	// address generation.
-	HDCoinType: 30,
+	HDCoinType: 0,
 
 	// ExchangeCoin PoS parameters
 	MinimumStakeDiff:        2 * 1e8, // 2 Coin
@@ -753,7 +753,7 @@ var TestNet2Params = Params{
 
 	// BIP44 coin type used in the hierarchical deterministic path for
 	// address generation.
-	HDCoinType: 11,
+	HDCoinType: 1,
 
 	// ExchangeCoin PoS parameters
 	MinimumStakeDiff:        20000000, // 0.2 Coin
@@ -944,7 +944,7 @@ var SimNetParams = Params{
 
 	// BIP44 coin type used in the hierarchical deterministic path for
 	// address generation.
-	HDCoinType: 115, // ASCII for s
+	HDCoinType: 2,
 
 	// ExchangeCoin PoS parameters
 	MinimumStakeDiff:        20000,
