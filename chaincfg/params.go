@@ -470,8 +470,8 @@ var MainNetParams = Params{
 	PowLimit:     mainPowLimit,
 	// TODO: Restore original pow limit bits: 0x1d00ffff and disable min difficulty reduction
 	PowLimitBits:             0x207fffff,
-	ReduceMinDifficulty:      true,
-	MinDiffReductionTime:     defaultTargetTimePerBlock * 2,
+	ReduceMinDifficulty:      true, // TODO: remove min difficulty reduction for MainNet
+	MinDiffReductionTime:     defaultTargetTimePerBlock,
 	GenerateSupported:        false,
 	MaximumBlockSizes:        []int{393216},
 	MaxTxSize:                393216,
