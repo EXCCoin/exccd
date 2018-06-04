@@ -597,21 +597,21 @@ var MainNetParams = Params{
 	HDCoinType: 0,
 
 	// ExchangeCoin PoS parameters
-	MinimumStakeDiff:        2 * 1e8, // 2 Coin
-	TicketPoolSize:          8192,
+	MinimumStakeDiff:        20000000, // 0.2 Coin
+	TicketPoolSize:          1024,
 	TicketsPerBlock:         5,
-	TicketMaturity:          256,
-	TicketExpiry:            40960, // 5*TicketPoolSize
-	CoinbaseMaturity:        256,
+	TicketMaturity:          16,
+	TicketExpiry:            6144, // 6*TicketPoolSize
+	CoinbaseMaturity:        16,
 	SStxChangeMaturity:      1,
 	TicketPoolSizeWeight:    4,
-	StakeDiffAlpha:          1, // Minimal
+	StakeDiffAlpha:          1,
 	StakeDiffWindowSize:     144,
 	StakeDiffWindows:        20,
 	StakeVersionInterval:    144 * 2 * 7, // ~1 week
 	MaxFreshStakePerBlock:   20,          // 4*TicketsPerBlock
-	StakeEnabledHeight:      256 + 256,   // CoinbaseMaturity + TicketMaturity
-	StakeValidationHeight:   4096,        // ~14 days
+	StakeEnabledHeight:      16 + 16,     // CoinbaseMaturity + TicketMaturity
+	StakeValidationHeight:   768,         // Arbitrary
 	StakeBaseSigScript:      []byte{0x00, 0x00},
 	StakeMajorityMultiplier: 3,
 	StakeMajorityDivisor:    4,
