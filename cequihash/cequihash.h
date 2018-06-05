@@ -4,8 +4,11 @@
 
 #pragma once
 
+#include <stdint.h>
+#include <stdlib.h>
+
 void* GetIndices(int, int, void* soln);
-void* PutIndices(int, int, const unsigned char*, int, int, void* , int solutionLen);
-int EquihashSolve(void*, int, int, void *, int, int);
-int EquihashValidate(int, int, void*, int, void*);
+void *PutIndices(int, int, void *, int, uint32_t, void *, int);
+int EquihashSolve(void*, int, int64_t , void *, int, int);
+int EquihashValidate(int, int, void *, int, int64_t, void *soln);
 

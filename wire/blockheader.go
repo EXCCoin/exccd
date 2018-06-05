@@ -160,7 +160,7 @@ func (h *BlockHeader) SerializeAllHeaderBytes() ([]byte, error) {
 
 	sec := uint32(h.Timestamp.Unix())
 	// Note that order of header elements here and in SerializeHeaderBytes() must match
-	err := writeElements(buf, h.Version, &h.PrevBlock, &h.MerkleRoot, h.Bits, sec, h.ExtraData, h.Nonce)
+	err := writeElements(buf, h.Version, &h.PrevBlock, &h.MerkleRoot, h.Bits, sec, h.ExtraData)
 
 	if err != nil {
 		return nil, err

@@ -24,6 +24,7 @@
 
 #else
 #define D(x...)
+#include <stdio.h>
 #endif
 
 #include <stdlib.h>
@@ -45,19 +46,19 @@
 int equihash_proxy(void *, void *);
 
 /* Writes Zcash personalization string. */
-static void zcashPerson(uint8_t *person, const int n, const int k) {
+static void zcashPerson(uint8_t *person, uint32_t n, uint32_t k) {
     memcpy(person, "ZcashPoW", 8);
     *(uint32_t *) (person + 8) = htole32(n);
     *(uint32_t *) (person + 12) = htole32(k);
 }
 
-static void digestInit(blake2b_state *S, const int n, const int k) {
+static void digestInit(blake2b_state *S, uint32_t n, uint32_t k) {
     blake2b_param P[1];
 
     memset(P, 0, sizeof(blake2b_param));
     P->fanout = 1;
     P->depth = 1;
-    P->digest_length = (512 / n) * n / 8;
+    P->digest_length = (uint8_t) ((512 / n) * n / 8);
     zcashPerson(P->personal, n, k);
     blake2b_init_param(S, P);
 }
@@ -72,7 +73,7 @@ uint32_t arrayToEhIndex(const uint8_t *array) {
     return be32toh(*(uint32_t *) array);
 }
 
-static void generateHash(blake2b_state *S, const uint32_t g, uint8_t *hash, const size_t hashLen) {
+static void generateHash(blake2b_state *S, const uint32_t g, uint8_t *hash, const uint8_t hashLen) {
     const uint32_t le_g = htole32(g);
     blake2b_state digest = *S; /* copy */
 
@@ -222,6 +223,9 @@ static int isZero(const uint8_t *hash, size_t len) {
     return 1;
 }
 
+#define X(y)  (x  + sizeof(hash) * (y))
+#define Xc(y) (xc + sizeof(hash) * (y))
+
 static int basicSolve(blake2b_state *digest,
                       const int n, const int k,
                       void *validBlockData) {
@@ -241,15 +245,13 @@ static int basicSolve(blake2b_state *digest,
     uint8_t *xc = malloc(xc_room * sizeof(hash)); // merge list
     assert(x);
     assert(xc);
-#define X(y)  (x  + sizeof(hash) * (y))
-#define Xc(y) (xc + sizeof(hash) * (y))
 
     uint8_t tmpHash[hashOutput];
     uint32_t x_size = 0, xc_size = 0;
 
     for (uint32_t g = 0; x_size < initSize; g++) {
         generateHash(digest, g, tmpHash, hashOutput);
-        //if (g == 0) dump_hex(tmpHash, hashOutput);
+
         for (uint32_t i = 0; i < indicesPerHashOutput && x_size < initSize; i++) {
             expandArray(tmpHash + (i * n / 8), n / 8,
                         hash, hashLength,
@@ -349,41 +351,110 @@ static int basicSolve(blake2b_state *digest,
     return solnr;
 }
 
-int basicValidate(int n, int k, blake2b_state *digest, void *soln) {
+static int basicValidate(int n, int k, blake2b_state *digest, void *soln) {
     const int collisionBitLength = n / (k + 1);
     const int collisionByteLength = (collisionBitLength + 7) / 8;
-    const int hashLength = (k + 1) * collisionByteLength;
+    const int HashLength = (k + 1) * collisionByteLength;
     const int indicesPerHashOutput = 512 / n;
     const int hashOutput = indicesPerHashOutput * n / 8;
     const int equihashSolutionSize = (1 << k) * (n / (k + 1) + 1) / 8;
     const int solnr = 1 << k;
+    const int fullWidth = 2 * collisionByteLength + sizeof(uint32_t) * (1 << (k - 1));
+
+    uint8_t hash[fullWidth];
+    uint8_t *x = malloc(solnr * sizeof(hash));
+    uint8_t *xc = malloc(solnr * sizeof(hash)); // merge list
+    assert(x);
+    assert(xc);
+
+    uint32_t x_size = 0, xc_size = 0;
     uint32_t indices[solnr];
 
     expandArray(soln, equihashSolutionSize, (unsigned char *) &indices, sizeof(indices), collisionBitLength + 1, 1);
 
-    uint8_t vHash[hashLength];
+    uint8_t vHash[HashLength];
     memset(vHash, 0, sizeof(vHash));
     for (int j = 0; j < solnr; j++) {
         uint8_t tmpHash[hashOutput];
-        uint8_t hash[hashLength];
+        uint8_t buf[HashLength + sizeof(uint32_t)];
         int i = be32toh(indices[j]);
 
         generateHash(digest, i / indicesPerHashOutput, tmpHash, hashOutput);
-        expandArray(tmpHash + (i % indicesPerHashOutput * n / 8), n / 8, hash, hashLength, collisionBitLength, 0);
+        expandArray(tmpHash + (i % indicesPerHashOutput * n / 8), n / 8, buf, HashLength, collisionBitLength, 0);
 
-        for (int k = 0; k < hashLength; ++k)
-            vHash[k] ^= hash[k];
+        ehIndexToArray(i, buf + HashLength);
+        memcpy(X(x_size), buf, HashLength + sizeof(uint32_t));
+
+        ++x_size;
     }
 
-    return isZero(vHash, sizeof(vHash));
+    size_t hashLength = HashLength;
+    size_t lenIndices = sizeof(uint32_t);
+    bool result = false;
+
+    while (x_size > 1) {
+        for (int i = 0; i < x_size; i += 2) {
+            if (!hasCollision(X(i), X(i + 1), collisionByteLength)) {
+                goto cleanup;
+            }
+
+            if (indicesBefore(X(i + 1), X(i), hashLength, lenIndices)) {
+                goto cleanup;
+            }
+
+            if (!distinctIndices(X(i), X(i + 1), hashLength, lenIndices)) {
+                goto cleanup;
+            }
+            combineRows(Xc(xc_size), X(i), X(i + 1), hashLength, lenIndices, collisionByteLength);
+            ++xc_size;
+        }
+        hashLength -= collisionByteLength;
+        lenIndices *= 2;
+
+        /* swap arrays */
+        swap(x, xc);
+        x_size = xc_size;
+        xc_size = 0;
+    }
+
+    result = isZero(X(0), hashLength);
+
+cleanup:
+    free(x);
+    free(xc);
+
+    return result;
 }
 
-int EquihashValidate(int n, int k, void *input, int len, void *soln) {
+static void hashNonce(blake2b_state *S, uint32_t nonce) {
+    uint32_t expandedNonce[8] = {0};
+    expandedNonce[0] = htole32(nonce);
+
+    blake2b_update(S, (uint8_t *) &expandedNonce, sizeof(expandedNonce));
+}
+
+int EquihashValidate(int n, int k, void *input, int len, int64_t nonce, void *soln) {
     blake2b_state digest[1];
     digestInit(digest, n, k);
     blake2b_update(digest, (uint8_t *) input, len);
 
+    if (nonce >= 0) {
+        hashNonce(digest, (uint32_t) nonce);
+    }
+
     return basicValidate(n, k, digest, soln);
+}
+
+int EquihashSolve(void *input, int len, int64_t nonce, void *validBlockData, int n, int k) {
+    blake2b_state digest[1];
+    digestInit(digest, n, k);
+    blake2b_update(digest, (const uint8_t *) input, len);
+
+    if (nonce >= 0) {
+        hashNonce(digest, (uint32_t) nonce);
+    }
+
+    return basicSolve(digest, n, k, validBlockData);
 }
 
 void *GetIndices(int n, int k, void *soln) {
@@ -404,60 +475,38 @@ void *GetIndices(int n, int k, void *soln) {
     return result;
 }
 
-static void hashNonce(blake2b_state *S, uint32_t nonce) {
-    uint32_t expandedNonce[8] = {0};
-    expandedNonce[0] = htole32(nonce);
-
-    blake2b_update(S, (uint8_t *) &expandedNonce, sizeof(expandedNonce));
-}
-
-int EquihashSolve(void *input, int len, int nonce, void *validBlockData, int n, int k) {
-    blake2b_state digest[1];
-    digestInit(digest, n, k);
-    blake2b_update(digest, (const uint8_t *) input, len);
-
-    if (nonce >= 0) {
-        hashNonce(digest, (uint32_t) nonce);
-    }
-
-    return basicSolve(digest, n, k, validBlockData);
-}
-
-void* getMinimalFromIndices(uint32_t* solution, size_t len, size_t cBitLen) {
+void *getMinimalFromIndices(uint32_t *solutionIndices, size_t len, size_t cBitLen) {
     const size_t lenIndices = len * sizeof(uint32_t);
-    const size_t minLen = (cBitLen+1)*lenIndices/(8*sizeof(uint32_t));
-    const size_t bytePad = sizeof(uint32_t) - ((cBitLen+1)+7)/8;
+    const size_t minLen = (cBitLen + 1) * lenIndices / (8 * sizeof(uint32_t));
+    const size_t bytePad = sizeof(uint32_t) - ((cBitLen + 1) + 7) / 8;
 
-    //std::vector<unsigned char> array(lenIndices);
-    unsigned char* array = (unsigned char*)malloc(lenIndices);
+    unsigned char *array = (unsigned char *) malloc(lenIndices);
 
     for (int i = 0; i < len; i++) {
-        ehIndexToArray(solution[i], array + (i*sizeof(uint32_t)));
+        uint32_t value = solutionIndices[i];
+        uint8_t *ptr = array + (i * sizeof(uint32_t));
+        ehIndexToArray(value, ptr);
     }
-    unsigned char* ret = (unsigned char*)malloc(minLen);
+    unsigned char *ret = (unsigned char *) malloc(minLen);
 
-    compressArray(array, lenIndices, ret, minLen, cBitLen+1, bytePad);
+    compressArray(array, lenIndices, ret, minLen, cBitLen + 1, bytePad);
     free(array);
+
     return ret;
 }
 
-void* PutIndices(int n, int k, const unsigned char* input, int len, int nonce, void* solution, int solutionLen) {
-    const size_t cBitLen = n/(k+1);
+void *PutIndices(int n, int k, void *input, int inputLen, uint32_t nonce, void *indices, int numIndices) {
+    const size_t cBitLen = n / (k + 1);
     blake2b_state digest[1];
     digestInit(digest, n, k);
-    blake2b_update(digest, (const uint8_t *) input, len);
+    blake2b_update(digest, (const uint8_t *) input, inputLen);
 
     hashNonce(digest, nonce);
 
-    return getMinimalFromIndices(solution, solutionLen, cBitLen);
+    return getMinimalFromIndices((uint32_t *) indices, numIndices, cBitLen);
 }
 
 #ifdef __INCLUDE_MAIN__
-
-int equihash_proxy(void *userData, void *soln) {
-    struct validData *data = (struct validData *) userData;
-    return 0;
-}
 
 struct validData {
     int n;
@@ -467,80 +516,119 @@ struct validData {
     int (*validator)(struct validData *v, void *);
 };
 
+int equihash_proxy(void *userData, void *soln) {
+    struct validData *data = (struct validData *) userData;
+
+    if (data && data->validator) {
+        return data->validator(data, soln);
+    } else {
+        return 0;
+    }
+}
+
 int basicValidator(struct validData *v, void *soln) {
     return basicValidate(v->n, v->k, v->digest, soln);
 }
 
+typedef struct {
+    int n;
+    int k;
+    bool result;
+    char *input;
+    int nonce;
+    uint32_t *indices;
+} ValidatorTest;
+
+uint32_t validIndices[] = {2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858,
+                           116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460,
+                           49807, 52426, 80391, 69567, 114474, 104973, 122568};
+uint32_t invalidIndices1[] = {2262, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080,
+                              45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132,
+                              23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568};
+uint32_t invalidIndices2[] = {45858, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080,
+                              2261, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132,
+                              23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568};
+uint32_t invalidIndices3[] = {15185, 2261, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080,
+                              45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132,
+                              23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568};
+uint32_t invalidIndices4[] = {36112, 104243, 2261, 15185, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080,
+                              45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132,
+                              23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568};
+uint32_t invalidIndices5[] = {2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080,
+                              45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132,
+                              23460, 49807, 52426, 80391, 104973, 122568, 69567, 114474};
+uint32_t invalidIndices6[] = {15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391,
+                              69567, 114474, 104973, 122568, 2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041,
+                              32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026};
+uint32_t invalidIndices7[] = {2261, 15185, 15972, 23460, 23779, 32642, 36112, 45858, 49807, 52426, 68190, 69567, 69878,
+                              76925, 80080, 80391, 81830, 85191, 90330, 91132, 92842, 104243, 104973, 111026, 114474,
+                              115059, 116805, 118332, 118390, 122568, 122819, 130041};
+uint32_t invalidIndices8[] = {2261, 2261, 15185, 15185, 36112, 36112, 104243, 104243, 23779, 23779, 118390, 118390,
+                              118332, 118332, 130041, 130041, 32642, 32642, 69878, 69878, 76925, 76925, 80080, 80080,
+                              45858, 45858, 116805, 116805, 92842, 92842, 111026, 111026};
+uint32_t invalidIndices9[] = {2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080,
+                              45858, 116805, 92842, 111026, 2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041,
+                              32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026};
+
+ValidatorTest validatorTests[] = {
+// Original valid solution
+        {96, 5, true,  "Equihash is an asymmetric PoW based on the Generalised Birthday problem.", 1,
+                validIndices,
+        },
+// Change one index
+        {96, 5, false, "Equihash is an asymmetric PoW based on the Generalised Birthday problem.", 1,
+                invalidIndices1,
+        },
+// Swap two arbitrary indices
+        {96, 5, false, "Equihash is an asymmetric PoW based on the Generalised Birthday problem.", 1,
+                invalidIndices2,
+        },
+// Reverse the first pair of indices
+        {96, 5, false, "Equihash is an asymmetric PoW based on the Generalised Birthday problem.", 1,
+                invalidIndices3,
+        },
+// Swap the first and second pairs of indices
+        {96, 5, false, "Equihash is an asymmetric PoW based on the Generalised Birthday problem.", 1,
+                invalidIndices4,
+        },
+// Swap the second-to-last and last pairs of indices
+        {96, 5, false, "Equihash is an asymmetric PoW based on the Generalised Birthday problem.", 1,
+                invalidIndices5,
+        },
+// Swap the first half and second half
+        {96, 5, false, "Equihash is an asymmetric PoW based on the Generalised Birthday problem.", 1,
+                invalidIndices6,
+        },
+// Sort the indices
+        {96, 5, false, "Equihash is an asymmetric PoW based on the Generalised Birthday problem.", 1,
+                invalidIndices7,
+        },
+// Duplicate indices
+        {96, 5, false, "Equihash is an asymmetric PoW based on the Generalised Birthday problem.", 1,
+                invalidIndices8,
+        },
+// Duplicate first half
+        {96, 5, false, "Equihash is an asymmetric PoW based on the Generalised Birthday problem.", 1,
+                invalidIndices9,
+        },
+};
+
+bool singleTest(ValidatorTest *test) {
+    size_t inputLen = strlen(test->input);
+    void *equihashSolution = PutIndices(test->n, test->k, test->input, inputLen, test->nonce, test->indices, 68);
+    bool result = EquihashValidate(test->n, test->k, test->input, inputLen, test->nonce, equihashSolution);
+
+    free(equihashSolution);
+
+    return result == test->result;
+}
+
 int main(int argc, char **argv) {
-    int n = 96;
-    int k = 5;
-    char *ii = "block header";
-    uint32_t nn = 0;
-    char *input = NULL;
-    int tFlags = 0;
-    int opt;
+    int nTests = sizeof(validatorTests) / sizeof(ValidatorTest);
 
-    while ((opt = getopt(argc, argv, "n:k:N:I:t:i:h")) != -1) {
-        switch (opt) {
-            case 'n':
-                n = atoi(optarg);
-                break;
-            case 'k':
-                k = atoi(optarg);
-                break;
-            case 'N':
-                nn = strtoul(optarg, NULL, 0);
-                tFlags = 1;
-                break;
-            case 'I':
-                ii = strdup(optarg);
-                tFlags = 2;
-                break;
-            case 'i':
-                input = strdup(optarg);
-                break;
-
-            case 'h':
-            default:
-                fprintf(stderr, "Solver CPI API mode:\n");
-                fprintf(stderr, "  %s -i input -n N -k K\n", argv[0]);
-                fprintf(stderr, "Test vector mode:\n");
-                fprintf(stderr, "  %s [-n N] [-k K] [-I string] [-N nonce]\n", argv[0]);
-                exit(1);
-        }
-    }
-    if (tFlags && input) {
-        fprintf(stderr, "Test vector parameters (-I, -N) cannot be used together with input (-i)\n");
-        exit(1);
-    }
-
-    if (input) {
-        uint8_t block_header[140];
-        int fd = open(input, O_RDONLY);
-        if (fd == -1) {
-            fprintf(stderr, "open: %s: %s\n", input, strerror(errno));
-            exit(1);
-        }
-        int i = read(fd, block_header, sizeof(block_header));
-        if (i == -1) {
-            fprintf(stderr, "read: %s: %s\n", input, strerror(errno));
-            exit(1);
-        } else if (i != sizeof(block_header)) {
-            fprintf(stderr, "read: %s: Zcash block header is not full\n", input);
-            exit(1);
-        }
-        close(fd);
-
-        int ret = EquihashSolve(block_header, i, -1, NULL, n, k);
-        exit(ret < 0);
-    } else {
-        blake2b_state digest[1];
-        digestInit(digest, n, k);
-        blake2b_update(digest, (uint8_t *) ii, strlen(ii));
-        hashNonce(digest, nn);
-
-        struct validData valData = {.n = n, .k = k, .digest = digest, .validator = basicValidator};
-        basicSolve(digest, n, k, &valData);
+    for (int i = 0; i < nTests; i++) {
+        fprintf(stderr, "Test (%d) ...", i);
+        fprintf(stderr, "%s\n", singleTest(&validatorTests[i]) ? "PASS" : "FAIL");
     }
 }
 

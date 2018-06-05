@@ -6,6 +6,7 @@ package cequihash
 
 /*
 #cgo CFLAGS: -O3 -I./implementation -I./implementation/blake2 -march=native -std=c99
+#include <stdint.h>
 #include "cequihash.h"
  */
 import "C"
@@ -36,24 +37,24 @@ func ExtractSolution(n, k int, solptr unsafe.Pointer) []byte {
 	return C.GoBytes(solptr, C.int(size))
 }
 
-func SolveEquihash(n, k int, input []byte, nonce uint32, callback EquihashCallback) error {
+func SolveEquihash(n, k int, input []byte, nonce int64, callback EquihashCallback) error {
 	callbackptr := cptr.Save(&callback)
 	defer cptr.Unref(callbackptr)
 
-	C.EquihashSolve(unsafe.Pointer(C.CBytes(input)), C.int(len(input)), C.int(nonce), callbackptr, C.int(n), C.int(k))
+	C.EquihashSolve(unsafe.Pointer(&input[0]), C.int(len(input)), C.int64_t(nonce), callbackptr, C.int(n), C.int(k))
 
 	return nil
 }
 
-func ValidateEquihash(n, k int, input []byte, solution []byte) bool {
+func ValidateEquihash(n, k int, input []byte, nonce int64, solution []byte) bool {
 	equihashSolutionSize := EquihashSolutionSize(n, k)
 
 	if len(solution) != equihashSolutionSize {
 		return false
 	}
 
-	return C.EquihashValidate(C.int(n), C.int(k), unsafe.Pointer(C.CBytes(input)), C.int(len(input)),
-		unsafe.Pointer(C.CBytes(solution))) != 0
+	return C.EquihashValidate(C.int(n), C.int(k), unsafe.Pointer(&input[0]), C.int(len(input)), C.int64_t(nonce),
+		unsafe.Pointer(&solution[0])) != 0
 }
 
 func EquihashSolutionSize(n, k int) int {

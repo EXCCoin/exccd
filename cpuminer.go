@@ -301,7 +301,8 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 
 			header.Nonce = i
 
-			err := equihash.SolveEquihash(chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, extraNonceBytes, i, validator)
+			err := equihash.SolveEquihash(chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, extraNonceBytes,
+				int64(i), validator)
 
 			if err != nil {
 				minrLog.Warnf("CPU miner unable to find equihash solution: %v", err)

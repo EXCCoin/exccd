@@ -6,7 +6,6 @@ package cequihash
 /*
 #cgo CFLAGS: -O3 -I./implementation -march=native -std=c99
 
-#include <stdlib.h>
 #include "cequihash.h"
  */
 import "C"
@@ -51,4 +50,18 @@ func (data SolutionAppenderData) Validate(solution unsafe.Pointer) int {
 	solutionIndexes := expandArray(data.n, data.k, solution)
 	data.solution.fullSolution = append(data.solution.fullSolution, solutionIndexes)
 	return 0
+}
+
+func compressIndices(n, k int, nonce uint32, input []byte, solutionIndices []int32) []byte {
+	ptr := C.PutIndices(C.int(n), C.int(k), unsafe.Pointer(&input[0]), C.int(len(input)), C.uint32_t(nonce),
+		unsafe.Pointer(&solutionIndices[0]), C.int(len(solutionIndices)))
+	defer C.free(ptr)
+
+	cBitLen := n/(k+1)
+	lenIndices := len(solutionIndices) * int(unsafe.Sizeof(solutionIndices[0]))
+	minLen := (cBitLen+1)*lenIndices/int(8*unsafe.Sizeof(solutionIndices[0]))
+
+	result := C.GoBytes(ptr, C.int(minLen))
+
+	return result
 }
