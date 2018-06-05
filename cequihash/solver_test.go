@@ -17,12 +17,12 @@ type solverTest struct {
 }
 
 type validatorTest struct {
-	n         int
-	k         int
-	valid     bool
-	I         []byte
-	nonce     uint32
-	solution  []int32
+	n        int
+	k        int
+	valid    bool
+	I        []byte
+	nonce    uint32
+	solution []int32
 }
 
 var solverTests = []solverTest{
@@ -76,13 +76,13 @@ var solverTests = []solverTest{
 	}},
 }
 
-var validatorTests = []validatorTest {
+var validatorTests = []validatorTest{
 	// Original valid solution
-	{96, 5, 	true, []byte("Equihash is an asymmetric PoW based on the Generalised Birthday problem."), 1,
+	{96, 5, true, []byte("Equihash is an asymmetric PoW based on the Generalised Birthday problem."), 1,
 		[]int32{2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568},
 	},
 	// Change one index
-	{ 96, 5, false, []byte("Equihash is an asymmetric PoW based on the Generalised Birthday problem."), 1,
+	{96, 5, false, []byte("Equihash is an asymmetric PoW based on the Generalised Birthday problem."), 1,
 		[]int32{2262, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568},
 	},
 	// Swap two arbitrary indices
@@ -121,8 +121,8 @@ var validatorTests = []validatorTest {
 
 func testSingleSolution(t *testing.T, test solverTest) {
 	data := SolutionAppenderData{
-		n: test.n,
-		k: test.k,
+		n:        test.n,
+		k:        test.k,
 		solution: &SolutionHolder{},
 	}
 

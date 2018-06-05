@@ -8,12 +8,11 @@ package cequihash
 #cgo CFLAGS: -O3 -I./implementation -I./implementation/blake2 -march=native -std=c99
 #include <stdint.h>
 #include "cequihash.h"
- */
+*/
 import "C"
 import (
-	"unsafe"
 	cptr "github.com/mattn/go-pointer"
-
+	"unsafe"
 )
 
 type EquihashCallback interface {

@@ -7,7 +7,7 @@ package cequihash
 #cgo CFLAGS: -O3 -I./implementation -march=native -std=c99
 
 #include "cequihash.h"
- */
+*/
 import "C"
 import (
 	"bytes"
@@ -21,7 +21,7 @@ func expandArray(n, k int, solution unsafe.Pointer) []int {
 
 	indexCount := 1 << uint32(k)
 
-	buf := bytes.NewBuffer(C.GoBytes(ptr, C.int(indexCount * 4)))
+	buf := bytes.NewBuffer(C.GoBytes(ptr, C.int(indexCount*4)))
 	var tmp [4]byte
 	var result []int
 
@@ -41,8 +41,8 @@ type SolutionHolder struct {
 }
 
 type SolutionAppenderData struct {
-	n int
-	k int
+	n        int
+	k        int
 	solution *SolutionHolder
 }
 
@@ -57,9 +57,9 @@ func compressIndices(n, k int, nonce uint32, input []byte, solutionIndices []int
 		unsafe.Pointer(&solutionIndices[0]), C.int(len(solutionIndices)))
 	defer C.free(ptr)
 
-	cBitLen := n/(k+1)
+	cBitLen := n / (k + 1)
 	lenIndices := len(solutionIndices) * int(unsafe.Sizeof(solutionIndices[0]))
-	minLen := (cBitLen+1)*lenIndices/int(8*unsafe.Sizeof(solutionIndices[0]))
+	minLen := (cBitLen + 1) * lenIndices / int(8*unsafe.Sizeof(solutionIndices[0]))
 
 	result := C.GoBytes(ptr, C.int(minLen))
 

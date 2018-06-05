@@ -15,9 +15,9 @@ import (
 	"time"
 
 	"github.com/EXCCoin/exccd/blockchain"
+	equihash "github.com/EXCCoin/exccd/cequihash"
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	equihash "github.com/EXCCoin/exccd/cequihash"
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/mining"
 	"github.com/EXCCoin/exccd/wire"
@@ -187,8 +187,8 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 }
 
 type solutionValidatorData struct {
-	n int
-	k int
+	n      int
+	k      int
 	header *wire.BlockHeader
 }
 
@@ -199,7 +199,7 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 
 	hash := data.header.BlockHash()
 
-	if (blockchain.HashToBig(&hash).Cmp(blockchain.CompactToBig(data.header.Bits)) <= 0) {
+	if blockchain.HashToBig(&hash).Cmp(blockchain.CompactToBig(data.header.Bits)) <= 0 {
 		return 1
 	} else {
 		return 0
@@ -240,7 +240,7 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 		return false
 	}
 
-	validator := solutionValidatorData{chaincfg.MainNetParams.N, chaincfg.MainNetParams.K,header}
+	validator := solutionValidatorData{chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, header}
 
 	// Note that the entire extra nonce range is iterated and the offset is
 	// added relying on the fact that overflow will wrap around 0 as
@@ -317,7 +317,7 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 }
 
 func appendExtraNonce(headerData []byte, header *wire.BlockHeader) []byte {
-	result := make([]byte, len(headerData) + 32)
+	result := make([]byte, len(headerData)+32)
 	copy(result, headerData)
 	result = append(result, header.ExtraData[:]...)
 
