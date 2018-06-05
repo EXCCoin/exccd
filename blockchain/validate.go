@@ -395,7 +395,8 @@ func validateEquihashSolution(header *wire.BlockHeader) error {
 		return ruleError(ErrInvalidEquihash, "unable to deserialize required header fields")
 	}
 
-	result := equihash.ValidateEquihash(chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, headerBytes, header.EquihashSolution[:])
+	result := equihash.ValidateEquihash(chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, headerBytes,
+		int64(header.Nonce), header.EquihashSolution[:])
 
 	if err != nil {
 		return ruleError(ErrInvalidEquihash, "invalid equihash data")
