@@ -14,10 +14,10 @@ import (
 	"time"
 
 	"github.com/EXCCoin/exccd/blockchain/stake"
+	equihash "github.com/EXCCoin/exccd/cequihash"
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/database"
-	equihash "github.com/EXCCoin/exccd/cequihash"
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
