@@ -4,7 +4,7 @@
 package cequihash
 
 /*
-#cgo CFLAGS: -O3 -I./implementation -march=native -std=c99
+#cgo CFLAGS: -O3 -march=native -std=c99
 
 #include "cequihash.h"
 */
