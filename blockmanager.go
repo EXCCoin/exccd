@@ -2001,8 +2001,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 		iv := wire.NewInvVect(wire.InvTypeBlock, block.Hash())
 		b.server.RelayInventory(iv, block.MsgBlock().Header)
 
-		// A block has been connected to the main block chain.
-	case blockchain.NTBlockConnected:
+	case blockchain.NTBlockConnected: // A block has been connected to the main block chain.
 		blockSlice, ok := notification.Data.([]*exccutil.Block)
 		if !ok {
 			bmgrLog.Warnf("Chain connected notification is not a block slice.")
@@ -2084,8 +2083,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			r.ntfnMgr.NotifyBlockConnected(block)
 		}
 
-		// Stake tickets are spent or missed from the most recently connected block.
-	case blockchain.NTSpentAndMissedTickets:
+	case blockchain.NTSpentAndMissedTickets: // Stake tickets are spent or missed from the most recently connected block.
 		tnd, ok := notification.Data.(*blockchain.TicketNotificationsData)
 		if !ok {
 			bmgrLog.Warnf("Tickets connected notification is not " +
@@ -2097,8 +2095,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			r.ntfnMgr.NotifySpentAndMissedTickets(tnd)
 		}
 
-		// Stake tickets are matured from the most recently connected block.
-	case blockchain.NTNewTickets:
+	case blockchain.NTNewTickets: // Stake tickets are matured from the most recently connected block.
 		tnd, ok := notification.Data.(*blockchain.TicketNotificationsData)
 		if !ok {
 			bmgrLog.Warnf("Tickets connected notification is not " +
@@ -2110,8 +2107,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			r.ntfnMgr.NotifyNewTickets(tnd)
 		}
 
-		// A block has been disconnected from the main block chain.
-	case blockchain.NTBlockDisconnected:
+	case blockchain.NTBlockDisconnected: // A block has been disconnected from the main block chain.
 		blockSlice, ok := notification.Data.([]*exccutil.Block)
 		if !ok {
 			bmgrLog.Warnf("Chain disconnected notification is not a block slice.")
@@ -2168,8 +2164,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			r.ntfnMgr.NotifyBlockDisconnected(block)
 		}
 
-		// The blockchain is reorganizing.
-	case blockchain.NTReorganization:
+	case blockchain.NTReorganization: // The blockchain is reorganizing.
 		rd, ok := notification.Data.(*blockchain.ReorganizationNtfnsData)
 		if !ok {
 			bmgrLog.Warnf("Chain reorganization notification is malformed")
