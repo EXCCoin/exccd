@@ -109,8 +109,7 @@ out:
 		case numHashes := <-m.updateHashes:
 			totalHashes += numHashes
 
-			// Time to update the hashes per second.
-		case <-ticker.C:
+		case <-ticker.C: // Time to update the hashes per second.
 			curHashesPerSec := float64(totalHashes) / hpsUpdateSecs
 			if hashesPerSec == 0 {
 				hashesPerSec = curHashesPerSec
@@ -122,8 +121,7 @@ out:
 					hashesPerSec/1000)
 			}
 
-			// Request for the number of hashes per second.
-		case m.queryHashesPerSec <- hashesPerSec:
+		case m.queryHashesPerSec <- hashesPerSec: // Request for the number of hashes per second.
 			// Nothing to do.
 
 		case <-m.speedMonitorQuit:
