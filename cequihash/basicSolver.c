@@ -18,12 +18,6 @@
 #include <stdint.h>
 
 #ifdef __INCLUDE_MAIN__
-#define D(x...)  fprintf(stderr, x)
-
-#include <stdio.h>
-
-#else
-#define D(x...)
 #include <stdio.h>
 #endif
 
@@ -43,7 +37,7 @@
 #define swap(a, b) \
     do { __typeof__(a) __tmp = (a); (a) = (b); (b) = __tmp; } while (0)
 
-int equihash_proxy(void *, void *);
+int equihashProxy(void *, void *);
 
 /* Writes Zcash personalization string. */
 static void zcashPerson(uint8_t *person, uint32_t n, uint32_t k) {
@@ -69,9 +63,11 @@ static void ehIndexToArray(const uint32_t i, uint8_t *array) {
     memcpy(array, &be_i, sizeof(be_i));
 }
 
-uint32_t arrayToEhIndex(const uint8_t *array) {
+#ifdef __INCLUDE_MAIN__
+static uint32_t arrayToEhIndex(const uint8_t *array) {
     return be32toh(*(uint32_t *) array);
 }
+#endif
 
 static void generateHash(blake2b_state *S, const uint32_t g, uint8_t *hash, const uint8_t hashLen) {
     const uint32_t le_g = htole32(g);
@@ -328,13 +324,15 @@ static int basicSolve(blake2b_state *digest,
                         ++solnr;
 
                         assert(equihashSolutionSize == ssize);
+
 #ifdef __INCLUDE_MAIN__
-                        D("+ collision of size %d (%d)\n", equihashSolutionSize, ssize);
+                        fprintf(stderr, "+ collision of size %d (%d)\n", equihashSolutionSize, ssize);
                         for (int y = 0; y < 2 * lenIndices; y += sizeof(uint32_t))
-                            D(" %u", arrayToEhIndex(Xc(xc_size) + hashLen + y));
-                        D("\n");
+                          fprintf(stderr, " %u", arrayToEhIndex(Xc(xc_size) + hashLen + y));
+                        fprintf(stderr, "\n");
 #endif
-                        if (validBlockData && equihash_proxy(validBlockData, soln)) {
+
+                        if (validBlockData && equihashProxy(validBlockData, soln)) {
                             return solnr;
                         }
                     }
