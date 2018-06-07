@@ -31,8 +31,7 @@
 #include "blake2-impl.h"
 
 #define swap(x, y) {                                                                         \
-    assert(sizeof(x) == sizeof(y));                                                          \
-    unsigned char temp[sizeof(x)];                                                           \
+    unsigned char temp[sizeof(x) == sizeof(y) ? sizeof(x) : -1];                             \
     memcpy(temp, &y, sizeof(x));                                                             \
     memcpy(&y, &x, sizeof(x));                                                               \
     memcpy(&x, temp, sizeof(x));                                                             \
