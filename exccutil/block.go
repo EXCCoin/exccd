@@ -259,6 +259,23 @@ func (b *Block) TxHash(txNum int) (*chainhash.Hash, error) {
 	return tx.Hash(), nil
 }
 
+func (b *Block) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, wire.MaxBlockHeaderPayload))
+
+	buf.Write([]byte("{ \"msgBlock\": "))
+	result, err := b.msgBlock.MarshalJSON()
+
+	if err != nil {
+		return nil, err
+	}
+
+	buf.Write(result)
+
+	buf.Write([]byte("}"))
+
+	return buf.Bytes(), nil
+}
+
 // STxHash returns the hash for the requested stake transaction number in the
 // Block.  The supplied index is 0 based.  That is to say, the first transaction
 // in the block is txNum 0.  This is equivalent to calling TxHash on the
