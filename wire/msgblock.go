@@ -57,6 +57,17 @@ type MsgBlock struct {
 	STransactions []*MsgTx
 }
 
+func (b *MsgBlock) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
+	err := marshalElement(buf, *b)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
 // AddTransaction adds a transaction to the message.
 func (msg *MsgBlock) AddTransaction(tx *MsgTx) error {
 	msg.Transactions = append(msg.Transactions, tx)

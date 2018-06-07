@@ -89,6 +89,17 @@ type BlockHeader struct {
 	EquihashSolution [1344]byte
 }
 
+func (b *BlockHeader) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
+	err := marshalElement(buf, *b)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
 // BlockHash computes the block identifier hash for the given block header.
 func (h *BlockHeader) BlockHash() chainhash.Hash {
 	// Encode the header and hash256 everything prior to the number of
