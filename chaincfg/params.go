@@ -83,32 +83,32 @@ type Checkpoint struct {
 //
 // For example, change block height from int64 to uint64.
 // Vote {
-//	Id:          "blockheight",
-//	Description: "Change block height from int64 to uint64"
-//	Mask:        0x0006,
-//	Choices:     []Choice{
-//		{
-//			Id:          "abstain",
-//			Description: "abstain voting for change",
-//			Bits:        0x0000,
-//			IsAbstain:   true,
-//			IsNo:        false,
-//		},
-//		{
-//			Id:          "no",
-//			Description: "reject changing block height to uint64",
-//			Bits:        0x0002,
-//			IsAbstain:   false,
-//			IsNo:        false,
-//		},
-//		{
-//			Id:          "yes",
-//			Description: "accept changing block height to uint64",
-//			Bits:        0x0004,
-//			IsAbstain:   false,
-//			IsNo:        true,
-//		},
-//	},
+// 	Id:          "blockheight",
+// 	Description: "Change block height from int64 to uint64"
+// 	Mask:        0x0006,
+// 	Choices:     []Choice{
+// 		{
+// 			Id:          "abstain",
+// 			Description: "abstain voting for change",
+// 			Bits:        0x0000,
+// 			IsAbstain:   true,
+// 			IsNo:        false,
+// 		},
+// 		{
+// 			Id:          "no",
+// 			Description: "reject changing block height to uint64",
+// 			Bits:        0x0002,
+// 			IsAbstain:   false,
+// 			IsNo:        false,
+// 		},
+// 		{
+// 			Id:          "yes",
+// 			Description: "accept changing block height to uint64",
+// 			Bits:        0x0004,
+// 			IsAbstain:   false,
+// 			IsNo:        true,
+// 		},
+// 	},
 // }
 //
 type Vote struct {
@@ -455,6 +455,10 @@ type Params struct {
 	// block height 1. If there are no payouts to be given, set this
 	// to an empty slice.
 	BlockOneLedger []*TokenPayout
+
+	// Equihash parameters
+	N int
+	K int
 }
 
 // MainNetParams defines the network parameters for the main ExchangeCoin network.
@@ -463,6 +467,8 @@ var MainNetParams = Params{
 	Net:         wire.MainNet,
 	DefaultPort: "9666",
 	DNSSeeds:    []DNSSeed{},
+	N:           200,
+	K:           9,
 
 	// Chain parameters
 	GenesisBlock: &genesisBlock,
@@ -577,14 +583,14 @@ var MainNetParams = Params{
 	// In order to see actual prefixes, encoded string must consist of prefix mentioned below
 	// followed by zeros up to 26 bytes total length.
 
-	//---------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
 	PubKeyAddrID:     [2]byte{0x02, 0xdc}, // starts with 2s	-- no such addresses should exist in RL
 	PubKeyHashAddrID: [2]byte{0x21, 0xB9}, // starts with 22
 	PKHEdwardsAddrID: [2]byte{0x35, 0xcf}, // starts with 2e
 	PKHSchnorrAddrID: [2]byte{0x2f, 0x0d}, // starts with 2S
 	ScriptHashAddrID: [2]byte{0x34, 0xAF}, // starts with 2c
 	PrivateKeyID:     [2]byte{0x80},       // starts with 4
-	//---------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
 
 	// BIP32 hierarchical deterministic extended key magics
 	// In order to see actual prefixes, encoded string must consist of prefix mentioned below
@@ -628,6 +634,8 @@ var TestNet2Params = Params{
 	Net:         wire.TestNet2,
 	DefaultPort: "11999",
 	DNSSeeds:    []DNSSeed{},
+	N:           200,
+	K:           9,
 
 	// Chain parameters
 	GenesisBlock:             &testNet2GenesisBlock,
@@ -791,6 +799,8 @@ var SimNetParams = Params{
 	Net:         wire.SimNet,
 	DefaultPort: "11998",
 	DNSSeeds:    []DNSSeed{}, // NOTE: There must NOT be any seeds.
+	N:           48,
+	K:           5,
 
 	// Chain parameters
 	GenesisBlock:             &simNetGenesisBlock,

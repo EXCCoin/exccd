@@ -204,13 +204,13 @@ func typesMaybeCompatible(dest reflect.Type, src reflect.Type) bool {
 		case reflect.Bool:
 			return true
 
-		// Strings can be converted to any other type which has as
-		// underlying type of string.
+			// Strings can be converted to any other type which has as
+			// underlying type of string.
 		case reflect.String:
 			return true
 
-		// Strings can potentially be converted to arrays, slice,
-		// structs, and maps via json.Unmarshal.
+			// Strings can potentially be converted to arrays, slice,
+			// structs, and maps via json.Unmarshal.
 		case reflect.Array, reflect.Slice, reflect.Struct, reflect.Map:
 			return true
 		}
@@ -310,7 +310,7 @@ func assignField(paramNum int, fieldName string, dest reflect.Value, src reflect
 
 			dest.SetInt(srcInt)
 
-		// Destination is an unsigned integer of various magnitude.
+			// Destination is an unsigned integer of various magnitude.
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32,
 			reflect.Uint64:
 
@@ -330,7 +330,7 @@ func assignField(paramNum int, fieldName string, dest reflect.Value, src reflect
 			return makeError(ErrInvalidType, str)
 		}
 
-	// Source value is an unsigned integer of various magnitude.
+		// Source value is an unsigned integer of various magnitude.
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32,
 		reflect.Uint64:
 
@@ -354,7 +354,7 @@ func assignField(paramNum int, fieldName string, dest reflect.Value, src reflect
 			}
 			dest.SetInt(int64(srcUint))
 
-		// Destination is an unsigned integer of various magnitude.
+			// Destination is an unsigned integer of various magnitude.
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32,
 			reflect.Uint64:
 
@@ -374,7 +374,7 @@ func assignField(paramNum int, fieldName string, dest reflect.Value, src reflect
 			return makeError(ErrInvalidType, str)
 		}
 
-	// Source value is a float.
+		// Source value is a float.
 	case reflect.Float32, reflect.Float64:
 		destKind := dest.Kind()
 		if destKind != reflect.Float32 && destKind != reflect.Float64 {
@@ -393,7 +393,7 @@ func assignField(paramNum int, fieldName string, dest reflect.Value, src reflect
 		}
 		dest.SetFloat(srcFloat)
 
-	// Source value is a string.
+		// Source value is a string.
 	case reflect.String:
 		switch dest.Kind() {
 		// String -> bool
@@ -407,7 +407,7 @@ func assignField(paramNum int, fieldName string, dest reflect.Value, src reflect
 			}
 			dest.SetBool(b)
 
-		// String -> signed integer of varying size.
+			// String -> signed integer of varying size.
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32,
 			reflect.Int64:
 
@@ -426,7 +426,7 @@ func assignField(paramNum int, fieldName string, dest reflect.Value, src reflect
 			}
 			dest.SetInt(srcInt)
 
-		// String -> unsigned integer of varying size.
+			// String -> unsigned integer of varying size.
 		case reflect.Uint, reflect.Uint8, reflect.Uint16,
 			reflect.Uint32, reflect.Uint64:
 
@@ -445,7 +445,7 @@ func assignField(paramNum int, fieldName string, dest reflect.Value, src reflect
 			}
 			dest.SetUint(srcUint)
 
-		// String -> float of varying size.
+			// String -> float of varying size.
 		case reflect.Float32, reflect.Float64:
 			srcFloat, err := strconv.ParseFloat(src.String(), 0)
 			if err != nil {
@@ -462,12 +462,12 @@ func assignField(paramNum int, fieldName string, dest reflect.Value, src reflect
 			}
 			dest.SetFloat(srcFloat)
 
-		// String -> string (typecast).
+			// String -> string (typecast).
 		case reflect.String:
 			dest.SetString(src.String())
 
-		// String -> arrays, slices, structs, and maps via
-		// json.Unmarshal.
+			// String -> arrays, slices, structs, and maps via
+			// json.Unmarshal.
 		case reflect.Array, reflect.Slice, reflect.Struct, reflect.Map:
 			concreteVal := dest.Addr().Interface()
 			err := json.Unmarshal([]byte(src.String()), &concreteVal)

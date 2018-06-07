@@ -17,6 +17,7 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/database"
+	equihash "github.com/EXCCoin/exccd/equihash"
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
@@ -375,6 +376,38 @@ func checkProofOfWork(header *wire.BlockHeader, powLimit *big.Int, flags Behavio
 				" expected max of %064x", hashNum, target)
 			return ruleError(ErrHighHash, str)
 		}
+
+		err := validateEquihashSolution(header)
+
+		if err != nil {
+			return ruleError(ErrInvalidEquihash, "block has incorrect equihash solution")
+		}
+	}
+
+	return nil
+}
+
+//TODO: (siy) pass net parameters as parameter instead of using hardcoded mainnet
+// Validate equihash solution for given block
+func validateEquihashSolution(header *wire.BlockHeader) error {
+	headerBytes, err := header.SerializeAllHeaderBytes()
+	if err != nil {
+		return ruleError(ErrInvalidEquihash, "unable to deserialize required header fields")
+	}
+
+	solution, err := header.DeserializeSolution()
+	if err != nil {
+		return ruleError(ErrInvalidEquihash, "unable to deserialize equihash solution from block header")
+	}
+
+	result, err := equihash.ValidateSolution(chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, headerBytes, solution)
+
+	if err != nil {
+		return ruleError(ErrInvalidEquihash, "invalid equihash data")
+	}
+
+	if !result {
+		return ruleError(ErrInvalidEquihash, "provided equihash solution is invalid")
 	}
 
 	return nil

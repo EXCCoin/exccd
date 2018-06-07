@@ -2001,7 +2001,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 		iv := wire.NewInvVect(wire.InvTypeBlock, block.Hash())
 		b.server.RelayInventory(iv, block.MsgBlock().Header)
 
-	// A block has been connected to the main block chain.
+		// A block has been connected to the main block chain.
 	case blockchain.NTBlockConnected:
 		blockSlice, ok := notification.Data.([]*exccutil.Block)
 		if !ok {
@@ -2084,7 +2084,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			r.ntfnMgr.NotifyBlockConnected(block)
 		}
 
-	// Stake tickets are spent or missed from the most recently connected block.
+		// Stake tickets are spent or missed from the most recently connected block.
 	case blockchain.NTSpentAndMissedTickets:
 		tnd, ok := notification.Data.(*blockchain.TicketNotificationsData)
 		if !ok {
@@ -2097,7 +2097,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			r.ntfnMgr.NotifySpentAndMissedTickets(tnd)
 		}
 
-	// Stake tickets are matured from the most recently connected block.
+		// Stake tickets are matured from the most recently connected block.
 	case blockchain.NTNewTickets:
 		tnd, ok := notification.Data.(*blockchain.TicketNotificationsData)
 		if !ok {
@@ -2110,7 +2110,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			r.ntfnMgr.NotifyNewTickets(tnd)
 		}
 
-	// A block has been disconnected from the main block chain.
+		// A block has been disconnected from the main block chain.
 	case blockchain.NTBlockDisconnected:
 		blockSlice, ok := notification.Data.([]*exccutil.Block)
 		if !ok {
@@ -2168,7 +2168,7 @@ func (b *blockManager) handleNotifyMsg(notification *blockchain.Notification) {
 			r.ntfnMgr.NotifyBlockDisconnected(block)
 		}
 
-	// The blockchain is reorganizing.
+		// The blockchain is reorganizing.
 	case blockchain.NTReorganization:
 		rd, ok := notification.Data.(*blockchain.ReorganizationNtfnsData)
 		if !ok {

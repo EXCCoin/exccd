@@ -21,7 +21,9 @@ import (
 // + Height 4 bytes + Size 4 bytes + Timestamp 4 bytes + Nonce 4 bytes +
 // ExtraData 32 bytes + StakeVersion 4 bytes.
 // --> Total 180 bytes.
-const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3)
+// + Equihash solution (always 1344 bytes, for N = 200, K = 9)
+// --> Total 1524 bytes
+const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + 1344
 
 // BlockHeader defines information about a block and is used in the ExchangeCoin
 // block (MsgBlock) and headers (MsgHeaders) messages.
@@ -82,11 +84,10 @@ type BlockHeader struct {
 
 	// StakeVersion used for voting.
 	StakeVersion uint32
-}
 
-// blockHeaderLen is a constant that represents the number of bytes for a block
-// header.
-const blockHeaderLen = 180
+	// Equihash solution bytes
+	EquihashSolution [1344]byte
+}
 
 // BlockHash computes the block identifier hash for the given block header.
 func (h *BlockHeader) BlockHash() chainhash.Hash {
@@ -153,6 +154,85 @@ func (h *BlockHeader) Bytes() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// TODO: add tests
+func (h *BlockHeader) SerializeAllHeaderBytes() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
+
+	sec := uint32(h.Timestamp.Unix())
+	// Note that order of header elements here and in SerializeHeaderBytes() must match
+	err := writeElements(buf, h.Version, &h.PrevBlock, &h.MerkleRoot, h.Bits, sec, h.ExtraData, h.Nonce)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+// TODO: add tests
+func (h *BlockHeader) SerializeMiningHeaderBytes() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
+
+	sec := uint32(h.Timestamp.Unix())
+	err := writeElements(buf, h.Version, &h.PrevBlock, &h.MerkleRoot, h.Bits, sec)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+// TODO: add tests
+func (h *BlockHeader) DeserializeSolution() ([]int, error) {
+	buf := bytes.NewBuffer(h.EquihashSolution[:])
+
+	numindexes, err := ReadVarInt(buf, 0)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var result []int
+
+	for i := uint64(0); i < numindexes; i++ {
+		var value int32
+		err := readElement(buf, value)
+
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, int(value))
+	}
+
+	return result, nil
+}
+
+// TODO: add tests
+func (h *BlockHeader) SerializeSolution(solution []int) error {
+	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
+
+	size := uint64(len(solution))
+	err := WriteVarInt(buf, 0, size)
+
+	if err != nil {
+		return err
+	}
+
+	for i := uint64(0); i < size; i++ {
+		err := WriteVarInt(buf, 0, uint64(solution[i]))
+
+		if err != nil {
+			return err
+		}
+	}
+
+	copy(h.EquihashSolution[:], buf.Bytes())
+
+	return nil
+}
+
 // NewBlockHeader returns a new BlockHeader using the provided previous block
 // hash, merkle root hash, difficulty bits, and nonce used to generate the
 // block with defaults for the remaining fields.
@@ -194,7 +274,7 @@ func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
 		&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.Voters,
 		&bh.FreshStake, &bh.Revocations, &bh.PoolSize, &bh.Bits,
 		&bh.SBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
-		&bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
+		&bh.Nonce, &bh.ExtraData, &bh.StakeVersion, &bh.EquihashSolution)
 }
 
 // writeBlockHeader writes a ExchangeCoin block header to w.  See Serialize for
@@ -206,5 +286,5 @@ func writeBlockHeader(w io.Writer, pver uint32, bh *BlockHeader) error {
 		&bh.StakeRoot, bh.VoteBits, bh.FinalState, bh.Voters,
 		bh.FreshStake, bh.Revocations, bh.PoolSize, bh.Bits, bh.SBits,
 		bh.Height, bh.Size, sec, bh.Nonce, bh.ExtraData,
-		bh.StakeVersion)
+		bh.StakeVersion, &bh.EquihashSolution)
 }
