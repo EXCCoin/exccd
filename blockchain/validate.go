@@ -398,10 +398,6 @@ func validateEquihashSolution(header *wire.BlockHeader) error {
 	result := equihash.ValidateEquihash(chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, headerBytes,
 		int64(header.Nonce), header.EquihashSolution[:])
 
-	if err != nil {
-		return ruleError(ErrInvalidEquihashSolution, "invalid equihash data")
-	}
-
 	if !result {
 		return ruleError(ErrInvalidEquihashSolution, "provided equihash solution is invalid")
 	}
