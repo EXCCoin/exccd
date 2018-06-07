@@ -165,7 +165,7 @@ func TestSolveEquihash(t *testing.T) {
 	}
 }
 
-//TODO: finish it
+// TODO: finish it
 func TestValidateEquihash(t *testing.T) {
 	//t.SkipNow()
 	for _, test := range validatorTests {

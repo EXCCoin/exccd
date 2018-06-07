@@ -205,7 +205,7 @@ func nodesEqual(a *Node, b *Node) error {
 	return nil
 }
 
-//TODO: once upon a time enable test and make it pass
+// TODO: once upon a time enable test and make it pass
 func TestTicketDBLongChain(t *testing.T) {
 	//Relies on external binary data
 	t.SkipNow()
@@ -538,7 +538,7 @@ func TestTicketDBLongChain(t *testing.T) {
 	*/
 }
 
-//TODO: once upon a time enable test and make it pass
+// TODO: once upon a time enable test and make it pass
 func TestTicketDBGeneral(t *testing.T) {
 	//Skip this test because it relies on binary data stored in file
 	t.SkipNow()
