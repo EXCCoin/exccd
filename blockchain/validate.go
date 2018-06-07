@@ -387,7 +387,7 @@ func checkProofOfWork(header *wire.BlockHeader, powLimit *big.Int, flags Behavio
 	return nil
 }
 
-//TODO: (siy) pass net parameters as parameter instead of using hardcoded mainnet
+// TODO: (siy) pass net parameters as parameter instead of using hardcoded mainnet
 // Validate equihash solution for given block
 func validateEquihashSolution(header *wire.BlockHeader) error {
 	headerBytes, err := header.SerializeAllHeaderBytes()

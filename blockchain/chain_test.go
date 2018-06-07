@@ -37,7 +37,7 @@ func cloneParams(params *chaincfg.Params) *chaincfg.Params {
 
 // TestBlockchainFunction tests the various blockchain API to ensure proper
 // functionality.
-//TODO: once upon a time enable test and make it pass
+// TODO: once upon a time enable test and make it pass
 func TestBlockchainFunctions(t *testing.T) {
 	//Skip this test for now since it relies on binary files
 	t.SkipNow()
@@ -123,7 +123,7 @@ func TestBlockchainFunctions(t *testing.T) {
 }
 
 // TestForceHeadReorg ensures forcing header reorganization works as expected.
-//TODO: once upon a time enable test and make it pass
+// TODO: once upon a time enable test and make it pass
 func TestForceHeadReorg(t *testing.T) {
 	//Test data contain invalid equihash solution
 	t.SkipNow()

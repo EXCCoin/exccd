@@ -113,7 +113,7 @@ var (
 
 // TestThresholdState ensures that the threshold state function progresses
 // through the states correctly.
-//TODO: once upon a time enable test and make it pass
+// TODO: once upon a time enable test and make it pass
 func TestThresholdState(t *testing.T) {
 	//Test data contains invalid equihash solution
 	t.SkipNow()

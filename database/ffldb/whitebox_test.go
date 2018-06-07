@@ -579,7 +579,7 @@ func testCorruption(tc *testContext) bool {
 // TestFailureScenarios ensures several failure scenarios such as database
 // corruption, block file write failures, and rollback failures are handled
 // correctly.
-//TODO: once upon a time enable test and make it pass
+// TODO: once upon a time enable test and make it pass
 func TestFailureScenarios(t *testing.T) {
 	t.SkipNow()
 
