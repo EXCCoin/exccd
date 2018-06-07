@@ -179,13 +179,12 @@ static int hasCollision(const uint8_t *a, const uint8_t *b, const size_t len) {
     return memcmp(a, b, len) == 0;
 }
 
-static int getIndices(const uint8_t *hash, size_t len, size_t lenIndices, size_t cBitLen,
+static uint32_t getIndices(const uint8_t *hash, size_t len, size_t lenIndices, size_t cBitLen,
                       uint8_t *data, size_t maxLen) {
     assert(((cBitLen + 1) + 7) / 8 <= sizeof(uint32_t));
     size_t minLen = (cBitLen + 1) * lenIndices / (8 * sizeof(uint32_t));
     size_t bytePad = sizeof(uint32_t) - ((cBitLen + 1) + 7) / 8;
-    if (minLen > maxLen)
-        return -1;
+    assert(maxLen >= minLen);
     if (data) {
         compressArray(hash + len, lenIndices, data, minLen, cBitLen + 1, bytePad);
     }
@@ -197,8 +196,8 @@ static int indicesBefore(const uint8_t *a, const uint8_t *b, const size_t len, c
 }
 
 static void combineRows(uint8_t *hash, const uint8_t *a, const uint8_t *b,
-                        const size_t len, const size_t lenIndices, const int trim) {
-    for (int i = trim; i < len; i++) {
+                        const size_t len, const size_t lenIndices, const size_t trim) {
+    for (size_t i = trim; i < len; i++) {
         hash[i - trim] = a[i] ^ b[i];
     }
     if (indicesBefore(a, b, len, lenIndices)) {
@@ -212,7 +211,7 @@ static void combineRows(uint8_t *hash, const uint8_t *a, const uint8_t *b,
 
 static int isZero(const uint8_t *hash, size_t len) {
     // This doesn't need to be constant time.
-    for (int i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
         if (hash[i] != 0)
             return 0;
     }
@@ -225,14 +224,14 @@ static int isZero(const uint8_t *hash, size_t len) {
 static int basicSolve(blake2b_state *digest,
                       const int n, const int k,
                       void *validBlockData) {
-    const int collisionBitLength = n / (k + 1);
-    const int collisionByteLength = (collisionBitLength + 7) / 8;
-    const int hashLength = (k + 1) * collisionByteLength;
-    const int indicesPerHashOutput = 512 / n;
-    const int hashOutput = indicesPerHashOutput * n / 8;
-    const int fullWidth = 2 * collisionByteLength + sizeof(uint32_t) * (1 << (k - 1));
-    const int initSize = 1 << (collisionBitLength + 1);
-    const int equihashSolutionSize = (1 << k) * (n / (k + 1) + 1) / 8;
+    const uint32_t collisionBitLength = n / (k + 1);
+    const uint32_t collisionByteLength = (collisionBitLength + 7) / 8;
+    const uint32_t hashLength = (k + 1) * collisionByteLength;
+    const uint32_t indicesPerHashOutput = 512 / n;
+    const uint32_t hashOutput = indicesPerHashOutput * n / 8;
+    const uint32_t fullWidth = 2 * collisionByteLength + sizeof(uint32_t) * (1 << (k - 1));
+    const uint32_t initSize = 1 << (collisionBitLength + 1);
+    const uint32_t equihashSolutionSize = (1 << k) * (n / (k + 1) + 1) / 8;
 
     uint8_t hash[fullWidth];
     size_t x_room = initSize;
@@ -265,7 +264,7 @@ static int basicSolve(blake2b_state *digest,
     for (int r = 1; r < k && x_size > 0; r++) {
         qsort_r(x, x_size, sizeof(hash), compareSR, (int *) &collisionByteLength);
 
-        for (int i = 0; i < x_size - 1;) {
+        for (uint32_t i = 0; i < x_size - 1;) {
             // 2b) Find next set of unordered pairs with collisions on the next n/(k+1) bits
             int j = 1;
             while (i + j < x_size && hasCollision(X(i), X(i + j), collisionByteLength)) {
@@ -306,20 +305,20 @@ static int basicSolve(blake2b_state *digest,
     int solnr = 0;
     if (x_size > 1) {
         qsort_r(x, x_size, sizeof(hash), compareSR, (int *) &hashLen);
-        for (int i = 0; i < x_size - 1;) {
-            int j = 1;
+        for (uint32_t i = 0; i < x_size - 1;) {
+            uint32_t j = 1;
             while (i + j < x_size && hasCollision(X(i), X(i + j), hashLen)) {
                 j++;
             }
 
-            for (int l = 0; l < j - 1; l++) {
-                for (int m = l + 1; m < j; m++) {
+            for (uint32_t l = 0; l < j - 1; l++) {
+                for (uint32_t m = l + 1; m < j; m++) {
                     combineRows(Xc(xc_size), X(i + l), X(i + m), hashLen, lenIndices, 0);
                     if (isZero(Xc(xc_size), hashLen) &&
                         distinctIndices(X(i + l), X(i + m), hashLen, lenIndices)) {
                         uint8_t soln[equihashSolutionSize];
 
-                        int ssize = getIndices(Xc(xc_size), hashLen, 2 * lenIndices, collisionBitLength,
+                        uint32_t ssize = getIndices(Xc(xc_size), hashLen, 2 * lenIndices, collisionBitLength,
                                                soln, sizeof(soln));
                         ++solnr;
 
@@ -391,7 +390,7 @@ static int basicValidate(int n, int k, blake2b_state *digest, void *soln) {
     bool result = false;
 
     while (x_size > 1) {
-        for (int i = 0; i < x_size; i += 2) {
+        for (uint32_t i = 0; i < x_size; i += 2) {
             if (!hasCollision(X(i), X(i + 1), collisionByteLength)) {
                 goto cleanup;
             }
@@ -461,7 +460,6 @@ void *GetIndices(int n, int k, void *soln) {
     const int lenIndices = 8 * sizeof(uint32_t) * equihashSolutionSize / (collisionBitLength + 1);
     const int bytePad = sizeof(uint32_t) - ((collisionBitLength + 1) + 7) / 8;
 
-    const int solnr = 1 << k;
     unsigned char indices_array[lenIndices];
     uint32_t *indices = (uint32_t *) indices_array;
 
@@ -480,7 +478,7 @@ void *getMinimalFromIndices(uint32_t *solutionIndices, size_t len, size_t cBitLe
 
     unsigned char *array = (unsigned char *) malloc(lenIndices);
 
-    for (int i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
         uint32_t value = solutionIndices[i];
         uint8_t *ptr = array + (i * sizeof(uint32_t));
         ehIndexToArray(value, ptr);
