@@ -19,7 +19,7 @@ import (
 
 // TODO: once upon a time enable test and make it pass
 func TestStakeVersion(t *testing.T) {
-	//At present encoded block has incorrect equihash solution
+	// At present encoded block has incorrect equihash solution
 	t.SkipNow()
 
 	// Create a test generator instance initialized with the genesis block
