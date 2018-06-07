@@ -14,7 +14,6 @@
 #define _DEFAULT_SOURCE
 #define _GNU_SOURCE
 
-#include <endian.h>
 #include <stdint.h>
 
 #ifdef __INCLUDE_MAIN__
@@ -23,10 +22,7 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <errno.h>
 #include <assert.h>
 
@@ -34,8 +30,14 @@
 #include "blake2.h"
 #include "blake2-impl.h"
 
-#define swap(a, b) \
-    do { __typeof__(a) __tmp = (a); (a) = (b); (b) = __tmp; } while (0)
+#define swap(x, y) {                                                                         \
+    assert(sizeof(x) == sizeof(y));                                                          \
+    unsigned char temp[sizeof(x)];                                                           \
+    memcpy(temp, &y, sizeof(x));                                                             \
+    memcpy(&y, &x, sizeof(x));                                                               \
+    memcpy(&x, temp, sizeof(x));                                                             \
+}
+
 
 int equihashProxy(void *, void *);
 
