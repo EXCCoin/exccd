@@ -134,7 +134,7 @@ func chainSetup(dbName string, params *chaincfg.Params) (*blockchain.BlockChain,
 // have the expected result when processed via ProcessBlock.
 // TODO: once upon a time enable test and make it pass
 func TestFullBlocks(t *testing.T) {
-	//Block should not be accepted, this requires deeper investigation
+	// Block should not be accepted, this requires deeper investigation
 	t.SkipNow()
 	tests, err := fullblocktests.Generate(false)
 	if err != nil {

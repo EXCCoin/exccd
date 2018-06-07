@@ -76,7 +76,7 @@ func updateVoteCommitments(msgBlock *wire.MsgBlock) {
 // hemisphere drunken vacancy uncut caretaker Dupont
 // TODO: once upon a time enable test and make it pass
 func TestBlockValidationRules(t *testing.T) {
-	//Test relies on encoded binary data, skip for now
+	// Test relies on encoded binary data, skip for now
 	t.SkipNow()
 
 	// Update simnet parameters to reflect what is expected by the legacy
@@ -843,7 +843,7 @@ func TestBlockValidationRules(t *testing.T) {
 // written to disk correctly on a live blockchain.
 // TODO: once upon a time enable test and make it pass
 func TestBlockchainSpendJournal(t *testing.T) {
-	//Test relies on encoded binary data, skip for now
+	// Test relies on encoded binary data, skip for now
 	t.SkipNow()
 
 	// Create a new database and chain instance to run tests against.

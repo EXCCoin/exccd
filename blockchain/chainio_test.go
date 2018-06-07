@@ -126,7 +126,7 @@ func TestErrNotInMainChain(t *testing.T) {
 // entries works as expected.
 // TODO: once upon a time enable test and make it pass
 func TestBlockIndexSerialization(t *testing.T) {
-	//Depends on binary encoded data
+	// Depends on binary encoded data
 	t.SkipNow()
 
 	t.Parallel()
