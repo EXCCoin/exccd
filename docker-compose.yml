@@ -1,0 +1,16 @@
+version: "3.3"
+
+services:
+  node:
+    image: exccco/exchangecoin_node:latest
+    ports:
+     - "5666:9666"
+     - "5109:9109"
+    networks:
+      - stakepool
+    working_dir: /go/bin
+    command: exccd --generate --miningaddr 22u4E52pCXS6fmQpdoukwXJu8ptod1kWxa5n -u rpcuser -P rpcpass --rpclisten=0.0.0.0:9109
+
+networks:
+  stakepool:
+    driver: bridge
