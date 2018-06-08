@@ -15,16 +15,16 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/EXCCoin/exccd/blockchain/chaingen"
-	"github.com/EXCCoin/exccd/chaincfg"
-	"github.com/EXCCoin/exccd/exccutil"
 	"compress/gzip"
-	"encoding/json"
-	"github.com/EXCCoin/exccd/wire"
-	"github.com/EXCCoin/exccd/cequihash"
-	"unsafe"
 	"encoding/binary"
+	"encoding/json"
+	"github.com/EXCCoin/exccd/blockchain/chaingen"
+	"github.com/EXCCoin/exccd/cequihash"
+	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/exccutil"
+	"github.com/EXCCoin/exccd/wire"
+	"unsafe"
 )
 
 // cloneParams returns a deep copy of the provided parameters so the caller is
@@ -90,6 +90,11 @@ const (
 func solve(t *testing.T, header *wire.BlockHeader) error {
 	headerData, err := header.SerializeMiningHeaderBytes()
 
+	if err != nil {
+		t.Logf("Unable to serialize header bytes")
+		return err
+	}
+
 	enOffset, err := wire.RandomUint64()
 	if err != nil {
 		t.Logf("Error generating extended nonce offset. Using default (0)")
@@ -136,13 +141,17 @@ func TestConvertToNewFormat(t *testing.T) {
 	// Load up the rest of the blocks up to HEAD~1.
 	filename := filepath.Join("testdata/", "blocks0to168.json.gz")
 	fi, err := os.Open(filename)
+	if err != nil {
+		t.Errorf("Unable to open %s: %v", filename, err)
+	}
+
 	ofilename := filepath.Join("testdata/", "blocks0to168.exccd.json.gz")
 	fo, err := os.Create(ofilename)
 	if err != nil {
 		t.Errorf("Unable to open %s: %v", filename, err)
 	}
-	jsonStream, err := gzip.NewReader(fi)
 
+	jsonStream, err := gzip.NewReader(fi)
 	if err != nil {
 		t.Fatalf("Unable to open input file %s (%v)", ofilename, err)
 	}

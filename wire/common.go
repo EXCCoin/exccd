@@ -14,8 +14,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"encoding/json"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"reflect"
 )
 
@@ -540,7 +540,7 @@ func marshalElement(w io.Writer, element interface{}) error {
 			return err
 		}
 
-		err = writeFieldValue(w, valueField, i != (val.NumField() - 1))
+		err = writeFieldValue(w, valueField, i != (val.NumField()-1))
 
 		if err != nil {
 			return err
