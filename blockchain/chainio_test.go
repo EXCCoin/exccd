@@ -124,9 +124,9 @@ func TestErrNotInMainChain(t *testing.T) {
 
 // TestBlockIndexSerialization ensures serializing and deserializing block index
 // entries works as expected.
-//TODO: once upon a time enable test and make it pass
+// TODO: once upon a time enable test and make it pass
 func TestBlockIndexSerialization(t *testing.T) {
-	//Depends on binary encoded data
+	// Depends on binary encoded data
 	t.SkipNow()
 
 	t.Parallel()
@@ -312,7 +312,7 @@ func TestBlockIndexSerialization(t *testing.T) {
 
 // TestBlockIndexDecodeErrors performs negative tests against decoding block
 // index entries to ensure error paths work as expected.
-//TODO: once upon a time enable test and make it pass
+// TODO: once upon a time enable test and make it pass
 func TestBlockIndexDecodeErrors(t *testing.T) {
 	// Depends on encoded binary data
 	t.SkipNow()

@@ -19,8 +19,8 @@ type EquihashCallback interface {
 	Validate(pointer unsafe.Pointer) int
 }
 
-//export equihash_proxy
-func equihash_proxy(callback_data unsafe.Pointer, extra_data unsafe.Pointer) C.int {
+//export equihashProxy
+func equihashProxy(callback_data unsafe.Pointer, extra_data unsafe.Pointer) C.int {
 	callback := cptr.Restore(callback_data).(*EquihashCallback)
 
 	if callback == nil {

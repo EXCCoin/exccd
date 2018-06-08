@@ -201,9 +201,9 @@ func TestConvertToNewFormat(t *testing.T) {
 
 // TestBlockchainFunction tests the various blockchain API to ensure proper
 // functionality.
-//TODO: once upon a time enable test and make it pass
+// TODO: once upon a time enable test and make it pass
 func TestBlockchainFunctions(t *testing.T) {
-	//Skip this test for now since it relies on binary files
+	// Skip this test for now since it relies on binary files
 	t.SkipNow()
 
 	// Update simnet parameters to reflect what is expected by the legacy
@@ -287,9 +287,9 @@ func TestBlockchainFunctions(t *testing.T) {
 }
 
 // TestForceHeadReorg ensures forcing header reorganization works as expected.
-//TODO: once upon a time enable test and make it pass
+// TODO: once upon a time enable test and make it pass
 func TestForceHeadReorg(t *testing.T) {
-	//Test data contain invalid equihash solution
+	// Test data contain invalid equihash solution
 	t.SkipNow()
 
 	// Create a test generator instance initialized with the genesis block

@@ -380,30 +380,26 @@ func checkProofOfWork(header *wire.BlockHeader, powLimit *big.Int, flags Behavio
 		err := validateEquihashSolution(header)
 
 		if err != nil {
-			return ruleError(ErrInvalidEquihash, "block has incorrect equihash solution")
+			return ruleError(ErrInvalidEquihashSolution, "block has incorrect equihash solution")
 		}
 	}
 
 	return nil
 }
 
-//TODO: (siy) pass net parameters as parameter instead of using hardcoded mainnet
+// TODO: (siy) pass net parameters as parameter instead of using hardcoded mainnet
 // Validate equihash solution for given block
 func validateEquihashSolution(header *wire.BlockHeader) error {
 	headerBytes, err := header.SerializeAllHeaderBytes()
 	if err != nil {
-		return ruleError(ErrInvalidEquihash, "unable to deserialize required header fields")
+		return ruleError(ErrInvalidEquihashSolution, "unable to deserialize required header fields")
 	}
 
 	result := equihash.ValidateEquihash(chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, headerBytes,
 		int64(header.Nonce), header.EquihashSolution[:])
 
-	if err != nil {
-		return ruleError(ErrInvalidEquihash, "invalid equihash data")
-	}
-
 	if !result {
-		return ruleError(ErrInvalidEquihash, "provided equihash solution is invalid")
+		return ruleError(ErrInvalidEquihashSolution, "provided equihash solution is invalid")
 	}
 
 	return nil
