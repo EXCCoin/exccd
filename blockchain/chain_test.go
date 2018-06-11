@@ -47,7 +47,7 @@ type JSONBlock struct {
 }
 
 type solutionValidatorData struct {
-	params	*chaincfg.Params
+	params *chaincfg.Params
 	solved *bool
 	header *wire.BlockHeader
 }
@@ -243,6 +243,10 @@ func TestBlockchainFunctions(t *testing.T) {
 		t.Errorf("Unable to open %s: %v", filename, err)
 	}
 	bcStream, err := gzip.NewReader(fi)
+	if err != nil {
+		t.Errorf("Unable to read archive %s: %v", filename, err)
+	}
+
 	defer bcStream.Close()
 	defer fi.Close()
 
