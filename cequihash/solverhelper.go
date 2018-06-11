@@ -15,7 +15,7 @@ import (
 	"unsafe"
 )
 
-func expandArray(n, k int, solution unsafe.Pointer) []int {
+func expandArray(n, k int, solution unsafe.Pointer) []uint32 {
 	ptr := C.GetIndices(C.int(n), C.int(k), solution)
 	defer C.free(ptr)
 
@@ -23,13 +23,13 @@ func expandArray(n, k int, solution unsafe.Pointer) []int {
 
 	buf := bytes.NewBuffer(C.GoBytes(ptr, C.int(indexCount*4)))
 	var tmp [4]byte
-	var result []int
+	var result []uint32
 
 	num_read, _ := buf.Read(tmp[:])
 
 	for num_read > 0 {
 		index := binary.BigEndian.Uint32(tmp[:])
-		result = append(result, int(index))
+		result = append(result, index)
 		num_read, _ = buf.Read(tmp[:])
 	}
 
@@ -37,7 +37,7 @@ func expandArray(n, k int, solution unsafe.Pointer) []int {
 }
 
 type SolutionHolder struct {
-	fullSolution [][]int
+	fullSolution [][]uint32
 }
 
 type SolutionAppenderData struct {
@@ -52,7 +52,7 @@ func (data SolutionAppenderData) Validate(solution unsafe.Pointer) int {
 	return 0
 }
 
-func compressIndices(n, k int, nonce uint32, input []byte, solutionIndices []int32) []byte {
+func compressIndices(n, k int, nonce uint32, input []byte, solutionIndices []uint32) []byte {
 	ptr := C.PutIndices(C.int(n), C.int(k), unsafe.Pointer(&input[0]), C.int(len(input)), C.uint32_t(nonce),
 		unsafe.Pointer(&solutionIndices[0]), C.int(len(solutionIndices)))
 	defer C.free(ptr)

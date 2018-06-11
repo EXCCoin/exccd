@@ -799,7 +799,7 @@ var SimNetParams = Params{
 	Net:         wire.SimNet,
 	DefaultPort: "11998",
 	DNSSeeds:    []DNSSeed{}, // NOTE: There must NOT be any seeds.
-	N:           48,
+	N:           96,
 	K:           5,
 
 	// Chain parameters

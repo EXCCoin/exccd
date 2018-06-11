@@ -187,6 +187,7 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 type solutionValidatorData struct {
 	n      int
 	k      int
+	solved *bool
 	header *wire.BlockHeader
 }
 
@@ -198,6 +199,7 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 	hash := data.header.BlockHash()
 
 	if blockchain.HashToBig(&hash).Cmp(blockchain.CompactToBig(data.header.Bits)) <= 0 {
+		*data.solved = true
 		return 1
 	} else {
 		return 0
@@ -238,12 +240,13 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 		return false
 	}
 
-	validator := solutionValidatorData{chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, header}
+	solved := false
+	validator := solutionValidatorData{chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, &solved, header}
 
 	// Note that the entire extra nonce range is iterated and the offset is
 	// added relying on the fact that overflow will wrap around 0 as
 	// provided by the Go spec.
-	for extraNonce := uint64(0); extraNonce < maxExtraNonce; extraNonce++ {
+	for extraNonce := uint64(0); extraNonce < maxExtraNonce && !solved; extraNonce++ {
 		// Update the extra nonce in the block template header with the
 		// new value.
 		littleEndian.PutUint64(header.ExtraData[:], extraNonce+enOffset)
@@ -254,7 +257,7 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 		// Search through the entire nonce range for a solution while
 		// periodically checking for early quit and stale block
 		// conditions along with updates to the speed monitor.
-		for i := uint32(0); i <= maxNonce; i++ {
+		for i := uint32(0); i <= maxNonce && !solved; i++ {
 			select {
 			case <-quit:
 				return false
@@ -311,7 +314,7 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 		}
 	}
 
-	return false
+	return solved
 }
 
 func appendExtraNonce(headerData []byte, header *wire.BlockHeader) []byte {

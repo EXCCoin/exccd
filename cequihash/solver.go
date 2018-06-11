@@ -48,9 +48,14 @@ func SolveEquihash(n, k int, input []byte, nonce int64, callback EquihashCallbac
 func ValidateEquihash(n, k int, input []byte, nonce int64, solution []byte) bool {
 	equihashSolutionSize := EquihashSolutionSize(n, k)
 
-	if len(solution) != equihashSolutionSize {
+	if len(solution) < equihashSolutionSize {
 		return false
 	}
+	//TODO: cleanup
+	// str1 := hex.Dump(input)
+	// str2 := hex.Dump(solution)
+	//
+	// fmt.Printf("I:%s\nS:%s\nNonce:%d\n", str1, str2, nonce)
 
 	return C.EquihashValidate(C.int(n), C.int(k), unsafe.Pointer(&input[0]), C.int(len(input)), C.int64_t(nonce),
 		unsafe.Pointer(&solution[0])) != 0

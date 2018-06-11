@@ -4258,8 +4258,7 @@ func handleGetWorkSubmission(s *rpcServer, hexData string) (interface{}, error) 
 	block := exccutil.NewBlockDeepCopyCoinbase(msgBlock)
 
 	// Ensure the submitted block hash is less than the target difficulty.
-	err = blockchain.CheckProofOfWork(&block.MsgBlock().Header,
-		activeNetParams.PowLimit)
+	err = blockchain.CheckProofOfWork(&block.MsgBlock().Header, activeNetParams)
 	if err != nil {
 		// Anything other than a rule violation is an unexpected error,
 		// so return that error as an internal error.

@@ -10,7 +10,6 @@ import (
 	"bytes"
 	"fmt"
 	"math"
-	"math/big"
 	"time"
 
 	"github.com/EXCCoin/exccd/blockchain/stake"
@@ -21,6 +20,8 @@ import (
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
+	"encoding/hex"
+	"os"
 )
 
 const (
@@ -349,7 +350,7 @@ func CheckProofOfStake(block *exccutil.Block, posLimit int64) error {
 // The flags modify the behavior of this function as follows:
 //  - BFNoPoWCheck: The check to ensure the block hash is less than the target
 //    difficulty is not performed.
-func checkProofOfWork(header *wire.BlockHeader, powLimit *big.Int, flags BehaviorFlags) error {
+func checkProofOfWork(header *wire.BlockHeader, chainParams *chaincfg.Params, flags BehaviorFlags) error {
 	// The target difficulty must be larger than zero.
 	target := CompactToBig(header.Bits)
 	if target.Sign() <= 0 {
@@ -359,9 +360,9 @@ func checkProofOfWork(header *wire.BlockHeader, powLimit *big.Int, flags Behavio
 	}
 
 	// The target difficulty must be less than the maximum allowed.
-	if target.Cmp(powLimit) > 0 {
+	if target.Cmp(chainParams.PowLimit) > 0 {
 		str := fmt.Sprintf("block target difficulty of %064x is "+
-			"higher than max of %064x", target, powLimit)
+			"higher than max of %064x", target, chainParams.PowLimit)
 		return ruleError(ErrUnexpectedDifficulty, str)
 	}
 
@@ -377,7 +378,7 @@ func checkProofOfWork(header *wire.BlockHeader, powLimit *big.Int, flags Behavio
 			return ruleError(ErrHighHash, str)
 		}
 
-		err := validateEquihashSolution(header)
+		err := validateEquihashSolution(header, chainParams)
 
 		if err != nil {
 			return ruleError(ErrInvalidEquihash, "block has incorrect equihash solution")
@@ -387,20 +388,20 @@ func checkProofOfWork(header *wire.BlockHeader, powLimit *big.Int, flags Behavio
 	return nil
 }
 
-//TODO: (siy) pass net parameters as parameter instead of using hardcoded mainnet
 // Validate equihash solution for given block
-func validateEquihashSolution(header *wire.BlockHeader) error {
+func validateEquihashSolution(header *wire.BlockHeader, chainParams *chaincfg.Params) error {
 	headerBytes, err := header.SerializeAllHeaderBytes()
+
 	if err != nil {
 		return ruleError(ErrInvalidEquihash, "unable to deserialize required header fields")
 	}
 
-	result := equihash.ValidateEquihash(chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, headerBytes,
+	result := equihash.ValidateEquihash(chainParams.N, chainParams.K, headerBytes,
 		int64(header.Nonce), header.EquihashSolution[:])
 
-	if err != nil {
-		return ruleError(ErrInvalidEquihash, "invalid equihash data")
-	}
+
+	fmt.Fprintf(os.Stderr, "Validating\nNonce: %d\nBytes: %s\nSol:\n%s\nValid: %v\n",
+		header.Nonce, hex.EncodeToString(headerBytes), hex.EncodeToString(header.EquihashSolution[:equihash.EquihashSolutionSize(chainParams.N, chainParams.K)]), result)
 
 	if !result {
 		return ruleError(ErrInvalidEquihash, "provided equihash solution is invalid")
@@ -412,8 +413,8 @@ func validateEquihashSolution(header *wire.BlockHeader) error {
 // CheckProofOfWork ensures the block header bits which indicate the target
 // difficulty is in min/max range and that the block hash is less than the
 // target difficulty as claimed.
-func CheckProofOfWork(header *wire.BlockHeader, powLimit *big.Int) error {
-	return checkProofOfWork(header, powLimit, BFNone)
+func CheckProofOfWork(header *wire.BlockHeader, chainParams *chaincfg.Params) error {
+	return checkProofOfWork(header, chainParams, BFNone)
 }
 
 // checkBlockHeaderSanity performs some preliminary checks on a block header to
@@ -436,7 +437,7 @@ func checkBlockHeaderSanity(header *wire.BlockHeader, timeSource MedianTimeSourc
 	// Ensure the proof of work bits in the block header is in min/max
 	// range and the block hash is less than the target value described by
 	// the bits.
-	err := checkProofOfWork(header, chainParams.PowLimit, flags)
+	err := checkProofOfWork(header, chainParams, flags)
 	if err != nil {
 		return err
 	}
