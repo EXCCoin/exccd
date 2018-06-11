@@ -16,7 +16,7 @@ import (
 	"github.com/EXCCoin/exccd/wire"
 )
 
-//TODO: enable test and make it working
+// TODO: enable test and make it working
 // TestSort ensures the transaction sorting works as expected.
 func TestSort(t *testing.T) {
 	//This test depends on encoded binary files. Skip it for now.

@@ -20,8 +20,6 @@ import (
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
-	"encoding/hex"
-	"os"
 )
 
 const (
@@ -381,7 +379,7 @@ func checkProofOfWork(header *wire.BlockHeader, chainParams *chaincfg.Params, fl
 		err := validateEquihashSolution(header, chainParams)
 
 		if err != nil {
-			return ruleError(ErrInvalidEquihash, "block has incorrect equihash solution")
+			return ruleError(ErrInvalidEquihashSolution, "block has incorrect equihash solution")
 		}
 	}
 
@@ -393,18 +391,14 @@ func validateEquihashSolution(header *wire.BlockHeader, chainParams *chaincfg.Pa
 	headerBytes, err := header.SerializeAllHeaderBytes()
 
 	if err != nil {
-		return ruleError(ErrInvalidEquihash, "unable to deserialize required header fields")
+		return ruleError(ErrInvalidEquihashSolution, "unable to deserialize required header fields")
 	}
 
 	result := equihash.ValidateEquihash(chainParams.N, chainParams.K, headerBytes,
 		int64(header.Nonce), header.EquihashSolution[:])
 
-
-	fmt.Fprintf(os.Stderr, "Validating\nNonce: %d\nBytes: %s\nSol:\n%s\nValid: %v\n",
-		header.Nonce, hex.EncodeToString(headerBytes), hex.EncodeToString(header.EquihashSolution[:equihash.EquihashSolutionSize(chainParams.N, chainParams.K)]), result)
-
 	if !result {
-		return ruleError(ErrInvalidEquihash, "provided equihash solution is invalid")
+		return ruleError(ErrInvalidEquihashSolution, "provided equihash solution is invalid")
 	}
 
 	return nil

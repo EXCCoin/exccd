@@ -19,8 +19,8 @@ type EquihashCallback interface {
 	Validate(pointer unsafe.Pointer) int
 }
 
-//export equihash_proxy
-func equihash_proxy(callback_data unsafe.Pointer, extra_data unsafe.Pointer) C.int {
+//export equihashProxy
+func equihashProxy(callback_data unsafe.Pointer, extra_data unsafe.Pointer) C.int {
 	callback := cptr.Restore(callback_data).(*EquihashCallback)
 
 	if callback == nil {
@@ -36,13 +36,11 @@ func ExtractSolution(n, k int, solptr unsafe.Pointer) []byte {
 	return C.GoBytes(solptr, C.int(size))
 }
 
-func SolveEquihash(n, k int, input []byte, nonce int64, callback EquihashCallback) error {
+func SolveEquihash(n, k int, input []byte, nonce int64, callback EquihashCallback) {
 	callbackptr := cptr.Save(&callback)
 	defer cptr.Unref(callbackptr)
 
 	C.EquihashSolve(unsafe.Pointer(&input[0]), C.int(len(input)), C.int64_t(nonce), callbackptr, C.int(n), C.int(k))
-
-	return nil
 }
 
 func ValidateEquihash(n, k int, input []byte, nonce int64, solution []byte) bool {
@@ -51,11 +49,6 @@ func ValidateEquihash(n, k int, input []byte, nonce int64, solution []byte) bool
 	if len(solution) < equihashSolutionSize {
 		return false
 	}
-	//TODO: cleanup
-	// str1 := hex.Dump(input)
-	// str2 := hex.Dump(solution)
-	//
-	// fmt.Printf("I:%s\nS:%s\nNonce:%d\n", str1, str2, nonce)
 
 	return C.EquihashValidate(C.int(n), C.int(k), unsafe.Pointer(&input[0]), C.int(len(input)), C.int64_t(nonce),
 		unsafe.Pointer(&solution[0])) != 0

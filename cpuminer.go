@@ -233,13 +233,6 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 	lastTxUpdate := m.txSource.LastUpdated()
 	hashesCompleted := uint64(0)
 
-	headerData, err := header.SerializeMiningHeaderBytes()
-
-	if err != nil {
-		minrLog.Errorf("Unexpected error while serializing header: %v ", err)
-		return false
-	}
-
 	solved := false
 	validator := solutionValidatorData{chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, &solved, header}
 
@@ -251,8 +244,8 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 		// new value.
 		littleEndian.PutUint64(header.ExtraData[:], extraNonce+enOffset)
 
-		// Update current hash value with new extra nonce
-		extraNonceBytes := appendExtraNonce(headerData, header)
+		// Update equihash solver input bytes
+		headerBytes, _ := header.SerializeAllHeaderBytes()
 
 		// Search through the entire nonce range for a solution while
 		// periodically checking for early quit and stale block
@@ -286,7 +279,7 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 				}
 
 				// Rebuild all input data
-				headerData, err = header.SerializeMiningHeaderBytes()
+				headerBytes, err = header.SerializeAllHeaderBytes()
 
 				if err != nil {
 					minrLog.Warnf("CPU miner unable to rebuild header data for updated block template "+
@@ -294,21 +287,13 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 					return false
 				}
 
-				extraNonceBytes = appendExtraNonce(headerData, header)
-
 			default:
 				// Non-blocking select to fall through
 			}
 
 			header.Nonce = i
 
-			err := equihash.SolveEquihash(chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, extraNonceBytes,
-				int64(i), validator)
-
-			if err != nil {
-				minrLog.Warnf("CPU miner unable to find equihash solution: %v", err)
-				continue
-			}
+			equihash.SolveEquihash(chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, headerBytes, int64(i), validator)
 
 			hashesCompleted++
 		}

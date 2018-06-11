@@ -775,7 +775,7 @@ func (view *UtxoViewpoint) disconnectTransactionSlice(transactions []*exccutil.T
 			txIn := msgTx.TxIn[txInIdx]
 			originHash := &txIn.PreviousOutPoint.Hash
 			originInIndex := txIn.PreviousOutPoint.Index
-			//originHeight := txIn.BlockHeight
+			// originHeight := txIn.BlockHeight
 			// originIndex := txIn.BlockIndex
 			entry := view.entries[*originHash]
 			if entry == nil {
@@ -783,8 +783,8 @@ func (view *UtxoViewpoint) disconnectTransactionSlice(transactions []*exccutil.T
 					stxo.index, stxo.isCoinBase, stxo.hasExpiry,
 					stxo.txType)
 				if txType == stake.TxTypeSStx {
-					//stakeExtra := make([]byte,
-					//	serializeSizeForMinimalOutputs(tx))
+					// stakeExtra := make([]byte,
+					// serializeSizeForMinimalOutputs(tx))
 					// putTxToMinimalOutputs(stakeExtra, tx)
 					// entry.stakeExtra = stakeExtra
 					entry.stakeExtra = stxo.stakeExtra
