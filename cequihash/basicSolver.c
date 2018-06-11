@@ -333,7 +333,7 @@ static int basicSolve(blake2b_state *digest,
 #endif
 
                         if (validBlockData && equihashProxy(validBlockData, soln)) {
-                            return solnr;
+                            goto cleanup;
                         }
                     }
                     ++xc_size;
@@ -343,6 +343,8 @@ static int basicSolve(blake2b_state *digest,
             i += j;
         }
     }
+
+cleanup:
 
     free(x);
     free(xc);
