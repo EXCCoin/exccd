@@ -280,7 +280,7 @@ static int basicSolve(blake2b_state *digest,
                         combineRows(Xc(xc_size), X(i + l), X(i + m), hashLen, lenIndices, collisionByteLength);
                         ++xc_size;
                         if (xc_size >= xc_room) {
-                            xc_room += 100000000 / sizeof(hash);
+                            xc_room *= 2;
                             xc = realloc(xc, xc_room * sizeof(hash));
                             assert(xc);
                         }
