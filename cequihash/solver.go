@@ -36,19 +36,17 @@ func ExtractSolution(n, k int, solptr unsafe.Pointer) []byte {
 	return C.GoBytes(solptr, C.int(size))
 }
 
-func SolveEquihash(n, k int, input []byte, nonce int64, callback EquihashCallback) error {
+func SolveEquihash(n, k int, input []byte, nonce int64, callback EquihashCallback) {
 	callbackptr := cptr.Save(&callback)
 	defer cptr.Unref(callbackptr)
 
 	C.EquihashSolve(unsafe.Pointer(&input[0]), C.int(len(input)), C.int64_t(nonce), callbackptr, C.int(n), C.int(k))
-
-	return nil
 }
 
 func ValidateEquihash(n, k int, input []byte, nonce int64, solution []byte) bool {
 	equihashSolutionSize := EquihashSolutionSize(n, k)
 
-	if len(solution) != equihashSolutionSize {
+	if len(solution) < equihashSolutionSize {
 		return false
 	}
 

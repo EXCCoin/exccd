@@ -187,6 +187,7 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 type solutionValidatorData struct {
 	n      int
 	k      int
+	solved *bool
 	header *wire.BlockHeader
 }
 
@@ -198,6 +199,7 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 	hash := data.header.BlockHash()
 
 	if blockchain.HashToBig(&hash).Cmp(blockchain.CompactToBig(data.header.Bits)) <= 0 {
+		*data.solved = true
 		return 1
 	} else {
 		return 0
@@ -231,30 +233,24 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 	lastTxUpdate := m.txSource.LastUpdated()
 	hashesCompleted := uint64(0)
 
-	headerData, err := header.SerializeMiningHeaderBytes()
-
-	if err != nil {
-		minrLog.Errorf("Unexpected error while serializing header: %v ", err)
-		return false
-	}
-
-	validator := solutionValidatorData{chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, header}
+	solved := false
+	validator := solutionValidatorData{chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, &solved, header}
 
 	// Note that the entire extra nonce range is iterated and the offset is
 	// added relying on the fact that overflow will wrap around 0 as
 	// provided by the Go spec.
-	for extraNonce := uint64(0); extraNonce < maxExtraNonce; extraNonce++ {
+	for extraNonce := uint64(0); extraNonce < maxExtraNonce && !solved; extraNonce++ {
 		// Update the extra nonce in the block template header with the
 		// new value.
 		littleEndian.PutUint64(header.ExtraData[:], extraNonce+enOffset)
 
-		// Update current hash value with new extra nonce
-		extraNonceBytes := appendExtraNonce(headerData, header)
+		// Update equihash solver input bytes
+		headerBytes, _ := header.SerializeAllHeaderBytes()
 
 		// Search through the entire nonce range for a solution while
 		// periodically checking for early quit and stale block
 		// conditions along with updates to the speed monitor.
-		for i := uint32(0); i <= maxNonce; i++ {
+		for i := uint32(0); i <= maxNonce && !solved; i++ {
 			select {
 			case <-quit:
 				return false
@@ -283,7 +279,7 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 				}
 
 				// Rebuild all input data
-				headerData, err = header.SerializeMiningHeaderBytes()
+				headerBytes, err = header.SerializeAllHeaderBytes()
 
 				if err != nil {
 					minrLog.Warnf("CPU miner unable to rebuild header data for updated block template "+
@@ -291,27 +287,19 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 					return false
 				}
 
-				extraNonceBytes = appendExtraNonce(headerData, header)
-
 			default:
 				// Non-blocking select to fall through
 			}
 
 			header.Nonce = i
 
-			err := equihash.SolveEquihash(chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, extraNonceBytes,
-				int64(i), validator)
-
-			if err != nil {
-				minrLog.Warnf("CPU miner unable to find equihash solution: %v", err)
-				continue
-			}
+			equihash.SolveEquihash(chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, headerBytes, int64(i), validator)
 
 			hashesCompleted++
 		}
 	}
 
-	return false
+	return solved
 }
 
 func appendExtraNonce(headerData []byte, header *wire.BlockHeader) []byte {

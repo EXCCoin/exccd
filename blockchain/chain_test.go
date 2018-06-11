@@ -8,7 +8,6 @@ package blockchain
 
 import (
 	"bytes"
-	"compress/bzip2"
 	"encoding/gob"
 	"fmt"
 	"os"
@@ -21,7 +20,6 @@ import (
 	"github.com/EXCCoin/exccd/blockchain/chaingen"
 	"github.com/EXCCoin/exccd/cequihash"
 	"github.com/EXCCoin/exccd/chaincfg"
-	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/wire"
 	"unsafe"
@@ -49,16 +47,15 @@ type JSONBlock struct {
 }
 
 type solutionValidatorData struct {
-	n      int
-	k      int
+	params *chaincfg.Params
 	solved *bool
 	header *wire.BlockHeader
 }
 
 func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
-	bytes := cequihash.ExtractSolution(data.n, data.k, solution)
+	solutionBytes := cequihash.ExtractSolution(data.params.N, data.params.K, solution)
 
-	copy(data.header.EquihashSolution[:], bytes)
+	copy(data.header.EquihashSolution[:], solutionBytes)
 
 	hash := data.header.BlockHash()
 
@@ -87,14 +84,7 @@ const (
 	maxExtraNonce = ^uint64(0) // 2^64 - 1
 )
 
-func solve(t *testing.T, header *wire.BlockHeader) error {
-	headerData, err := header.SerializeMiningHeaderBytes()
-
-	if err != nil {
-		t.Logf("Unable to serialize header bytes")
-		return err
-	}
-
+func solve(t *testing.T, header *wire.BlockHeader, chainParams *chaincfg.Params) error {
 	enOffset, err := wire.RandomUint64()
 	if err != nil {
 		t.Logf("Error generating extended nonce offset. Using default (0)")
@@ -106,17 +96,15 @@ func solve(t *testing.T, header *wire.BlockHeader) error {
 	}
 
 	solved := false
-	n := chaincfg.SimNetParams.N
-	k := chaincfg.SimNetParams.K
-	validator := solutionValidatorData{n, k, &solved, header}
+	validator := solutionValidatorData{chainParams, &solved, header}
 
 	for extraNonce := uint64(0); extraNonce < maxExtraNonce && !solved; extraNonce++ {
 		// Update the extra nonce in the block template header with the
 		// new value.
 		binary.LittleEndian.PutUint64(header.ExtraData[:], extraNonce+enOffset)
 
-		// Update current hash value with new extra nonce
-		extraNonceBytes := appendExtraNonce(headerData, header)
+		// Update equihash solver input bytes
+		headerBytes, _ := header.SerializeAllHeaderBytes()
 
 		// Search through the entire nonce range for a solution while
 		// periodically checking for early quit and stale block
@@ -126,18 +114,19 @@ func solve(t *testing.T, header *wire.BlockHeader) error {
 
 			header.Nonce = i
 
-			err := cequihash.SolveEquihash(n, k, extraNonceBytes, int64(i), validator)
-
-			if err != nil {
-				return err
-			}
+			cequihash.SolveEquihash(chainParams.N, chainParams.K, headerBytes, int64(i), validator)
 		}
 	}
 
 	return nil
 }
 
+// Note: this test usually should be skipped. It is used only to convert and re-generate
+// valid test data in cases of block header format or other relevant changes (for example, hash function)
 func TestConvertToNewFormat(t *testing.T) {
+
+	t.SkipNow()
+
 	// Load up the rest of the blocks up to HEAD~1.
 	filename := filepath.Join("testdata/", "blocks0to168.json.gz")
 	fi, err := os.Open(filename)
@@ -152,6 +141,7 @@ func TestConvertToNewFormat(t *testing.T) {
 	}
 
 	jsonStream, err := gzip.NewReader(fi)
+
 	if err != nil {
 		t.Fatalf("Unable to open input file %s (%v)", ofilename, err)
 	}
@@ -167,14 +157,14 @@ func TestConvertToNewFormat(t *testing.T) {
 
 	counter := 0
 
+	params := cloneParams(&chaincfg.SimNetParams)
+	params.GenesisBlock.Header.MerkleRoot = *mustParseHash("a216ea043f0d481a072424af646787794c32bcefd3ed181a090319bbf8a37105")
+	genesisHash := params.GenesisBlock.BlockHash()
+	params.GenesisHash = &genesisHash
+	hash := &genesisHash
+
 	for decoder.More() {
-
 		var bl JSONBlock
-		var hash []byte
-
-		if counter == 0 {
-			hash = make([]byte, chainhash.HashSize)
-		}
 
 		counter++
 
@@ -184,17 +174,29 @@ func TestConvertToNewFormat(t *testing.T) {
 			t.Fatalf("Unable to decode block (%d) %v", counter, err)
 		}
 
-		bl.MsgBlock.Header.PrevBlock.SetBytes(hash[:])
+		// Update block header with missing or incorrect values
+		bl.MsgBlock.Header.Size = uint32(bl.MsgBlock.SerializeSize())
+		bl.MsgBlock.Header.PrevBlock.SetBytes(hash.CloneBytes())
+		merkles := BuildMerkleTreeStore(exccutil.NewBlock(&bl.MsgBlock).Transactions())
+		bl.MsgBlock.Header.MerkleRoot = *merkles[len(merkles)-1]
 
 		t.Logf("Solving block %d...", counter)
 
-		err = solve(t, &bl.MsgBlock.Header)
+		// Solve block and store valid equihash solution
+		err = solve(t, &bl.MsgBlock.Header, params)
 
 		if err != nil {
 			t.Fatalf("Unable to find solution for block (%d) %v", counter, err)
 		}
 
-		t.Logf("...solved\n")
+		err = validateEquihashSolution(&bl.MsgBlock.Header, params)
+
+		if err != nil {
+			t.Logf("...not solved\n")
+
+		} else {
+			t.Logf("...solved\n")
+		}
 
 		err = encoder.Encode(bl)
 
@@ -202,8 +204,8 @@ func TestConvertToNewFormat(t *testing.T) {
 			t.Fatalf("Unable to encode block %v", err)
 		}
 
-		blockHash := bl.MsgBlock.BlockHash()
-		copy(hash, blockHash.CloneBytes())
+		prevHash := bl.MsgBlock.BlockHash()
+		hash = &prevHash
 	}
 	t.Logf("Total number of records: %d\n", counter)
 }
@@ -212,7 +214,7 @@ func TestConvertToNewFormat(t *testing.T) {
 // functionality.
 // TODO: once upon a time enable test and make it pass
 func TestBlockchainFunctions(t *testing.T) {
-	// Skip this test for now since it relies on binary files
+	// TODO: At present test does not pass because of some discrepancies in TxOut of block #2. Need to fix this.
 	t.SkipNow()
 
 	// Update simnet parameters to reflect what is expected by the legacy
@@ -231,34 +233,32 @@ func TestBlockchainFunctions(t *testing.T) {
 	defer teardownFunc()
 
 	// Load up the rest of the blocks up to HEAD~1.
-	filename := filepath.Join("testdata/", "blocks0to168.bz2")
+	filename := filepath.Join("testdata/", "blocks0to168.exccd.json.gz")
 	fi, err := os.Open(filename)
 	if err != nil {
 		t.Errorf("Unable to open %s: %v", filename, err)
 	}
-	bcStream := bzip2.NewReader(fi)
+	bcStream, err := gzip.NewReader(fi)
+	if err != nil {
+		t.Errorf("Unable to read archive %s: %v", filename, err)
+	}
+
+	defer bcStream.Close()
 	defer fi.Close()
 
-	// Create a buffer of the read file.
-	bcBuf := new(bytes.Buffer)
-	bcBuf.ReadFrom(bcStream)
-
 	// Create decoder from the buffer and a map to store the data.
-	bcDecoder := gob.NewDecoder(bcBuf)
-	blockChain := make(map[int64][]byte)
-
-	// Decode the blockchain into the map.
-	if err := bcDecoder.Decode(&blockChain); err != nil {
-		t.Errorf("error decoding test blockchain: %v", err.Error())
-	}
+	decoder := json.NewDecoder(bcStream)
 
 	// Insert blocks 1 to 168 and perform various tests.
 	for i := 1; i <= 168; i++ {
-		bl, err := exccutil.NewBlockFromBytes(blockChain[int64(i)])
+		var jsbl JSONBlock
+		err := decoder.Decode(&jsbl)
+
 		if err != nil {
-			t.Errorf("NewBlockFromBytes error: %v", err.Error())
+			t.Fatalf("Unable to decode block (%d) %v", i, err)
 		}
 
+		bl := exccutil.NewBlock(&jsbl.MsgBlock)
 		_, _, err = chain.ProcessBlock(bl, BFNone)
 		if err != nil {
 			t.Fatalf("ProcessBlock error at height %v: %v", i, err.Error())
