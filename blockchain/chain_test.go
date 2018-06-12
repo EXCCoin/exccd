@@ -40,7 +40,7 @@ func cloneParams(params *chaincfg.Params) *chaincfg.Params {
 	return &paramsCopy
 }
 
-//Temporary function for block data conversion
+//Functions and structures for test data conversion
 
 type JSONBlock struct {
 	MsgBlock wire.MsgBlock
@@ -65,14 +65,6 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 	} else {
 		return 0
 	}
-}
-
-func appendExtraNonce(headerData []byte, header *wire.BlockHeader) []byte {
-	result := make([]byte, len(headerData)+32)
-	copy(result, headerData)
-	result = append(result, header.ExtraData[:]...)
-
-	return result
 }
 
 const (
