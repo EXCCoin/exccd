@@ -527,7 +527,7 @@ func marshalElement(w io.Writer, element interface{}) error {
 		valueField := val.Field(i)
 		typeField := val.Type().Field(i)
 
-		//Skip nil pointers
+		// Skip nil pointers
 		if valueField.Kind() == reflect.Ptr {
 			if valueField.IsNil() {
 				continue
