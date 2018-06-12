@@ -47,6 +47,10 @@ type SolutionAppenderData struct {
 }
 
 func (data SolutionAppenderData) Validate(solution unsafe.Pointer) int {
+	if uintptr(solution) == 0 {
+		return 0
+	}
+
 	solutionIndexes := expandArray(data.n, data.k, solution)
 	data.solution.fullSolution = append(data.solution.fullSolution, solutionIndexes)
 	return 0

@@ -53,6 +53,10 @@ type solutionValidatorData struct {
 }
 
 func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
+	if uintptr(solution) == 0 {
+		return 0
+	}
+
 	solutionBytes := cequihash.ExtractSolution(data.params.N, data.params.K, solution)
 
 	copy(data.header.EquihashSolution[:], solutionBytes)

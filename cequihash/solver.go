@@ -15,6 +15,33 @@ import (
 	"unsafe"
 )
 
+// This code is a wrapper for C implementation of equihash.
+// The C part relies on the callback which validates found solution for some additional criteria.
+// The callback (from the point of view of C code) receives two parameters:
+// -- pointer to some (unknown to C code) structure. No attempts to access this structure or check its content
+//    are performed by C code. The pointer is just passed back and forth between C and Go.
+// -- pointer to the solution. Note that since we're dealing with Equihash algorithm there is no need to pass
+//    any information about solution size - it can be calculated on the fly from Equihash N and K parameters.
+// The C code uses equihashProxy() Go function as an entry point for callback. This function converts pointer to
+// data structure into Go EquihashCallback interface and calls Validate method with solution as a parameter.
+//
+// All of the above describes "business" call path, when actual solution is passed. There is additional call path
+// which is necessary to prematurely finish C Equihash solver. This is done as follows:
+// From time to time C code invokes callback with NULL solution. The purpose of this call is to check additional
+// exit conditions. If callback returns non-zero value for such an invocation, then C Equihash solver exits ASAP.
+//
+// The call path at the Go side is identical for both of the above cases, so Validate method must be prepared to
+// receive 0 as a solution. Corresponding check may look like this:
+//
+// ...Validate(solution unsafe.Pointer) int {
+//    if uintptr(solution) == 0 {
+//        if someExternalCondition {
+//            return 1 // stop the solver
+//        }
+//    }
+// ...
+// }
+
 type EquihashCallback interface {
 	Validate(pointer unsafe.Pointer) int
 }

@@ -248,6 +248,10 @@ static int basicSolve(blake2b_state *digest,
     for (uint32_t g = 0; x_size < initSize; g++) {
         generateHash(digest, g, tmpHash, hashOutput);
 
+        if (validBlockData && equihashProxy(validBlockData, 0)) {
+            goto cleanup;
+        }
+
         for (uint32_t i = 0; i < indicesPerHashOutput && x_size < initSize; i++) {
             expandArray(tmpHash + (i * n / 8), n / 8,
                         hash, hashLength,
@@ -271,6 +275,11 @@ static int basicSolve(blake2b_state *digest,
             while (i + j < x_size && hasCollision(X(i), X(i + j), collisionByteLength)) {
                 j++;
             }
+
+            if (validBlockData && equihashProxy(validBlockData, 0)) {
+                goto cleanup;
+            }
+
             /* Found partially collided values range between i and i+j. */
 
             // 2c) Calculate tuples (X_i ^ X_j, (i, j))
@@ -313,8 +322,13 @@ static int basicSolve(blake2b_state *digest,
             }
 
             for (uint32_t l = 0; l < j - 1; l++) {
+                if (validBlockData && equihashProxy(validBlockData, 0)) {
+                    goto cleanup;
+                }
+
                 for (uint32_t m = l + 1; m < j; m++) {
                     combineRows(Xc(xc_size), X(i + l), X(i + m), hashLen, lenIndices, 0);
+
                     if (isZero(Xc(xc_size), hashLen) &&
                         distinctIndices(X(i + l), X(i + m), hashLen, lenIndices)) {
                         uint8_t soln[equihashSolutionSize];
@@ -335,6 +349,8 @@ static int basicSolve(blake2b_state *digest,
                         if (validBlockData && equihashProxy(validBlockData, soln)) {
                             goto cleanup;
                         }
+                    } else if (validBlockData && equihashProxy(validBlockData, 0)) {
+                        goto cleanup;
                     }
                     ++xc_size;
                     assert(xc_size < xc_room);

@@ -188,10 +188,29 @@ type solutionValidatorData struct {
 	n      int
 	k      int
 	solved *bool
+	exiting *bool
 	header *wire.BlockHeader
+	quit chan struct{}
 }
 
 func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
+	if uintptr(solution) == 0 {
+		if *data.exiting {
+			minrLog.Infof("Shutdown is pending. Bailing out")
+			return 1
+		}
+		select {
+		case <- data.quit:
+			minrLog.Infof("Miner is stopping")
+			*data.exiting = true;
+			return 1
+		default:
+		}
+
+		return 0
+	}
+
+	minrLog.Infof("Validating found solution")
 	bytes := equihash.ExtractSolution(data.n, data.k, solution)
 
 	copy(data.header.EquihashSolution[:], bytes)
@@ -234,12 +253,14 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 	hashesCompleted := uint64(0)
 
 	solved := false
-	validator := solutionValidatorData{chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, &solved, header}
+	exiting := false
+	validator := solutionValidatorData{chaincfg.MainNetParams.N, chaincfg.MainNetParams.K,
+	&solved, &exiting, header, quit}
 
 	// Note that the entire extra nonce range is iterated and the offset is
 	// added relying on the fact that overflow will wrap around 0 as
 	// provided by the Go spec.
-	for extraNonce := uint64(0); extraNonce < maxExtraNonce && !solved; extraNonce++ {
+	for extraNonce := uint64(0); extraNonce < maxExtraNonce && !solved && !exiting; extraNonce++ {
 		// Update the extra nonce in the block template header with the
 		// new value.
 		littleEndian.PutUint64(header.ExtraData[:], extraNonce+enOffset)
@@ -250,12 +271,15 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 		// Search through the entire nonce range for a solution while
 		// periodically checking for early quit and stale block
 		// conditions along with updates to the speed monitor.
-		for i := uint32(0); i <= maxNonce && !solved; i++ {
+		for i := uint32(0); i <= maxNonce && !solved && !exiting; i++ {
 			select {
 			case <-quit:
+				minrLog.Infof("Miner is stopping")
+				exiting = true
 				return false
 
 			case <-ticker.C:
+				minrLog.Infof("Miner is updating time for currently mined block")
 				m.updateHashes <- hashesCompleted
 				hashesCompleted = 0
 
