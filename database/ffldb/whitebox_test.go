@@ -17,13 +17,13 @@ import (
 	"path/filepath"
 	"testing"
 
+	"compress/gzip"
+	"encoding/json"
 	"github.com/EXCCoin/exccd/database"
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/wire"
 	"github.com/btcsuite/goleveldb/leveldb"
 	ldberrors "github.com/btcsuite/goleveldb/leveldb/errors"
-	"compress/gzip"
-	"encoding/json"
 )
 
 var (
