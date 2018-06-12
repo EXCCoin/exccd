@@ -250,7 +250,7 @@ func TestBlockchainFunctions(t *testing.T) {
 	defer bcStream.Close()
 	defer fi.Close()
 
-	// // Create decoder from the buffer and a map to store the data.
+	// Create decoder from the buffer and a map to store the data.
 	decoder := json.NewDecoder(bcStream)
 
 	// Insert blocks 1 to 168 and perform various tests.
