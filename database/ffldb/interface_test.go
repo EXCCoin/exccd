@@ -24,12 +24,12 @@ import (
 	"testing"
 	"time"
 
+	"compress/gzip"
+	"encoding/json"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/database"
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/wire"
-	"compress/gzip"
-	"encoding/json"
 )
 
 var (
