@@ -12,11 +12,9 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 )
 
-// TODO: once upon a time enable test and make it pass
 func TestBlockSubsidy(t *testing.T) {
-	// Test is affected by block time and inflation
-	// Fix it after integrating inflation changes
-	t.SkipNow()
+	// TODO: Test is affected by block time and inflation. Fix it after applying inflation changes
+
 	mainnet := &chaincfg.MainNetParams
 	subsidyCache := NewSubsidyCache(0, mainnet)
 
@@ -27,7 +25,7 @@ func TestBlockSubsidy(t *testing.T) {
 			continue
 		}
 
-		if i%mainnet.SubsidyReductionInterval == 0 {
+		if i % mainnet.SubsidyReductionInterval == 0 {
 			numBlocks := mainnet.SubsidyReductionInterval
 			// First reduction internal, which is reduction interval - 2
 			// to skip the genesis block and block one.
@@ -47,7 +45,7 @@ func TestBlockSubsidy(t *testing.T) {
 		}
 	}
 
-	expectedSubsidy := int64(2100000004058704)
+	expectedSubsidy := int64(3116646855157966)
 	if totalSubsidy != expectedSubsidy {
 		t.Errorf("Bad total subsidy; want %v, got %v", expectedSubsidy, totalSubsidy)
 	}
