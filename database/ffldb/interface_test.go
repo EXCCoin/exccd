@@ -16,8 +16,6 @@ package ffldb_test
 
 import (
 	"bytes"
-	"compress/bzip2"
-	"encoding/gob"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -30,6 +28,8 @@ import (
 	"github.com/EXCCoin/exccd/database"
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/wire"
+	"compress/gzip"
+	"encoding/json"
 )
 
 var (
@@ -38,11 +38,15 @@ var (
 
 	// blockDataFile is the path to a file containing the first 168 blocks
 	// of the simulation network.
-	blockDataFile = filepath.Join("..", "..", "blockchain", "testdata", "blocks0to168.bz2")
+	blockDataFile = filepath.Join("..", "..", "blockchain", "testdata", "blocks0to168.exccd.json.gz")
 
 	// errSubTestFail is used to signal that a sub test returned false.
 	errSubTestFail = fmt.Errorf("sub test failure")
 )
+
+type JSONBlock struct {
+	MsgBlock wire.MsgBlock
+}
 
 // loadBlocks loads the blocks contained in the testdata directory and returns
 // a slice of them.
@@ -60,30 +64,29 @@ func loadBlocks(t *testing.T, dataFile string, network wire.CurrencyNet) ([]*exc
 		}
 	}()
 
-	bcStream := bzip2.NewReader(fi)
+	bcStream, err := gzip.NewReader(fi)
 
-	// Create a buffer of the read file.
-	bcBuf := new(bytes.Buffer)
-	bcBuf.ReadFrom(bcStream)
-
-	// Create decoder from the buffer and a map to store the data.
-	bcDecoder := gob.NewDecoder(bcBuf)
-	blockChain := make(map[int64][]byte)
-
-	// Decode the blockchain into the map.
-	if err := bcDecoder.Decode(&blockChain); err != nil {
-		t.Errorf("error decoding test blockchain: %v", err.Error())
+	if err != nil {
+		t.Errorf("Unable to read archive %s: %v", dataFile, err)
 	}
 
+	// Create decoder from the buffer and a map to store the data.
+	decoder := json.NewDecoder(bcStream)
+
 	// Fetch blocks 1 to 168 and perform various tests.
-	blocks := make([]*exccutil.Block, 169)
-	for i := 0; i <= 168; i++ {
-		bl, err := exccutil.NewBlockFromBytes(blockChain[int64(i)])
+	blocks := make([]*exccutil.Block, 168)
+	for i := 0; i < 168; i++ {
+		var jsbl JSONBlock
+		err := decoder.Decode(&jsbl)
+
+		if err != nil {
+			t.Fatalf("Unable to decode block (%d) %v", i, err)
+		}
 		if err != nil {
 			t.Errorf("NewBlockFromBytes error: %v", err.Error())
 		}
 
-		blocks[i] = bl
+		blocks[i] = exccutil.NewBlock(&jsbl.MsgBlock)
 	}
 
 	return blocks, nil
@@ -2232,11 +2235,7 @@ func testConcurrentClose(tc *testContext) bool {
 // testInterface tests performs tests for the various interfaces of the database
 // package which require state in the database for the given database type.
 
-// TODO: once upon a time enable test and make it pass
 func testInterface(t *testing.T, db database.DB) {
-	// Relies on external encoded binary files
-	t.SkipNow()
-
 	// Create a test context to pass around.
 	context := testContext{t: t, db: db}
 
