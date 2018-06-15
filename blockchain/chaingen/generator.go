@@ -15,14 +15,14 @@ import (
 	"sort"
 	"time"
 
+	"github.com/EXCCoin/exccd/blockchain/stake"
+	"github.com/EXCCoin/exccd/cequihash"
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
-	"github.com/EXCCoin/exccd/cequihash"
 	"unsafe"
-	"github.com/EXCCoin/exccd/blockchain/stake"
 )
 
 var (
@@ -164,7 +164,7 @@ type Generator struct {
 	missedVotes     map[chainhash.Hash][]*stakeTicket
 
 	// Blockchain we're generating blocks for
-	chain 			ChainInterface
+	chain ChainInterface
 }
 
 // MakeGenerator returns a generator instance initialized with the genesis block
@@ -196,7 +196,7 @@ func MakeGenerator(params *chaincfg.Params, chain ChainInterface) (Generator, er
 		originalParents:  make(map[chainhash.Hash]chainhash.Hash),
 		wonTickets:       make(map[chainhash.Hash][]*stakeTicket),
 		missedVotes:      make(map[chainhash.Hash][]*stakeTicket),
-		chain:			  chain,
+		chain:            chain,
 	}, nil
 }
 

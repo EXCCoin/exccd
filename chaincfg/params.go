@@ -28,7 +28,7 @@ var (
 	// have for the main network.  It is the value 2^555 - 1.
 	// TODO: restore production parameters
 	// TODO: Restore original pow limit for mainnet: 2^224 - 1.
-	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 511), bigOne)
+	mainPowLimit        = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 511), bigOne)
 	mainNetPowLimitBits = bigToCompact(mainPowLimit)
 
 	// testNetPowLimit is the highest proof of work value a ExchangeCoin block
@@ -42,9 +42,9 @@ var (
 	// SimNet parameters
 
 	// Original settings
-	simTicketPoolSize = uint16(64)
-	simCoinbaseMaturity = uint16(16)
-	simTicketMaturity = uint16(16)
+	simTicketPoolSize       = uint16(64)
+	simCoinbaseMaturity     = uint16(16)
+	simTicketMaturity       = uint16(16)
 	simStakeVersionInterval = int64(8 * 2 * 7)
 
 	// Fastest settings, but not all tests pass
@@ -55,7 +55,7 @@ var (
 
 	// simNetPowLimit is the highest proof of work value a ExchangeCoin block
 	// can have for the simulation test network.  It is the value 2^255 - 1.
-	simNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 511), bigOne)
+	simNetPowLimit     = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 511), bigOne)
 	simNetPowLimitBits = bigToCompact(simNetPowLimit)
 )
 
@@ -79,7 +79,7 @@ var CheckForDuplicateHashes = false
 
 // CPUMinerThreads is the default number of threads to utilize with the
 // CPUMiner when mining.
-var CPUMinerThreads = 1
+var CPUMinerThreads = 2
 
 // Checkpoint identifies a known good point in the block chain.  Using
 // checkpoints allows a few optimizations for old blocks during initial download
@@ -487,8 +487,8 @@ var MainNetParams = Params{
 	// TODO: restore production parameters
 	// N:           200,
 	// K:           9,
-	N:           96,
-	K:           5,
+	N: 96,
+	K: 5,
 
 	// Chain parameters
 	GenesisBlock: &genesisBlock,
@@ -982,7 +982,7 @@ var SimNetParams = Params{
 	TicketPoolSize:          simTicketPoolSize,
 	TicketsPerBlock:         5,
 	TicketMaturity:          simTicketMaturity,
-	TicketExpiry:            uint32(6*simTicketPoolSize), // 6*TicketPoolSize
+	TicketExpiry:            uint32(6 * simTicketPoolSize), // 6*TicketPoolSize
 	CoinbaseMaturity:        simCoinbaseMaturity,
 	SStxChangeMaturity:      1,
 	TicketPoolSizeWeight:    4,
@@ -990,9 +990,9 @@ var SimNetParams = Params{
 	StakeDiffWindowSize:     8,
 	StakeDiffWindows:        8,
 	StakeVersionInterval:    simStakeVersionInterval,
-	MaxFreshStakePerBlock:   20,            // 4*TicketsPerBlock
-	StakeEnabledHeight:      int64(simCoinbaseMaturity + simTicketMaturity),       // CoinbaseMaturity + TicketMaturity
-	StakeValidationHeight:   int64(simCoinbaseMaturity + simTicketPoolSize * 2), // CoinbaseMaturity + TicketPoolSize*2
+	MaxFreshStakePerBlock:   20,                                               // 4*TicketsPerBlock
+	StakeEnabledHeight:      int64(simCoinbaseMaturity + simTicketMaturity),   // CoinbaseMaturity + TicketMaturity
+	StakeValidationHeight:   int64(simCoinbaseMaturity + simTicketPoolSize*2), // CoinbaseMaturity + TicketPoolSize*2
 	StakeBaseSigScript:      []byte{0xDE, 0xAD, 0xBE, 0xEF},
 	StakeMajorityMultiplier: 3,
 	StakeMajorityDivisor:    4,
