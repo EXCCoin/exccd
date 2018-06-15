@@ -379,7 +379,7 @@ func checkProofOfWork(header *wire.BlockHeader, chainParams *chaincfg.Params, fl
 		err := ValidateEquihashSolution(header, chainParams)
 
 		if err != nil {
-			return ruleError(ErrInvalidEquihashSolution, "block has incorrect equihash solution")
+			return err
 		}
 	}
 

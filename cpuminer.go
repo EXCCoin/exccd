@@ -185,12 +185,12 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 }
 
 type solutionValidatorData struct {
-	n      int
-	k      int
-	solved *bool
+	n       int
+	k       int
+	solved  *bool
 	exiting *bool
-	header *wire.BlockHeader
-	quit chan struct{}
+	header  *wire.BlockHeader
+	quit    chan struct{}
 }
 
 func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
@@ -200,9 +200,9 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 			return 1
 		}
 		select {
-		case <- data.quit:
+		case <-data.quit:
 			minrLog.Infof("Miner is stopping")
-			*data.exiting = true;
+			*data.exiting = true
 			return 1
 		default:
 		}
@@ -255,7 +255,7 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 	solved := false
 	exiting := false
 	validator := solutionValidatorData{chaincfg.MainNetParams.N, chaincfg.MainNetParams.K,
-	&solved, &exiting, header, quit}
+		&solved, &exiting, header, quit}
 
 	// Note that the entire extra nonce range is iterated and the offset is
 	// added relying on the fact that overflow will wrap around 0 as
