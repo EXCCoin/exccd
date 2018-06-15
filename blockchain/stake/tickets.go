@@ -182,6 +182,10 @@ func (sn *Node) Winners() []chainhash.Hash {
 	return sn.nextWinners
 }
 
+func (sn *Node) ReplaceWinners(newWinners []chainhash.Hash) {
+	sn.nextWinners = newWinners
+}
+
 // FinalState returns the final state lottery checksum of the node.
 func (sn *Node) FinalState() [6]byte {
 	return sn.finalState

@@ -14,7 +14,9 @@ import (
 	"math"
 	"time"
 
+	"encoding/json"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"reflect"
 )
 
 const (
@@ -254,7 +256,7 @@ func readElement(r io.Reader, element interface{}) error {
 		}
 		return nil
 
-	// Unix timestamp encoded as a uint32.
+		// Unix timestamp encoded as a uint32.
 	case *uint32Time:
 		rv, err := binarySerializer.Uint32(r, binary.LittleEndian)
 		if err != nil {
@@ -263,7 +265,7 @@ func readElement(r io.Reader, element interface{}) error {
 		*e = uint32Time(time.Unix(int64(rv), 0))
 		return nil
 
-	// Unix timestamp encoded as an int64.
+		// Unix timestamp encoded as an int64.
 	case *int64Time:
 		rv, err := binarySerializer.Uint64(r, binary.LittleEndian)
 		if err != nil {
@@ -272,7 +274,7 @@ func readElement(r io.Reader, element interface{}) error {
 		*e = int64Time(time.Unix(int64(rv), 0))
 		return nil
 
-	// Message header checksum.
+		// Message header checksum.
 	case *[4]byte:
 		_, err := io.ReadFull(r, e[:])
 		if err != nil {
@@ -287,7 +289,7 @@ func readElement(r io.Reader, element interface{}) error {
 		}
 		return nil
 
-	// Message header command.
+		// Message header command.
 	case *[CommandSize]uint8:
 		_, err := io.ReadFull(r, e[:])
 		if err != nil {
@@ -295,7 +297,7 @@ func readElement(r io.Reader, element interface{}) error {
 		}
 		return nil
 
-	// IP address.
+		// IP address.
 	case *[16]byte:
 		_, err := io.ReadFull(r, e[:])
 		if err != nil {
@@ -420,7 +422,7 @@ func writeElement(w io.Writer, element interface{}) error {
 		}
 		return nil
 
-	// Message header checksum.
+		// Message header checksum.
 	case [4]byte:
 		_, err := w.Write(e[:])
 		if err != nil {
@@ -428,7 +430,7 @@ func writeElement(w io.Writer, element interface{}) error {
 		}
 		return nil
 
-	// Message header command.
+		// Message header command.
 	case [CommandSize]uint8:
 		_, err := w.Write(e[:])
 		if err != nil {
@@ -436,7 +438,7 @@ func writeElement(w io.Writer, element interface{}) error {
 		}
 		return nil
 
-	// IP address.
+		// IP address.
 	case [16]byte:
 		_, err := w.Write(e[:])
 		if err != nil {
@@ -502,6 +504,90 @@ func writeElements(w io.Writer, elements ...interface{}) error {
 		}
 	}
 	return nil
+}
+
+func marshalElement(w io.Writer, element interface{}) error {
+	val := reflect.ValueOf(element)
+
+	if val.Kind() != reflect.Struct {
+		elementVal, err := json.Marshal(element)
+
+		if err != nil {
+			return err
+		}
+
+		_, err = w.Write(elementVal)
+
+		return err
+	}
+
+	w.Write([]byte("{"))
+
+	for i := 0; i < val.NumField(); i++ {
+		valueField := val.Field(i)
+		typeField := val.Type().Field(i)
+
+		// Skip nil pointers
+		if valueField.Kind() == reflect.Ptr {
+			if valueField.IsNil() {
+				continue
+			}
+		}
+
+		err := writeFieldNameAndPrefix(w, typeField.Name)
+
+		if err != nil {
+			return err
+		}
+
+		err = writeFieldValue(w, valueField, i != (val.NumField()-1))
+
+		if err != nil {
+			return err
+		}
+	}
+
+	w.Write([]byte("}"))
+
+	return nil
+}
+
+func writeFieldValue(w io.Writer, value reflect.Value, writeComma bool) error {
+	fieldVal, err := json.Marshal(value.Interface())
+
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(fieldVal)
+
+	if err != nil {
+		return err
+	}
+
+	if writeComma {
+		_, err = w.Write([]byte(","))
+		return err
+	}
+
+	return nil
+}
+
+func writeFieldNameAndPrefix(w io.Writer, fieldName string) error {
+	_, err := w.Write([]byte("\""))
+
+	if err != nil {
+		return err
+	}
+	_, err = w.Write([]byte(fieldName))
+
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write([]byte("\" : "))
+
+	return err
 }
 
 // ReadVarInt reads a variable length integer from r and returns it as a uint64.

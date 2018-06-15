@@ -265,6 +265,17 @@ func NewOutPoint(hash *chainhash.Hash, index uint32, tree int8) *OutPoint {
 	}
 }
 
+func (b *OutPoint) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
+	err := marshalElement(buf, *b)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
 // String returns the OutPoint in the human-readable form "hash:index".
 func (o OutPoint) String() string {
 	// Allocate enough for hash string, colon, and 10 digits.  Although
@@ -291,6 +302,17 @@ type TxIn struct {
 	BlockHeight     uint32
 	BlockIndex      uint32
 	SignatureScript []byte
+}
+
+func (b *TxIn) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
+	err := marshalElement(buf, *b)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
 
 // SerializeSizePrefix returns the number of bytes it would take to serialize
@@ -351,6 +373,17 @@ type TxOut struct {
 	PkScript []byte
 }
 
+func (b *TxOut) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
+	err := marshalElement(buf, *b)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
 // SerializeSize returns the number of bytes it would take to serialize the
 // the transaction output.
 func (t *TxOut) SerializeSize() int {
@@ -383,6 +416,17 @@ type MsgTx struct {
 	TxOut      []*TxOut
 	LockTime   uint32
 	Expiry     uint32
+}
+
+func (b *MsgTx) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
+	err := marshalElement(buf, *b)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
 
 // AddTxIn adds a transaction input to the message.

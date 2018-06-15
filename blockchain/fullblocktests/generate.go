@@ -356,7 +356,7 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 	// Create a generator instance initialized with the genesis block as the
 	// tip as well as some cached payment scripts to be used throughout the
 	// tests.
-	g, err := chaingen.MakeGenerator(simNetParams)
+	g, err := chaingen.MakeGenerator(simNetParams, nil)
 	if err != nil {
 		return nil, err
 	}

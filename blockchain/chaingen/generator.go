@@ -20,6 +20,9 @@ import (
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/txscript"
 	"github.com/EXCCoin/exccd/wire"
+	"github.com/EXCCoin/exccd/cequihash"
+	"unsafe"
+	"github.com/EXCCoin/exccd/blockchain/stake"
 )
 
 var (
@@ -130,6 +133,10 @@ func (t stakeTicketSorter) Less(i, j int) bool {
 	return bytes.Compare(iHash, jHash) < 0
 }
 
+type ChainInterface interface {
+	GetPrevStakeNode(blockHeader *wire.BlockHeader) (*stake.Node, error)
+}
+
 // Generator houses state used to ease the process of generating test blocks
 // that build from one another along with housing other useful things such as
 // available spendable outputs and generic payment scripts used throughout the
@@ -155,11 +162,14 @@ type Generator struct {
 	wonTickets      map[chainhash.Hash][]*stakeTicket
 	expiredTickets  []*stakeTicket
 	missedVotes     map[chainhash.Hash][]*stakeTicket
+
+	// Blockchain we're generating blocks for
+	chain 			ChainInterface
 }
 
 // MakeGenerator returns a generator instance initialized with the genesis block
 // as the tip as well as a cached generic pay-to-script-hash script for OP_TRUE.
-func MakeGenerator(params *chaincfg.Params) (Generator, error) {
+func MakeGenerator(params *chaincfg.Params, chain ChainInterface) (Generator, error) {
 	// Generate a generic pay-to-script-hash script that is a simple
 	// OP_TRUE.  This allows the tests to avoid needing to generate and
 	// track actual public keys and signatures.
@@ -186,6 +196,7 @@ func MakeGenerator(params *chaincfg.Params) (Generator, error) {
 		originalParents:  make(map[chainhash.Hash]chainhash.Hash),
 		wonTickets:       make(map[chainhash.Hash][]*stakeTicket),
 		missedVotes:      make(map[chainhash.Hash][]*stakeTicket),
+		chain:			  chain,
 	}, nil
 }
 
@@ -1019,99 +1030,6 @@ func (g *Generator) CalcNextRequiredStakeDifficulty() int64 {
 	return nextDiff
 }
 
-// hash256prng is a determinstic pseudorandom number generator that uses a
-// 256-bit secure hashing function to generate random uint32s starting from
-// an initial seed.
-type hash256prng struct {
-	seed       chainhash.Hash // Initialization seed
-	idx        uint64         // Hash iterator index
-	cachedHash chainhash.Hash // Most recently generated hash
-	hashOffset int            // Offset into most recently generated hash
-}
-
-// newHash256PRNG creates a pointer to a newly created hash256PRNG.
-func newHash256PRNG(seed []byte) *hash256prng {
-	// The provided seed is initialized by appending a constant derived from
-	// the hex representation of pi and hashing the result to give 32 bytes.
-	// This ensures the PRNG is always doing a short number of rounds
-	// regardless of input since it will only need to hash small messages
-	// (less than 64 bytes).
-	seedHash := chainhash.HashFunc(append(seed, hash256prngSeedConst...))
-	return &hash256prng{
-		seed:       seedHash,
-		idx:        0,
-		cachedHash: seedHash,
-	}
-}
-
-// State returns a hash that represents the current state of the deterministic
-// PRNG.
-func (hp *hash256prng) State() chainhash.Hash {
-	// The final state is the hash of the most recently generated hash
-	// concatenated with both the hash iterator index and the offset into
-	// the hash.
-	//
-	//   hash(hp.cachedHash || hp.idx || hp.hashOffset)
-	finalState := make([]byte, len(hp.cachedHash)+4+1)
-	copy(finalState, hp.cachedHash[:])
-	offset := len(hp.cachedHash)
-	binary.BigEndian.PutUint32(finalState[offset:], uint32(hp.idx))
-	offset += 4
-	finalState[offset] = byte(hp.hashOffset)
-	return chainhash.HashH(finalState)
-}
-
-// Hash256Rand returns a uint32 random number using the pseudorandom number
-// generator and updates the state.
-func (hp *hash256prng) Hash256Rand() uint32 {
-	offset := hp.hashOffset * 4
-	r := binary.BigEndian.Uint32(hp.cachedHash[offset : offset+4])
-	hp.hashOffset++
-
-	// Generate a new hash and reset the hash position index once it would
-	// overflow the available bytes in the most recently generated hash.
-	if hp.hashOffset > 7 {
-		// Hash of the seed concatenated with the hash iterator index.
-		//   hash(hp.seed || hp.idx)
-		data := make([]byte, len(hp.seed)+4)
-		copy(data, hp.seed[:])
-		binary.BigEndian.PutUint32(data[len(hp.seed):], uint32(hp.idx))
-		hp.cachedHash = chainhash.HashH(data)
-		hp.idx++
-		hp.hashOffset = 0
-	}
-
-	// Roll over the entire PRNG by re-hashing the seed when the hash
-	// iterator index overlows a uint32.
-	if hp.idx > math.MaxUint32 {
-		hp.seed = chainhash.HashH(hp.seed[:])
-		hp.cachedHash = hp.seed
-		hp.idx = 0
-	}
-
-	return r
-}
-
-// uniformRandom returns a random in the range [0, upperBound) while avoiding
-// modulo bias to ensure a normal distribution within the specified range.
-func (hp *hash256prng) uniformRandom(upperBound uint32) uint32 {
-	if upperBound < 2 {
-		return 0
-	}
-
-	// (2^32 - (x*2)) % x == 2^32 % x when x <= 2^31
-	min := ((math.MaxUint32 - (upperBound * 2)) + 1) % upperBound
-	if upperBound > 0x80000000 {
-		min = 1 + ^upperBound
-	}
-
-	r := hp.Hash256Rand()
-	for r < min {
-		r = hp.Hash256Rand()
-	}
-	return r % upperBound
-}
-
 // winningTickets returns a slice of tickets that are required to vote for the
 // given block being voted on and live ticket pool and the associated underlying
 // deterministic prng state hash.
@@ -1140,35 +1058,18 @@ func winningTickets(voteBlock *wire.MsgBlock, liveTickets []*stakeTicket, numVot
 	// Construct list of winners by generating successive values from the
 	// deterministic prng and using them as indices into the sorted live
 	// ticket pool while skipping any duplicates that might occur.
-	prng := newHash256PRNG(buf.Bytes())
+	seed := stake.CalcHash256PRNGIV(buf.Bytes())
+	prng := stake.NewHash256PRNGFromIV(seed)
 	winners := make([]*stakeTicket, 0, numVotes)
 	usedOffsets := make(map[uint32]struct{})
 	for uint16(len(winners)) < numVotes {
-		ticketIndex := prng.uniformRandom(numLiveTickets)
+		ticketIndex := prng.Hash256Rand() % numLiveTickets
 		if _, exists := usedOffsets[ticketIndex]; !exists {
 			usedOffsets[ticketIndex] = struct{}{}
 			winners = append(winners, liveTickets[ticketIndex])
 		}
 	}
-	return winners, prng.State(), nil
-}
-
-// calcFinalLotteryState calculates the final lottery state for a set of winning
-// tickets and the associated deterministic prng state hash after selecting the
-// winners.  It is the first 6 bytes of:
-//   blake256(firstTicketHash || ... || lastTicketHash || prngStateHash)
-func calcFinalLotteryState(winners []*stakeTicket, prngStateHash chainhash.Hash) [6]byte {
-	data := make([]byte, (len(winners)+1)*chainhash.HashSize)
-	for i := 0; i < len(winners); i++ {
-		h := winners[i].tx.CachedTxHash()
-		copy(data[chainhash.HashSize*i:], h[:])
-	}
-	copy(data[chainhash.HashSize*len(winners):], prngStateHash[:])
-	dataHash := chainhash.HashH(data)
-
-	var finalState [6]byte
-	copy(finalState[:], dataHash[0:6])
-	return finalState
+	return winners, prng.StateHash(), nil
 }
 
 // nextPowerOfTwo returns the next highest power of two from a given number if
@@ -1359,71 +1260,68 @@ func IsSolved(header *wire.BlockHeader) bool {
 	return hashToBig(&hash).Cmp(targetDifficulty) <= 0
 }
 
-// solveBlock attempts to find a nonce which makes the passed block header hash
-// to a value less than the target difficulty.  When a successful solution is
-// found, true is returned and the nonce field of the passed header is updated
-// with the solution.  False is returned if no solution exists.
-//
-// NOTE: This function will never solve blocks with a nonce of 0.  This is done
-// so the 'NextBlock' function can properly detect when a nonce was modified by
-// a munge function.
-func solveBlock(header *wire.BlockHeader) bool {
-	// sbResult is used by the solver goroutines to send results.
-	type sbResult struct {
-		found bool
-		nonce uint32
+type solutionValidatorData struct {
+	params *chaincfg.Params
+	solved *bool
+	header *wire.BlockHeader
+}
+
+func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
+	if uintptr(solution) == 0 {
+		return 0
 	}
 
-	// solver accepts a block header and a nonce range to test. It is
-	// intended to be run as a goroutine.
-	targetDifficulty := compactToBig(header.Bits)
-	quit := make(chan bool)
-	results := make(chan sbResult)
-	solver := func(hdr wire.BlockHeader, startNonce, stopNonce uint32) {
-		// We need to modify the nonce field of the header, so make sure
-		// we work with a copy of the original header.
-		for i := startNonce; i >= startNonce && i <= stopNonce; i++ {
-			select {
-			case <-quit:
-				results <- sbResult{false, 0}
-				return
-			default:
-				hdr.Nonce = i
-				hash := hdr.BlockHash()
-				if hashToBig(&hash).Cmp(
-					targetDifficulty) <= 0 {
+	solutionBytes := cequihash.ExtractSolution(data.params.N, data.params.K, solution)
 
-					results <- sbResult{true, i}
-					return
-				}
-			}
-		}
-		results <- sbResult{false, 0}
+	copy(data.header.EquihashSolution[:], solutionBytes)
+
+	hash := data.header.BlockHash()
+
+	if hashToBig(&hash).Cmp(compactToBig(data.header.Bits)) <= 0 {
+		*data.solved = true
+		return 1
+	} else {
+		return 0
+	}
+}
+
+const (
+	// maxNonce is the maximum value a nonce can be in a block header.
+	maxNonce = ^uint32(0) // 2^32 - 1
+
+	// maxExtraNonce is the maximum value an extra nonce used in a coinbase
+	// transaction can be.
+	maxExtraNonce = ^uint64(0) // 2^64 - 1
+)
+
+func SolveBlockWithEquihash(header *wire.BlockHeader, chainParams *chaincfg.Params) bool {
+	enOffset, err := wire.RandomUint64()
+	if err != nil {
+		enOffset = 0
 	}
 
-	startNonce := uint32(1)
-	stopNonce := uint32(math.MaxUint32)
-	numCores := uint32(runtime.NumCPU())
-	noncesPerCore := (stopNonce - startNonce) / numCores
-	for i := uint32(0); i < numCores; i++ {
-		rangeStart := startNonce + (noncesPerCore * i)
-		rangeStop := startNonce + (noncesPerCore * (i + 1)) - 1
-		if i == numCores-1 {
-			rangeStop = stopNonce
-		}
-		go solver(*header, rangeStart, rangeStop)
-	}
-	var foundResult bool
-	for i := uint32(0); i < numCores; i++ {
-		result := <-results
-		if !foundResult && result.found {
-			close(quit)
-			header.Nonce = result.nonce
-			foundResult = true
+	solved := false
+	validator := solutionValidatorData{chainParams, &solved, header}
+
+	for extraNonce := uint64(0); extraNonce < maxExtraNonce && !solved; extraNonce++ {
+		// Update the extra nonce in the block template header with the
+		// new value.
+		binary.LittleEndian.PutUint64(header.ExtraData[:], extraNonce+enOffset)
+
+		// Update equihash solver input bytes
+		headerBytes, _ := header.SerializeAllHeaderBytes()
+
+		// Search through the entire nonce range for a solution while
+		// periodically checking for early quit and stale block
+		// conditions along with updates to the speed monitor.
+		for i := uint32(0); i <= maxNonce && !solved; i++ {
+			header.Nonce = i
+
+			cequihash.SolveEquihash(chainParams.N, chainParams.K, headerBytes, int64(i), validator)
 		}
 	}
 
-	return foundResult
+	return solved
 }
 
 // ReplaceWithNVotes returns a function that itself takes a block and modifies
@@ -1962,7 +1860,6 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 	// current tip block and provided ticket spendable outputs.
 	var ticketWinners []*stakeTicket
 	var stakeTxns []*wire.MsgTx
-	var finalState [6]byte
 	nextHeight := g.tip.Header.Height + 1
 	if nextHeight > uint32(g.params.CoinbaseMaturity) {
 		// Generate votes once the stake validation height has been
@@ -1971,7 +1868,7 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 			// Generate and add the vote transactions for the
 			// winning tickets to the stake tree.
 			numVotes := g.params.TicketsPerBlock
-			winners, stateHash, err := winningTickets(g.tip,
+			winners, _, err := winningTickets(g.tip,
 				g.liveTickets, numVotes)
 			if err != nil {
 				panic(err)
@@ -1981,10 +1878,6 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 				voteTx := g.createVoteTx(g.tip, ticket)
 				stakeTxns = append(stakeTxns, voteTx)
 			}
-
-			// Calculate the final lottery state hash for use in the
-			// block header.
-			finalState = calcFinalLotteryState(winners, stateHash)
 		}
 
 		// Generate ticket purchases (sstx) using the provided spendable
@@ -2098,7 +1991,7 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 			MerkleRoot:   calcMerkleRoot(regularTxns),
 			StakeRoot:    calcMerkleRoot(stakeTxns),
 			VoteBits:     1,
-			FinalState:   finalState,
+			FinalState:   [6]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 			Voters:       numVotes,
 			FreshStake:   uint8(len(ticketPurchases)),
 			Revocations:  numTicketRevocations,
@@ -2116,6 +2009,21 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 		STransactions: stakeTxns,
 	}
 	block.Header.Size = uint32(block.SerializeSize())
+
+	if g.chain != nil {
+		// Update final state
+		stakeNode, _ := g.chain.GetPrevStakeNode(&block.Header)
+		block.Header.FinalState = stakeNode.FinalState()
+		block.Header.PoolSize = uint32(stakeNode.PoolSize())
+
+		var extraWinners []chainhash.Hash
+
+		for _, winner := range ticketWinners {
+			extraWinners = append(extraWinners, *winner.tx.CachedTxHash())
+		}
+
+		stakeNode.ReplaceWinners(extraWinners)
+	}
 
 	// Perform any block munging just before solving.  Once stake validation
 	// height has been reached, update the vote commitments accordingly if the
@@ -2146,7 +2054,7 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 
 	// Only solve the block if the nonce wasn't manually changed by a munge
 	// function.
-	if block.Header.Nonce == curNonce && !solveBlock(&block.Header) {
+	if block.Header.Nonce == curNonce && !SolveBlockWithEquihash(&block.Header, g.params) {
 		panic(fmt.Sprintf("unable to solve block at height %d",
 			block.Header.Height))
 	}

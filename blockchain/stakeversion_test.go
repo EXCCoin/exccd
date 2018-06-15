@@ -316,7 +316,7 @@ func TestCalcStakeVersionByNode(t *testing.T) {
 // TestIsStakeMajorityVersion ensures that determining the current majority
 // stake version works as intended under a wide variety of scenarios.
 func TestIsStakeMajorityVersion(t *testing.T) {
-	// TODO: fix this test
+	// TODO: fails with following diagnostics: 75%-1 with 3 votes blockversion 3 calcStakeVersionByNode got 0 expected 1
 	t.SkipNow()
 
 	params := &chaincfg.MainNetParams

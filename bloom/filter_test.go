@@ -245,9 +245,9 @@ func TestFilterInsertKey(t *testing.T) {
 	}
 }
 
-//TODO: once upon a time enable test and make it pass
+// TODO: once upon a time enable test and make it pass
 func TestFilterBloomMatch(t *testing.T) {
-	//A lot of unclear (yet) hash transformations/matching. Ignore for now
+	// Some hashes still not matched
 	t.SkipNow()
 
 	// tx 2 from blk 10000
@@ -291,7 +291,7 @@ func TestFilterBloomMatch(t *testing.T) {
 	}
 
 	f := bloom.NewFilter(10, 0, 0.000001, wire.BloomUpdateAll)
-	inputStr := "50112deb46289119be635b3e486b1e24ae1e7328c228e20e0a753df8621f5e8c"
+	inputStr := "25341ade0cc4581209cf95de4097f9bb8bcb1b589bd2f1df2948629d9c65049b"
 	hash, err := chainhash.NewHashFromStr(inputStr)
 	if err != nil {
 		t.Errorf("TestFilterBloomMatch NewHashFromStr failed: %v\n", err)
@@ -303,7 +303,7 @@ func TestFilterBloomMatch(t *testing.T) {
 	}
 
 	f = bloom.NewFilter(10, 0, 0.000001, wire.BloomUpdateAll)
-	inputStr = "8c5e1f62f83d750a0ee228c228731eae241e6b483e5b63be19912846eb2d1150"
+	inputStr = "4036ef142144c0cb9499e9af747c0ca0a30afb72e12098ba8df99f70ab4eb4d9"
 	hashBytes, err := hex.DecodeString(inputStr)
 	if err != nil {
 		t.Errorf("TestFilterBloomMatch DecodeString failed: %v\n", err)
@@ -482,9 +482,9 @@ func TestFilterInsertUpdateNone(t *testing.T) {
 	}
 }
 
-//TODO: once upon a time enable test and make it pass
+// TODO: once upon a time enable test and make it pass
 func TestFilterInsertP2PubKeyOnly(t *testing.T) {
-	//A lot of unclear (yet) hash transformations/matching. Ignore for now
+	// A lot of unclear (yet) hash transformations/matching. Ignore for now
 	t.SkipNow()
 
 	blockStr := "000000003ffad804971ce6b8a13c8162287222d91395fa77b6bea6b4" +

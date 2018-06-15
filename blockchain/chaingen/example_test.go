@@ -17,7 +17,7 @@ import (
 // outputs to work with along with asserting the generator state along the way.
 func Example_basicUsage() {
 	params := &chaincfg.SimNetParams
-	g, err := chaingen.MakeGenerator(params)
+	g, err := chaingen.MakeGenerator(params, nil)
 	if err != nil {
 		fmt.Println(err)
 		return

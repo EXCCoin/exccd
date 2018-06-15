@@ -26,20 +26,37 @@ var (
 
 	// mainPowLimit is the highest proof of work value a ExchangeCoin block can
 	// have for the main network.  It is the value 2^555 - 1.
+	// TODO: restore production parameters
 	// TODO: Restore original pow limit for mainnet: 2^224 - 1.
-	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
+	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 511), bigOne)
+	mainNetPowLimitBits = bigToCompact(mainPowLimit)
 
 	// testNetPowLimit is the highest proof of work value a ExchangeCoin block
 	// can have for the test network.  It is the value 2^232 - 1.
 	testNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 232), bigOne)
 
-	// simNetPowLimit is the highest proof of work value a ExchangeCoin block
-	// can have for the simulation test network.  It is the value 2^255 - 1.
-	simNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
-
 	// defaultTargetTimePerBlock is the ideal ExchangeCoin block time.
 	// It is the value of 2.5 minute.
 	defaultTargetTimePerBlock = time.Second * (60 * 2.5)
+
+	// SimNet parameters
+
+	// Original settings
+	simTicketPoolSize = uint16(64)
+	simCoinbaseMaturity = uint16(16)
+	simTicketMaturity = uint16(16)
+	simStakeVersionInterval = int64(8 * 2 * 7)
+
+	// Fastest settings, but not all tests pass
+	// simTicketPoolSize = uint16(16)
+	// simCoinbaseMaturity = uint16(4)
+	// simTicketMaturity = uint16(4)
+	// simStakeVersionInterval = int64(6 * 2 * 7)
+
+	// simNetPowLimit is the highest proof of work value a ExchangeCoin block
+	// can have for the simulation test network.  It is the value 2^255 - 1.
+	simNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 511), bigOne)
+	simNetPowLimitBits = bigToCompact(simNetPowLimit)
 )
 
 // SigHashOptimization is an optimization for verification of transactions that
@@ -83,32 +100,32 @@ type Checkpoint struct {
 //
 // For example, change block height from int64 to uint64.
 // Vote {
-//	Id:          "blockheight",
-//	Description: "Change block height from int64 to uint64"
-//	Mask:        0x0006,
-//	Choices:     []Choice{
-//		{
-//			Id:          "abstain",
-//			Description: "abstain voting for change",
-//			Bits:        0x0000,
-//			IsAbstain:   true,
-//			IsNo:        false,
-//		},
-//		{
-//			Id:          "no",
-//			Description: "reject changing block height to uint64",
-//			Bits:        0x0002,
-//			IsAbstain:   false,
-//			IsNo:        false,
-//		},
-//		{
-//			Id:          "yes",
-//			Description: "accept changing block height to uint64",
-//			Bits:        0x0004,
-//			IsAbstain:   false,
-//			IsNo:        true,
-//		},
-//	},
+// 	Id:          "blockheight",
+// 	Description: "Change block height from int64 to uint64"
+// 	Mask:        0x0006,
+// 	Choices:     []Choice{
+// 		{
+// 			Id:          "abstain",
+// 			Description: "abstain voting for change",
+// 			Bits:        0x0000,
+// 			IsAbstain:   true,
+// 			IsNo:        false,
+// 		},
+// 		{
+// 			Id:          "no",
+// 			Description: "reject changing block height to uint64",
+// 			Bits:        0x0002,
+// 			IsAbstain:   false,
+// 			IsNo:        false,
+// 		},
+// 		{
+// 			Id:          "yes",
+// 			Description: "accept changing block height to uint64",
+// 			Bits:        0x0004,
+// 			IsAbstain:   false,
+// 			IsNo:        true,
+// 		},
+// 	},
 // }
 //
 type Vote struct {
@@ -455,6 +472,10 @@ type Params struct {
 	// block height 1. If there are no payouts to be given, set this
 	// to an empty slice.
 	BlockOneLedger []*TokenPayout
+
+	// Equihash parameters
+	N int
+	K int
 }
 
 // MainNetParams defines the network parameters for the main ExchangeCoin network.
@@ -463,13 +484,19 @@ var MainNetParams = Params{
 	Net:         wire.MainNet,
 	DefaultPort: "9666",
 	DNSSeeds:    []DNSSeed{},
+	// TODO: restore production parameters
+	// N:           200,
+	// K:           9,
+	N:           96,
+	K:           5,
 
 	// Chain parameters
 	GenesisBlock: &genesisBlock,
 	GenesisHash:  &genesisHash,
 	PowLimit:     mainPowLimit,
+	// TODO: restore production parameters
 	// TODO: Restore original pow limit bits: 0x1d00ffff and disable min difficulty reduction
-	PowLimitBits:             0x207fffff,
+	PowLimitBits:             mainNetPowLimitBits,
 	ReduceMinDifficulty:      true, // TODO: remove min difficulty reduction for MainNet
 	MinDiffReductionTime:     defaultTargetTimePerBlock,
 	GenerateSupported:        false,
@@ -577,14 +604,14 @@ var MainNetParams = Params{
 	// In order to see actual prefixes, encoded string must consist of prefix mentioned below
 	// followed by zeros up to 26 bytes total length.
 
-	//---------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
 	PubKeyAddrID:     [2]byte{0x02, 0xdc}, // starts with 2s	-- no such addresses should exist in RL
 	PubKeyHashAddrID: [2]byte{0x21, 0xB9}, // starts with 22
 	PKHEdwardsAddrID: [2]byte{0x35, 0xcf}, // starts with 2e
 	PKHSchnorrAddrID: [2]byte{0x2f, 0x0d}, // starts with 2S
 	ScriptHashAddrID: [2]byte{0x34, 0xAF}, // starts with 2c
 	PrivateKeyID:     [2]byte{0x80},       // starts with 4
-	//---------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
 
 	// BIP32 hierarchical deterministic extended key magics
 	// In order to see actual prefixes, encoded string must consist of prefix mentioned below
@@ -628,6 +655,8 @@ var TestNet2Params = Params{
 	Net:         wire.TestNet2,
 	DefaultPort: "11999",
 	DNSSeeds:    []DNSSeed{},
+	N:           200,
+	K:           9,
 
 	// Chain parameters
 	GenesisBlock:             &testNet2GenesisBlock,
@@ -791,12 +820,14 @@ var SimNetParams = Params{
 	Net:         wire.SimNet,
 	DefaultPort: "11998",
 	DNSSeeds:    []DNSSeed{}, // NOTE: There must NOT be any seeds.
+	N:           96,
+	K:           5,
 
 	// Chain parameters
 	GenesisBlock:             &simNetGenesisBlock,
 	GenesisHash:              &simNetGenesisHash,
 	PowLimit:                 simNetPowLimit,
-	PowLimitBits:             0x207fffff,
+	PowLimitBits:             simNetPowLimitBits,
 	ReduceMinDifficulty:      false,
 	MinDiffReductionTime:     0, // Does not apply since ReduceMinDifficulty false
 	GenerateSupported:        true,
@@ -948,20 +979,20 @@ var SimNetParams = Params{
 
 	// ExchangeCoin PoS parameters
 	MinimumStakeDiff:        20000,
-	TicketPoolSize:          64,
+	TicketPoolSize:          simTicketPoolSize,
 	TicketsPerBlock:         5,
-	TicketMaturity:          16,
-	TicketExpiry:            384, // 6*TicketPoolSize
-	CoinbaseMaturity:        16,
+	TicketMaturity:          simTicketMaturity,
+	TicketExpiry:            uint32(6*simTicketPoolSize), // 6*TicketPoolSize
+	CoinbaseMaturity:        simCoinbaseMaturity,
 	SStxChangeMaturity:      1,
 	TicketPoolSizeWeight:    4,
 	StakeDiffAlpha:          1,
 	StakeDiffWindowSize:     8,
 	StakeDiffWindows:        8,
-	StakeVersionInterval:    8 * 2 * 7,
+	StakeVersionInterval:    simStakeVersionInterval,
 	MaxFreshStakePerBlock:   20,            // 4*TicketsPerBlock
-	StakeEnabledHeight:      16 + 16,       // CoinbaseMaturity + TicketMaturity
-	StakeValidationHeight:   16 + (64 * 2), // CoinbaseMaturity + TicketPoolSize*2
+	StakeEnabledHeight:      int64(simCoinbaseMaturity + simTicketMaturity),       // CoinbaseMaturity + TicketMaturity
+	StakeValidationHeight:   int64(simCoinbaseMaturity + simTicketPoolSize * 2), // CoinbaseMaturity + TicketPoolSize*2
 	StakeBaseSigScript:      []byte{0xDE, 0xAD, 0xBE, 0xEF},
 	StakeMajorityMultiplier: 3,
 	StakeMajorityDivisor:    4,
@@ -1148,4 +1179,46 @@ func init() {
 	mustRegister(&MainNetParams)
 	mustRegister(&TestNet2Params)
 	mustRegister(&SimNetParams)
+}
+
+// BigToCompact converts a whole number N to a compact representation using
+// an unsigned 32-bit number.  The compact representation only provides 23 bits
+// of precision, so values larger than (2^23 - 1) only encode the most
+// significant digits of the number.  See CompactToBig for details.
+func bigToCompact(n *big.Int) uint32 {
+	// No need to do any work if it's zero.
+	if n.Sign() == 0 {
+		return 0
+	}
+
+	// Since the base for the exponent is 256, the exponent can be treated
+	// as the number of bytes.  So, shift the number right or left
+	// accordingly.  This is equivalent to:
+	// mantissa = mantissa / 256^(exponent-3)
+	var mantissa uint32
+	exponent := uint(len(n.Bytes()))
+	if exponent <= 3 {
+		mantissa = uint32(n.Bits()[0])
+		mantissa <<= 8 * (3 - exponent)
+	} else {
+		// Use a copy to avoid modifying the caller's original number.
+		tn := new(big.Int).Set(n)
+		mantissa = uint32(tn.Rsh(tn, 8*(exponent-3)).Bits()[0])
+	}
+
+	// When the mantissa already has the sign bit set, the number is too
+	// large to fit into the available 23-bits, so divide the number by 256
+	// and increment the exponent accordingly.
+	if mantissa&0x00800000 != 0 {
+		mantissa >>= 8
+		exponent++
+	}
+
+	// Pack the exponent, sign bit, and mantissa into an unsigned 32-bit
+	// int and return it.
+	compact := uint32(exponent<<24) | mantissa
+	if n.Sign() < 0 {
+		compact |= 0x00800000
+	}
+	return compact
 }

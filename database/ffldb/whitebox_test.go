@@ -10,16 +10,15 @@
 package ffldb
 
 import (
-	"bytes"
-	"compress/bzip2"
 	"encoding/binary"
-	"encoding/gob"
 	"fmt"
 	"hash/crc32"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"compress/gzip"
+	"encoding/json"
 	"github.com/EXCCoin/exccd/database"
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/wire"
@@ -33,11 +32,15 @@ var (
 
 	// blockDataFile is the path to a file containing the first 256 blocks
 	// of the block chain.
-	blockDataFile = filepath.Join("..", "..", "blockchain", "testdata", "blocks0to168.bz2")
+	blockDataFile = filepath.Join("..", "..", "blockchain", "testdata", "blocks0to168.exccd.json.gz")
 
 	// errSubTestFail is used to signal that a sub test returned false.
 	errSubTestFail = fmt.Errorf("sub test failure")
 )
+
+type JSONBlock struct {
+	MsgBlock wire.MsgBlock
+}
 
 // loadBlocks loads the blocks contained in the testdata directory and returns
 // a slice of them.
@@ -55,30 +58,29 @@ func loadBlocks(t *testing.T, dataFile string, network wire.CurrencyNet) ([]*exc
 		}
 	}()
 
-	bcStream := bzip2.NewReader(fi)
+	bcStream, err := gzip.NewReader(fi)
 
-	// Create a buffer of the read file.
-	bcBuf := new(bytes.Buffer)
-	bcBuf.ReadFrom(bcStream)
-
-	// Create decoder from the buffer and a map to store the data.
-	bcDecoder := gob.NewDecoder(bcBuf)
-	blockChain := make(map[int64][]byte)
-
-	// Decode the blockchain into the map.
-	if err := bcDecoder.Decode(&blockChain); err != nil {
-		t.Errorf("error decoding test blockchain: %v", err.Error())
+	if err != nil {
+		t.Errorf("Unable to read archive %s: %v", dataFile, err)
 	}
 
+	// Create decoder from the buffer and a map to store the data.
+	decoder := json.NewDecoder(bcStream)
+
 	// Fetch blocks 1 to 168 and perform various tests.
-	blocks := make([]*exccutil.Block, 169)
-	for i := 0; i <= 168; i++ {
-		bl, err := exccutil.NewBlockFromBytes(blockChain[int64(i)])
+	blocks := make([]*exccutil.Block, 168)
+	for i := 0; i < 168; i++ {
+		var jsbl JSONBlock
+		err := decoder.Decode(&jsbl)
+
+		if err != nil {
+			t.Fatalf("Unable to decode block (%d) %v", i, err)
+		}
 		if err != nil {
 			t.Errorf("NewBlockFromBytes error: %v", err.Error())
 		}
 
-		blocks[i] = bl
+		blocks[i] = exccutil.NewBlock(&jsbl.MsgBlock)
 	}
 
 	return blocks, nil
@@ -196,7 +198,7 @@ func TestCornerCases(t *testing.T) {
 	ldb := idb.(*db).cache.ldb
 	ldb.Close()
 
-	// Ensure initilization errors in the underlying database work as
+	// Ensure initialization errors in the underlying database work as
 	// expected.
 	testName = "initDB: reinitialization"
 	wantErrCode = database.ErrDbNotOpen
@@ -579,7 +581,10 @@ func testCorruption(tc *testContext) bool {
 // TestFailureScenarios ensures several failure scenarios such as database
 // corruption, block file write failures, and rollback failures are handled
 // correctly.
+// TODO: once upon a time enable test and make it pass
 func TestFailureScenarios(t *testing.T) {
+	//t.SkipNow()
+
 	// Create a new database to run tests against.
 	dbPath := filepath.Join(os.TempDir(), "ffldb-failurescenarios")
 	_ = os.RemoveAll(dbPath)
@@ -604,7 +609,7 @@ func TestFailureScenarios(t *testing.T) {
 	// to make use of mock files in memory.  This allows injection of
 	// various file-related errors.
 	store := idb.(*db).store
-	store.maxBlockFileSize = 1024 // 1KiB
+	store.maxBlockFileSize = 10240 // 10KiB
 	store.openWriteFileFunc = func(fileNum uint32) (filer, error) {
 		if file, ok := tc.files[fileNum]; ok {
 			// "Reopen" the file.
