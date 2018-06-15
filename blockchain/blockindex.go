@@ -392,9 +392,12 @@ func (bi *blockIndex) loadBlockNode(dbTx database.Tx, hash *chainhash.Hash) (*bl
 //
 // This function is safe for concurrent access.
 func (bi *blockIndex) PrevNodeFromBlock(block *exccutil.Block) (*blockNode, error) {
+	return bi.NodeFromHash(&block.MsgBlock().Header.PrevBlock)
+}
+
+func (bi *blockIndex) NodeFromHash(hash *chainhash.Hash) (*blockNode, error) {
 	// Genesis block.
-	prevHash := &block.MsgBlock().Header.PrevBlock
-	if prevHash.IsEqual(zeroHash) {
+	if hash.IsEqual(zeroHash) {
 		return nil, nil
 	}
 
@@ -402,7 +405,7 @@ func (bi *blockIndex) PrevNodeFromBlock(block *exccutil.Block) (*blockNode, erro
 	defer bi.Unlock()
 
 	// Return the existing previous block node if it's already there.
-	if bn, ok := bi.index[*prevHash]; ok {
+	if bn, ok := bi.index[*hash]; ok {
 		return bn, nil
 	}
 
@@ -411,7 +414,7 @@ func (bi *blockIndex) PrevNodeFromBlock(block *exccutil.Block) (*blockNode, erro
 	var prevBlockNode *blockNode
 	err := bi.db.View(func(dbTx database.Tx) error {
 		var err error
-		prevBlockNode, err = bi.loadBlockNode(dbTx, prevHash)
+		prevBlockNode, err = bi.loadBlockNode(dbTx, hash)
 		return err
 	})
 	return prevBlockNode, err

@@ -15,14 +15,11 @@ import (
 	"testing"
 
 	"compress/gzip"
-	"encoding/binary"
 	"encoding/json"
 	"github.com/EXCCoin/exccd/blockchain/chaingen"
-	"github.com/EXCCoin/exccd/cequihash"
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/wire"
-	"unsafe"
 )
 
 // cloneParams returns a deep copy of the provided parameters so the caller is
@@ -44,77 +41,6 @@ func cloneParams(params *chaincfg.Params) *chaincfg.Params {
 
 type JSONBlock struct {
 	MsgBlock wire.MsgBlock
-}
-
-type solutionValidatorData struct {
-	params *chaincfg.Params
-	solved *bool
-	header *wire.BlockHeader
-}
-
-func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
-	if uintptr(solution) == 0 {
-		return 0
-	}
-
-	solutionBytes := cequihash.ExtractSolution(data.params.N, data.params.K, solution)
-
-	copy(data.header.EquihashSolution[:], solutionBytes)
-
-	hash := data.header.BlockHash()
-
-	if HashToBig(&hash).Cmp(CompactToBig(data.header.Bits)) <= 0 {
-		*data.solved = true
-		return 1
-	} else {
-		return 0
-	}
-}
-
-const (
-	// maxNonce is the maximum value a nonce can be in a block header.
-	maxNonce = ^uint32(0) // 2^32 - 1
-
-	// maxExtraNonce is the maximum value an extra nonce used in a coinbase
-	// transaction can be.
-	maxExtraNonce = ^uint64(0) // 2^64 - 1
-)
-
-func solve(t *testing.T, header *wire.BlockHeader, chainParams *chaincfg.Params) error {
-	enOffset, err := wire.RandomUint64()
-	if err != nil {
-		t.Logf("Error generating extended nonce offset. Using default (0)")
-		enOffset = 0
-	}
-
-	if err != nil {
-		return err
-	}
-
-	solved := false
-	validator := solutionValidatorData{chainParams, &solved, header}
-
-	for extraNonce := uint64(0); extraNonce < maxExtraNonce && !solved; extraNonce++ {
-		// Update the extra nonce in the block template header with the
-		// new value.
-		binary.LittleEndian.PutUint64(header.ExtraData[:], extraNonce+enOffset)
-
-		// Update equihash solver input bytes
-		headerBytes, _ := header.SerializeAllHeaderBytes()
-
-		// Search through the entire nonce range for a solution while
-		// periodically checking for early quit and stale block
-		// conditions along with updates to the speed monitor.
-		for i := uint32(0); i <= maxNonce && !solved; i++ {
-			t.Logf("Trying nonce %d", i)
-
-			header.Nonce = i
-
-			cequihash.SolveEquihash(chainParams.N, chainParams.K, headerBytes, int64(i), validator)
-		}
-	}
-
-	return nil
 }
 
 // Note: this test usually should be skipped. It is used only to convert and re-generate
@@ -179,17 +105,16 @@ func TestConvertToNewFormat(t *testing.T) {
 		t.Logf("Solving block %d...", counter)
 
 		// Solve block and store valid equihash solution
-		err = solve(t, &bl.MsgBlock.Header, params)
+		found := chaingen.SolveBlockWithEquihash(&bl.MsgBlock.Header, params)
 
-		if err != nil {
+		if !found {
 			t.Fatalf("Unable to find solution for block (%d) %v", counter, err)
 		}
 
-		err = validateEquihashSolution(&bl.MsgBlock.Header, params)
+		err = ValidateEquihashSolution(&bl.MsgBlock.Header, params)
 
 		if err != nil {
 			t.Logf("...not solved\n")
-
 		} else {
 			t.Logf("...solved\n")
 		}
@@ -210,7 +135,7 @@ func TestConvertToNewFormat(t *testing.T) {
 // functionality.
 // TODO: once upon a time enable test and make it pass
 func TestBlockchainFunctions(t *testing.T) {
-	// TODO: At present test does not pass because of some discrepancies in TxOut of block #2. Need to fix this.
+	// TODO: Current failure: ProcessBlock error at height 18: block does not commit to enough votes (min: 3, got 0)
 	t.SkipNow()
 
 	// Update simnet parameters to reflect what is expected by the legacy
@@ -292,19 +217,10 @@ func TestBlockchainFunctions(t *testing.T) {
 }
 
 // TestForceHeadReorg ensures forcing header reorganization works as expected.
-// TODO: once upon a time enable test and make it pass
 func TestForceHeadReorg(t *testing.T) {
-	// Test data contain invalid equihash solution
+	// TODO: this test is working, but takes too long to pass
 	t.SkipNow()
-
-	// Create a test generator instance initialized with the genesis block
-	// as the tip as well as some cached payment scripts to be used
-	// throughout the tests.
 	params := &chaincfg.SimNetParams
-	g, err := chaingen.MakeGenerator(params)
-	if err != nil {
-		t.Fatalf("Failed to create generator: %v", err)
-	}
 
 	// Create a new database and chain instance to run tests against.
 	chain, teardownFunc, err := chainSetup("forceheadreorgtest", params)
@@ -312,6 +228,14 @@ func TestForceHeadReorg(t *testing.T) {
 		t.Fatalf("Failed to setup chain instance: %v", err)
 	}
 	defer teardownFunc()
+
+	// Create a test generator instance initialized with the genesis block
+	// as the tip as well as some cached payment scripts to be used
+	// throughout the tests.
+	g, err := chaingen.MakeGenerator(params, chain)
+	if err != nil {
+		t.Fatalf("Failed to create generator: %v", err)
+	}
 
 	// Define some convenience helper functions to process the current tip
 	// block associated with the generator.

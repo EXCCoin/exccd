@@ -317,21 +317,13 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 
 			header.Nonce = i
 
-			equihash.SolveEquihash(chaincfg.MainNetParams.N, chaincfg.MainNetParams.K, headerBytes, int64(i), validator)
+			equihash.SolveEquihash(m.server.chainParams.N, m.server.chainParams.K, headerBytes, int64(i), validator)
 
 			hashesCompleted++
 		}
 	}
 
 	return solved
-}
-
-func appendExtraNonce(headerData []byte, header *wire.BlockHeader) []byte {
-	result := make([]byte, len(headerData)+32)
-	copy(result, headerData)
-	result = append(result, header.ExtraData[:]...)
-
-	return result
 }
 
 // generateBlocks is a worker that is controlled by the miningWorkerController.

@@ -376,7 +376,7 @@ func checkProofOfWork(header *wire.BlockHeader, chainParams *chaincfg.Params, fl
 			return ruleError(ErrHighHash, str)
 		}
 
-		err := validateEquihashSolution(header, chainParams)
+		err := ValidateEquihashSolution(header, chainParams)
 
 		if err != nil {
 			return ruleError(ErrInvalidEquihashSolution, "block has incorrect equihash solution")
@@ -387,7 +387,7 @@ func checkProofOfWork(header *wire.BlockHeader, chainParams *chaincfg.Params, fl
 }
 
 // Validate equihash solution for given block
-func validateEquihashSolution(header *wire.BlockHeader, chainParams *chaincfg.Params) error {
+func ValidateEquihashSolution(header *wire.BlockHeader, chainParams *chaincfg.Params) error {
 	headerBytes, err := header.SerializeAllHeaderBytes()
 
 	if err != nil {

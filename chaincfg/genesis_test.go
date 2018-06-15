@@ -293,14 +293,15 @@ func TestSimNetGenesisBlock(t *testing.T) {
 		t.Fatalf("TestSimNetGenesisBlock: %v", err)
 	}
 
-	simNetGenesisBlockBytes, _ := hex.DecodeString("01000000000000000000000000000000" +
+	simNetGenesisBlockBytes, _ := hex.DecodeString(
+		"01000000000000000000000000000000" +
 		"00000000000000000000000000000000" +
 		"00000000e0d744c8c5cc4ddb8db59b14" +
 		"0e6ff5e09aca011219c25ddb5bbaca5a" +
 		"aa432c8a000000000000000000000000" +
 		"00000000000000000000000000000000" +
 		"00000000000000000000000000000000" +
-		"00000000ffff7f200000000000000000" +
+		"00000000ffff7f400000000000000000" +
 		"00000000000000004506865300000000" +
 		"00000000000000000000000000000000" +
 		"00000000000000000000000000000000" +
@@ -403,7 +404,6 @@ func TestSimNetGenesisBlock(t *testing.T) {
 		"6c6c6f72206f6e206272696e6b206f66" +
 		"207365636f6e64206261696c6f757420" +
 		"666f722062616e6b7300")
-
 	// Ensure the encoded block matches the expected bytes.
 	if !bytes.Equal(buf.Bytes(), simNetGenesisBlockBytes) {
 		t.Fatalf("TestSimNetGenesisBlock: Genesis block does not "+
