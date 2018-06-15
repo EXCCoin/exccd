@@ -25,7 +25,7 @@ func TestBlockSubsidy(t *testing.T) {
 			continue
 		}
 
-		if i % mainnet.SubsidyReductionInterval == 0 {
+		if i%mainnet.SubsidyReductionInterval == 0 {
 			numBlocks := mainnet.SubsidyReductionInterval
 			// First reduction internal, which is reduction interval - 2
 			// to skip the genesis block and block one.
