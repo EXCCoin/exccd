@@ -358,6 +358,14 @@ func readElement(r io.Reader, element interface{}) error {
 		}
 		*e = RejectCode(rv)
 		return nil
+
+		// Equihash solution
+	case *[1344]byte:
+		_, err := io.ReadFull(r, e[:])
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
 	// Fall back to the slower binary.Read if a fast path was not available
@@ -483,6 +491,14 @@ func writeElement(w io.Writer, element interface{}) error {
 
 	case RejectCode:
 		err := binarySerializer.PutUint8(w, uint8(e))
+		if err != nil {
+			return err
+		}
+		return nil
+
+		// Equihash solution
+	case *[1344]byte:
+		_, err := w.Write(e[:])
 		if err != nil {
 			return err
 		}
