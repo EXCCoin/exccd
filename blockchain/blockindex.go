@@ -140,6 +140,9 @@ type blockNode struct {
 
 	// Keep track of all vote version and bits in this block.
 	votes []stake.VoteVersionTuple
+
+	// Equihash solution bytes
+	equihashSolution [1344]byte
 }
 
 // initBlockNode initializes a block node from the given header, initialization
@@ -151,26 +154,27 @@ type blockNode struct {
 // initially creating a node.
 func initBlockNode(node *blockNode, blockHeader *wire.BlockHeader, parent *blockNode) {
 	*node = blockNode{
-		hash:         blockHeader.BlockHash(),
-		parentHash:   blockHeader.PrevBlock,
-		workSum:      CalcWork(blockHeader.Bits),
-		height:       int64(blockHeader.Height),
-		blockVersion: blockHeader.Version,
-		voteBits:     blockHeader.VoteBits,
-		finalState:   blockHeader.FinalState,
-		voters:       blockHeader.Voters,
-		freshStake:   blockHeader.FreshStake,
-		poolSize:     blockHeader.PoolSize,
-		bits:         blockHeader.Bits,
-		sbits:        blockHeader.SBits,
-		timestamp:    blockHeader.Timestamp.Unix(),
-		merkleRoot:   blockHeader.MerkleRoot,
-		stakeRoot:    blockHeader.StakeRoot,
-		revocations:  blockHeader.Revocations,
-		blockSize:    blockHeader.Size,
-		nonce:        blockHeader.Nonce,
-		extraData:    blockHeader.ExtraData,
-		stakeVersion: blockHeader.StakeVersion,
+		hash:             blockHeader.BlockHash(),
+		parentHash:       blockHeader.PrevBlock,
+		workSum:          CalcWork(blockHeader.Bits),
+		height:           int64(blockHeader.Height),
+		blockVersion:     blockHeader.Version,
+		voteBits:         blockHeader.VoteBits,
+		finalState:       blockHeader.FinalState,
+		voters:           blockHeader.Voters,
+		freshStake:       blockHeader.FreshStake,
+		poolSize:         blockHeader.PoolSize,
+		bits:             blockHeader.Bits,
+		sbits:            blockHeader.SBits,
+		timestamp:        blockHeader.Timestamp.Unix(),
+		merkleRoot:       blockHeader.MerkleRoot,
+		stakeRoot:        blockHeader.StakeRoot,
+		revocations:      blockHeader.Revocations,
+		blockSize:        blockHeader.Size,
+		nonce:            blockHeader.Nonce,
+		extraData:        blockHeader.ExtraData,
+		stakeVersion:     blockHeader.StakeVersion,
+		equihashSolution: blockHeader.EquihashSolution,
 	}
 	if parent != nil {
 		node.parent = parent
@@ -193,24 +197,25 @@ func newBlockNode(blockHeader *wire.BlockHeader, parent *blockNode) *blockNode {
 func (node *blockNode) Header() wire.BlockHeader {
 	// No lock is needed because all accessed fields are immutable.
 	return wire.BlockHeader{
-		Version:      node.blockVersion,
-		PrevBlock:    node.parentHash,
-		MerkleRoot:   node.merkleRoot,
-		StakeRoot:    node.stakeRoot,
-		VoteBits:     node.voteBits,
-		FinalState:   node.finalState,
-		Voters:       node.voters,
-		FreshStake:   node.freshStake,
-		Revocations:  node.revocations,
-		PoolSize:     node.poolSize,
-		Bits:         node.bits,
-		SBits:        node.sbits,
-		Height:       uint32(node.height),
-		Size:         node.blockSize,
-		Timestamp:    time.Unix(node.timestamp, 0),
-		Nonce:        node.nonce,
-		ExtraData:    node.extraData,
-		StakeVersion: node.stakeVersion,
+		Version:          node.blockVersion,
+		PrevBlock:        node.parentHash,
+		MerkleRoot:       node.merkleRoot,
+		StakeRoot:        node.stakeRoot,
+		VoteBits:         node.voteBits,
+		FinalState:       node.finalState,
+		Voters:           node.voters,
+		FreshStake:       node.freshStake,
+		Revocations:      node.revocations,
+		PoolSize:         node.poolSize,
+		Bits:             node.bits,
+		SBits:            node.sbits,
+		Height:           uint32(node.height),
+		Size:             node.blockSize,
+		Timestamp:        time.Unix(node.timestamp, 0),
+		Nonce:            node.nonce,
+		ExtraData:        node.extraData,
+		StakeVersion:     node.stakeVersion,
+		EquihashSolution: node.equihashSolution,
 	}
 }
 
