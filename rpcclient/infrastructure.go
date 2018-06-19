@@ -78,11 +78,16 @@ var (
 const (
 	// sendBufferSize is the number of elements the websocket send channel
 	// can queue before blocking.
-	sendBufferSize = 50
+
+	// TODO: cleanup
+	//sendBufferSize = 50
+	sendBufferSize = 500
 
 	// sendPostBufferSize is the number of elements the HTTP POST send
 	// channel can queue before blocking.
-	sendPostBufferSize = 100
+	// TODO: cleanup
+	//sendPostBufferSize = 100
+	sendPostBufferSize = 1000
 
 	// connectionRetryInterval is the amount of time to wait in between
 	// retries when automatically reconnecting to an RPC server.
@@ -421,7 +426,14 @@ out:
 		default:
 		}
 
+		// TODO: cleanup
+		log.Infof("Entering ReadMessage")
+
 		_, msg, err := c.wsConn.ReadMessage()
+
+		// TODO: cleanup
+		log.Infof("Leaving ReadMessage")
+
 		if err != nil {
 			// Log the error if it's not due to disconnecting.
 			if c.shouldLogReadError(err) {

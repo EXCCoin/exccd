@@ -55,7 +55,7 @@ var (
 
 	// simNetPowLimit is the highest proof of work value a ExchangeCoin block
 	// can have for the simulation test network.  It is the value 2^255 - 1.
-	simNetPowLimit     = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 511), bigOne)
+	simNetPowLimit     = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
 	simNetPowLimitBits = bigToCompact(simNetPowLimit)
 )
 
