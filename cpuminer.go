@@ -210,7 +210,7 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 		return 0
 	}
 
-	minrLog.Infof("Validating found solution")
+	minrLog.Debugf("Validating found solution")
 	bytes := equihash.ExtractSolution(data.n, data.k, solution)
 
 	copy(data.header.EquihashSolution[:], bytes)
