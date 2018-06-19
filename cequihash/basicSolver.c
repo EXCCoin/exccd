@@ -30,12 +30,14 @@
 #include "blake2.h"
 #include "blake2-impl.h"
 
-#define swap(x, y) {                                                                         \
-    unsigned char temp[sizeof(x) == sizeof(y) ? sizeof(x) : -1];                             \
-    memcpy(temp, &y, sizeof(x));                                                             \
-    memcpy(&y, &x, sizeof(x));                                                               \
-    memcpy(&x, temp, sizeof(x));                                                             \
+void swap_impl(void *x, void *y, const int size) {
+    unsigned char temp[size];
+    memcpy(temp, y, size);
+    memcpy(y, x, size);
+    memcpy(x, temp, size);
 }
+
+#define swap(x, y) swap_impl(&x, &y, sizeof(x) == sizeof(y) ? sizeof(x) : -1)
 
 
 int equihashProxy(void *, void *);
