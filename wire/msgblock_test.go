@@ -266,7 +266,7 @@ func TestBlockWireErrors(t *testing.T) {
 		// Force error in tx count.
 		{&testBlock, testBlockBytes, pver, 180, io.ErrShortWrite, io.EOF}, // 16
 		// Force error in tx.
-		{&testBlock, testBlockBytes, pver, 1525, io.ErrShortWrite, io.EOF}, // 17
+		{&testBlock, testBlockBytes, pver, MaxBlockHeaderPayload + 1, io.ErrShortWrite, io.EOF}, // 17
 	}
 
 	t.Logf("Running %d tests", len(tests))
@@ -410,7 +410,7 @@ func TestBlockSerializeErrors(t *testing.T) {
 		// Force error in tx count.
 		{&testBlock, testBlockBytes, 180, io.ErrShortWrite, io.EOF}, // 18
 		// Force error in tx.
-		{&testBlock, testBlockBytes, 1525, io.ErrShortWrite, io.EOF}, // 19
+		{&testBlock, testBlockBytes, MaxBlockHeaderPayload + 1, io.ErrShortWrite, io.EOF}, // 19
 	}
 
 	t.Logf("Running %d tests", len(tests))
@@ -715,7 +715,7 @@ func TestBlockSerializeSize(t *testing.T) {
 		size int       // Expected serialized size
 	}{
 		// Block with no transactions (header + 2x numtx)
-		{noTxBlock, 1526},
+		{noTxBlock, MaxBlockHeaderPayload + 2},
 
 		// First block in the mainnet block chain.
 		{&testBlock, len(testBlockBytes)},
@@ -1133,10 +1133,10 @@ var testBlockBytes = []byte{
 
 // Transaction location information for the test block transactions.
 var testBlockTxLocs = []TxLoc{
-	{TxStart: 1525, TxLen: 158},
+	{TxStart: MaxBlockHeaderPayload + 1, TxLen: 158},
 }
 
 // Transaction location information for the test block stake transactions.
 var testBlockSTxLocs = []TxLoc{
-	{TxStart: 1684, TxLen: 158},
+	{TxStart: MaxBlockHeaderPayload + 160, TxLen: 158},
 }

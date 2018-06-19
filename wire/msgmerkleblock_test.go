@@ -301,22 +301,22 @@ func TestMerkleBlockWireErrors(t *testing.T) {
 		},
 		// Force error in num hashes. [17]
 		{
-			&testMerkleBlock, testMerkleBlockBytes, pver, 184 - 180 + 1524,
+			&testMerkleBlock, testMerkleBlockBytes, pver, MaxBlockHeaderPayload + 4,
 			io.ErrShortWrite, io.EOF,
 		},
 		// Force error in hashes. [18]
 		{
-			&testMerkleBlock, testMerkleBlockBytes, pver, 185 - 180 + 1524,
+			&testMerkleBlock, testMerkleBlockBytes, pver, MaxBlockHeaderPayload + 5,
 			io.ErrShortWrite, io.EOF,
 		},
 		// Force error in num flag bytes. [19]
 		{
-			&testMerkleBlock, testMerkleBlockBytes, pver, 254 - 180 + 1524,
+			&testMerkleBlock, testMerkleBlockBytes, pver, MaxBlockHeaderPayload + 74,
 			io.ErrShortWrite, io.EOF,
 		},
 		// Force error in flag bytes. [20]
 		{
-			&testMerkleBlock, testMerkleBlockBytes, pver, 255 - 180 + 1524,
+			&testMerkleBlock, testMerkleBlockBytes, pver, MaxBlockHeaderPayload + 75,
 			io.ErrShortWrite, io.EOF,
 		},
 	}
