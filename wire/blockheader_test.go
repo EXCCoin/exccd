@@ -141,7 +141,7 @@ func TestBlockHeaderWire(t *testing.T) {
 		StakeVersion:     uint32(0x0ddba110),
 		Height:           uint32(0),
 		Size:             uint32(0),
-		EquihashSolution: [1344]byte{0x00},
+		EquihashSolution: [EquihashSolutionLen]byte{0x00},
 	}
 
 	// baseBlockHdrEncoded is the wire encoded bytes of baseBlockHdr.

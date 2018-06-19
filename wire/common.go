@@ -360,7 +360,7 @@ func readElement(r io.Reader, element interface{}) error {
 		return nil
 
 		// Equihash solution
-	case *[1344]byte:
+	case *[EquihashSolutionLen]byte:
 		_, err := io.ReadFull(r, e[:])
 		if err != nil {
 			return err
@@ -497,7 +497,7 @@ func writeElement(w io.Writer, element interface{}) error {
 		return nil
 
 		// Equihash solution
-	case *[1344]byte:
+	case *[EquihashSolutionLen]byte:
 		_, err := w.Write(e[:])
 		if err != nil {
 			return err

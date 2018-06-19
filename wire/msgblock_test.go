@@ -768,7 +768,7 @@ var testBlock = MsgBlock{
 		Nonce:            0x9962e301,               // 2573394689
 		ExtraData:        [32]byte{},
 		StakeVersion:     uint32(0x5ca1ab1e),
-		EquihashSolution: [1344]byte{0x00},
+		EquihashSolution: [EquihashSolutionLen]byte{0x00},
 	},
 	Transactions: []*MsgTx{
 		{

@@ -142,7 +142,7 @@ type blockNode struct {
 	votes []stake.VoteVersionTuple
 
 	// Equihash solution bytes
-	equihashSolution [1344]byte
+	equihashSolution [wire.EquihashSolutionLen]byte
 }
 
 // initBlockNode initializes a block node from the given header, initialization

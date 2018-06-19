@@ -22,8 +22,9 @@ import (
 // ExtraData 32 bytes + StakeVersion 4 bytes.
 // --> Total 180 bytes.
 // + Equihash solution (always 1344 bytes, for N = 200, K = 9)
+const EquihashSolutionLen = 1344
 // --> Total 1524 bytes
-const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + 1344
+const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + EquihashSolutionLen
 
 // BlockHeader defines information about a block and is used in the ExchangeCoin
 // block (MsgBlock) and headers (MsgHeaders) messages.
@@ -86,7 +87,7 @@ type BlockHeader struct {
 	StakeVersion uint32
 
 	// Equihash solution bytes
-	EquihashSolution [1344]byte
+	EquihashSolution [EquihashSolutionLen]byte
 }
 
 func (b *BlockHeader) MarshalJSON() ([]byte, error) {
