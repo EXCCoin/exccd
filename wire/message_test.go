@@ -98,6 +98,7 @@ func TestMessage(t *testing.T) {
 		uint32(0x00000000),                          // Nonce
 		[32]byte{},                                  // ExtraData
 		uint32(0xcab005e0),                          // StakeVersion
+		[EquihashSolutionLen]byte{},                 // EquihashSolution
 	)
 	msgMerkleBlock := NewMsgMerkleBlock(bh)
 	msgReject := NewMsgReject("block", RejectDuplicate, "duplicate block")

@@ -182,20 +182,6 @@ func (h *BlockHeader) SerializeAllHeaderBytes() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// TODO: add tests
-func (h *BlockHeader) SerializeMiningHeaderBytes() ([]byte, error) {
-	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
-
-	sec := uint32(h.Timestamp.Unix())
-	err := writeElements(buf, h.Version, &h.PrevBlock, &h.MerkleRoot, h.Bits, sec)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
-}
-
 // NewBlockHeader returns a new BlockHeader using the provided previous block
 // hash, merkle root hash, difficulty bits, and nonce used to generate the
 // block with defaults for the remaining fields.
@@ -203,29 +189,30 @@ func NewBlockHeader(version int32, prevHash *chainhash.Hash,
 	merkleRootHash *chainhash.Hash, stakeRoot *chainhash.Hash, voteBits uint16,
 	finalState [6]byte, voters uint16, freshStake uint8, revocations uint8,
 	poolsize uint32, bits uint32, sbits int64, height uint32, size uint32,
-	nonce uint32, extraData [32]byte, stakeVersion uint32) *BlockHeader {
+	nonce uint32, extraData [32]byte, stakeVersion uint32, equihashSolution [EquihashSolutionLen]byte) *BlockHeader {
 
 	// Limit the timestamp to one second precision since the protocol
 	// doesn't support better.
 	return &BlockHeader{
-		Version:      version,
-		PrevBlock:    *prevHash,
-		MerkleRoot:   *merkleRootHash,
-		StakeRoot:    *stakeRoot,
-		VoteBits:     voteBits,
-		FinalState:   finalState,
-		Voters:       voters,
-		FreshStake:   freshStake,
-		Revocations:  revocations,
-		PoolSize:     poolsize,
-		Bits:         bits,
-		SBits:        sbits,
-		Height:       height,
-		Size:         size,
-		Timestamp:    time.Unix(time.Now().Unix(), 0),
-		Nonce:        nonce,
-		ExtraData:    extraData,
-		StakeVersion: stakeVersion,
+		Version:          version,
+		PrevBlock:        *prevHash,
+		MerkleRoot:       *merkleRootHash,
+		StakeRoot:        *stakeRoot,
+		VoteBits:         voteBits,
+		FinalState:       finalState,
+		Voters:           voters,
+		FreshStake:       freshStake,
+		Revocations:      revocations,
+		PoolSize:         poolsize,
+		Bits:             bits,
+		SBits:            sbits,
+		Height:           height,
+		Size:             size,
+		Timestamp:        time.Unix(time.Now().Unix(), 0),
+		Nonce:            nonce,
+		ExtraData:        extraData,
+		StakeVersion:     stakeVersion,
+		EquihashSolution: equihashSolution,
 	}
 }
 

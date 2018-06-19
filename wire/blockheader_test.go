@@ -39,6 +39,7 @@ func TestBlockHeader(t *testing.T) {
 	blockSize := uint32(0)
 	stakeVersion := uint32(0xb0a710ad)
 	extraData := [32]byte{}
+	equihashSolution := [EquihashSolutionLen]byte{}
 
 	bh := NewBlockHeader(
 		1, // verision
@@ -58,6 +59,7 @@ func TestBlockHeader(t *testing.T) {
 		nonce,
 		extraData,
 		stakeVersion,
+		equihashSolution,
 	)
 
 	// Ensure we get the same data back out.

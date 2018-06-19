@@ -81,6 +81,7 @@ func TestHeadersWire(t *testing.T) {
 		uint32(0x01010101),                          // Nonce
 		[32]byte{},                                  // ExtraData
 		uint32(0xba5eba11),                          // StakeVersion
+		[EquihashSolutionLen]byte{},                 // EquihashSolution
 	)
 	bh.Timestamp = time.Unix(0x4966bc61, 0)
 
@@ -378,6 +379,7 @@ func TestHeadersWireErrors(t *testing.T) {
 		nonce,                     // Nonce
 		[32]byte{},                // ExtraData
 		uint32(0xca55e77e),        // StakeVersion
+		[EquihashSolutionLen]byte{},
 	)
 
 	bh.Version = testBlock.Header.Version
@@ -450,6 +452,7 @@ func TestHeadersWireErrors(t *testing.T) {
 		nonce,                     // Nonce
 		[32]byte{},                // ExtraData
 		uint32(0xf01dab1e),        // StakeVersion
+		[EquihashSolutionLen]byte{},
 	)
 	bhTrans.Version = testBlock.Header.Version
 	bhTrans.Timestamp = testBlock.Header.Timestamp

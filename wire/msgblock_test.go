@@ -40,6 +40,7 @@ func TestBlock(t *testing.T) {
 		testBlock.Header.Nonce,                      // Nonce
 		[32]byte{},                                  // ExtraData
 		uint32(0x5ca1ab1e),                          // StakeVersion
+		[EquihashSolutionLen]byte{},                 // EquihashSolution
 	)
 
 	// Ensure the command is expected value.

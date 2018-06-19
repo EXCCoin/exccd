@@ -41,6 +41,7 @@ func TestMerkleBlock(t *testing.T) {
 		testBlock.Header.Nonce,                      // Nonce
 		[32]byte{},                                  // ExtraData
 		uint32(0x7e1eca57),                          // StakeVersion
+		[EquihashSolutionLen]byte{},                 // EquihashSolution
 	)
 
 	// Ensure the command is expected value.
