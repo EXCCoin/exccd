@@ -13,7 +13,7 @@ This client provides a robust and easy to use client for interfacing
 with a ExchangeCoin RPC server that uses a mostly btcd/bitcoin core
 style ExchangeCoin JSON-RPC API.  This client has been tested with exccd
 (https://github.com/EXCCoin/exccd) and exccwallet
-(https://github.com/decred/exccwallet).
+(https://github.com/EXCCoin/exccwallet).
 
 In addition to the compatible standard HTTP POST JSON-RPC API, exccd and
 exccwallet provide a websocket interface that is more efficient than the standard
