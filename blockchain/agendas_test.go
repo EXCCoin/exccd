@@ -176,6 +176,7 @@ func testLNFeaturesDeployment(t *testing.T, params *chaincfg.Params, deploymentV
 // TestLNFeaturesDeployment ensures the deployment of the LN features agenda
 // activate the expected changes.
 func TestLNFeaturesDeployment(t *testing.T) {
-	testLNFeaturesDeployment(t, &chaincfg.MainNetParams, 5)
+	// Since there isn't LN agenda on mainnet this should be skipped for now
+	// testLNFeaturesDeployment(t, &chaincfg.MainNetParams, 5)
 	testLNFeaturesDeployment(t, &chaincfg.TestNet2Params, 6)
 }

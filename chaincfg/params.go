@@ -185,10 +185,6 @@ const (
 	// algorithm (aka ticket price) agenda defined by DCP0001.
 	VoteIDSDiffAlgorithm = "sdiffalgorithm"
 
-	// VoteIDLNSupport is the vote ID for determining if the developers
-	// should work on integrating Lightning Network support.
-	VoteIDLNSupport = "lnsupport"
-
 	// VoteIDLNFeatures is the vote ID for the agenda that introduces
 	// features useful for the Lightning Network (among other uses) defined
 	// by DCP0002 and DCP0003.
@@ -552,34 +548,6 @@ var MainNetParams = Params{
 			},
 			StartTime:  1493164800, // Apr 26th, 2017
 			ExpireTime: 1524700800, // Apr 26th, 2018
-		}},
-		5: {{
-			Vote: Vote{
-				Id:          VoteIDLNFeatures,
-				Description: "Enable features defined in DCP0002 and DCP0003 necessary to support Lightning Network (LN)",
-				Mask:        0x0006, // Bits 1 and 2
-				Choices: []Choice{{
-					Id:          "abstain",
-					Description: "abstain voting for change",
-					Bits:        0x0000,
-					IsAbstain:   true,
-					IsNo:        false,
-				}, {
-					Id:          "no",
-					Description: "keep the existing consensus rules",
-					Bits:        0x0002, // Bit 1
-					IsAbstain:   false,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "change to the new consensus rules",
-					Bits:        0x0004, // Bit 2
-					IsAbstain:   false,
-					IsNo:        false,
-				}},
-			},
-			StartTime:  1505260800, // Sep 13th, 2017
-			ExpireTime: 1536796800, // Sep 13th, 2018
 		}},
 	},
 
