@@ -279,7 +279,7 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 				return false
 
 			case <-ticker.C:
-				minrLog.Infof("Miner is updating time for currently mined block")
+				minrLog.Debugf("Miner is updating time for currently mined block")
 				m.updateHashes <- hashesCompleted
 				hashesCompleted = 0
 
