@@ -193,21 +193,23 @@ type solutionValidatorData struct {
 	quit    chan struct{}
 }
 
-func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
+func (data solutionValidatorData) Validate(solution unsafe.Pointer) (stopMining int) {
 	if uintptr(solution) == 0 {
 		if *data.exiting {
 			minrLog.Infof("Shutdown is pending. Bailing out")
-			return 1
+			stopMining = 1
+			return
 		}
 		select {
 		case <-data.quit:
 			minrLog.Infof("Miner is stopping")
 			*data.exiting = true
-			return 1
+			stopMining = 1
+			return
 		default:
 		}
 
-		return 0
+		return
 	}
 
 	minrLog.Debugf("Validating found solution")
@@ -219,10 +221,11 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 
 	if blockchain.HashToBig(&hash).Cmp(blockchain.CompactToBig(data.header.Bits)) <= 0 {
 		*data.solved = true
-		return 1
-	} else {
-		return 0
+		stopMining = 1
+		return
 	}
+
+	return
 }
 
 // solveBlock attempts to find some combination of a nonce, extra nonce, and

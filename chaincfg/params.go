@@ -79,7 +79,7 @@ var CheckForDuplicateHashes = false
 
 // CPUMinerThreads is the default number of threads to utilize with the
 // CPUMiner when mining.
-var CPUMinerThreads = 2
+var CPUMinerThreads = 1
 
 // Checkpoint identifies a known good point in the block chain.  Using
 // checkpoints allows a few optimizations for old blocks during initial download
