@@ -491,14 +491,12 @@ var MainNetParams = Params{
 	K: 5,
 
 	// Chain parameters
-	GenesisBlock: &genesisBlock,
-	GenesisHash:  &genesisHash,
-	PowLimit:     mainPowLimit,
-	// TODO: restore production parameters
-	// TODO: Restore original pow limit bits: 0x1d00ffff and disable min difficulty reduction
+	GenesisBlock:             &genesisBlock,
+	GenesisHash:              &genesisHash,
+	PowLimit:                 mainPowLimit,
 	PowLimitBits:             mainNetPowLimitBits,
-	ReduceMinDifficulty:      true, // TODO: remove min difficulty reduction for MainNet
-	MinDiffReductionTime:     defaultTargetTimePerBlock,
+	ReduceMinDifficulty:      false,
+	MinDiffReductionTime:     0,
 	GenerateSupported:        false,
 	MaximumBlockSizes:        []int{393216},
 	MaxTxSize:                393216,
