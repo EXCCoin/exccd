@@ -13,6 +13,7 @@
 
 #define _DEFAULT_SOURCE
 #define _GNU_SOURCE
+#define _BSD_SOURCE
 
 #include <stdint.h>
 
@@ -25,6 +26,12 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <assert.h>
+
+#ifdef __APPLE__
+#include <machine/endian.h>
+#else
+#include <endian.h>
+#endif
 
 #include "cequihash.h"
 #include "blake2.h"
