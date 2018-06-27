@@ -45,7 +45,7 @@ func TestBlockSubsidy(t *testing.T) {
 		}
 	}
 
-	expectedSubsidy := int64(3116646855157966)
+	expectedSubsidy := int64(2044657240590848) + mainnet.BlockOneSubsidy()
 	if totalSubsidy != expectedSubsidy {
 		t.Errorf("Bad total subsidy; want %v, got %v", expectedSubsidy, totalSubsidy)
 	}
