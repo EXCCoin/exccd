@@ -119,8 +119,9 @@ func TestThresholdState(t *testing.T) {
 	// size to a really large number so that the test chain can be generated
 	// more quickly.
 
-	// TODO: this test is working, but takes too long to pass
-	t.SkipNow()
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
 
 	posVersion := uint32(4)
 	params := chaincfg.SimNetParams
