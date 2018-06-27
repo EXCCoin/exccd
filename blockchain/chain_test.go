@@ -218,8 +218,10 @@ func TestBlockchainFunctions(t *testing.T) {
 
 // TestForceHeadReorg ensures forcing header reorganization works as expected.
 func TestForceHeadReorg(t *testing.T) {
-	// TODO: this test is working, but takes too long to pass
-	t.SkipNow()
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	params := &chaincfg.SimNetParams
 
 	// Create a new database and chain instance to run tests against.
