@@ -16,10 +16,10 @@ import (
 
 // TestStakeVersion ensures that the stake version field in the block header is
 // enforced properly.
-
 func TestStakeVersion(t *testing.T) {
-	// TODO: this test is working, but takes too long to pass
-	t.SkipNow()
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
 
 	params := &chaincfg.SimNetParams
 
