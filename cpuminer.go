@@ -15,11 +15,13 @@ import (
 	"time"
 
 	"github.com/EXCCoin/exccd/blockchain"
+	equihash "github.com/EXCCoin/exccd/cequihash"
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/mining"
 	"github.com/EXCCoin/exccd/wire"
+	"unsafe"
 )
 
 const (
@@ -107,8 +109,7 @@ out:
 		case numHashes := <-m.updateHashes:
 			totalHashes += numHashes
 
-		// Time to update the hashes per second.
-		case <-ticker.C:
+		case <-ticker.C: // Time to update the hashes per second.
 			curHashesPerSec := float64(totalHashes) / hpsUpdateSecs
 			if hashesPerSec == 0 {
 				hashesPerSec = curHashesPerSec
@@ -120,8 +121,7 @@ out:
 					hashesPerSec/1000)
 			}
 
-		// Request for the number of hashes per second.
-		case m.queryHashesPerSec <- hashesPerSec:
+		case m.queryHashesPerSec <- hashesPerSec: // Request for the number of hashes per second.
 			// Nothing to do.
 
 		case <-m.speedMonitorQuit:
@@ -184,6 +184,50 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 	return true
 }
 
+type solutionValidatorData struct {
+	n       int
+	k       int
+	solved  *bool
+	exiting *bool
+	header  *wire.BlockHeader
+	quit    chan struct{}
+}
+
+func (data solutionValidatorData) Validate(solution unsafe.Pointer) (stopMining int) {
+	if uintptr(solution) == 0 {
+		if *data.exiting {
+			minrLog.Infof("Shutdown is pending. Bailing out")
+			stopMining = 1
+			return
+		}
+		select {
+		case <-data.quit:
+			minrLog.Infof("Miner is stopping")
+			*data.exiting = true
+			stopMining = 1
+			return
+		default:
+		}
+
+		return
+	}
+
+	minrLog.Debugf("Validating found solution")
+	bytes := equihash.ExtractSolution(data.n, data.k, solution)
+
+	copy(data.header.EquihashSolution[:], bytes)
+
+	hash := data.header.BlockHash()
+
+	if blockchain.HashToBig(&hash).Cmp(blockchain.CompactToBig(data.header.Bits)) <= 0 {
+		*data.solved = true
+		stopMining = 1
+		return
+	}
+
+	return
+}
+
 // solveBlock attempts to find some combination of a nonce, extra nonce, and
 // current timestamp which makes the passed block hash to a value less than the
 // target difficulty.  The timestamp is updated periodically and the passed
@@ -205,30 +249,40 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 
 	// Create a couple of convenience variables.
 	header := &msgBlock.Header
-	targetDifficulty := blockchain.CompactToBig(header.Bits)
 
 	// Initial state.
 	lastGenerated := time.Now()
 	lastTxUpdate := m.txSource.LastUpdated()
 	hashesCompleted := uint64(0)
 
+	solved := false
+	exiting := false
+	validator := solutionValidatorData{chaincfg.MainNetParams.N, chaincfg.MainNetParams.K,
+		&solved, &exiting, header, quit}
+
 	// Note that the entire extra nonce range is iterated and the offset is
 	// added relying on the fact that overflow will wrap around 0 as
 	// provided by the Go spec.
-	for extraNonce := uint64(0); extraNonce < maxExtraNonce; extraNonce++ {
+	for extraNonce := uint64(0); extraNonce < maxExtraNonce && !solved && !exiting; extraNonce++ {
 		// Update the extra nonce in the block template header with the
 		// new value.
 		littleEndian.PutUint64(header.ExtraData[:], extraNonce+enOffset)
 
+		// Update equihash solver input bytes
+		headerBytes, _ := header.SerializeAllHeaderBytes()
+
 		// Search through the entire nonce range for a solution while
 		// periodically checking for early quit and stale block
 		// conditions along with updates to the speed monitor.
-		for i := uint32(0); i <= maxNonce; i++ {
+		for i := uint32(0); i <= maxNonce && !solved && !exiting; i++ {
 			select {
 			case <-quit:
+				minrLog.Infof("Miner is stopping")
+				exiting = true
 				return false
 
 			case <-ticker.C:
+				minrLog.Debugf("Miner is updating time for currently mined block")
 				m.updateHashes <- hashesCompleted
 				hashesCompleted = 0
 
@@ -244,8 +298,18 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 				}
 
 				err = UpdateBlockTime(msgBlock, m.server.blockManager)
+
 				if err != nil {
 					minrLog.Warnf("CPU miner unable to update block template "+
+						"time: %v", err)
+					return false
+				}
+
+				// Rebuild all input data
+				headerBytes, err = header.SerializeAllHeaderBytes()
+
+				if err != nil {
+					minrLog.Warnf("CPU miner unable to rebuild header data for updated block template "+
 						"time: %v", err)
 					return false
 				}
@@ -254,21 +318,15 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 				// Non-blocking select to fall through
 			}
 
-			// Update the nonce and hash the block header.
 			header.Nonce = i
-			hash := header.BlockHash()
-			hashesCompleted++
 
-			// The block is solved when the new block hash is less
-			// than the target difficulty.  Yay!
-			if blockchain.HashToBig(&hash).Cmp(targetDifficulty) <= 0 {
-				m.updateHashes <- hashesCompleted
-				return true
-			}
+			equihash.SolveEquihash(m.server.chainParams.N, m.server.chainParams.K, headerBytes, int64(i), validator)
+
+			hashesCompleted++
 		}
 	}
 
-	return false
+	return solved
 }
 
 // generateBlocks is a worker that is controlled by the miningWorkerController.

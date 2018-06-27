@@ -1955,28 +1955,29 @@ func handleGetBlock(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (i
 
 	sbitsFloat := float64(blockHeader.SBits) / exccutil.AtomsPerCoin
 	blockReply := exccjson.GetBlockVerboseResult{
-		Hash:          c.Hash,
-		Version:       blockHeader.Version,
-		MerkleRoot:    blockHeader.MerkleRoot.String(),
-		StakeRoot:     blockHeader.StakeRoot.String(),
-		PreviousHash:  blockHeader.PrevBlock.String(),
-		Nonce:         blockHeader.Nonce,
-		VoteBits:      blockHeader.VoteBits,
-		FinalState:    hex.EncodeToString(blockHeader.FinalState[:]),
-		Voters:        blockHeader.Voters,
-		FreshStake:    blockHeader.FreshStake,
-		Revocations:   blockHeader.Revocations,
-		PoolSize:      blockHeader.PoolSize,
-		Time:          blockHeader.Timestamp.Unix(),
-		StakeVersion:  blockHeader.StakeVersion,
-		Confirmations: confirmations,
-		Height:        int64(blockHeader.Height),
-		Size:          int32(blk.MsgBlock().Header.Size),
-		Bits:          strconv.FormatInt(int64(blockHeader.Bits), 16),
-		SBits:         sbitsFloat,
-		Difficulty:    getDifficultyRatio(blockHeader.Bits),
-		ExtraData:     hex.EncodeToString(blockHeader.ExtraData[:]),
-		NextHash:      nextHashString,
+		Hash:             c.Hash,
+		Version:          blockHeader.Version,
+		MerkleRoot:       blockHeader.MerkleRoot.String(),
+		StakeRoot:        blockHeader.StakeRoot.String(),
+		PreviousHash:     blockHeader.PrevBlock.String(),
+		Nonce:            blockHeader.Nonce,
+		VoteBits:         blockHeader.VoteBits,
+		FinalState:       hex.EncodeToString(blockHeader.FinalState[:]),
+		Voters:           blockHeader.Voters,
+		FreshStake:       blockHeader.FreshStake,
+		Revocations:      blockHeader.Revocations,
+		PoolSize:         blockHeader.PoolSize,
+		Time:             blockHeader.Timestamp.Unix(),
+		StakeVersion:     blockHeader.StakeVersion,
+		Confirmations:    confirmations,
+		Height:           int64(blockHeader.Height),
+		Size:             int32(blk.MsgBlock().Header.Size),
+		Bits:             strconv.FormatInt(int64(blockHeader.Bits), 16),
+		SBits:            sbitsFloat,
+		Difficulty:       getDifficultyRatio(blockHeader.Bits),
+		ExtraData:        hex.EncodeToString(blockHeader.ExtraData[:]),
+		NextHash:         nextHashString,
+		EquihashSolution: blockHeader.EquihashSolution[:],
 	}
 
 	if c.VerboseTx == nil || !*c.VerboseTx {
@@ -2105,27 +2106,28 @@ func handleGetBlockHeader(s *rpcServer, cmd interface{}, closeChan <-chan struct
 	}
 
 	blockHeaderReply := exccjson.GetBlockHeaderVerboseResult{
-		Hash:          c.Hash,
-		Confirmations: confirmations,
-		Version:       blockHeader.Version,
-		PreviousHash:  blockHeader.PrevBlock.String(),
-		MerkleRoot:    blockHeader.MerkleRoot.String(),
-		StakeRoot:     blockHeader.StakeRoot.String(),
-		VoteBits:      blockHeader.VoteBits,
-		FinalState:    hex.EncodeToString(blockHeader.FinalState[:]),
-		Voters:        blockHeader.Voters,
-		FreshStake:    blockHeader.FreshStake,
-		Revocations:   blockHeader.Revocations,
-		PoolSize:      blockHeader.PoolSize,
-		Bits:          strconv.FormatInt(int64(blockHeader.Bits), 16),
-		SBits:         exccutil.Amount(blockHeader.SBits).ToCoin(),
-		Height:        uint32(height),
-		Size:          blockHeader.Size,
-		Time:          blockHeader.Timestamp.Unix(),
-		Nonce:         blockHeader.Nonce,
-		StakeVersion:  blockHeader.StakeVersion,
-		Difficulty:    getDifficultyRatio(blockHeader.Bits),
-		NextHash:      nextHashString,
+		Hash:             c.Hash,
+		Confirmations:    confirmations,
+		Version:          blockHeader.Version,
+		PreviousHash:     blockHeader.PrevBlock.String(),
+		MerkleRoot:       blockHeader.MerkleRoot.String(),
+		StakeRoot:        blockHeader.StakeRoot.String(),
+		VoteBits:         blockHeader.VoteBits,
+		FinalState:       hex.EncodeToString(blockHeader.FinalState[:]),
+		Voters:           blockHeader.Voters,
+		FreshStake:       blockHeader.FreshStake,
+		Revocations:      blockHeader.Revocations,
+		PoolSize:         blockHeader.PoolSize,
+		Bits:             strconv.FormatInt(int64(blockHeader.Bits), 16),
+		SBits:            exccutil.Amount(blockHeader.SBits).ToCoin(),
+		Height:           uint32(height),
+		Size:             blockHeader.Size,
+		Time:             blockHeader.Timestamp.Unix(),
+		Nonce:            blockHeader.Nonce,
+		StakeVersion:     blockHeader.StakeVersion,
+		Difficulty:       getDifficultyRatio(blockHeader.Bits),
+		NextHash:         nextHashString,
+		EquihashSolution: blockHeader.EquihashSolution[:],
 	}
 
 	return blockHeaderReply, nil
@@ -2739,7 +2741,7 @@ func handleGetBlockTemplateLongPoll(s *rpcServer, longPollID string, useCoinbase
 	case <-closeChan:
 		return nil, ErrClientQuit
 
-	// Wait until signal received to send the reply.
+		// Wait until signal received to send the reply.
 	case <-longPollChan:
 		// Fallthrough
 	}
@@ -4258,8 +4260,7 @@ func handleGetWorkSubmission(s *rpcServer, hexData string) (interface{}, error) 
 	block := exccutil.NewBlockDeepCopyCoinbase(msgBlock)
 
 	// Ensure the submitted block hash is less than the target difficulty.
-	err = blockchain.CheckProofOfWork(&block.MsgBlock().Header,
-		activeNetParams.PowLimit)
+	err = blockchain.CheckProofOfWork(&block.MsgBlock().Header, activeNetParams.Params)
 	if err != nil {
 		// Anything other than a rule violation is an unexpected error,
 		// so return that error as an internal error.

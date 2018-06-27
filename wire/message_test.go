@@ -98,6 +98,7 @@ func TestMessage(t *testing.T) {
 		uint32(0x00000000),                          // Nonce
 		[32]byte{},                                  // ExtraData
 		uint32(0xcab005e0),                          // StakeVersion
+		[EquihashSolutionLen]byte{},                 // EquihashSolution
 	)
 	msgMerkleBlock := NewMsgMerkleBlock(bh)
 	msgReject := NewMsgReject("block", RejectDuplicate, "duplicate block")
@@ -114,7 +115,7 @@ func TestMessage(t *testing.T) {
 		{msgGetAddr, msgGetAddr, pver, MainNet, 24},           // [2]
 		{msgAddr, msgAddr, pver, MainNet, 25},                 // [3]
 		{msgGetBlocks, msgGetBlocks, pver, MainNet, 61},       // [4]
-		{msgBlock, msgBlock, pver, MainNet, 522},              // [5]
+		{msgBlock, msgBlock, pver, MainNet, 1866},             // [5]
 		{msgInv, msgInv, pver, MainNet, 25},                   // [6]
 		{msgGetData, msgGetData, pver, MainNet, 25},           // [7]
 		{msgNotFound, msgNotFound, pver, MainNet, 25},         // [8]
@@ -127,7 +128,7 @@ func TestMessage(t *testing.T) {
 		{msgFilterAdd, msgFilterAdd, pver, MainNet, 26},       // [16]
 		{msgFilterClear, msgFilterClear, pver, MainNet, 24},   // [17]
 		{msgFilterLoad, msgFilterLoad, pver, MainNet, 35},     // [18]
-		{msgMerkleBlock, msgMerkleBlock, pver, MainNet, 215},  // [19]
+		{msgMerkleBlock, msgMerkleBlock, pver, MainNet, 1559}, // [19]
 		{msgReject, msgReject, pver, MainNet, 79},             // [20]
 		{msgGetCFilter, msgGetCFilter, pver, MainNet, 57},     // [21]
 		{msgGetCFHeaders, msgGetCFHeaders, pver, MainNet, 58}, // [22]

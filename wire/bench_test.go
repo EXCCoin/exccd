@@ -492,7 +492,7 @@ func BenchmarkDecodeHeaders(b *testing.B) {
 			b.Fatalf("NewHashFromStr: unexpected error: %v", err)
 		}
 		m.AddBlockHeader(NewBlockHeader(1, hash, hash, hash, 0, [6]byte{}, 0, 0,
-			0, 0, 0, 0, 0, 0, uint32(i), [32]byte{}, 0xdeadbeef))
+			0, 0, 0, 0, 0, 0, uint32(i), [32]byte{}, 0xdeadbeef, [EquihashSolutionLen]byte{}))
 	}
 
 	// Serialize it so the bytes are available to test the decode below.
@@ -640,7 +640,7 @@ func BenchmarkDecodeMerkleBlock(b *testing.B) {
 	}
 	m.Header = *NewBlockHeader(1, hash, hash, hash, 0,
 		[6]byte{}, 0, 0, 0, 0, 0, 0, 0, 0, uint32(10000),
-		[32]byte{}, 0xbadc0ffe)
+		[32]byte{}, 0xbadc0ffe, [EquihashSolutionLen]byte{})
 	for i := 0; i < 105; i++ {
 		hash, err := chainhash.NewHashFromStr(fmt.Sprintf("%x", i))
 		if err != nil {

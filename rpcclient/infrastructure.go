@@ -78,6 +78,7 @@ var (
 const (
 	// sendBufferSize is the number of elements the websocket send channel
 	// can queue before blocking.
+
 	sendBufferSize = 50
 
 	// sendPostBufferSize is the number of elements the HTTP POST send
@@ -422,6 +423,7 @@ out:
 		}
 
 		_, msg, err := c.wsConn.ReadMessage()
+
 		if err != nil {
 			// Log the error if it's not due to disconnecting.
 			if c.shouldLogReadError(err) {

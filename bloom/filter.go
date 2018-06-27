@@ -115,7 +115,7 @@ func (bf *Filter) Unload() {
 }
 
 // hash returns the bit offset in the bloom filter which corresponds to the
-// passed data for the given indepedent hash function number.
+// passed data for the given independent hash function number.
 func (bf *Filter) hash(hashNum uint32, data []byte) uint32 {
 	// bitcoind: 0xfba4c795 chosen as it guarantees a reasonable bit
 	// difference between hashNum values.
@@ -142,7 +142,7 @@ func (bf *Filter) matches(data []byte) bool {
 	// equivalent of:
 	//   arrayIndex := idx / 8     (idx >> 3)
 	//   bitOffset := idx % 8      (idx & 7)
-	///  if filter[arrayIndex] & 1<<bitOffset == 0 { ... }
+	//   if filter[arrayIndex] & 1<<bitOffset == 0 { ... }
 	for i := uint32(0); i < bf.msgFilterLoad.HashFuncs; i++ {
 		idx := bf.hash(i, data)
 		if bf.msgFilterLoad.Filter[idx>>3]&(1<<(idx&7)) == 0 {
@@ -201,7 +201,7 @@ func (bf *Filter) add(data []byte) {
 	// of:
 	//   arrayIndex := idx / 8    (idx >> 3)
 	//   bitOffset := idx % 8     (idx & 7)
-	///  filter[arrayIndex] |= 1<<bitOffset
+	//   filter[arrayIndex] |= 1<<bitOffset
 	for i := uint32(0); i < bf.msgFilterLoad.HashFuncs; i++ {
 		idx := bf.hash(i, data)
 		bf.msgFilterLoad.Filter[idx>>3] |= (1 << (7 & idx))

@@ -118,6 +118,11 @@ func TestThresholdState(t *testing.T) {
 	// dummy deployment and set the proof-of-work difficulty readjustment
 	// size to a really large number so that the test chain can be generated
 	// more quickly.
+
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
 	posVersion := uint32(4)
 	params := chaincfg.SimNetParams
 	params.WorkDiffWindowSize = 200000
@@ -140,19 +145,19 @@ func TestThresholdState(t *testing.T) {
 			ExpireTime: math.MaxUint64,
 		})
 
-	// Create a test generator instance initialized with the genesis block
-	// as the tip.
-	g, err := chaingen.MakeGenerator(&params)
-	if err != nil {
-		t.Fatalf("Failed to create generator: %v", err)
-	}
-
 	// Create a new database and chain instance to run tests against.
 	chain, teardownFunc, err := chainSetup("thresholdstatetest", &params)
 	if err != nil {
 		t.Fatalf("Failed to setup chain instance: %v", err)
 	}
 	defer teardownFunc()
+
+	// Create a test generator instance initialized with the genesis block
+	// as the tip.
+	g, err := chaingen.MakeGenerator(&params, chain)
+	if err != nil {
+		t.Fatalf("Failed to create generator: %v", err)
+	}
 
 	// accepted processes the current tip block associated with the
 	// generator and expects it to be accepted to the main chain.

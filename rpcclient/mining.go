@@ -450,7 +450,7 @@ func (c *Client) SubmitBlockAsync(block *exccutil.Block, options *exccjson.Submi
 	return c.sendCmd(cmd)
 }
 
-// SubmitBlock attempts to submit a new block into the Decred network.
+// SubmitBlock attempts to submit a new block into the excc network.
 func (c *Client) SubmitBlock(block *exccutil.Block, options *exccjson.SubmitBlockOptions) error {
 	return c.SubmitBlockAsync(block, options).Receive()
 }

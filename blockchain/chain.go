@@ -1809,6 +1809,22 @@ func (b *BlockChain) FetchHeader(hash *chainhash.Hash) (wire.BlockHeader, error)
 	return *header, nil
 }
 
+func (chain *BlockChain) GetPrevStakeNode(blockHeader *wire.BlockHeader) (*stake.Node, error) {
+	prevNode, err := chain.index.NodeFromHash(&blockHeader.PrevBlock)
+
+	if err != nil {
+		return nil, err
+	}
+
+	stakeNode, err := chain.fetchStakeNode(prevNode)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return stakeNode, nil
+}
+
 // IndexManager provides a generic interface that the is called when blocks are
 // connected and disconnected to and from the tip of the main chain for the
 // purpose of supporting optional indexes.

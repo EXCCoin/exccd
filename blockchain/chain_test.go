@@ -8,16 +8,18 @@ package blockchain
 
 import (
 	"bytes"
-	"compress/bzip2"
 	"encoding/gob"
 	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"compress/gzip"
+	"encoding/json"
 	"github.com/EXCCoin/exccd/blockchain/chaingen"
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/exccutil"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 // cloneParams returns a deep copy of the provided parameters so the caller is
@@ -35,11 +37,105 @@ func cloneParams(params *chaincfg.Params) *chaincfg.Params {
 	return &paramsCopy
 }
 
+//Functions and structures for test data conversion
+
+type JSONBlock struct {
+	MsgBlock wire.MsgBlock
+}
+
+// Note: this test usually should be skipped. It is used only to convert and re-generate
+// valid test data in cases of block header format or other relevant changes (for example, hash function)
+func TestConvertToNewFormat(t *testing.T) {
+
+	t.SkipNow()
+
+	// Load up the rest of the blocks up to HEAD~1.
+	filename := filepath.Join("testdata/", "blocks0to168.json.gz")
+	fi, err := os.Open(filename)
+	if err != nil {
+		t.Errorf("Unable to open %s: %v", filename, err)
+	}
+
+	ofilename := filepath.Join("testdata/", "blocks0to168.exccd.json.gz")
+	fo, err := os.Create(ofilename)
+	if err != nil {
+		t.Errorf("Unable to open %s: %v", filename, err)
+	}
+
+	jsonStream, err := gzip.NewReader(fi)
+
+	if err != nil {
+		t.Fatalf("Unable to open input file %s (%v)", ofilename, err)
+	}
+
+	jsonOutStream := gzip.NewWriter(fo)
+
+	defer jsonStream.Close()
+	defer fi.Close()
+	defer jsonOutStream.Close()
+
+	decoder := json.NewDecoder(jsonStream)
+	encoder := json.NewEncoder(jsonOutStream)
+
+	counter := 0
+
+	params := cloneParams(&chaincfg.SimNetParams)
+	params.GenesisBlock.Header.MerkleRoot = *mustParseHash("a216ea043f0d481a072424af646787794c32bcefd3ed181a090319bbf8a37105")
+	genesisHash := params.GenesisBlock.BlockHash()
+	params.GenesisHash = &genesisHash
+	hash := &genesisHash
+
+	for decoder.More() {
+		var bl JSONBlock
+
+		counter++
+
+		err := decoder.Decode(&bl)
+
+		if err != nil {
+			t.Fatalf("Unable to decode block (%d) %v", counter, err)
+		}
+
+		// Update block header with missing or incorrect values
+		bl.MsgBlock.Header.Size = uint32(bl.MsgBlock.SerializeSize())
+		bl.MsgBlock.Header.PrevBlock.SetBytes(hash.CloneBytes())
+		merkles := BuildMerkleTreeStore(exccutil.NewBlock(&bl.MsgBlock).Transactions())
+		bl.MsgBlock.Header.MerkleRoot = *merkles[len(merkles)-1]
+
+		t.Logf("Solving block %d...", counter)
+
+		// Solve block and store valid equihash solution
+		found := chaingen.SolveBlockWithEquihash(&bl.MsgBlock.Header, params)
+
+		if !found {
+			t.Fatalf("Unable to find solution for block (%d) %v", counter, err)
+		}
+
+		err = ValidateEquihashSolution(&bl.MsgBlock.Header, params)
+
+		if err != nil {
+			t.Logf("...not solved\n")
+		} else {
+			t.Logf("...solved\n")
+		}
+
+		err = encoder.Encode(bl)
+
+		if err != nil {
+			t.Fatalf("Unable to encode block %v", err)
+		}
+
+		prevHash := bl.MsgBlock.BlockHash()
+		hash = &prevHash
+	}
+	t.Logf("Total number of records: %d\n", counter)
+}
+
 // TestBlockchainFunction tests the various blockchain API to ensure proper
 // functionality.
-//TODO: once upon a time enable test and make it pass
+// TODO: once upon a time enable test and make it pass
 func TestBlockchainFunctions(t *testing.T) {
-	//Skip this test for now since it relies on binary files
+	// TODO: Current failure: ProcessBlock error at height 18: block does not commit to enough votes (min: 3, got 0)
 	t.SkipNow()
 
 	// Update simnet parameters to reflect what is expected by the legacy
@@ -58,34 +154,32 @@ func TestBlockchainFunctions(t *testing.T) {
 	defer teardownFunc()
 
 	// Load up the rest of the blocks up to HEAD~1.
-	filename := filepath.Join("testdata/", "blocks0to168.bz2")
+	filename := filepath.Join("testdata/", "blocks0to168.exccd.json.gz")
 	fi, err := os.Open(filename)
 	if err != nil {
 		t.Errorf("Unable to open %s: %v", filename, err)
 	}
-	bcStream := bzip2.NewReader(fi)
+	bcStream, err := gzip.NewReader(fi)
+	if err != nil {
+		t.Errorf("Unable to read archive %s: %v", filename, err)
+	}
+
+	defer bcStream.Close()
 	defer fi.Close()
 
-	// Create a buffer of the read file.
-	bcBuf := new(bytes.Buffer)
-	bcBuf.ReadFrom(bcStream)
-
 	// Create decoder from the buffer and a map to store the data.
-	bcDecoder := gob.NewDecoder(bcBuf)
-	blockChain := make(map[int64][]byte)
-
-	// Decode the blockchain into the map.
-	if err := bcDecoder.Decode(&blockChain); err != nil {
-		t.Errorf("error decoding test blockchain: %v", err.Error())
-	}
+	decoder := json.NewDecoder(bcStream)
 
 	// Insert blocks 1 to 168 and perform various tests.
 	for i := 1; i <= 168; i++ {
-		bl, err := exccutil.NewBlockFromBytes(blockChain[int64(i)])
+		var jsbl JSONBlock
+		err := decoder.Decode(&jsbl)
+
 		if err != nil {
-			t.Errorf("NewBlockFromBytes error: %v", err.Error())
+			t.Fatalf("Unable to decode block (%d) %v", i, err)
 		}
 
+		bl := exccutil.NewBlock(&jsbl.MsgBlock)
 		_, _, err = chain.ProcessBlock(bl, BFNone)
 		if err != nil {
 			t.Fatalf("ProcessBlock error at height %v: %v", i, err.Error())
@@ -124,14 +218,11 @@ func TestBlockchainFunctions(t *testing.T) {
 
 // TestForceHeadReorg ensures forcing header reorganization works as expected.
 func TestForceHeadReorg(t *testing.T) {
-	// Create a test generator instance initialized with the genesis block
-	// as the tip as well as some cached payment scripts to be used
-	// throughout the tests.
-	params := &chaincfg.SimNetParams
-	g, err := chaingen.MakeGenerator(params)
-	if err != nil {
-		t.Fatalf("Failed to create generator: %v", err)
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
 	}
+
+	params := &chaincfg.SimNetParams
 
 	// Create a new database and chain instance to run tests against.
 	chain, teardownFunc, err := chainSetup("forceheadreorgtest", params)
@@ -139,6 +230,14 @@ func TestForceHeadReorg(t *testing.T) {
 		t.Fatalf("Failed to setup chain instance: %v", err)
 	}
 	defer teardownFunc()
+
+	// Create a test generator instance initialized with the genesis block
+	// as the tip as well as some cached payment scripts to be used
+	// throughout the tests.
+	g, err := chaingen.MakeGenerator(params, chain)
+	if err != nil {
+		t.Fatalf("Failed to create generator: %v", err)
+	}
 
 	// Define some convenience helper functions to process the current tip
 	// block associated with the generator.

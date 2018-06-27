@@ -300,6 +300,7 @@ var helpDescsEnUS = map[string]string{
 	"getblockverboseresult-finalstate":        "The block's finalstate",
 	"getblockverboseresult-extradata":         "Extra data field for the requested block",
 	"getblockverboseresult-stakeversion":      "Stake Version of the block",
+	"getblockverboseresult-equihashsolution":  "The equihash solution of the block",
 
 	// GetBlockCountCmd help.
 	"getblockcount--synopsis": "Returns the number of blocks in the longest block chain.",
@@ -340,6 +341,7 @@ var helpDescsEnUS = map[string]string{
 	"getblockheaderverboseresult-votebits":          "The vote bits",
 	"getblockheaderverboseresult-stakeroot":         "The merkle root of the stake transaction tree",
 	"getblockheaderverboseresult-stakeversion":      "The stake version of the block",
+	"getblockheaderverboseresult-equihashsolution":  "The equihash solution of the block",
 
 	// GetBlockSubsidyCmd help.
 	"getblocksubsidy--synopsis": "Returns information regarding subsidy amounts.",
@@ -1074,7 +1076,7 @@ func (c *helpCacher) rpcUsage(includeWebsockets bool) (string, error) {
 		}
 	}
 
-	sort.Sort(sort.StringSlice(usageTexts))
+	sort.Strings(usageTexts)
 	c.usage = strings.Join(usageTexts, "\n")
 	return c.usage, nil
 }

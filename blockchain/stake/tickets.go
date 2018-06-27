@@ -98,6 +98,21 @@ func (sn *Node) MissedByBlock() []chainhash.Hash {
 	return missed
 }
 
+// ExpiredByBlock returns the tickets that expired in this block. This is a
+// subset of the missed tickets returned by MissedByBlock. The output only
+// includes the initial expiration of the ticket, not when an expired ticket is
+// revoked. This is unlike MissedByBlock that includes the revocation as well.
+func (sn *Node) ExpiredByBlock() []chainhash.Hash {
+	var expired []chainhash.Hash
+	for _, undo := range sn.databaseUndoUpdate {
+		if undo.Expired && !undo.Revoked {
+			expired = append(expired, undo.TicketHash)
+		}
+	}
+
+	return expired
+}
+
 // ExistsLiveTicket returns whether or not a ticket exists in the live ticket
 // treap for this stake node.
 func (sn *Node) ExistsLiveTicket(ticket chainhash.Hash) bool {
@@ -180,6 +195,10 @@ func (sn *Node) ExistsExpiredTicket(ticket chainhash.Hash) bool {
 // can vote on this node.
 func (sn *Node) Winners() []chainhash.Hash {
 	return sn.nextWinners
+}
+
+func (sn *Node) ReplaceWinners(newWinners []chainhash.Hash) {
+	sn.nextWinners = newWinners
 }
 
 // FinalState returns the final state lottery checksum of the node.

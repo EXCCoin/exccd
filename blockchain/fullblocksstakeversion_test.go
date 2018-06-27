@@ -17,14 +17,11 @@ import (
 // TestStakeVersion ensures that the stake version field in the block header is
 // enforced properly.
 func TestStakeVersion(t *testing.T) {
-	// Create a test generator instance initialized with the genesis block
-	// as the tip as well as some cached payment scripts to be used
-	// throughout the tests.
-	params := &chaincfg.SimNetParams
-	g, err := chaingen.MakeGenerator(params)
-	if err != nil {
-		t.Fatalf("Failed to create generator: %v", err)
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
 	}
+
+	params := &chaincfg.SimNetParams
 
 	// Create a new database and chain instance to run tests against.
 	chain, teardownFunc, err := chainSetup("stakeversiontest", params)
@@ -32,6 +29,14 @@ func TestStakeVersion(t *testing.T) {
 		t.Fatalf("Failed to setup chain instance: %v", err)
 	}
 	defer teardownFunc()
+
+	// Create a test generator instance initialized with the genesis block
+	// as the tip as well as some cached payment scripts to be used
+	// throughout the tests.
+	g, err := chaingen.MakeGenerator(params, chain)
+	if err != nil {
+		t.Fatalf("Failed to create generator: %v", err)
+	}
 
 	// Define some convenience helper functions to process the current tip
 	// block associated with the generator.

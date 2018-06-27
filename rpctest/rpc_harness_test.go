@@ -372,8 +372,7 @@ func testMemWalletReorg(r *Harness, t *testing.T) {
 	}
 
 	// The original wallet should now have a balance of 0 Coin as its entire
-	// chain should have been decimated in favor of the main harness'
-	// chain.
+	// chain should have been decimated in favor of the main harness' chain.
 	expectedBalance = exccutil.Amount(0)
 	walletBalance = harness.ConfirmedBalance()
 	if expectedBalance != walletBalance {

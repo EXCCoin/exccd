@@ -478,7 +478,7 @@ func TestPeerListeners(t *testing.T) {
 			wire.NewMsgBlock(wire.NewBlockHeader(0, &chainhash.Hash{},
 				&chainhash.Hash{}, &chainhash.Hash{}, 1, [6]byte{},
 				1, 1, 1, 1, 1, 1, 1, 1, 1, [32]byte{},
-				binary.LittleEndian.Uint32([]byte{0xb0, 0x1d, 0xfa, 0xce}))),
+				binary.LittleEndian.Uint32([]byte{0xb0, 0x1d, 0xfa, 0xce}), [wire.EquihashSolutionLen]byte{})),
 		},
 		{
 			"OnInv",
@@ -553,7 +553,7 @@ func TestPeerListeners(t *testing.T) {
 				&chainhash.Hash{}, &chainhash.Hash{},
 				&chainhash.Hash{}, 1, [6]byte{},
 				1, 1, 1, 1, 1, 1, 1, 1, 1, [32]byte{},
-				binary.LittleEndian.Uint32([]byte{0xb0, 0x1d, 0xfa, 0xce}))),
+				binary.LittleEndian.Uint32([]byte{0xb0, 0x1d, 0xfa, 0xce}), [wire.EquihashSolutionLen]byte{})),
 		},
 		// only one version message is allowed
 		// only one verack message is allowed
