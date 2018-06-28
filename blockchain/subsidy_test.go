@@ -42,10 +42,16 @@ func TestBlockSubsidy(t *testing.T) {
 				break
 			}
 			totalSubsidy += (work + stake) * numBlocks
+
+			// First reduction internal, subtract the stake subsidy for
+			// blocks before the staking system is enabled.
+			if i == mainnet.SubsidyReductionInterval {
+				totalSubsidy -= stake * (mainnet.StakeValidationHeight - 2)
+			}
 		}
 	}
 
-	expectedSubsidy := int64(2044657240590848) + mainnet.BlockOneSubsidy()
+	expectedSubsidy := int64(2043784000590848) + mainnet.BlockOneSubsidy()
 	if totalSubsidy != expectedSubsidy {
 		t.Errorf("Bad total subsidy; want %v, got %v", expectedSubsidy, totalSubsidy)
 	}
