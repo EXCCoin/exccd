@@ -162,7 +162,7 @@ static _SORT_R_INLINE void qsort_r_simple(void *base, size_t nel, size_t w,
 
   /* implementation */
 
-  static _SORT_R_INLINE void qsort_r(void *base, size_t nel, size_t width,
+  static _SORT_R_INLINE void custom_qsort_r(void *base, size_t nel, size_t width,
                                     int (*compar)(const void *_a, const void *_b, void *_arg),
                                     void *arg)
   {
@@ -207,7 +207,7 @@ static _SORT_R_INLINE void qsort_r_simple(void *base, size_t nel, size_t w,
   }
 
 #endif /* !NESTED_QSORT */
-
+#define qsort_r(...) custom_qsort_r(__VA_ARGS__)
 #undef _SORT_R_INLINE
 #undef _SORT_R_WINDOWS
 #undef _SORT_R_LINUX
