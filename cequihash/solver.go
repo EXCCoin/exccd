@@ -6,7 +6,6 @@ package cequihash
 
 /*
 #cgo CFLAGS: -O3 -march=native -std=c99
-#include <stdint.h>
 #include "cequihash.h"
 */
 import "C"
