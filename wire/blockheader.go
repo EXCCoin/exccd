@@ -22,7 +22,12 @@ import (
 // ExtraData 32 bytes + StakeVersion 4 bytes.
 // --> Total 180 bytes.
 // + Equihash solution (always 1344 bytes, for N = 200, K = 9)
-const EquihashSolutionLen = 1344
+// + Equihash solution (always 100 bytes, for N = 144, K = 5)
+
+const MainEquihashN = 144
+const MainEquihashK = 5
+
+const EquihashSolutionLen = (1 << uint32(MainEquihashK) * (MainEquihashN/(MainEquihashK + 1) + 1) / 8)
 
 // --> Total 1524 bytes
 const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + EquihashSolutionLen
