@@ -25,7 +25,9 @@ func testLNFeaturesDeployment(t *testing.T, params *chaincfg.Params, deploymentV
 		txscript.ScriptVerifyStrictEncoding |
 		txscript.ScriptVerifyMinimalData |
 		txscript.ScriptVerifyCleanStack |
-		txscript.ScriptVerifyCheckLockTimeVerify
+		txscript.ScriptVerifyCheckLockTimeVerify |
+		txscript.ScriptVerifyCheckSequenceVerify |
+		txscript.ScriptVerifySHA256
 
 	// Find the correct deployment for the LN features agenda.
 	var deployment chaincfg.ConsensusDeployment
@@ -92,22 +94,18 @@ func testLNFeaturesDeployment(t *testing.T, params *chaincfg.Params, deploymentV
 			expectedFlags: baseConsensusScriptVerifyFlags,
 		},
 		{
-			name:       "exactly active",
-			numNodes:   1,
-			curActive:  true,
-			nextActive: true,
-			expectedFlags: baseConsensusScriptVerifyFlags |
-				txscript.ScriptVerifyCheckSequenceVerify |
-				txscript.ScriptVerifySHA256,
+			name:          "exactly active",
+			numNodes:      1,
+			curActive:     true,
+			nextActive:    true,
+			expectedFlags: baseConsensusScriptVerifyFlags,
 		},
 		{
-			name:       "one after active",
-			numNodes:   1,
-			curActive:  true,
-			nextActive: true,
-			expectedFlags: baseConsensusScriptVerifyFlags |
-				txscript.ScriptVerifyCheckSequenceVerify |
-				txscript.ScriptVerifySHA256,
+			name:          "one after active",
+			numNodes:      1,
+			curActive:     true,
+			nextActive:    true,
+			expectedFlags: baseConsensusScriptVerifyFlags,
 		},
 	}
 
