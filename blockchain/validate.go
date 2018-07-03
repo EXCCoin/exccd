@@ -2480,7 +2480,6 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block, parent *exccutil.
 
 	// Enforce all relative lock times via sequence numbers for the stake
 	// transaction tree once the stake vote for the agenda is active.
-	//if lnFeaturesActive {
 	for _, stx := range block.STransactions() {
 		sequenceLock, err := b.calcSequenceLock(node, stx,
 			utxoView, true)
@@ -2496,7 +2495,6 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block, parent *exccutil.
 			return ruleError(ErrUnfinalizedTx, str)
 		}
 	}
-	//}
 
 	if runScripts {
 		err = checkBlockScripts(block, utxoView, true,
