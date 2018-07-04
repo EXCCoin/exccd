@@ -194,10 +194,10 @@ func assertStakeDiffParamsTestNet(t *testing.T, params *chaincfg.Params) {
 	}
 }
 
-// TestCalcNextRequiredStakeDiffV2 ensure the stake diff calculation function
+// TestCalcNextRequiredStakeDiff ensure the stake diff calculation function
 // for the algorithm defined by DCP0001 works as expected.
 // TODO: once upon a time enable test and make it pass
-func TestCalcNextRequiredStakeDiffV2(t *testing.T) {
+func TestCalcNextRequiredStakeDiff(t *testing.T) {
 	// Test is affected by block time and inflation rules
 	// Fix it after aplying inflation rule changes
 	t.SkipNow()
@@ -441,14 +441,14 @@ nextTest:
 		for _, ticketInfo := range test.ticketInfo {
 			// Ensure the test data isn't faking ticket purchases at
 			// an incorrect difficulty.
-			gotDiff, err := bc.calcNextRequiredStakeDifficultyV2(bc.bestNode)
+			gotDiff, err := bc.calcNextRequiredStakeDifficulty(bc.bestNode)
 			if err != nil {
-				t.Errorf("calcNextRequiredStakeDifficultyV2 (%s): "+
+				t.Errorf("calcNextRequiredStakeDifficulty (%s): "+
 					"unexpected error: %v", test.name, err)
 				continue nextTest
 			}
 			if gotDiff != ticketInfo.stakeDiff {
-				t.Errorf("calcNextRequiredStakeDifficultyV2 (%s): "+
+				t.Errorf("calcNextRequiredStakeDifficulty (%s): "+
 					"did not get expected stake difficulty -- got "+
 					"%d, want %d", test.name, gotDiff,
 					ticketInfo.stakeDiff)
@@ -489,14 +489,14 @@ nextTest:
 		}
 
 		// Ensure the calculated difficulty matches the expected value.
-		gotDiff, err := bc.calcNextRequiredStakeDifficultyV2(bc.bestNode)
+		gotDiff, err := bc.calcNextRequiredStakeDifficulty(bc.bestNode)
 		if err != nil {
-			t.Errorf("calcNextRequiredStakeDifficultyV2 (%s): "+
+			t.Errorf("calcNextRequiredStakeDifficulty (%s): "+
 				"unexpected error: %v", test.name, err)
 			continue
 		}
 		if gotDiff != test.expectedDiff {
-			t.Errorf("calcNextRequiredStakeDifficultyV2 (%s): "+
+			t.Errorf("calcNextRequiredStakeDifficulty (%s): "+
 				"did not get expected stake difficulty -- got "+
 				"%d, want %d", test.name, gotDiff,
 				test.expectedDiff)
@@ -505,10 +505,10 @@ nextTest:
 	}
 }
 
-// TestEstimateNextStakeDiffV2 ensures the function that estimates the stake
+// TestEstimateNextStakeDiff ensures the function that estimates the stake
 // diff calculation for the algorithm defined by DCP0001 works as expected.
 // TODO: once upon a time enable test and make it pass
-func TestEstimateNextStakeDiffV2(t *testing.T) {
+func TestEstimateNextStakeDiff(t *testing.T) {
 	// Test is affected by block time and inflation rules
 	// Fix it after aplying inflation rule changes
 	t.SkipNow()
@@ -996,14 +996,14 @@ nextTest:
 		for _, ticketInfo := range test.ticketInfo {
 			// Ensure the test data isn't faking ticket purchases at
 			// an incorrect difficulty.
-			reqDiff, err := bc.calcNextRequiredStakeDifficultyV2(bc.bestNode)
+			reqDiff, err := bc.calcNextRequiredStakeDifficulty(bc.bestNode)
 			if err != nil {
-				t.Errorf("calcNextRequiredStakeDifficultyV2 (%s): "+
+				t.Errorf("calcNextRequiredStakeDifficulty (%s): "+
 					"unexpected error: %v", test.name, err)
 				continue nextTest
 			}
 			if ticketInfo.stakeDiff != reqDiff {
-				t.Errorf("calcNextRequiredStakeDifficultyV2 (%s): "+
+				t.Errorf("calcNextRequiredStakeDifficulty (%s): "+
 					"test data has incorrect stake difficulty: "+
 					"has %d, requires %d", test.name,
 					ticketInfo.stakeDiff, reqDiff)
@@ -1044,15 +1044,15 @@ nextTest:
 		}
 
 		// Ensure the calculated difficulty matches the expected value.
-		gotDiff, err := bc.estimateNextStakeDifficultyV2(bc.bestNode,
+		gotDiff, err := bc.estimateNextStakeDifficulty(bc.bestNode,
 			test.newTickets, test.useMaxTickets)
 		if err != nil {
-			t.Errorf("estimateNextStakeDifficultyV2 (%s): "+
+			t.Errorf("estimateNextStakeDifficulty (%s): "+
 				"unexpected error: %v", test.name, err)
 			continue
 		}
 		if gotDiff != test.expectedDiff {
-			t.Errorf("estimateNextStakeDifficultyV2 (%s): did not "+
+			t.Errorf("estimateNextStakeDifficulty (%s): did not "+
 				"get expected stake difficulty -- got %d, "+
 				"want %d", test.name, gotDiff, test.expectedDiff)
 			continue
