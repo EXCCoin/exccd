@@ -470,7 +470,12 @@ var MainNetParams = Params{
 	Name:        "mainnet",
 	Net:         wire.MainNet,
 	DefaultPort: "9666",
-	DNSSeeds:    []DNSSeed{},
+	DNSSeeds: []DNSSeed{
+		{"seed.excc.co", true},
+		{"seed.xchange.me", true},
+		{"excc-seed.pragmaticcoders.com", true},
+		{"seed.exccited.com", true},
+	},
 	// TODO: restore production parameters
 	// N:           200,
 	// K:           9,
