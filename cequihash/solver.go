@@ -5,13 +5,14 @@
 package cequihash
 
 /*
-#cgo CFLAGS: -O3 -march=native -std=c99
+#cgo CXXFLAGS: -Og -std=c++17 -Wall -Wno-deprecated-declarations -D_POSIX_C_SOURCE=200112L
 #include "cequihash.h"
 */
 import "C"
 import (
 	cptr "github.com/mattn/go-pointer"
 	"unsafe"
+	"fmt"
 )
 
 // This code is a wrapper for C implementation of equihash.
@@ -47,6 +48,8 @@ type EquihashCallback interface {
 
 //export equihashProxy
 func equihashProxy(callback_data unsafe.Pointer, extra_data unsafe.Pointer) C.int {
+	fmt.Errorf("callback invoked with %d %d\n", uintptr(callback_data), uintptr(extra_data))
+
 	callback := cptr.Restore(callback_data).(*EquihashCallback)
 
 	if callback == nil {

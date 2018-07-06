@@ -1,16 +1,14 @@
 /*
-   BLAKE2 reference source code package - reference C implementations
+   BLAKE2 reference source code package - optimized C implementations
 
-   Copyright 2012, Samuel Neves <sneves@dei.uc.pt>.  You may use this under the
-   terms of the CC0, the OpenSSL Licence, or the Apache Public License 2.0, at
-   your option.  The terms of these licenses can be found at:
+   Written in 2012 by Samuel Neves <sneves@dei.uc.pt>
 
-   - CC0 1.0 Universal : http://creativecommons.org/publicdomain/zero/1.0
-   - OpenSSL license   : https://www.openssl.org/source/license.html
-   - Apache 2.0        : http://www.apache.org/licenses/LICENSE-2.0
+   To the extent possible under law, the author(s) have dedicated all copyright
+   and related and neighboring rights to this software to the public domain
+   worldwide. This software is distributed without any warranty.
 
-   More information about the BLAKE2 hash function can be found at
-   https://blake2.net.
+   You should have received a copy of the CC0 Public Domain Dedication along with
+   this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 */
 #pragma once
 #ifndef __BLAKE2_H__
@@ -19,23 +17,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#ifdef BLAKE2_NO_INLINE
-#define BLAKE2_LOCAL_INLINE(type) static type
+#if defined(_MSC_VER)
+#define ALIGN(x) __declspec(align(x))
+#else
+#define ALIGN(x) __attribute__ ((__aligned__(x)))
 #endif
-
-#ifndef BLAKE2_LOCAL_INLINE
-#define BLAKE2_LOCAL_INLINE(type) static inline type
-#endif
-
-#ifndef CRYPTO_ALIGN
-//# if defined(__INTEL_COMPILER) || defined(_MSC_VER)
-//#  define CRYPTO_ALIGN(x) __declspec(align(x))
-//# else
-//#  define CRYPTO_ALIGN(x) __attribute__ ((aligned(x)))
-//# endif
-#define CRYPTO_ALIGN(x)
-#endif
-
 
 #if defined(__cplusplus)
 extern "C" {
@@ -59,7 +45,23 @@ extern "C" {
     BLAKE2B_PERSONALBYTES = 16
   };
 
-  typedef CRYPTO_ALIGN(64) struct __blake2s_state
+#pragma pack(push, 1)
+  typedef struct __blake2s_param
+  {
+    uint8_t  digest_length; // 1
+    uint8_t  key_length;    // 2
+    uint8_t  fanout;        // 3
+    uint8_t  depth;         // 4
+    uint32_t leaf_length;   // 8
+    uint8_t  node_offset[6];// 14
+    uint8_t  node_depth;    // 15
+    uint8_t  inner_length;  // 16
+    // uint8_t  reserved[0];
+    uint8_t  salt[BLAKE2S_SALTBYTES]; // 24
+    uint8_t  personal[BLAKE2S_PERSONALBYTES];  // 32
+  } blake2s_param;
+
+  ALIGN( 64 ) typedef struct __blake2s_state
   {
     uint32_t h[8];
     uint32_t t[2];
@@ -69,17 +71,31 @@ extern "C" {
     uint8_t  last_node;
   } blake2s_state;
 
-  typedef CRYPTO_ALIGN(64) struct __blake2b_state
+  typedef struct __blake2b_param
   {
-    uint64_t h[8]; //+8*8 = +64 => 64
-    uint64_t t[2]; //+2*8 = +16 => 80
-    uint64_t f[2]; //+2*8 = +16 => 96
-    uint8_t  buf[2 * BLAKE2B_BLOCKBYTES]; // +2*128 = +256 => 352
-    size_t   buflen; // +8 = +8 => 360
-    uint8_t  last_node; //+1 = +1 => 361
+    uint8_t  digest_length; // 1
+    uint8_t  key_length;    // 2
+    uint8_t  fanout;        // 3
+    uint8_t  depth;         // 4
+    uint32_t leaf_length;   // 8
+    uint64_t node_offset;   // 16
+    uint8_t  node_depth;    // 17
+    uint8_t  inner_length;  // 18
+    uint8_t  reserved[14];  // 32
+    uint8_t  salt[BLAKE2B_SALTBYTES]; // 48
+    uint8_t  personal[BLAKE2B_PERSONALBYTES];  // 64
+  } blake2b_param;
+
+  ALIGN( 64 ) typedef struct __blake2b_state
+  {
+    uint64_t h[8];
+    uint8_t  buf[BLAKE2B_BLOCKBYTES];
+    uint16_t counter;
+    uint8_t  buflen;
+    uint8_t  lastblock;
   } blake2b_state;
 
-  typedef CRYPTO_ALIGN(64) struct __blake2sp_state
+  ALIGN( 64 ) typedef struct __blake2sp_state
   {
     blake2s_state S[8][1];
     blake2s_state R[1];
@@ -87,48 +103,16 @@ extern "C" {
     size_t  buflen;
   } blake2sp_state;
 
-  typedef CRYPTO_ALIGN(64) struct __blake2bp_state
+  ALIGN( 64 ) typedef struct __blake2bp_state
   {
     blake2b_state S[4][1];
     blake2b_state R[1];
     uint8_t buf[4 * BLAKE2B_BLOCKBYTES];
     size_t  buflen;
   } blake2bp_state;
-
-
-#pragma pack(push, 1)
-  typedef struct __blake2s_param
-  {
-    uint8_t  digest_length; /* 1 */
-    uint8_t  key_length;    /* 2 */
-    uint8_t  fanout;        /* 3 */
-    uint8_t  depth;         /* 4 */
-    uint32_t leaf_length;   /* 8 */
-    uint8_t  node_offset[6];// 14
-    uint8_t  node_depth;    /* 15 */
-    uint8_t  inner_length;  /* 16 */
-    /* uint8_t  reserved[0]; */
-    uint8_t  salt[BLAKE2S_SALTBYTES]; /* 24 */
-    uint8_t  personal[BLAKE2S_PERSONALBYTES];  /* 32 */
-  } blake2s_param;
-
-  typedef struct __blake2b_param
-  {
-    uint8_t  digest_length; /* 1 */
-    uint8_t  key_length;    /* 2 */
-    uint8_t  fanout;        /* 3 */
-    uint8_t  depth;         /* 4 */
-    uint32_t leaf_length;   /* 8 */
-    uint64_t node_offset;   /* 16 */
-    uint8_t  node_depth;    /* 17 */
-    uint8_t  inner_length;  /* 18 */
-    uint8_t  reserved[14];  /* 32 */
-    uint8_t  salt[BLAKE2B_SALTBYTES]; /* 48 */
-    uint8_t  personal[BLAKE2B_PERSONALBYTES];  /* 64 */
-  } blake2b_param;
 #pragma pack(pop)
 
-  /* Streaming API */
+  // Streaming API
   int blake2s_init( blake2s_state *S, const uint8_t outlen );
   int blake2s_init_key( blake2s_state *S, const uint8_t outlen, const void *key, const uint8_t keylen );
   int blake2s_init_param( blake2s_state *S, const blake2s_param *P );
@@ -151,9 +135,10 @@ extern "C" {
   int blake2bp_update( blake2bp_state *S, const uint8_t *in, uint64_t inlen );
   int blake2bp_final( blake2bp_state *S, uint8_t *out, uint8_t outlen );
 
-  /* Simple API */
+  // Simple API
   int blake2s( uint8_t *out, const void *in, const void *key, const uint8_t outlen, const uint64_t inlen, uint8_t keylen );
   int blake2b( uint8_t *out, const void *in, const void *key, const uint8_t outlen, const uint64_t inlen, uint8_t keylen );
+  int blake2b_long(uint8_t *out, const void *in, const uint32_t outlen, const uint64_t inlen);
 
   int blake2sp( uint8_t *out, const void *in, const void *key, const uint8_t outlen, const uint64_t inlen, uint8_t keylen );
   int blake2bp( uint8_t *out, const void *in, const void *key, const uint8_t outlen, const uint64_t inlen, uint8_t keylen );
@@ -168,3 +153,4 @@ extern "C" {
 #endif
 
 #endif
+

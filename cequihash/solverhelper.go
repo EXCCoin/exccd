@@ -4,8 +4,7 @@
 package cequihash
 
 /*
-#cgo CFLAGS: -O3 -march=native -std=c99
-
+#cgo CXXFLAGS: -Og -std=c++17 -Wall -Wno-deprecated-declarations -D_POSIX_C_SOURCE=200112L
 #include "cequihash.h"
 */
 import "C"
@@ -16,7 +15,7 @@ import (
 )
 
 func expandArray(n, k int, solution unsafe.Pointer) []uint32 {
-	ptr := C.GetIndices(C.int(n), C.int(k), solution)
+	ptr := C.IndicesFromSolution(C.int(n), C.int(k), solution)
 	defer C.free(ptr)
 
 	indexCount := 1 << uint32(k)
@@ -57,8 +56,7 @@ func (data SolutionAppenderData) Validate(solution unsafe.Pointer) int {
 }
 
 func compressIndices(n, k int, nonce uint32, input []byte, solutionIndices []uint32) []byte {
-	ptr := C.PutIndices(C.int(n), C.int(k), unsafe.Pointer(&input[0]), C.int(len(input)), C.uint32_t(nonce),
-		unsafe.Pointer(&solutionIndices[0]), C.int(len(solutionIndices)))
+	ptr := C.SolutionFromIndices(C.int(n), C.int(k), unsafe.Pointer(&solutionIndices[0]), C.uint(len(solutionIndices)))
 	defer C.free(ptr)
 
 	cBitLen := n / (k + 1)
