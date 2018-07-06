@@ -25,15 +25,13 @@ var (
 	bigOne = big.NewInt(1)
 
 	// mainPowLimit is the highest proof of work value a ExchangeCoin block can
-	// have for the main network.  It is the value 2^555 - 1.
-	// TODO: restore production parameters
-	// TODO: Restore original pow limit for mainnet: 2^224 - 1.
-	mainPowLimit        = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 511), bigOne)
-	mainNetPowLimitBits = bigToCompact(mainPowLimit)
+	// have for the main network.  It is the value 2^250 - 1.
+	// TODO: set production parameters
+	mainPowLimit        = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 250), bigOne)
 
 	// testNetPowLimit is the highest proof of work value a ExchangeCoin block
-	// can have for the test network.  It is the value 2^232 - 1.
-	testNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 232), bigOne)
+	// can have for the test network.  It is the value 2^250 - 1.
+	testNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 250), bigOne)
 
 	// defaultTargetTimePerBlock is the ideal ExchangeCoin block time.
 	// It is the value of 2.5 minute.
@@ -481,7 +479,7 @@ var MainNetParams = Params{
 	GenesisBlock:             &genesisBlock,
 	GenesisHash:              &genesisHash,
 	PowLimit:                 mainPowLimit,
-	PowLimitBits:             mainNetPowLimitBits,
+	PowLimitBits:             bigToCompact(mainPowLimit),
 	ReduceMinDifficulty:      false,
 	MinDiffReductionTime:     0,
 	GenerateSupported:        false,
@@ -590,7 +588,7 @@ var TestNet2Params = Params{
 	GenesisBlock:             &testNet2GenesisBlock,
 	GenesisHash:              &testNet2GenesisHash,
 	PowLimit:                 testNetPowLimit,
-	PowLimitBits:             0x1e00ffff,
+	PowLimitBits:             bigToCompact(testNetPowLimit),
 	ReduceMinDifficulty:      false,
 	MinDiffReductionTime:     0, // Does not apply since ReduceMinDifficulty false
 	GenerateSupported:        true,
