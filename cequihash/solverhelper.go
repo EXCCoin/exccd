@@ -56,7 +56,7 @@ func (data SolutionAppenderData) Validate(solution unsafe.Pointer) int {
 }
 
 func compressIndices(n, k int, nonce uint32, input []byte, solutionIndices []uint32) []byte {
-	ptr := C.SolutionFromIndices(C.int(n), C.int(k), unsafe.Pointer(&solutionIndices[0]), C.uint(len(solutionIndices)))
+	ptr := C.SolutionFromIndices(C.int(n), C.int(k), unsafe.Pointer(&solutionIndices[0]), C.uint32_t(len(solutionIndices)))
 	defer C.free(ptr)
 
 	cBitLen := n / (k + 1)

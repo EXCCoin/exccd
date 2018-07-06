@@ -12,7 +12,6 @@ import "C"
 import (
 	cptr "github.com/mattn/go-pointer"
 	"unsafe"
-	"fmt"
 )
 
 // This code is a wrapper for C implementation of equihash.
@@ -48,8 +47,6 @@ type EquihashCallback interface {
 
 //export equihashProxy
 func equihashProxy(callback_data unsafe.Pointer, extra_data unsafe.Pointer) C.int {
-	fmt.Errorf("callback invoked with %d %d\n", uintptr(callback_data), uintptr(extra_data))
-
 	callback := cptr.Restore(callback_data).(*EquihashCallback)
 
 	if callback == nil {
