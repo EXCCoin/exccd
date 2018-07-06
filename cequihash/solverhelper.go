@@ -4,7 +4,7 @@
 package cequihash
 
 /*
-#cgo CXXFLAGS: -Og -std=c++17 -Wall -Wno-deprecated-declarations -D_POSIX_C_SOURCE=200112L
+#cgo CXXFLAGS: -O3 -march=native -std=c++17 -Wall -Wno-deprecated-declarations -D_POSIX_C_SOURCE=200112L
 #include "cequihash.h"
 */
 import "C"
@@ -27,7 +27,7 @@ func expandArray(n, k int, solution unsafe.Pointer) []uint32 {
 	num_read, _ := buf.Read(tmp[:])
 
 	for num_read > 0 {
-		index := binary.BigEndian.Uint32(tmp[:])
+		index := binary.LittleEndian.Uint32(tmp[:])
 		result = append(result, index)
 		num_read, _ = buf.Read(tmp[:])
 	}

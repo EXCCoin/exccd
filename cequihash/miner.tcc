@@ -6,9 +6,6 @@
 #include <ctype.h>
 #include <algorithm>
 
-//TODO: (siy) cleanup
-#include <stdio.h>
-
 #ifdef __APPLE__
     #include <machine/endian.h>
     #include <libkern/OSByteOrder.h>
@@ -30,26 +27,32 @@
 #define WN          48
 #define WK          5
 #define RESTBITS    4
-#define SUFFIX  _485
 #elif defined(CONF_96_5)
 #define WN          96
 #define WK          5
 #define RESTBITS    4
-#define SUFFIX  _965
 #elif defined(CONF_144_5)
 #define WN          144
 #define WK          5
 #define RESTBITS    4
-#define SUFFIX  _1445
 #elif defined(CONF_200_9)
 #define WN          200
 #define WK          9
-#define SUFFIX  _2009
 #endif
 
-#define verify              JOIN(verify,SUFFIX)
-#define solve               JOIN(solve,SUFFIX)
-#define compress_solution   JOIN(compress_solution,SUFFIX)
+#define SUFFIX  JOIN(WN,WK)
+
+//Make unique names for multiple instantiations
+#define verify              JOIN(verify_,SUFFIX)
+#define solve               JOIN(solve_,SUFFIX)
+#define compress_solution   JOIN(compress_solution_,SUFFIX)
+#define setheader           JOIN(setheader_,SUFFIX)
+#define duped               JOIN(duped_,SUFFIX)
+#define genhash             JOIN(genhash_,SUFFIX)
+#define equi                JOIN(equi_,SUFFIX)
+#define htunit              JOIN(htunit_,SUFFIX)
+#define tree                JOIN(tree_,SUFFIX)
+#define htalloc             JOIN(htalloc_,SUFFIX)
 
 #define NDIGITS        (WK+1)
 #define DIGITBITS    (WN/(NDIGITS))
@@ -119,7 +122,7 @@ static_assert(NSLOTPAIRS <= 1 << CANTORBITS, "cantor throws a fit");
 #define TREEBYTES sizeof(tree_t)
 #define TREEBITS (8*TREEBYTES)
 
-extern "C" int equihashProxy(void* blockData, void* solution);
+extern "C" int equihashProxy(const void* blockData, void* solution);
 
 static int compu32(const void *pa, const void *pb) {
     u32 a = *(u32 *) pa, b = *(u32 *) pb;
@@ -364,14 +367,6 @@ struct htalloc {
     }
 };
 
-struct equi;
-
-// Thread context
-typedef struct {
-    u32 id;
-    equi *eq;
-} thread_ctx;
-
 // main solver object, shared between all threads
 struct equi {
     typedef u32 proof[PROOFSIZE];
@@ -380,9 +375,9 @@ struct equi {
     bsizes *nslots;          // counts number of slots used in buckets
     proof *sols;             // store found solutions here (only first MAXSOLS)
     u32 nsols;              // number of solutions found
-    void* user_data;
+    const void* user_data;
 
-    equi(void* userData):user_data(userData) {
+    equi(const void* userData):user_data(userData) {
         static_assert(sizeof(htunit) == sizeof(tree_t), "");
         static_assert(WK & 1, "K assumed odd in candidate() calling indices1()");
         hta.alloctrees();
@@ -430,9 +425,6 @@ struct equi {
 
     // recognize most (but not all) remaining dupes while Wagner-ordering the indices
     bool orderindices(u32 *indices, u32 size) {
-
-    fprintf(stderr, "orderindices.0 %d\n", size);
-
         if (indices[0] > indices[size]) {
             for (u32 i = 0; i < size; i++) {
                 const u32 tmp = indices[i];
@@ -440,36 +432,24 @@ struct equi {
                 indices[size + i] = tmp;
             }
         }
-    fprintf(stderr, "orderindices.1 %d\n", size);
         return false;
     }
 
     // listindices combines index tree reconstruction with probably dupe test
     bool listindices0(u32 r, const tree t, u32 *indices) {
-fprintf(stderr, "listindices0.0 %d\n", r);
         if (r == 0) {
-fprintf(stderr, "listindices0.0.1 %d\n", r);
             *indices = t.getindex();
             return false;
         }
-fprintf(stderr, "listindices0.1 %d\n", r);
         const slot1 *buck = hta.heap1[t.bucketid()];
         const u32 size = 1 << --r;
         u32 tagi = hashwords(hashsize(r));
-fprintf(stderr, "listindices0.2 %d\n", r);
 #ifdef CANTOR
         u32 s1 = t.slotid1(), s0 = t.slotid0(s1);
 #else
         u32 s1 = t.slotid1(), s0 = t.slotid0();
 #endif
-fprintf(stderr, "listindices0.3 s0:%d s1:%d tagi:%d buck:%lx\n", s0, s1, tagi, (u64)buck);
-fprintf(stderr, "listindices0.3 buck[s0]:%lx\n", (u64)(&buck[s0]));
-fprintf(stderr, "listindices0.3 buck[s1]:%lx\n", (u64)(&buck[s1]));
-
         tree t0 = buck[s0][tagi].tag, t1 = buck[s1][tagi].tag;
-
-fprintf(stderr, "listindices0.4 %d %d\n", s0, s1);
-
         return !t0.prob_disjoint(t1)
                || listindices1(r, t0, indices) || listindices1(r, t1, indices + size)
                || orderindices(indices, size) || indices[0] == indices[size];
@@ -477,21 +457,15 @@ fprintf(stderr, "listindices0.4 %d %d\n", s0, s1);
 
     // need separate instance for accessing (differently typed) heap1
     bool listindices1(u32 r, const tree t, u32 *indices) {
-
-fprintf(stderr, "listindices1.0 %d\n", r);
         const slot0 *buck = hta.heap0[t.bucketid()];
         const u32 size = 1 << --r;
         u32 tagi = hashwords(hashsize(r));
-fprintf(stderr, "listindices1.1\n");
 #ifdef CANTOR
         u32 s1 = t.slotid1(), s0 = t.slotid0(s1);
 #else
         u32 s1 = t.slotid1(), s0 = t.slotid0();
 #endif
-fprintf(stderr, "listindices1.2\n");
         tree t0 = buck[s0][tagi].tag, t1 = buck[s1][tagi].tag;
-fprintf(stderr, "listindices1.3 %08lx %d\n", (u64)indices, size);
-
         return listindices0(r, t0, indices) || listindices0(r, t1, indices + size)
                || orderindices(indices, size) || indices[0] == indices[size];
     }
@@ -1177,7 +1151,7 @@ static int verifyrec(const blake2b_state *ctx, u32 *indices, uchar *hash, int r)
 }
 
 int verify(u32* indices, u32 proofsize, const unsigned char *input, const u32 input_len, int64_t nonce) {
-    if (input_len > HEADERNONCELEN || !input_len)
+    if (input_len > HEADERNONCELEN)
         return POW_INVALID_HEADER_LENGTH;
     if (proofsize != PROOFSIZE)
         return POW_SOL_SIZE_MISMATCH;
@@ -1189,19 +1163,9 @@ int verify(u32* indices, u32 proofsize, const unsigned char *input, const u32 in
     return verifyrec(&ctx, indices, hash, WK);
 }
 
-int solve(unsigned char* input, u32 input_len, uint32_t nonce, void* userData) {
-    fprintf(stderr, "input:%016lx, len:%d, nonce:%d, data:%016lx, n:%d, k:%d\n", (uint64_t)input, input_len, nonce, (uint64_t)userData, WN, WK);
+int solve(const unsigned char* input, u32 input_len, uint32_t nonce, const void* userData) {
     equi eq(userData);
-
-    unsigned char headernonce[HEADERNONCELEN];
-    memcpy(headernonce, input, std::min(input_len, HEADERNONCELEN));
-
-    if (input_len < HEADERNONCELEN) {
-        memset(headernonce + input_len, 0, sizeof(headernonce) - input_len);
-    }
-
-    eq.setheadernonce(headernonce, sizeof(headernonce), nonce);
-
+    eq.setheadernonce(input, input_len, nonce);
     eq.worker();
 
     u32 maxsols = std::min(MAXSOLS, eq.nsols);
@@ -1217,3 +1181,109 @@ int solve(unsigned char* input, u32 input_len, uint32_t nonce, void* userData) {
 
     return eq.nsols;
 }
+
+#ifdef __EQUI_MAIN__
+extern "C" int equihashProxy(const void* blockData, void* solution) {
+    return 0;
+}
+
+static int hextobyte(const char *x) {
+    u32 b = 0;
+    for (int i = 0; i < 2; i++) {
+        uchar c = tolower(x[i]);
+        assert(isxdigit(c));
+        b = (b << 4) | (c - (c >= '0' && c <= '9' ? '0' : ('a' - 10)));
+    }
+    return b;
+}
+
+int main(int argc, char **argv) {
+    int nonce = 0;
+    int range = 1;
+    bool showsol = false;
+    bool compress_sol = false;
+    bool print_decimal = false;
+    const char *header = "";
+    const char *hex = "";
+    int c;
+    while ((c = getopt(argc, argv, "h:n:r:t:x:dsc")) != -1) {
+        switch (c) {
+            case 'h':
+                header = optarg;
+                break;
+            case 'n':
+                nonce = atoi(optarg);
+                break;
+            case 'r':
+                range = atoi(optarg);
+                break;
+            case 's':
+                showsol = true;
+                break;
+            case 'x':
+                hex = optarg;
+                break;
+            case 'c':
+                compress_sol = true;
+                break;
+            case 'd':
+                print_decimal = true;
+                break;
+        }
+    }
+#ifndef XWITHASH
+    if (sizeof(tree) > 4)
+        printf("WARNING: please compile with -DXWITHASH to shrink tree!\n");
+#endif
+
+    printf("Looking for wagner-tree on (\"%s\",%d", hex ? "0x..." : header, nonce);
+    if (range > 1)
+        printf("-%d", nonce + range - 1);
+    printf(") with %d %d-bit digits\n", NDIGITS, DIGITBITS);
+    equi eq(nullptr);
+    printf("Using 2^%d buckets, %dMB of memory, and %d-way blake2b, print decimal %d\n", BUCKBITS, 1 + eq.hta.alloced / 0x100000,
+           NBLAKES, print_decimal);
+
+    u32 sumnsols = 0;
+//    unsigned char headernonce[HEADERNONCELEN];
+//    u32 hdrlen = strlen(header);
+//    if (*hex) {
+//        assert(strlen(hex) == 2 * HEADERNONCELEN);
+//        for (u32 i = 0; i < HEADERNONCELEN; i++)
+//            headernonce[i] = hextobyte(&hex[2 * i]);
+//    } else {
+//        memcpy(headernonce, header, hdrlen);
+//        memset(headernonce + hdrlen, 0, sizeof(headernonce) - hdrlen);
+//    }
+    for (int r = 0; r < range; r++) {
+//        ((u32 *) headernonce)[27] = htole32(nonce + r);
+//        eq.setheadernonce(headernonce, sizeof(headernonce), nonce + r);
+        eq.setheadernonce((const u8*)header, strlen(header), nonce + r);
+        eq.worker();
+
+        u32 nsols, maxsols = min(MAXSOLS, eq.nsols);
+        for (nsols = 0; nsols < maxsols; nsols++) {
+            if (showsol) {
+                printf("Solution");
+                if (compress_sol) {
+                    printf(" ");
+                    uchar csol[COMPRESSED_SOL_SIZE];
+                    compress_solution(eq.sols[nsols], csol);
+                    for (u32 i = 0; i < COMPRESSED_SOL_SIZE; ++i) {
+                        printf("%02hhx", csol[i]);
+                    }
+                } else {
+                    for (u32 i = 0; i < PROOFSIZE; i++)
+                        printf((print_decimal ? " %ld" : " %jx"), (uintmax_t) eq.sols[nsols][i]);
+                }
+                printf("\n");
+            }
+        }
+        printf("%d solutions... ", nsols);
+        sumnsols += nsols;
+    }
+    printf("\n%d total solutions\n", sumnsols);
+    return 0;
+}
+
+#endif
