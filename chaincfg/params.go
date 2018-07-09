@@ -484,11 +484,8 @@ var MainNetParams = Params{
 	Net:         wire.MainNet,
 	DefaultPort: "9666",
 	DNSSeeds:    []DNSSeed{},
-	// TODO: restore production parameters
-	// N:           200,
-	// K:           9,
-	N: 96,
-	K: 5,
+	N: wire.MainEquihashN,
+	K: wire.MainEquihashK,
 
 	// Chain parameters
 	GenesisBlock:             &genesisBlock,
@@ -653,8 +650,8 @@ var TestNet2Params = Params{
 	Net:         wire.TestNet2,
 	DefaultPort: "11999",
 	DNSSeeds:    []DNSSeed{},
-	N:           200,
-	K:           9,
+	N:           144,
+	K:           5,
 
 	// Chain parameters
 	GenesisBlock:             &testNet2GenesisBlock,
@@ -818,7 +815,7 @@ var SimNetParams = Params{
 	Net:         wire.SimNet,
 	DefaultPort: "11998",
 	DNSSeeds:    []DNSSeed{}, // NOTE: There must NOT be any seeds.
-	N:           96,
+	N:           48,
 	K:           5,
 
 	// Chain parameters
