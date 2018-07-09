@@ -25,15 +25,13 @@ var (
 	bigOne = big.NewInt(1)
 
 	// mainPowLimit is the highest proof of work value a ExchangeCoin block can
-	// have for the main network.  It is the value 2^555 - 1.
-	// TODO: restore production parameters
-	// TODO: Restore original pow limit for mainnet: 2^224 - 1.
-	mainPowLimit        = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 511), bigOne)
-	mainNetPowLimitBits = bigToCompact(mainPowLimit)
+	// have for the main network.  It is the value 2^250 - 1.
+	// TODO: set production parameters
+	mainPowLimit        = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 250), bigOne)
 
 	// testNetPowLimit is the highest proof of work value a ExchangeCoin block
-	// can have for the test network.  It is the value 2^232 - 1.
-	testNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 232), bigOne)
+	// can have for the test network.  It is the value 2^250 - 1.
+	testNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 250), bigOne)
 
 	// defaultTargetTimePerBlock is the ideal ExchangeCoin block time.
 	// It is the value of 2.5 minute.
@@ -180,19 +178,6 @@ const (
 	// VoteIDMaxBlockSize is the vote ID for the the maximum block size
 	// increase agenda used for the hard fork demo.
 	VoteIDMaxBlockSize = "maxblocksize"
-
-	// VoteIDSDiffAlgorithm is the vote ID for the new stake difficulty
-	// algorithm (aka ticket price) agenda defined by DCP0001.
-	VoteIDSDiffAlgorithm = "sdiffalgorithm"
-
-	// VoteIDLNSupport is the vote ID for determining if the developers
-	// should work on integrating Lightning Network support.
-	VoteIDLNSupport = "lnsupport"
-
-	// VoteIDLNFeatures is the vote ID for the agenda that introduces
-	// features useful for the Lightning Network (among other uses) defined
-	// by DCP0002 and DCP0003.
-	VoteIDLNFeatures = "lnfeatures"
 )
 
 // ConsensusDeployment defines details related to a specific consensus rule
@@ -491,7 +476,7 @@ var MainNetParams = Params{
 	GenesisBlock:             &genesisBlock,
 	GenesisHash:              &genesisHash,
 	PowLimit:                 mainPowLimit,
-	PowLimitBits:             mainNetPowLimitBits,
+	PowLimitBits:             bigToCompact(mainPowLimit),
 	ReduceMinDifficulty:      false,
 	MinDiffReductionTime:     0,
 	GenerateSupported:        false,
@@ -521,64 +506,7 @@ var MainNetParams = Params{
 	RuleChangeActivationMultiplier: 3,    // 75%
 	RuleChangeActivationDivisor:    4,
 	RuleChangeActivationInterval:   2016 * 4, // 4 weeks
-	Deployments: map[uint32][]ConsensusDeployment{
-		4: {{
-			Vote: Vote{
-				Id:          VoteIDSDiffAlgorithm,
-				Description: "Change stake difficulty algorithm as defined in DCP0001",
-				Mask:        0x0006, // Bits 1 and 2
-				Choices: []Choice{{
-					Id:          "abstain",
-					Description: "abstain voting for change",
-					Bits:        0x0000,
-					IsAbstain:   true,
-					IsNo:        false,
-				}, {
-					Id:          "no",
-					Description: "keep the existing algorithm",
-					Bits:        0x0002, // Bit 1
-					IsAbstain:   false,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "change to the new algorithm",
-					Bits:        0x0004, // Bit 2
-					IsAbstain:   false,
-					IsNo:        false,
-				}},
-			},
-			StartTime:  1493164800, // Apr 26th, 2017
-			ExpireTime: 1524700800, // Apr 26th, 2018
-		}},
-		5: {{
-			Vote: Vote{
-				Id:          VoteIDLNFeatures,
-				Description: "Enable features defined in DCP0002 and DCP0003 necessary to support Lightning Network (LN)",
-				Mask:        0x0006, // Bits 1 and 2
-				Choices: []Choice{{
-					Id:          "abstain",
-					Description: "abstain voting for change",
-					Bits:        0x0000,
-					IsAbstain:   true,
-					IsNo:        false,
-				}, {
-					Id:          "no",
-					Description: "keep the existing consensus rules",
-					Bits:        0x0002, // Bit 1
-					IsAbstain:   false,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "change to the new consensus rules",
-					Bits:        0x0004, // Bit 2
-					IsAbstain:   false,
-					IsNo:        false,
-				}},
-			},
-			StartTime:  1505260800, // Sep 13th, 2017
-			ExpireTime: 1536796800, // Sep 13th, 2018
-		}},
-	},
+	Deployments:                    map[uint32][]ConsensusDeployment{},
 
 	// Enforce current block version once majority of the network has
 	// upgraded.
@@ -619,21 +547,21 @@ var MainNetParams = Params{
 	HDCoinType: 0,
 
 	// ExchangeCoin PoS parameters
-	MinimumStakeDiff:        20000000, // 0.2 Coin
-	TicketPoolSize:          1024,
+	MinimumStakeDiff:        2 * 1e8, // 2 Coin
+	TicketPoolSize:          8192,
 	TicketsPerBlock:         5,
-	TicketMaturity:          16,
-	TicketExpiry:            6144, // 6*TicketPoolSize
-	CoinbaseMaturity:        16,
+	TicketMaturity:          256,
+	TicketExpiry:            40960, // 5*TicketPoolSize
+	CoinbaseMaturity:        256,
 	SStxChangeMaturity:      1,
 	TicketPoolSizeWeight:    4,
-	StakeDiffAlpha:          1,
+	StakeDiffAlpha:          1, // Minimal
 	StakeDiffWindowSize:     144,
 	StakeDiffWindows:        20,
 	StakeVersionInterval:    144 * 2 * 7, // ~1 week
 	MaxFreshStakePerBlock:   20,          // 4*TicketsPerBlock
-	StakeEnabledHeight:      16 + 16,     // CoinbaseMaturity + TicketMaturity
-	StakeValidationHeight:   768,         // Arbitrary
+	StakeEnabledHeight:      256 + 256,   // CoinbaseMaturity + TicketMaturity
+	StakeValidationHeight:   4096,        // ~7 days
 	StakeBaseSigScript:      []byte{0x00, 0x00},
 	StakeMajorityMultiplier: 3,
 	StakeMajorityDivisor:    4,
@@ -657,7 +585,7 @@ var TestNet2Params = Params{
 	GenesisBlock:             &testNet2GenesisBlock,
 	GenesisHash:              &testNet2GenesisHash,
 	PowLimit:                 testNetPowLimit,
-	PowLimitBits:             0x1e00ffff,
+	PowLimitBits:             bigToCompact(testNetPowLimit),
 	ReduceMinDifficulty:      false,
 	MinDiffReductionTime:     0, // Does not apply since ReduceMinDifficulty false
 	GenerateSupported:        true,
@@ -689,64 +617,7 @@ var TestNet2Params = Params{
 	RuleChangeActivationMultiplier: 3,    // 75%
 	RuleChangeActivationDivisor:    4,
 	RuleChangeActivationInterval:   5040, // 1 week
-	Deployments: map[uint32][]ConsensusDeployment{
-		5: {{
-			Vote: Vote{
-				Id:          VoteIDSDiffAlgorithm,
-				Description: "Change stake difficulty algorithm as defined in DCP0001",
-				Mask:        0x0006, // Bits 1 and 2
-				Choices: []Choice{{
-					Id:          "abstain",
-					Description: "abstain voting for change",
-					Bits:        0x0000,
-					IsAbstain:   true,
-					IsNo:        false,
-				}, {
-					Id:          "no",
-					Description: "keep the existing algorithm",
-					Bits:        0x0002, // Bit 1
-					IsAbstain:   false,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "change to the new algorithm",
-					Bits:        0x0004, // Bit 2
-					IsAbstain:   false,
-					IsNo:        false,
-				}},
-			},
-			StartTime:  1493164800, // Apr 26th, 2017
-			ExpireTime: 1524700800, // Apr 26th, 2018
-		}},
-		6: {{
-			Vote: Vote{
-				Id:          VoteIDLNFeatures,
-				Description: "Enable features defined in DCP0002 and DCP0003 necessary to support Lightning Network (LN)",
-				Mask:        0x0006, // Bits 1 and 2
-				Choices: []Choice{{
-					Id:          "abstain",
-					Description: "abstain voting for change",
-					Bits:        0x0000,
-					IsAbstain:   true,
-					IsNo:        false,
-				}, {
-					Id:          "no",
-					Description: "keep the existing consensus rules",
-					Bits:        0x0002, // Bit 1
-					IsAbstain:   false,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "change to the new consensus rules",
-					Bits:        0x0004, // Bit 2
-					IsAbstain:   false,
-					IsNo:        false,
-				}},
-			},
-			StartTime:  1505260800, // Sep 13th, 2017
-			ExpireTime: 1536796800, // Sep 13th, 2018
-		}},
-	},
+	Deployments:                    map[uint32][]ConsensusDeployment{},
 
 	// Enforce current block version once majority of the network has
 	// upgraded.
@@ -875,62 +746,6 @@ var SimNetParams = Params{
 				}, {
 					Id:          "yes",
 					Description: "accept changing max allowed block size",
-					Bits:        0x0004, // Bit 2
-					IsAbstain:   false,
-					IsNo:        false,
-				}},
-			},
-			StartTime:  0,             // Always available for vote
-			ExpireTime: math.MaxInt64, // Never expires
-		}},
-		5: {{
-			Vote: Vote{
-				Id:          VoteIDSDiffAlgorithm,
-				Description: "Change stake difficulty algorithm as defined in DCP0001",
-				Mask:        0x0006, // Bits 1 and 2
-				Choices: []Choice{{
-					Id:          "abstain",
-					Description: "abstain voting for change",
-					Bits:        0x0000,
-					IsAbstain:   true,
-					IsNo:        false,
-				}, {
-					Id:          "no",
-					Description: "keep the existing algorithm",
-					Bits:        0x0002, // Bit 1
-					IsAbstain:   false,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "change to the new algorithm",
-					Bits:        0x0004, // Bit 2
-					IsAbstain:   false,
-					IsNo:        false,
-				}},
-			},
-			StartTime:  0,             // Always available for vote
-			ExpireTime: math.MaxInt64, // Never expires
-		}},
-		6: {{
-			Vote: Vote{
-				Id:          VoteIDLNFeatures,
-				Description: "Enable features defined in DCP0002 and DCP0003 necessary to support Lightning Network (LN)",
-				Mask:        0x0006, // Bits 1 and 2
-				Choices: []Choice{{
-					Id:          "abstain",
-					Description: "abstain voting for change",
-					Bits:        0x0000,
-					IsAbstain:   true,
-					IsNo:        false,
-				}, {
-					Id:          "no",
-					Description: "keep the existing consensus rules",
-					Bits:        0x0002, // Bit 1
-					IsAbstain:   false,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "change to the new consensus rules",
 					Bits:        0x0004, // Bit 2
 					IsAbstain:   false,
 					IsNo:        false,

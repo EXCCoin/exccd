@@ -11,6 +11,7 @@ import (
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/wire"
+	"math/big"
 )
 
 // MainNet ------------------------------------------------------------------------
@@ -53,9 +54,14 @@ var genesisCoinbaseTx = wire.MsgTx{
 	Expiry:   0,
 }
 
-// genesisMerkleRoot is the hash of the first transaction in the genesis block
-// for the main network.
-var genesisMerkleRoot = genesisCoinbaseTx.TxHashFull()
+var (
+	// genesisMerkleRoot is the hash of the first transaction in the genesis block
+	// for the main network.
+	genesisMerkleRoot = genesisCoinbaseTx.TxHashFull()
+
+	// genesis block difficulty ratio
+	initialDifficulty = big.NewInt(100)
+)
 
 // genesisBlock defines the genesis block of the block chain which serves as the
 // public transaction ledger for the main network.
@@ -78,8 +84,8 @@ var genesisBlock = wire.MsgBlock{
 		MerkleRoot:   genesisMerkleRoot,
 		StakeRoot:    chainhash.Hash{},
 		Timestamp:    time.Unix(1528711200, 0), // Mon, Jun 11 2018 10:00:00 GMT
-		Bits:         0x21010000,               // Difficulty (decimal 553713664)
-		SBits:        2 * 1e8,                  // 2 Coin
+		Bits:         bigToCompact(new(big.Int).Div(mainPowLimit, initialDifficulty)),
+		SBits:        2 * 1e8, // 2 Coin
 		Nonce:        0x00000000,
 		StakeVersion: 0,
 	},
@@ -150,7 +156,7 @@ var testNet2GenesisBlock = wire.MsgBlock{
 		PrevBlock:    chainhash.Hash{},
 		MerkleRoot:   testNet2GenesisMerkleRoot,
 		Timestamp:    time.Unix(1489550400, 0), // 2017-03-15 TestNet10
-		Bits:         0x1e00ffff,
+		Bits:         bigToCompact(new(big.Int).Div(testNetPowLimit, initialDifficulty)),
 		SBits:        20000000,
 		Nonce:        0x18aea41a,
 		StakeVersion: 0,
@@ -238,7 +244,7 @@ var simNetGenesisBlock = wire.MsgBlock{
 		Revocations:  0,
 		Timestamp:    time.Unix(1401292357, 0), // 2009-01-08 20:54:25 -0600 CST
 		PoolSize:     0,
-		Bits:         simNetPowLimitBits,
+		Bits:         bigToCompact(new(big.Int).Div(simNetPowLimit, initialDifficulty)),
 		SBits:        0,
 		Nonce:        0,
 		StakeVersion: 0,

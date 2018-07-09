@@ -3188,13 +3188,11 @@ var BlockOneLedgerMainNet = []*TokenPayout{
 	{"22tksGju2MtH8NmsujVvm42bBZGkJbDrSAkt", 11785780570},
 }
 
-// BlockOneLedgerTestNet is the block one output ledger for the test
-// network.
-var BlockOneLedgerTestNet = []*TokenPayout{}
-
 // BlockOneLedgerTestNet2 is the block one output ledger for the 2nd test
 // network.
-var BlockOneLedgerTestNet2 = []*TokenPayout{}
+var BlockOneLedgerTestNet2 = []*TokenPayout{
+	{"TsaZEuKujndudza1tS4Y5NQZWBcrXnETFoL", 100000 * 1e8},
+}
 
 // BlockOneLedgerSimNet is the block one output ledger for the simulation
 // network. See under "ExchangeCoin organization related parameters" in params.go
