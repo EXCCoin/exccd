@@ -1174,9 +1174,9 @@ int solve(const unsigned char* input, u32 input_len, uint32_t nonce, const void*
     for (u32 nsols = 0; nsols < maxsols; nsols++) {
         compress_solution(eq.sols[nsols], csol);
 
-        if (equihashProxy(eq.user_data, csol))
+        if (equihashProxy(eq.user_data, csol)) {
             return 1;
-
+        }
     }
 
     return eq.nsols;

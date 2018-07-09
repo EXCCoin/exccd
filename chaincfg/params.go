@@ -27,7 +27,7 @@ var (
 	// mainPowLimit is the highest proof of work value a ExchangeCoin block can
 	// have for the main network.  It is the value 2^250 - 1.
 	// TODO: set production parameters
-	mainPowLimit        = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 250), bigOne)
+	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 250), bigOne)
 
 	// testNetPowLimit is the highest proof of work value a ExchangeCoin block
 	// can have for the test network.  It is the value 2^250 - 1.
@@ -469,8 +469,8 @@ var MainNetParams = Params{
 	Net:         wire.MainNet,
 	DefaultPort: "9666",
 	DNSSeeds:    []DNSSeed{},
-	N: wire.MainEquihashN,
-	K: wire.MainEquihashK,
+	N:           wire.MainEquihashN,
+	K:           wire.MainEquihashK,
 
 	// Chain parameters
 	GenesisBlock:             &genesisBlock,
@@ -578,7 +578,7 @@ var TestNet2Params = Params{
 	Net:         wire.TestNet2,
 	DefaultPort: "11999",
 	DNSSeeds:    []DNSSeed{},
-	N:           144,
+	N:           96,
 	K:           5,
 
 	// Chain parameters
@@ -686,7 +686,7 @@ var SimNetParams = Params{
 	Net:         wire.SimNet,
 	DefaultPort: "11998",
 	DNSSeeds:    []DNSSeed{}, // NOTE: There must NOT be any seeds.
-	N:           48,
+	N:           96,
 	K:           5,
 
 	// Chain parameters

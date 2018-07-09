@@ -27,7 +27,7 @@ import (
 const MainEquihashN = 144
 const MainEquihashK = 5
 
-const EquihashSolutionLen = (1 << uint32(MainEquihashK) * (MainEquihashN/(MainEquihashK + 1) + 1) / 8)
+const EquihashSolutionLen = (1 << uint32(MainEquihashK) * (MainEquihashN/(MainEquihashK+1) + 1) / 8)
 
 // --> Total 1524 bytes
 const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + EquihashSolutionLen
@@ -177,7 +177,6 @@ func (h *BlockHeader) SerializeAllHeaderBytes() ([]byte, error) {
 	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
 
 	sec := uint32(h.Timestamp.Unix())
-	// Note that order of header elements here and in SerializeHeaderBytes() must match
 	err := writeElements(buf, h.Version, &h.PrevBlock, &h.MerkleRoot, h.Bits, sec, h.ExtraData)
 
 	if err != nil {

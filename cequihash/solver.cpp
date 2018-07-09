@@ -121,7 +121,7 @@ int EquihashValidate(int n, int k, const void *input, int len, int64_t nonce, co
 
     auto indices = to_indices((u8 *) soln, solver->solution_size, collision_bit_length);
 
-    return solver->vfn(indices.data(), indices.size(), (u8*)input, len, nonce) ? 0:1;
+    return solver->vfn(indices.data(), indices.size(), (u8*)input, len, nonce);
 }
 
 int EquihashSolve(const void *input, int len, int64_t nonce, const void *validBlockData, int n, int k) {

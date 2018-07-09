@@ -220,8 +220,13 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) (stopMining 
 	hash := data.header.BlockHash()
 
 	if blockchain.HashToBig(&hash).Cmp(blockchain.CompactToBig(data.header.Bits)) <= 0 {
-		*data.solved = true
-		stopMining = 1
+		headerBytes, _ := data.header.SerializeAllHeaderBytes()
+		rc1 := equihash.ValidateEquihash(data.n, data.k, headerBytes, int64(data.header.Nonce), data.header.EquihashSolution[:])
+
+		*data.solved = rc1
+		if rc1 {
+			stopMining = 1
+		}
 		return
 	}
 
