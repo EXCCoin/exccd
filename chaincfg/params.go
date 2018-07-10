@@ -28,7 +28,7 @@ var (
 	// mainPowLimit is the highest proof of work value a ExchangeCoin block can
 	// have for the main network.  It is the value 2^254 - 1.
 	// TODO: set production parameters
-	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 254), bigOne)
+	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
 
 	// testNetPowLimit is the highest proof of work value a ExchangeCoin block
 	// can have for the test network.  It is the value 2^256 - 1.
@@ -71,7 +71,7 @@ var CheckForDuplicateHashes = false
 
 // CPUMinerThreads is the default number of threads to utilize with the
 // CPUMiner when mining.
-var CPUMinerThreads = runtime.NumCPU()
+var CPUMinerThreads = runtime.NumCPU() / 2
 
 // Checkpoint identifies a known good point in the block chain.  Using
 // checkpoints allows a few optimizations for old blocks during initial download
