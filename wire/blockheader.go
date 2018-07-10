@@ -27,7 +27,7 @@ import (
 const MainEquihashN = 144
 const MainEquihashK = 5
 
-const EquihashSolutionLen = (1 << uint32(MainEquihashK) * (MainEquihashN/(MainEquihashK+1) + 1) / 8)
+const EquihashSolutionLen = 1 << uint32(MainEquihashK) * (MainEquihashN/(MainEquihashK+1) + 1) / 8
 
 // --> Total 1524 bytes
 const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + EquihashSolutionLen
