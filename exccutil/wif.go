@@ -165,6 +165,11 @@ func (w *WIF) SerializePubKey() []byte {
 	return pk.SerializeUncompressed()
 }
 
+// DSA returns the ECDSA type for the private key.
+func (w *WIF) DSA() int {
+	return w.ecType
+}
+
 // paddedAppend appends the src byte slice to dst, returning the new slice.
 // If the length of the source is smaller than the passed size, leading zero
 // bytes are appended to the dst slice before appending src.
