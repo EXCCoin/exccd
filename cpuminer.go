@@ -75,6 +75,7 @@ type CPUMiner struct {
 	started           bool
 	discreteMining    bool
 	submitBlockLock   sync.Mutex
+	validationLock    sync.Mutex
 	wg                sync.WaitGroup
 	workerWg          sync.WaitGroup
 	updateNumWorkers  chan struct{}
@@ -82,6 +83,8 @@ type CPUMiner struct {
 	updateHashes      chan uint64
 	speedMonitorQuit  chan struct{}
 	quit              chan struct{}
+	runningWorkers    []chan struct{}
+	miningStoppper    []chan struct{}
 
 	// This is a map that keeps track of how many blocks have
 	// been mined on each parent by the CPUMiner. It is only
@@ -185,6 +188,7 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 }
 
 type callbackData struct {
+	tid				uint32
 	n               int
 	k               int
 	solved          bool
@@ -193,6 +197,7 @@ type callbackData struct {
 	miner           *CPUMiner
 	headerBytes     []byte
 	quit            chan struct{}
+	term            chan struct{}
 	ticker          *time.Ticker
 	hashesCompleted uint64
 	lastGenerated   time.Time
@@ -212,19 +217,29 @@ func (data *callbackData) IsExiting() bool {
 }
 
 func (data *callbackData) validate(solution unsafe.Pointer) int {
+	data.miner.validationLock.Lock()
+	defer data.miner.validationLock.Unlock()
+
+	if data.exiting {
+		return 2
+	}
+
 	if uintptr(solution) == 0 {
-		if data.exiting {
-			minrLog.Infof("Shutdown is pending. Bailing out")
-			return 1
-		}
 		select {
-		case <-data.quit:
-			minrLog.Infof("Miner is stopping")
+		case <-data.term:
+			//TODO: (siy) cleanup : set logging level to trace
+			minrLog.Infof("Stopping mining current block by %d (v)", data.tid)
 			data.exiting = true
-			return 1
+			data.solved = false
+			return 2
+		case <-data.quit:
+			minrLog.Infof("Miner thread is stopping")
+			data.exiting = true
+			data.solved = false
+			return 2
 		case <-data.ticker.C:
 			if !data.miner.updateBlockTime(data) {
-				return 1
+				return 2
 			}
 		default:
 		}
@@ -244,7 +259,12 @@ func (data *callbackData) validate(solution unsafe.Pointer) int {
 		rc := equihash.ValidateEquihash(data.n, data.k, data.headerBytes, int64(header.Nonce), header.EquihashSolution[:])
 		data.solved = rc
 		if rc {
-			//data.miner.notifyBlockDone()
+			block := exccutil.NewBlock(data.msgBlock)
+			minrLog.Infof("Submitting block by thread %d at height %d, hash %s", data.tid, block.Height(), block.Hash())
+			data.miner.submitBlock(block)
+			data.miner.minedOnParents[data.msgBlock.Header.PrevBlock]++
+
+			data.miner.notifyBlockDone(data.tid)
 			return 1
 		}
 	}
@@ -299,7 +319,15 @@ func (m *CPUMiner) updateBlockTime(data *callbackData) bool {
 // This function will return early with false when conditions that trigger a
 // stale block such as a new block showing up or periodically when there are
 // new transactions and enough time has elapsed without finding a solution.
-func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit chan struct{}) bool {
+func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock,
+	ticker *time.Ticker,
+	quit chan struct{},
+	term chan struct{},
+	id uint32) bool {
+
+	//TODO: (siy) cleanup : set logging level to trace
+	minrLog.Infof("Starting mining new block by %d", id)
+
 	// Choose a random extra nonce offset for this block template and
 	// worker.
 	enOffset, err := wire.RandomUint64()
@@ -314,6 +342,7 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 
 	// Initial state.
 	data := callbackData{
+		tid:			 id,
 		n:               m.server.chainParams.N,
 		k:				 m.server.chainParams.K,
 		solved:          false,
@@ -321,6 +350,7 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 		msgBlock:        msgBlock,
 		miner:           m,
 		quit:            quit,
+		term:            term,
 		ticker:          ticker,
 		hashesCompleted: 0,
 		lastGenerated:   time.Now(),
@@ -346,9 +376,18 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 		// conditions along with updates to the speed monitor.
 		for i := uint32(0); i <= maxNonce && !data.IsExiting(); i++ {
 			select {
-			case <-quit:
-				minrLog.Infof("Miner thread is stopping")
+			case <-term:
+				//TODO: (siy) cleanup : set logging level to trace
+				minrLog.Infof("Stopping mining current block by %d", id)
 				data.exiting = true
+				data.solved = false;
+				return false
+
+			case <-quit:
+				//TODO: (siy) cleanup : set logging level to trace
+				minrLog.Infof("Stopping mining thread")
+				data.exiting = true
+				data.solved = false;
 				return false
 
 			case <-ticker.C:
@@ -377,8 +416,8 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 // is submitted.
 //
 // It must be run as a goroutine.
-func (m *CPUMiner) generateBlocks(quit chan struct{}) {
-	minrLog.Tracef("Starting generate blocks worker")
+func (m *CPUMiner) generateBlocks(quit chan struct{}, term chan struct{}, id uint32) {
+	minrLog.Tracef("Starting generate blocks worker %d", id)
 
 	// Start a ticker which is used to signal checks for stale work and
 	// updates to the speed monitor.
@@ -390,6 +429,7 @@ out:
 		// Quit when the miner is stopped.
 		select {
 		case <-quit:
+			minrLog.Infof("Stopping mining thread")
 			break out
 		default:
 			// Non-blocking select to fall through
@@ -455,15 +495,16 @@ out:
 		// with false when conditions that trigger a stale block, so
 		// a new block template can be generated.  When the return is
 		// true a solution was found, so submit the solved block.
-		if m.solveBlock(template.Block, ticker, quit) {
-			block := exccutil.NewBlock(template.Block)
-			m.submitBlock(block)
-			m.minedOnParents[template.Block.Header.PrevBlock]++
+		if m.solveBlock(template.Block, ticker, quit, term, id) {
+			// block := exccutil.NewBlock(template.Block)
+			// minrLog.Infof("Submitting block by thread %d at height %d, hash %s", id, block.Height(), block.Hash())
+			// m.submitBlock(block)
+			// m.minedOnParents[template.Block.Header.PrevBlock]++
 		}
 	}
 
 	m.workerWg.Done()
-	minrLog.Tracef("Generate blocks worker done")
+	minrLog.Tracef("Generate blocks worker %d done", id)
 }
 
 // miningWorkerController launches the worker goroutines that are used to
@@ -474,19 +515,20 @@ out:
 func (m *CPUMiner) miningWorkerController() {
 	// launchWorkers groups common code to launch a specified number of
 	// workers for generating blocks.
-	var runningWorkers []chan struct{}
+
 	launchWorkers := func(numWorkers uint32) {
 		for i := uint32(0); i < numWorkers; i++ {
 			quit := make(chan struct{})
-			runningWorkers = append(runningWorkers, quit)
-
+			m.runningWorkers = append(m.runningWorkers, quit)
+			term := make(chan struct{}, 1)
+			m.miningStoppper = append(m.miningStoppper, term)
 			m.workerWg.Add(1)
-			go m.generateBlocks(quit)
+			go m.generateBlocks(quit, term, uint32(len(m.miningStoppper)))
 		}
 	}
 
 	// Launch the current number of workers by default.
-	runningWorkers = make([]chan struct{}, 0, m.numWorkers)
+	m.runningWorkers = make([]chan struct{}, 0, m.numWorkers)
 	launchWorkers(m.numWorkers)
 
 out:
@@ -495,7 +537,7 @@ out:
 		// Update the number of running workers.
 		case <-m.updateNumWorkers:
 			// No change.
-			numRunning := uint32(len(runningWorkers))
+			numRunning := uint32(len(m.runningWorkers))
 			if m.numWorkers == numRunning {
 				continue
 			}
@@ -508,13 +550,13 @@ out:
 
 			// Signal the most recently created goroutines to exit.
 			for i := numRunning - 1; i >= m.numWorkers; i-- {
-				close(runningWorkers[i])
-				runningWorkers[i] = nil
-				runningWorkers = runningWorkers[:i]
+				close(m.runningWorkers[i])
+				m.runningWorkers[i] = nil
+				m.runningWorkers = m.runningWorkers[:i]
 			}
 
 		case <-m.quit:
-			for _, quit := range runningWorkers {
+			for _, quit := range m.runningWorkers {
 				close(quit)
 			}
 			break out
@@ -641,6 +683,26 @@ func (m *CPUMiner) NumWorkers() int32 {
 	return int32(m.numWorkers)
 }
 
+func (m *CPUMiner) notifyBlockDone(ownTid uint32) {
+	m.Lock()
+	defer m.Unlock()
+
+	//TODO: (siy) cleanup - set logging level to trace
+	minrLog.Infof("Solution found by thread %d, notifying other threads", ownTid)
+
+	for i := uint32(0); i < m.numWorkers; i++ {
+		if (i + 1) == ownTid  {
+			continue
+		}
+
+		select {
+			case m.miningStoppper[i] <- struct {}{}:
+				minrLog.Infof("Miner thread %d is notified", i + 1)
+		default:
+		}
+	}
+}
+
 // GenerateNBlocks generates the requested number of blocks. It is self
 // contained in that it creates block templates and attempts to solve them while
 // detecting when it is performing stale work and reacting accordingly by
@@ -723,7 +785,7 @@ func (m *CPUMiner) GenerateNBlocks(n uint32) ([]*chainhash.Hash, error) {
 		// with false when conditions that trigger a stale block, so
 		// a new block template can be generated.  When the return is
 		// true a solution was found, so submit the solved block.
-		if m.solveBlock(template.Block, ticker, nil) {
+		if m.solveBlock(template.Block, ticker, nil, nil, 1) {
 			block := exccutil.NewBlock(template.Block)
 			m.submitBlock(block)
 			blockHashes[i] = block.Hash()

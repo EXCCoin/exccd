@@ -15,6 +15,7 @@ import (
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/wire"
+	"runtime"
 )
 
 // These variables are the chain proof-of-work limit parameters for each default
@@ -76,7 +77,7 @@ var CheckForDuplicateHashes = false
 
 // CPUMinerThreads is the default number of threads to utilize with the
 // CPUMiner when mining.
-var CPUMinerThreads = 1
+var CPUMinerThreads = runtime.NumCPU()
 
 // Checkpoint identifies a known good point in the block chain.  Using
 // checkpoints allows a few optimizations for old blocks during initial download
