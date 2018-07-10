@@ -27,8 +27,7 @@ var (
 
 	// mainPowLimit is the highest proof of work value a ExchangeCoin block can
 	// have for the main network.  It is the value 2^254 - 1.
-	// TODO: set production parameters
-	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
+	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 254), bigOne)
 
 	// testNetPowLimit is the highest proof of work value a ExchangeCoin block
 	// can have for the test network.  It is the value 2^256 - 1.
