@@ -666,7 +666,8 @@ func (m *CPUMiner) notifyBlockDone(ownTid uint32) {
 	m.Lock()
 	defer m.Unlock()
 
-	for i := uint32(0); i < m.numWorkers; i++ {
+	for i := uint32(0); i < uint32(len(m.miningStoppper)); i++ {
+
 		if (i + 1) == ownTid {
 			continue
 		}
