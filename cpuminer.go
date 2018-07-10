@@ -199,11 +199,19 @@ type callbackData struct {
 	lastTxUpdate    time.Time
 }
 
-func (data callbackData) IsExiting() bool {
+type callbackStruct struct {
+	cbdata *callbackData
+}
+
+func (cs callbackStruct) Validate(solution unsafe.Pointer) int {
+	return cs.cbdata.validate(solution);
+}
+
+func (data *callbackData) IsExiting() bool {
 	return data.solved || data.exiting
 }
 
-func (data callbackData) Validate(solution unsafe.Pointer) int {
+func (data *callbackData) validate(solution unsafe.Pointer) int {
 	if uintptr(solution) == 0 {
 		if data.exiting {
 			minrLog.Infof("Shutdown is pending. Bailing out")
@@ -215,7 +223,7 @@ func (data callbackData) Validate(solution unsafe.Pointer) int {
 			data.exiting = true
 			return 1
 		case <-data.ticker.C:
-			if !data.miner.updateBlockTime(&data) {
+			if !data.miner.updateBlockTime(data) {
 				return 1
 			}
 		default:
@@ -236,6 +244,7 @@ func (data callbackData) Validate(solution unsafe.Pointer) int {
 		rc := equihash.ValidateEquihash(data.n, data.k, data.headerBytes, int64(header.Nonce), header.EquihashSolution[:])
 		data.solved = rc
 		if rc {
+			//data.miner.notifyBlockDone()
 			return 1
 		}
 	}
@@ -304,9 +313,9 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 	header := &msgBlock.Header
 
 	// Initial state.
-	validator := callbackData{
-		n:               chaincfg.MainNetParams.N,
-		k:               chaincfg.MainNetParams.K,
+	data := callbackData{
+		n:               m.server.chainParams.N,
+		k:				 m.server.chainParams.K,
 		solved:          false,
 		exiting:         false,
 		msgBlock:        msgBlock,
@@ -317,29 +326,33 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 		lastGenerated:   time.Now(),
 		lastTxUpdate:    m.txSource.LastUpdated()}
 
+	cbstruct := callbackStruct{
+		cbdata: &data,
+	}
+
 	// Note that the entire extra nonce range is iterated and the offset is
 	// added relying on the fact that overflow will wrap around 0 as
 	// provided by the Go spec.
-	for extraNonce := uint64(0); extraNonce < maxExtraNonce && !validator.IsExiting(); extraNonce++ {
+	for extraNonce := uint64(0); extraNonce < maxExtraNonce && !data.IsExiting(); extraNonce++ {
 		// Update the extra nonce in the block template header with the
 		// new value.
 		littleEndian.PutUint64(header.ExtraData[:], extraNonce+enOffset)
 
 		// Update equihash solver input bytes
-		validator.headerBytes, _ = header.SerializeAllHeaderBytes()
+		data.headerBytes, _ = header.SerializeAllHeaderBytes()
 
 		// Search through the entire nonce range for a solution while
 		// periodically checking for early quit and stale block
 		// conditions along with updates to the speed monitor.
-		for i := uint32(0); i <= maxNonce && !validator.solved && !validator.exiting; i++ {
+		for i := uint32(0); i <= maxNonce && !data.IsExiting(); i++ {
 			select {
 			case <-quit:
-				minrLog.Infof("Miner is stopping")
-				validator.exiting = true
+				minrLog.Infof("Miner thread is stopping")
+				data.exiting = true
 				return false
 
 			case <-ticker.C:
-				if !m.updateBlockTime(&validator) {
+				if !m.updateBlockTime(&data) {
 					return false
 				}
 			default:
@@ -348,13 +361,13 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 
 			header.Nonce = i
 
-			equihash.SolveEquihash(m.server.chainParams.N, m.server.chainParams.K, validator.headerBytes, int64(i), validator)
+			equihash.SolveEquihash(data.n, data.k, data.headerBytes, int64(i), cbstruct)
 
-			validator.hashesCompleted++
+			data.hashesCompleted++
 		}
 	}
 
-	return validator.solved
+	return data.solved
 }
 
 // generateBlocks is a worker that is controlled by the miningWorkerController.
