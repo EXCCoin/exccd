@@ -188,7 +188,7 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 }
 
 type callbackData struct {
-	tid				uint32
+	tid             uint32
 	n               int
 	k               int
 	solved          bool
@@ -209,7 +209,7 @@ type callbackStruct struct {
 }
 
 func (cs callbackStruct) Validate(solution unsafe.Pointer) int {
-	return cs.cbdata.validate(solution);
+	return cs.cbdata.validate(solution)
 }
 
 func (data *callbackData) IsExiting() bool {
@@ -227,13 +227,10 @@ func (data *callbackData) validate(solution unsafe.Pointer) int {
 	if uintptr(solution) == 0 {
 		select {
 		case <-data.term:
-			//TODO: (siy) cleanup : set logging level to trace
-			minrLog.Infof("Stopping mining current block by %d (v)", data.tid)
 			data.exiting = true
 			data.solved = false
 			return 2
 		case <-data.quit:
-			minrLog.Infof("Miner thread is stopping")
 			data.exiting = true
 			data.solved = false
 			return 2
@@ -249,7 +246,6 @@ func (data *callbackData) validate(solution unsafe.Pointer) int {
 
 	header := &data.msgBlock.Header
 
-	minrLog.Debugf("Validating found solution")
 	bytes := equihash.ExtractSolution(data.n, data.k, solution)
 	copy(header.EquihashSolution[:], bytes)
 	hash := header.BlockHash()
@@ -260,7 +256,6 @@ func (data *callbackData) validate(solution unsafe.Pointer) int {
 		data.solved = rc
 		if rc {
 			block := exccutil.NewBlock(data.msgBlock)
-			minrLog.Infof("Submitting block by thread %d at height %d, hash %s", data.tid, block.Height(), block.Hash())
 			data.miner.submitBlock(block)
 			data.miner.minedOnParents[data.msgBlock.Header.PrevBlock]++
 
@@ -325,9 +320,6 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock,
 	term chan struct{},
 	id uint32) bool {
 
-	//TODO: (siy) cleanup : set logging level to trace
-	minrLog.Infof("Starting mining new block by %d", id)
-
 	// Choose a random extra nonce offset for this block template and
 	// worker.
 	enOffset, err := wire.RandomUint64()
@@ -342,9 +334,9 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock,
 
 	// Initial state.
 	data := callbackData{
-		tid:			 id,
+		tid:             id,
 		n:               m.server.chainParams.N,
-		k:				 m.server.chainParams.K,
+		k:               m.server.chainParams.K,
 		solved:          false,
 		exiting:         false,
 		msgBlock:        msgBlock,
@@ -377,17 +369,13 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock,
 		for i := uint32(0); i <= maxNonce && !data.IsExiting(); i++ {
 			select {
 			case <-term:
-				//TODO: (siy) cleanup : set logging level to trace
-				minrLog.Infof("Stopping mining current block by %d", id)
 				data.exiting = true
-				data.solved = false;
+				data.solved = false
 				return false
 
 			case <-quit:
-				//TODO: (siy) cleanup : set logging level to trace
-				minrLog.Infof("Stopping mining thread")
 				data.exiting = true
-				data.solved = false;
+				data.solved = false
 				return false
 
 			case <-ticker.C:
@@ -429,7 +417,7 @@ out:
 		// Quit when the miner is stopped.
 		select {
 		case <-quit:
-			minrLog.Infof("Stopping mining thread")
+			minrLog.Tracef("Stopping mining thread %d", id)
 			break out
 		default:
 			// Non-blocking select to fall through
@@ -491,16 +479,7 @@ out:
 			}
 		}
 
-		// Attempt to solve the block.  The function will exit early
-		// with false when conditions that trigger a stale block, so
-		// a new block template can be generated.  When the return is
-		// true a solution was found, so submit the solved block.
-		if m.solveBlock(template.Block, ticker, quit, term, id) {
-			// block := exccutil.NewBlock(template.Block)
-			// minrLog.Infof("Submitting block by thread %d at height %d, hash %s", id, block.Height(), block.Hash())
-			// m.submitBlock(block)
-			// m.minedOnParents[template.Block.Header.PrevBlock]++
-		}
+		m.solveBlock(template.Block, ticker, quit, term, id)
 	}
 
 	m.workerWg.Done()
@@ -687,17 +666,13 @@ func (m *CPUMiner) notifyBlockDone(ownTid uint32) {
 	m.Lock()
 	defer m.Unlock()
 
-	//TODO: (siy) cleanup - set logging level to trace
-	minrLog.Infof("Solution found by thread %d, notifying other threads", ownTid)
-
 	for i := uint32(0); i < m.numWorkers; i++ {
-		if (i + 1) == ownTid  {
+		if (i + 1) == ownTid {
 			continue
 		}
 
 		select {
-			case m.miningStoppper[i] <- struct {}{}:
-				minrLog.Infof("Miner thread %d is notified", i + 1)
+		case m.miningStoppper[i] <- struct{}{}:
 		default:
 		}
 	}

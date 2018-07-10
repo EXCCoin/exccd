@@ -46,15 +46,9 @@ var (
 	simTicketMaturity       = uint16(16)
 	simStakeVersionInterval = int64(8 * 2 * 7)
 
-	// Fastest settings, but not all tests pass
-	// simTicketPoolSize = uint16(16)
-	// simCoinbaseMaturity = uint16(4)
-	// simTicketMaturity = uint16(4)
-	// simStakeVersionInterval = int64(6 * 2 * 7)
-
 	// simNetPowLimit is the highest proof of work value a ExchangeCoin block
 	// can have for the simulation test network.  It is the value 2^256 - 1.
-	simNetPowLimit     = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 256), bigOne)
+	simNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 256), bigOne)
 )
 
 // SigHashOptimization is an optimization for verification of transactions that
