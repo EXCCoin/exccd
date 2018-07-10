@@ -1163,7 +1163,7 @@ int verify(u32* indices, u32 proofsize, const unsigned char *input, const u32 in
     return verifyrec(&ctx, indices, hash, WK);
 }
 
-int solve(const unsigned char* input, u32 input_len, uint32_t nonce, const void* userData) {
+int solve(const unsigned char* input, u32 input_len, int64_t nonce, const void* userData) {
     equi eq(userData);
     eq.setheadernonce(input, input_len, nonce);
     eq.worker();
@@ -1172,6 +1172,10 @@ int solve(const unsigned char* input, u32 input_len, uint32_t nonce, const void*
     uchar csol[COMPRESSED_SOL_SIZE];
 
     for (u32 nsols = 0; nsols < maxsols; nsols++) {
+        if (verify(eq.sols[nsols], PROOFSIZE, input, input_len, nonce) != POW_OK) {
+            continue;
+        }
+
         compress_solution(eq.sols[nsols], csol);
 
         if (equihashProxy(eq.user_data, csol)) {

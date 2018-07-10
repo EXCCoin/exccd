@@ -15,7 +15,6 @@ import (
 	"sort"
 	"time"
 
-	"encoding/hex"
 	"github.com/EXCCoin/exccd/blockchain/stake"
 	"github.com/EXCCoin/exccd/cequihash"
 	"github.com/EXCCoin/exccd/chaincfg"
@@ -1278,17 +1277,9 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 
 	if hashToBig(&hash).Cmp(compactToBig(data.header.Bits)) <= 0 {
 		headerBytes, _ := data.header.SerializeAllHeaderBytes()
-		rc1 := cequihash.ValidateEquihash(data.params.N, data.params.K, headerBytes, int64(data.header.Nonce), data.header.EquihashSolution[:])
-
-		if !rc1 {
-			fmt.Printf("Equihash solver returned invalid solution.\nHeader:\n\"%s\"\nSolution:\n\"%s\"\nNonce: %d\nResult:%v\n\n",
-				hex.EncodeToString(headerBytes),
-				hex.EncodeToString(solutionBytes),
-				data.header.Nonce, rc1)
-		}
-
-		*data.solved = rc1
-		if rc1 {
+		rc := cequihash.ValidateEquihash(data.params.N, data.params.K, headerBytes, int64(data.header.Nonce), data.header.EquihashSolution[:])
+		*data.solved = rc
+		if rc {
 			return 1
 		}
 	}

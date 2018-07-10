@@ -3,7 +3,7 @@
 #include "cequihash.h"
 
 typedef int (*verify_ptr)(u32* indices, u32 proofsize, const unsigned char *input, const u32 input_len, int64_t nonce);
-typedef int (*solve_ptr)(const unsigned char* input, u32 input_len, uint32_t nonce, const void* userData);
+typedef int (*solve_ptr)(const unsigned char* input, u32 input_len, int64_t nonce, const void* userData);
 typedef void (*compress_ptr)(const u32* sol, uchar *csol);
 
 inline constexpr size_t equihash_solution_size(unsigned int N, unsigned int K) {
