@@ -184,49 +184,101 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 	return true
 }
 
-type solutionValidatorData struct {
-	n       int
-	k       int
-	solved  *bool
-	exiting *bool
-	header  *wire.BlockHeader
-	quit    chan struct{}
+type callbackData struct {
+	n               int
+	k               int
+	solved          bool
+	exiting         bool
+	msgBlock        *wire.MsgBlock
+	miner           *CPUMiner
+	headerBytes     []byte
+	quit            chan struct{}
+	ticker          *time.Ticker
+	hashesCompleted uint64
+	lastGenerated   time.Time
+	lastTxUpdate    time.Time
 }
 
-func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
+func (data callbackData) IsExiting() bool {
+	return data.solved || data.exiting
+}
+
+func (data callbackData) Validate(solution unsafe.Pointer) int {
 	if uintptr(solution) == 0 {
-		if *data.exiting {
+		if data.exiting {
 			minrLog.Infof("Shutdown is pending. Bailing out")
 			return 1
 		}
 		select {
 		case <-data.quit:
 			minrLog.Infof("Miner is stopping")
-			*data.exiting = true
+			data.exiting = true
 			return 1
+		case <-data.ticker.C:
+			if !data.miner.updateBlockTime(&data) {
+				return 1
+			}
 		default:
 		}
 
 		return 0
 	}
 
+	header := &data.msgBlock.Header
+
 	minrLog.Debugf("Validating found solution")
 	bytes := equihash.ExtractSolution(data.n, data.k, solution)
+	copy(header.EquihashSolution[:], bytes)
+	hash := header.BlockHash()
 
-	copy(data.header.EquihashSolution[:], bytes)
-
-	hash := data.header.BlockHash()
-
-	if blockchain.HashToBig(&hash).Cmp(blockchain.CompactToBig(data.header.Bits)) <= 0 {
-		headerBytes, _ := data.header.SerializeAllHeaderBytes()
-		rc := equihash.ValidateEquihash(data.n, data.k, headerBytes, int64(data.header.Nonce), data.header.EquihashSolution[:])
-		*data.solved = rc
+	if blockchain.HashToBig(&hash).Cmp(blockchain.CompactToBig(header.Bits)) <= 0 {
+		data.headerBytes, _ = header.SerializeAllHeaderBytes()
+		rc := equihash.ValidateEquihash(data.n, data.k, data.headerBytes, int64(header.Nonce), header.EquihashSolution[:])
+		data.solved = rc
 		if rc {
 			return 1
 		}
 	}
 
 	return 0
+}
+
+func (m *CPUMiner) updateBlockTime(data *callbackData) bool {
+	minrLog.Debugf("Miner is updating time for currently mined block")
+	m.updateHashes <- data.hashesCompleted
+	data.hashesCompleted = 0
+
+	// The current block is stale if the memory pool
+	// has been updated since the block template was
+	// generated and it has been at least 3 seconds,
+	// or if it's been one minute.
+	if (data.lastTxUpdate != m.txSource.LastUpdated() &&
+		time.Now().After(data.lastGenerated.Add(3*time.Second))) ||
+		time.Now().After(data.lastGenerated.Add(60*time.Second)) {
+
+		return false
+	}
+
+	data.lastTxUpdate = m.txSource.LastUpdated()
+	err := UpdateBlockTime(data.msgBlock, m.server.blockManager)
+
+	if err != nil {
+		minrLog.Warnf("CPU miner unable to update block template "+
+			"time: %v", err)
+		return false
+	}
+
+	// Rebuild all input data
+	header := &data.msgBlock.Header
+	data.headerBytes, err = header.SerializeAllHeaderBytes()
+
+	if err != nil {
+		minrLog.Warnf("CPU miner unable to rebuild header data for updated block template "+
+			"time: %v", err)
+		return false
+	}
+
+	return true
 }
 
 // solveBlock attempts to find some combination of a nonce, extra nonce, and
@@ -252,82 +304,57 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 	header := &msgBlock.Header
 
 	// Initial state.
-	lastGenerated := time.Now()
-	lastTxUpdate := m.txSource.LastUpdated()
-	hashesCompleted := uint64(0)
-
-	solved := false
-	exiting := false
-	validator := solutionValidatorData{chaincfg.MainNetParams.N, chaincfg.MainNetParams.K,
-		&solved, &exiting, header, quit}
+	validator := callbackData{
+		n:               chaincfg.MainNetParams.N,
+		k:               chaincfg.MainNetParams.K,
+		solved:          false,
+		exiting:         false,
+		msgBlock:        msgBlock,
+		miner:           m,
+		quit:            quit,
+		ticker:          ticker,
+		hashesCompleted: 0,
+		lastGenerated:   time.Now(),
+		lastTxUpdate:    m.txSource.LastUpdated()}
 
 	// Note that the entire extra nonce range is iterated and the offset is
 	// added relying on the fact that overflow will wrap around 0 as
 	// provided by the Go spec.
-	for extraNonce := uint64(0); extraNonce < maxExtraNonce && !solved && !exiting; extraNonce++ {
+	for extraNonce := uint64(0); extraNonce < maxExtraNonce && !validator.IsExiting(); extraNonce++ {
 		// Update the extra nonce in the block template header with the
 		// new value.
 		littleEndian.PutUint64(header.ExtraData[:], extraNonce+enOffset)
 
 		// Update equihash solver input bytes
-		headerBytes, _ := header.SerializeAllHeaderBytes()
+		validator.headerBytes, _ = header.SerializeAllHeaderBytes()
 
 		// Search through the entire nonce range for a solution while
 		// periodically checking for early quit and stale block
 		// conditions along with updates to the speed monitor.
-		for i := uint32(0); i <= maxNonce && !solved && !exiting; i++ {
+		for i := uint32(0); i <= maxNonce && !validator.solved && !validator.exiting; i++ {
 			select {
 			case <-quit:
 				minrLog.Infof("Miner is stopping")
-				exiting = true
+				validator.exiting = true
 				return false
 
 			case <-ticker.C:
-				minrLog.Debugf("Miner is updating time for currently mined block")
-				m.updateHashes <- hashesCompleted
-				hashesCompleted = 0
-
-				// The current block is stale if the memory pool
-				// has been updated since the block template was
-				// generated and it has been at least 3 seconds,
-				// or if it's been one minute.
-				if (lastTxUpdate != m.txSource.LastUpdated() &&
-					time.Now().After(lastGenerated.Add(3*time.Second))) ||
-					time.Now().After(lastGenerated.Add(60*time.Second)) {
-
+				if !m.updateBlockTime(&validator) {
 					return false
 				}
-
-				err = UpdateBlockTime(msgBlock, m.server.blockManager)
-
-				if err != nil {
-					minrLog.Warnf("CPU miner unable to update block template "+
-						"time: %v", err)
-					return false
-				}
-
-				// Rebuild all input data
-				headerBytes, err = header.SerializeAllHeaderBytes()
-
-				if err != nil {
-					minrLog.Warnf("CPU miner unable to rebuild header data for updated block template "+
-						"time: %v", err)
-					return false
-				}
-
 			default:
 				// Non-blocking select to fall through
 			}
 
 			header.Nonce = i
 
-			equihash.SolveEquihash(m.server.chainParams.N, m.server.chainParams.K, headerBytes, int64(i), validator)
+			equihash.SolveEquihash(m.server.chainParams.N, m.server.chainParams.K, validator.headerBytes, int64(i), validator)
 
-			hashesCompleted++
+			validator.hashesCompleted++
 		}
 	}
 
-	return solved
+	return validator.solved
 }
 
 // generateBlocks is a worker that is controlled by the miningWorkerController.
@@ -364,6 +391,7 @@ out:
 		time.Sleep(100 * time.Millisecond)
 
 		// Hacks to make exccd work with ExchangeCoin PoC (simnet only)
+		// TODO: (siy) cleanup?
 		// TODO Remove before production.
 		if cfg.SimNet {
 			_, curHeight := m.server.blockManager.chainState.Best()
