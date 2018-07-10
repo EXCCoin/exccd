@@ -244,7 +244,7 @@ var simNetGenesisBlock = wire.MsgBlock{
 		Revocations:  0,
 		Timestamp:    time.Unix(1401292357, 0), // 2009-01-08 20:54:25 -0600 CST
 		PoolSize:     0,
-		Bits:         simNetPowLimitBits,
+		Bits:         bigToCompact(simNetPowLimit),
 		SBits:        0,
 		Nonce:        0,
 		StakeVersion: 0,

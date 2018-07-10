@@ -25,13 +25,13 @@ var (
 	bigOne = big.NewInt(1)
 
 	// mainPowLimit is the highest proof of work value a ExchangeCoin block can
-	// have for the main network.  It is the value 2^250 - 1.
+	// have for the main network.  It is the value 2^254 - 1.
 	// TODO: set production parameters
-	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 250), bigOne)
+	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 254), bigOne)
 
 	// testNetPowLimit is the highest proof of work value a ExchangeCoin block
-	// can have for the test network.  It is the value 2^250 - 1.
-	testNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 250), bigOne)
+	// can have for the test network.  It is the value 2^256 - 1.
+	testNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 256), bigOne)
 
 	// defaultTargetTimePerBlock is the ideal ExchangeCoin block time.
 	// It is the value of 2.5 minute.
@@ -52,9 +52,8 @@ var (
 	// simStakeVersionInterval = int64(6 * 2 * 7)
 
 	// simNetPowLimit is the highest proof of work value a ExchangeCoin block
-	// can have for the simulation test network.  It is the value 2^255 - 1.
-	simNetPowLimit     = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
-	simNetPowLimitBits = bigToCompact(simNetPowLimit)
+	// can have for the simulation test network.  It is the value 2^256 - 1.
+	simNetPowLimit     = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 256), bigOne)
 )
 
 // SigHashOptimization is an optimization for verification of transactions that
@@ -693,7 +692,7 @@ var SimNetParams = Params{
 	GenesisBlock:             &simNetGenesisBlock,
 	GenesisHash:              &simNetGenesisHash,
 	PowLimit:                 simNetPowLimit,
-	PowLimitBits:             simNetPowLimitBits,
+	PowLimitBits:             bigToCompact(simNetPowLimit),
 	ReduceMinDifficulty:      false,
 	MinDiffReductionTime:     0, // Does not apply since ReduceMinDifficulty false
 	GenerateSupported:        true,
