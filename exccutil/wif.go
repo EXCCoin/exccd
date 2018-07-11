@@ -14,7 +14,6 @@ import (
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
-	"github.com/EXCCoin/exccd/exccec/secp256k1"
 )
 
 // ErrMalformedPrivateKey describes an error where a WIF-encoded private
@@ -171,14 +170,14 @@ func (w *WIF) String() string {
 	// extra byte if the pubkey is to be compressed or uses non-secp256k1 EC,
 	// and finally four bytes of checksum.
 	encodeLen := 1 + privKeyBytesLen + cksumBytesLen
-	if w.CompressPubKey || w.ecType != chainec.ECTypeSecp256k1 {
+	if w.CompressPubKey {
 		encodeLen++
 	}
 
 	a := make([]byte, 0, encodeLen)
 	a = append(a, w.netID)
 	a = append(a, w.PrivKey.Serialize()...)
-	if w.CompressPubKey || w.ecType != chainec.ECTypeSecp256k1 {
+	if w.CompressPubKey {
 		a = append(a, byte(w.ecType+ecTypeOffset))
 	}
 
@@ -189,9 +188,20 @@ func (w *WIF) String() string {
 
 // SerializePubKey serializes the associated public key of the imported or
 // exported private key in either a compressed or uncompressed format.  The
-// serialization format chosen depends on the value of w.CompressPubKey.
+// serialization format chosen depends on the value of w.ecType and w.CompressPubKey.
 func (w *WIF) SerializePubKey() []byte {
-	pk := secp256k1.NewPublicKey(w.PrivKey.Public())
+	pkx, pky := w.PrivKey.Public()
+	var pk chainec.PublicKey
+
+	switch w.ecType {
+	case chainec.ECTypeSecp256k1:
+		pk = chainec.Secp256k1.NewPublicKey(pkx, pky)
+	case chainec.ECTypeEdwards:
+		pk = chainec.Edwards.NewPublicKey(pkx, pky)
+	case chainec.ECTypeSecSchnorr:
+		pk = chainec.SecSchnorr.NewPublicKey(pkx, pky)
+	}
+
 	if w.CompressPubKey {
 		return pk.SerializeCompressed()
 	}
