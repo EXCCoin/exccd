@@ -113,7 +113,6 @@ func DecodeWIF(wif string) (*WIF, error) {
 	decodedLen := len(decoded)
 
 	var compress bool
-	var privKey chainec.PrivateKey
 	var ecType int
 
 	// Length of base58 decoded WIF must be 32 bytes + an optional 1 byte
@@ -142,6 +141,8 @@ func DecodeWIF(wif string) (*WIF, error) {
 	if !bytes.Equal(cksum, decoded[decodedLen-cksumBytesLen:]) {
 		return nil, ErrChecksumMismatch
 	}
+
+	var privKey chainec.PrivateKey
 
 	switch ecType {
 	case chainec.ECTypeSecp256k1:
