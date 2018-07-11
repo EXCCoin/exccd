@@ -149,7 +149,7 @@ func DecodeWIF(wif string) (*WIF, error) {
 		privKeyBytes := decoded[1 : 1+chainec.Secp256k1.PrivKeyBytesLen()]
 		privKey, _ = chainec.Secp256k1.PrivKeyFromScalar(privKeyBytes)
 	case chainec.ECTypeEdwards:
-		privKeyBytes := decoded[1 : 1+32]
+		privKeyBytes := decoded[1 : 1+privKeyBytesLen]
 		privKey, _ = chainec.Edwards.PrivKeyFromScalar(privKeyBytes)
 	case chainec.ECTypeSecSchnorr:
 		privKeyBytes := decoded[1 : 1+chainec.SecSchnorr.PrivKeyBytesLen()]
