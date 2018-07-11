@@ -60,15 +60,26 @@ type WIF struct {
 	netID byte
 }
 
-// NewWIF creates a new WIF structure to export an address and its private key
-// as a string encoded in the Wallet Import Format.  The compress argument
-// specifies whether the address intended to be imported or exported was created
-// by serializing the public key compressed rather than uncompressed.
-func NewWIF(privKey chainec.PrivateKey, net *chaincfg.Params, ecType int, compress bool) (*WIF, error) {
+// NewUncompressedWIF creates a new WIF structure to export an address and its private key
+// as a string encoded in the Wallet Import Format.
+// The address intended to be imported or exported was created
+// by serializing the Secp256k1 public key UNCOMPRESSED (legacy compatibility).
+func NewUncompressedWIF(privKey chainec.PrivateKey, net *chaincfg.Params) (*WIF, error) {
 	if net == nil {
 		return nil, errors.New("no network")
 	}
-	return &WIF{ecType, privKey, compress, net.PrivateKeyID}, nil
+	return &WIF{chainec.ECTypeSecp256k1, privKey, false, net.PrivateKeyID}, nil
+}
+
+// NewWIF creates a new WIF structure to export an address and its private key
+// as a string encoded in the Wallet Import Format.
+// The address intended to be imported or exported was created
+// by serializing the public key COMPRESSED.
+func NewWIF(privKey chainec.PrivateKey, net *chaincfg.Params, ecType int) (*WIF, error) {
+	if net == nil {
+		return nil, errors.New("no network")
+	}
+	return &WIF{ecType, privKey, true, net.PrivateKeyID}, nil
 }
 
 // IsForNet returns whether or not the decoded WIF structure is associated
