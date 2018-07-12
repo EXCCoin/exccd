@@ -1178,12 +1178,8 @@ int solve(const unsigned char* input, u32 input_len, int64_t nonce, const void* 
 
         compress_solution(eq.sols[nsols], csol);
 
-        int rc = equihashProxy(eq.user_data, csol);
-
-        if (rc == 1) {
+        if (equihashProxy(eq.user_data, csol)) {
             return 1;
-        } else if (rc == 2) {
-            return 0;
         }
     }
 
