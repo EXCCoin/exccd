@@ -224,8 +224,6 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 			data.miner.submitBlock(block)
 			data.miner.minedOnParents[data.msgBlock.Header.PrevBlock]++
 			return 1
-		} else {
-			panic("Provided solution does not pass validation")
 		}
 	}
 
@@ -681,7 +679,7 @@ func (m *CPUMiner) GenerateNBlocks(n uint32) ([]*chainhash.Hash, error) {
 		if m.solveAndSubmitBlock(template.Block, ticker, nil) {
 			blockHashes[i] = exccutil.NewBlock(template.Block).Hash()
 			i++
-
+			
 			if i == n {
 				minrLog.Tracef("Generated %d blocks", i)
 				m.Lock()

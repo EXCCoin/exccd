@@ -1,5 +1,3 @@
-// Copyright (c) 2018 The ExchangeCoin team
-
 #ifndef __CEQUIHASH_H
 #define __CEQUIHASH_H
 
@@ -10,12 +8,9 @@
 extern "C" {
 #endif
     int EquihashValidate(int n, int k, const void *input, int len, int64_t nonce, const void *soln);
-    int EquihashSolve(int n, int k, const void *input, int len, int64_t nonce, const void *validBlockData);
+    int EquihashSolve(const void *input, int len, int64_t nonce, const void *validBlockData, int n, int k);
     void *SolutionFromIndices(int n, int k, const void *indices, uint32_t numIndices);
     void *IndicesFromSolution(int n, int k, void *soln);
-
-    // Provided by Go
-    int equihashProxy(void* blockData, void* solution);
 #ifdef __cplusplus
 }
 #endif

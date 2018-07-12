@@ -1281,8 +1281,6 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 		*data.solved = rc
 		if rc {
 			return 1
-		} else {
-			panic("Provided solution does not pass validation")
 		}
 	}
 	return 0

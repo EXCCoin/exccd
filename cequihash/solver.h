@@ -1,27 +1,20 @@
-// Copyright (c) 2018 The ExchangeCoin team
+#ifndef __SOLVER_H
+#define __SOLVER_H
 
-#ifndef _SOLVER_H
-#define _SOLVER_H
+#include "miner.h"
+int verify_485(u32* indices, u32 proofsize, const unsigned char *input, const u32 input_len, int64_t nonce);
+int verify_965(u32* indices, u32 proofsize, const unsigned char *input, const u32 input_len, int64_t nonce);
+int verify_1445(u32* indices, u32 proofsize, const unsigned char *input, const u32 input_len, int64_t nonce);
+int verify_2009(u32* indices, u32 proofsize, const unsigned char *input, const u32 input_len, int64_t nonce);
 
-#include <vector>
+int solve_485(const unsigned char* input, u32 input_len, int64_t nonce, const void* userData);
+int solve_965(const unsigned char* input, u32 input_len, int64_t nonce, const void* userData);
+int solve_1445(const unsigned char* input, u32 input_len, int64_t nonce, const void* userData);
+int solve_2009(const unsigned char* input, u32 input_len, int64_t nonce, const void* userData);
 
-template <typename T>
-std::vector<T> toVector(const T* src, size_t len) {
-    std::vector<T> result;
-    T* ptr = const_cast<T*> (src);
+void compress_solution_485(const u32* sol, uchar *csol);
+void compress_solution_965(const u32* sol, uchar *csol);
+void compress_solution_1445(const u32* sol, uchar *csol);
+void compress_solution_2009(const u32* sol, uchar *csol);
 
-    for(size_t i = 0; i < len; i++, ptr++) {
-        result.push_back(*ptr);
-    }
-    return result;
-}
-
-template <typename T>
-void* make_copy(std::vector<T> input) {
-    unsigned long size = input.size() * sizeof(T);
-    void* result = malloc(size);
-    memcpy(result, input.data(), size);
-    return result;
-}
-
-#endif //_SOLVER_H
+#endif //__SOLVER_H
