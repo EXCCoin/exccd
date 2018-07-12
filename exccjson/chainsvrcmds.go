@@ -652,6 +652,7 @@ func NewSendRawTransactionCmd(hexTx string, allowHighFees *bool) *SendRawTransac
 type SetGenerateCmd struct {
 	Generate     bool
 	GenProcLimit *int `jsonrpcdefault:"-1"`
+	MiningAddr   *string
 }
 
 // NewSetGenerateCmd returns a new instance which can be used to issue a
@@ -659,10 +660,11 @@ type SetGenerateCmd struct {
 //
 // The parameters which are pointers indicate they are optional.  Passing nil
 // for optional parameters will use the default value.
-func NewSetGenerateCmd(generate bool, genProcLimit *int) *SetGenerateCmd {
+func NewSetGenerateCmd(generate bool, genProcLimit *int, miningAddr *string) *SetGenerateCmd {
 	return &SetGenerateCmd{
 		Generate:     generate,
 		GenProcLimit: genProcLimit,
+		MiningAddr:   miningAddr,
 	}
 }
 

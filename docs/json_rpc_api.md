@@ -181,7 +181,7 @@ the method name for further details such as parameter and return information.
 |25|[help](#help)|Y|Returns a list of all commands or help for a specified command.|
 |26|[ping](#ping)|N|Queues a ping to be sent to each connected peer.|
 |27|[sendrawtransaction](#sendrawtransaction)|Y|Submits the serialized, hex-encoded transaction to the local peer and relays it to the network.<br /><br />NOTE: exccd does not yet implement the `allowhighfees` parameter, so it has no effect|
-|28|[setgenerate](#setgenerate) |N|Set the server to generate coins (mine) or not.<br/>NOTE: Since exccd does not have the wallet integrated to provide payment addresses, exccd must be configured via the `--miningaddr` option to provide which payment addresses to pay created blocks to for this RPC to function.|
+|28|[setgenerate](#setgenerate) |N|Set the server to generate coins (mine) or not.|
 |29|[stop](#stop)|N|Shutdown exccd.|
 |30|[submitblock](#submitblock)|Y|Attempts to submit a new serialized, hex-encoded block to the network.|
 |31|[validateaddress](#validateaddress)|Y|Verifies the given address is valid.  NOTE: Since exccd does not have a wallet integrated, exccd will only return whether the address is valid or not.|
@@ -526,9 +526,8 @@ the method name for further details such as parameter and return information.
 |   |   |
 |---|---|
 |Method|setgenerate|
-|Parameters|1. `generate`: `(boolean, required)` set to `true` to enable generation, `false` to disable it.<br />2. `genproclimit`: `(numeric, optional)` the number of processors (cores) to limit generation to or `-1` for default.|
+|Parameters|1. `generate`: `(boolean, required)` set to `true` to enable generation, `false` to disable it.<br />2. `genproclimit`: `(numeric, optional)` the number of processors (cores) to limit generation to or `-1` for default.<br /> 3. `miningaddr`: `(string, optional)` the mining address |
 |Description|Set the server to generate coins (mine) or not.|
-|Notes|NOTE: Since exccd does not have the wallet integrated to provide payment addresses, exccd must be configured via the `--miningaddr` option to provide which payment addresses to pay created blocks to for this RPC to function.|
 |Returns|Nothing|
 [Return to Overview](#MethodOverview)<br />
 

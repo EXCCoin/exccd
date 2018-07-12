@@ -74,6 +74,7 @@ type CPUMiner struct {
 	numWorkers        uint32
 	started           bool
 	discreteMining    bool
+	miningAddr        *exccutil.Address
 	submitBlockLock   sync.Mutex
 	wg                sync.WaitGroup
 	workerWg          sync.WaitGroup
@@ -89,6 +90,16 @@ type CPUMiner struct {
 	// exhaustion. It should not race because it's only
 	// accessed in a single threaded loop below.
 	minedOnParents map[chainhash.Hash]uint8
+}
+
+// randomMiningAddr chooses random payToAddr from mining addresses
+// pool or fallbacks to configuration (--miningaddr parameter) if none
+func (m *CPUMiner) randomMiningAddr() exccutil.Address {
+	if m.miningAddr != nil {
+		return *m.miningAddr
+	}
+	rand.Seed(time.Now().UnixNano())
+	return cfg.miningAddrs[rand.Intn(len(cfg.miningAddrs))]
 }
 
 // speedMonitor handles tracking the number of hashes per second the mining
@@ -377,8 +388,7 @@ out:
 		}
 
 		// Choose a payment address at random.
-		rand.Seed(time.Now().UnixNano())
-		payToAddr := cfg.miningAddrs[rand.Intn(len(cfg.miningAddrs))]
+		payToAddr := m.randomMiningAddr()
 
 		// Create a new block template using the available transactions
 		// in the memory pool as a source of transactions to potentially
@@ -559,6 +569,17 @@ func (m *CPUMiner) HashesPerSecond() float64 {
 	return <-m.queryHashesPerSec
 }
 
+// SetMiningAddr sets the mining addresses that optionally overwrite
+// addresses specified using --miningaddr flag
+//
+// This function is safe for concurrent access.
+func (m *CPUMiner) SetMiningAddr(addr *exccutil.Address) {
+	m.submitBlockLock.Lock()
+	defer m.submitBlockLock.Unlock()
+
+	m.miningAddr = addr
+}
+
 // SetNumWorkers sets the number of workers to create which solve blocks.  Any
 // negative values will cause a default number of workers to be used which is
 // based on the number of processor cores in the system.  A value of 0 will
@@ -655,9 +676,7 @@ func (m *CPUMiner) GenerateNBlocks(n uint32) ([]*chainhash.Hash, error) {
 		// template on a block that is in the process of becoming stale.
 		m.submitBlockLock.Lock()
 
-		// Choose a payment address at random.
-		rand.Seed(time.Now().UnixNano())
-		payToAddr := cfg.miningAddrs[rand.Intn(len(cfg.miningAddrs))]
+		payToAddr := m.randomMiningAddr()
 
 		// Create a new block template using the available transactions
 		// in the memory pool as a source of transactions to potentially

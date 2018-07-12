@@ -5091,11 +5091,25 @@ func handleSetGenerate(s *rpcServer, cmd interface{}, closeChan <-chan struct{})
 	if !generate {
 		s.server.cpuMiner.Stop()
 	} else {
-		// Respond with an error if there are no addresses to pay the
-		// created blocks to.
-		if len(cfg.miningAddrs) == 0 {
-			return nil, rpcInternalError("No payment addresses "+
-				"specified via --miningaddr", "Configuration")
+		// Check mining address is valid
+		if c.MiningAddr != nil {
+			strAddr := *c.MiningAddr
+			miningAddr, err := exccutil.DecodeAddress(strAddr)
+			if err != nil {
+				return nil, rpcInternalError("Invalid mining address",
+					"Address parsing")
+			}
+			if !miningAddr.IsForNet(activeNetParams.Params) {
+				return nil, rpcInternalError("Mining address is on wrong network",
+					"Address check")
+			}
+			s.server.cpuMiner.SetMiningAddr(&miningAddr)
+		} else if len(cfg.miningAddrs) == 0 {
+			return nil, rpcInternalError("No payment addresses specified via --miningaddr",
+				"Configuration")
+		} else {
+			// Reset miningaddr and fallback to startup configuration
+			s.server.cpuMiner.SetMiningAddr(nil)
 		}
 
 		// It's safe to call start even if it's already started.
