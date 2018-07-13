@@ -92,9 +92,9 @@ type CPUMiner struct {
 	minedOnParents map[chainhash.Hash]uint8
 }
 
-// randomMiningAddr chooses random payToAddr from mining addresses
-// pool or fallbacks to configuration (--miningaddr parameter) if none
-func (m *CPUMiner) randomMiningAddr() exccutil.Address {
+// getMiningAddr gets payToAddr from mining address field
+// or fallbacks to configuration addresses (--miningaddr parameter)
+func (m *CPUMiner) getMiningAddr() exccutil.Address {
 	if m.miningAddr != nil {
 		return *m.miningAddr
 	}
@@ -388,7 +388,7 @@ out:
 		}
 
 		// Choose a payment address at random.
-		payToAddr := m.randomMiningAddr()
+		payToAddr := m.getMiningAddr()
 
 		// Create a new block template using the available transactions
 		// in the memory pool as a source of transactions to potentially
@@ -676,7 +676,7 @@ func (m *CPUMiner) GenerateNBlocks(n uint32) ([]*chainhash.Hash, error) {
 		// template on a block that is in the process of becoming stale.
 		m.submitBlockLock.Lock()
 
-		payToAddr := m.randomMiningAddr()
+		payToAddr := m.getMiningAddr()
 
 		// Create a new block template using the available transactions
 		// in the memory pool as a source of transactions to potentially
