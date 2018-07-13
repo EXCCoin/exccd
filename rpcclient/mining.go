@@ -116,14 +116,14 @@ func (r FutureSetGenerateResult) Receive() error {
 // returned instance.
 //
 // See SetGenerate for the blocking version and more details.
-func (c *Client) SetGenerateAsync(enable bool, numCPUs int) FutureSetGenerateResult {
-	cmd := exccjson.NewSetGenerateCmd(enable, &numCPUs)
+func (c *Client) SetGenerateAsync(enable bool, numCPUs int, miningAddr *string) FutureSetGenerateResult {
+	cmd := exccjson.NewSetGenerateCmd(enable, &numCPUs, miningAddr)
 	return c.sendCmd(cmd)
 }
 
 // SetGenerate sets the server to generate coins (mine) or not.
-func (c *Client) SetGenerate(enable bool, numCPUs int) error {
-	return c.SetGenerateAsync(enable, numCPUs).Receive()
+func (c *Client) SetGenerate(enable bool, numCPUs int, miningAddr *string) error {
+	return c.SetGenerateAsync(enable, numCPUs, miningAddr).Receive()
 }
 
 // FutureGetHashesPerSecResult is a future promise to deliver the result of a

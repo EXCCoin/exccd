@@ -870,26 +870,28 @@ func TestChainSvrCmds(t *testing.T) {
 				return exccjson.NewCmd("setgenerate", true)
 			},
 			staticCmd: func() interface{} {
-				return exccjson.NewSetGenerateCmd(true, nil)
+				return exccjson.NewSetGenerateCmd(true, nil, nil)
 			},
 			marshalled: `{"jsonrpc":"1.0","method":"setgenerate","params":[true],"id":1}`,
 			unmarshalled: &exccjson.SetGenerateCmd{
 				Generate:     true,
 				GenProcLimit: exccjson.Int(-1),
+				MiningAddr:   nil,
 			},
 		},
 		{
 			name: "setgenerate optional",
 			newCmd: func() (interface{}, error) {
-				return exccjson.NewCmd("setgenerate", true, 6)
+				return exccjson.NewCmd("setgenerate", true, 6, "22tv7nd31sMmD8BpcVRJAWQLqYCjaCuqpWpz")
 			},
 			staticCmd: func() interface{} {
-				return exccjson.NewSetGenerateCmd(true, exccjson.Int(6))
+				return exccjson.NewSetGenerateCmd(true, exccjson.Int(6), exccjson.String("22tv7nd31sMmD8BpcVRJAWQLqYCjaCuqpWpz"))
 			},
-			marshalled: `{"jsonrpc":"1.0","method":"setgenerate","params":[true,6],"id":1}`,
+			marshalled: `{"jsonrpc":"1.0","method":"setgenerate","params":[true,6,"22tv7nd31sMmD8BpcVRJAWQLqYCjaCuqpWpz"],"id":1}`,
 			unmarshalled: &exccjson.SetGenerateCmd{
 				Generate:     true,
 				GenProcLimit: exccjson.Int(6),
+				MiningAddr:   exccjson.String("22tv7nd31sMmD8BpcVRJAWQLqYCjaCuqpWpz"),
 			},
 		},
 		{

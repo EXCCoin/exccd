@@ -720,6 +720,7 @@ var helpDescsEnUS = map[string]string{
 	"setgenerate--synopsis":    "Set the server to generate coins (mine) or not.",
 	"setgenerate-generate":     "Use true to enable generation, false to disable it",
 	"setgenerate-genproclimit": "The number of processors (cores) to limit generation to or -1 for default",
+	"setgenerate-miningaddr":   "The mining address",
 
 	// StopCmd help.
 	"stop--synopsis": "Shutdown exccd.",
