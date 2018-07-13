@@ -1282,6 +1282,7 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 		if rc {
 			return 1
 		}
+		panic("Invalid equihash solution")
 	}
 	return 0
 }

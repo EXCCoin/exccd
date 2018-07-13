@@ -225,6 +225,7 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 			data.miner.minedOnParents[data.msgBlock.Header.PrevBlock]++
 			return 1
 		}
+		panic("Invalid equihash solution")
 	}
 
 	return 0
