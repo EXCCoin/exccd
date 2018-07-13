@@ -679,7 +679,7 @@ func (m *CPUMiner) GenerateNBlocks(n uint32) ([]*chainhash.Hash, error) {
 		if m.solveAndSubmitBlock(template.Block, ticker, nil) {
 			blockHashes[i] = exccutil.NewBlock(template.Block).Hash()
 			i++
-			
+
 			if i == n {
 				minrLog.Tracef("Generated %d blocks", i)
 				m.Lock()
