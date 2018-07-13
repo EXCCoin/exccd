@@ -736,6 +736,13 @@ struct TrompEquihash {
             if (sortprf[i] <= sortprf[i - 1]) {
                 return true;
             }
+
+            constexpr size_t cBitLen { WN/(WK+1) };
+            constexpr size_t maxValue { (1 << (cBitLen + 1)) - 1};
+
+            if (sortprf[i] > maxValue) {
+                return true;
+            }
         }
         return false;
     }
