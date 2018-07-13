@@ -1,6 +1,7 @@
 #include <vector>
 #include "solver.h"
 #include "cequihash.h"
+#include "portable_endian.h"
 
 typedef int (*verify_ptr)(u32* indices, u32 proofsize, const unsigned char *input, const u32 input_len, int64_t nonce);
 typedef int (*solve_ptr)(const unsigned char* input, u32 input_len, int64_t nonce, const void* userData);

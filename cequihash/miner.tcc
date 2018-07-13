@@ -5,22 +5,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <algorithm>
-
-#ifdef __APPLE__
-    #include <machine/endian.h>
-    #include <libkern/OSByteOrder.h>
-    #define htole32(x) OSSwapHostToLittleInt32(x)
-#else
-#include <endian.h>
-#endif
-
-#if defined __builtin_bswap32 && defined __LITTLE_ENDIAN
-#undef htobe32
-    #define htobe32(x) __builtin_bswap32(x)
-#elif defined __APPLE__
-#undef htobe32
-    #define htobe32(x) OSSwapHostToBigInt32(x)
-#endif
+#include "portable_endian.h"
 
 // Select algorithm parameters according to specified configuration
 #ifdef CONF_48_5

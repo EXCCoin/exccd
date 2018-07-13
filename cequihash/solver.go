@@ -5,7 +5,7 @@
 package cequihash
 
 /*
-#cgo CXXFLAGS: -O3 -march=native -std=c++17 -Wall -Wno-deprecated-declarations -D_POSIX_C_SOURCE=200112L
+#cgo CXXFLAGS: -O3 -march=native -std=c++17 -Wall -Wno-deprecated-declarations -D_POSIX_C_SOURCE=200112L -Werror
 #include "cequihash.h"
 */
 import "C"
