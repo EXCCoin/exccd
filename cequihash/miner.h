@@ -732,13 +732,18 @@ struct TrompEquihash {
         uint32_t sortprf[PROOFSIZE];
         memcpy(sortprf, prf, sizeof(sortprf));
         std::sort(sortprf, sortprf + PROOFSIZE);
+
+        constexpr size_t cBitLen { WN/(WK+1) };
+        constexpr size_t maxValue { (1 << (cBitLen + 1)) - 1};
+
+        if (sortprf[0] > maxValue) {
+            return true;
+        }
+
         for (uint32_t i = 1; i < PROOFSIZE; i++) {
             if (sortprf[i] <= sortprf[i - 1]) {
                 return true;
             }
-
-            constexpr size_t cBitLen { WN/(WK+1) };
-            constexpr size_t maxValue { (1 << (cBitLen + 1)) - 1};
 
             if (sortprf[i] > maxValue) {
                 return true;
