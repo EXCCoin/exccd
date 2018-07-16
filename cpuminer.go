@@ -206,6 +206,12 @@ type solutionValidatorData struct {
 }
 
 func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
+	bestBlock, _ := data.miner.server.blockManager.chainState.Best()
+	if data.msgBlock.Header.PrevBlock != *bestBlock {
+		*data.exiting = true
+		return 1
+	}
+
 	if uintptr(solution) == 0 {
 		if *data.exiting {
 			minrLog.Infof("Shutdown is pending. Bailing out")
