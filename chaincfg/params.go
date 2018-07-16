@@ -467,8 +467,8 @@ var MainNetParams = Params{
 		{"excc-seed.pragmaticcoders.com", true},
 		{"seed.exccited.com", true},
 	},
-	N:           wire.MainEquihashN,
-	K:           wire.MainEquihashK,
+	N: wire.MainEquihashN,
+	K: wire.MainEquihashK,
 
 	// Chain parameters
 	GenesisBlock:             &genesisBlock,
