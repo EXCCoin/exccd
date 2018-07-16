@@ -489,8 +489,8 @@ var MainNetParams = Params{
 
 	// Subsidy parameters.
 	BaseSubsidy:              38 * 1e8,
-	MulSubsidy:               10000,
-	DivSubsidy:               10309,
+	MulSubsidy:               100000,
+	DivSubsidy:               103183,
 	SubsidyReductionInterval: 16128, // 4 weeks
 	WorkRewardProportion:     7,
 	StakeRewardProportion:    3,
@@ -556,7 +556,7 @@ var MainNetParams = Params{
 	StakeDiffAlpha:          1, // Minimal
 	StakeDiffWindowSize:     144,
 	StakeDiffWindows:        20,
-	StakeVersionInterval:    144 * 2 * 7, // ~1 week
+	StakeVersionInterval:    144 * 2 * 7, // ~3.5 day
 	MaxFreshStakePerBlock:   20,          // 4*TicketsPerBlock
 	StakeEnabledHeight:      256 + 256,   // CoinbaseMaturity + TicketMaturity
 	StakeValidationHeight:   768,         // ~32 hours
