@@ -1276,13 +1276,8 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 	hash := data.header.BlockHash()
 
 	if hashToBig(&hash).Cmp(compactToBig(data.header.Bits)) <= 0 {
-		headerBytes, _ := data.header.SerializeAllHeaderBytes()
-		rc := cequihash.ValidateEquihash(data.params.N, data.params.K, headerBytes, int64(data.header.Nonce), data.header.EquihashSolution[:])
-		*data.solved = rc
-		if rc {
-			return 1
-		}
-		panic("Invalid equihash solution")
+		*data.solved = true
+		return 1
 	}
 	return 0
 }

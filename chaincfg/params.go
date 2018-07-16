@@ -467,9 +467,6 @@ var MainNetParams = Params{
 		{"excc-seed.pragmaticcoders.com", true},
 		{"seed.exccited.com", true},
 	},
-	// TODO: restore production parameters
-	// N:           200,
-	// K:           9,
 	N:           wire.MainEquihashN,
 	K:           wire.MainEquihashK,
 

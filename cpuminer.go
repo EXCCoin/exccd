@@ -227,16 +227,10 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 	hash := data.msgBlock.Header.BlockHash()
 
 	if blockchain.HashToBig(&hash).Cmp(blockchain.CompactToBig(data.msgBlock.Header.Bits)) <= 0 {
-		headerBytes, _ := data.msgBlock.Header.SerializeAllHeaderBytes()
-		*data.solved = equihash.ValidateEquihash(data.n, data.k, headerBytes, int64(data.msgBlock.Header.Nonce), data.msgBlock.Header.EquihashSolution[:])
-
-		if *data.solved {
-			block := exccutil.NewBlock(data.msgBlock)
-			data.miner.submitBlock(block)
-			data.miner.minedOnParents[data.msgBlock.Header.PrevBlock]++
-			return 1
-		}
-		panic("Invalid equihash solution")
+		data.miner.submitBlock(exccutil.NewBlock(data.msgBlock))
+		data.miner.minedOnParents[data.msgBlock.Header.PrevBlock]++
+		*data.solved = true
+		return 1
 	}
 
 	return 0
