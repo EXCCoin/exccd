@@ -150,7 +150,7 @@ struct TrompEquihash {
 
     static_assert(TREEMINBITS <= 32, "tree doesnt fit in 32 bits");
 
-    using tree_t = std::conditional_t<TREEMINBITS <= 16, uint16_t, uint32_t>;
+    using tree_t = typename std::conditional<TREEMINBITS <= 16, uint16_t, uint32_t>::type;
 
     static constexpr uint32_t TREEBYTES = sizeof(tree_t);
     static constexpr uint32_t TREEBITS = TREEBYTES*8;
@@ -481,7 +481,7 @@ struct TrompEquihash {
         // slots in each list are found through nextxhashslot[]
         // since 0 is already a valid slot number, use ~0 as nil value
 
-        using xslot = std::conditional_t<RESTBITS <= 6, uint8_t, uint16_t >;
+        using xslot = typename std::conditional<RESTBITS <= 6, uint8_t, uint16_t>::type;
         static const xslot xnil = ~0;
         xslot xhashslots[NRESTS];
         xslot nextxhashslot[NSLOTS];
