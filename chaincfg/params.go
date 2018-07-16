@@ -365,7 +365,7 @@ type Params struct {
 	PKHEdwardsAddrID [2]byte // First 2 bytes of an Edwards P2PKH address
 	PKHSchnorrAddrID [2]byte // First 2 bytes of a secp256k1 Schnorr P2PKH address
 	ScriptHashAddrID [2]byte // First 2 bytes of a P2SH address
-	PrivateKeyID     [2]byte // First 2 bytes of a WIF private key
+	PrivateKeyID     byte    // First byte of a WIF private key
 
 	// BIP32 hierarchical deterministic extended key magics
 	HDPrivateKeyID [4]byte
@@ -461,7 +461,15 @@ var MainNetParams = Params{
 	Name:        "mainnet",
 	Net:         wire.MainNet,
 	DefaultPort: "9666",
-	DNSSeeds:    []DNSSeed{},
+	DNSSeeds: []DNSSeed{
+		{"seed.excc.co", true},
+		{"seed.xchange.me", true},
+		{"excc-seed.pragmaticcoders.com", true},
+		{"seed.exccited.com", true},
+	},
+	// TODO: restore production parameters
+	// N:           200,
+	// K:           9,
 	N:           wire.MainEquihashN,
 	K:           wire.MainEquihashK,
 
@@ -526,7 +534,7 @@ var MainNetParams = Params{
 	PKHEdwardsAddrID: [2]byte{0x35, 0xcf}, // starts with 2e
 	PKHSchnorrAddrID: [2]byte{0x2f, 0x0d}, // starts with 2S
 	ScriptHashAddrID: [2]byte{0x34, 0xAF}, // starts with 2c
-	PrivateKeyID:     [2]byte{0x80},       // starts with 4
+	PrivateKeyID:     0x80,                // starts with 5 (uncompressed) or K (compressed)
 	// ---------------------------------------------------------------------------------------------
 
 	// BIP32 hierarchical deterministic extended key magics
@@ -554,7 +562,7 @@ var MainNetParams = Params{
 	StakeVersionInterval:    144 * 2 * 7, // ~1 week
 	MaxFreshStakePerBlock:   20,          // 4*TicketsPerBlock
 	StakeEnabledHeight:      256 + 256,   // CoinbaseMaturity + TicketMaturity
-	StakeValidationHeight:   4096,        // ~7 days
+	StakeValidationHeight:   768,         // ~32 hours
 	StakeBaseSigScript:      []byte{0x00, 0x00},
 	StakeMajorityMultiplier: 3,
 	StakeMajorityDivisor:    4,
@@ -633,7 +641,7 @@ var TestNet2Params = Params{
 	PKHEdwardsAddrID:     [2]byte{0x0f, 0x01}, // starts with Te
 	PKHSchnorrAddrID:     [2]byte{0x0e, 0xe3}, // starts with TS
 	ScriptHashAddrID:     [2]byte{0x0e, 0xfc}, // starts with Tc
-	PrivateKeyID:         [2]byte{0x23, 0x0e}, // starts with Pt
+	PrivateKeyID:         0xef,                // starts with 9 (uncompressed) or c (compressed)
 
 	// BIP32 hierarchical deterministic extended key magics
 	HDPrivateKeyID: [4]byte{0x04, 0x35, 0x83, 0x97}, // starts with tprv
@@ -770,7 +778,7 @@ var SimNetParams = Params{
 	PKHEdwardsAddrID:     [2]byte{0x0e, 0x71}, // starts with Se
 	PKHSchnorrAddrID:     [2]byte{0x0e, 0x53}, // starts with SS
 	ScriptHashAddrID:     [2]byte{0x0e, 0x6c}, // starts with Sc
-	PrivateKeyID:         [2]byte{0x23, 0x07}, // starts with Ps
+	PrivateKeyID:         0xef,                // starts with 9 (uncompressed) or c (compressed)
 
 	// BIP32 hierarchical deterministic extended key magics
 	HDPrivateKeyID: [4]byte{0x04, 0x20, 0xb9, 0x03}, // starts with sprv

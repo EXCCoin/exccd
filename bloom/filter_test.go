@@ -214,7 +214,7 @@ func TestFilterInsertWithTweak(t *testing.T) {
 // TestFilterInsertKey ensures inserting public keys and addresses works as
 // expected.
 func TestFilterInsertKey(t *testing.T) {
-	secret := "PtWU93QdrNBasyWA7GDJ3ycEN5aQRF69EynXJfmnyWDS4G7n8GKqS"
+	secret := "cV1Y7ARUr9Yx7BR55nTdnR7ZXNJphZtCCMBTEZBJe1hXt2kB684q"
 
 	wif, err := exccutil.DecodeWIF(secret)
 	if err != nil {
@@ -226,7 +226,7 @@ func TestFilterInsertKey(t *testing.T) {
 	f.Add(wif.SerializePubKey())
 	f.Add(exccutil.Hash160(wif.SerializePubKey()))
 
-	want, err := hex.DecodeString("035629e7080000000000000001")
+	want, err := hex.DecodeString("035d5820080000000000000001")
 	if err != nil {
 		t.Errorf("TestFilterInsertWithTweak DecodeString failed: %v\n", err)
 		return
@@ -240,7 +240,7 @@ func TestFilterInsertKey(t *testing.T) {
 
 	if !bytes.Equal(got.Bytes(), want) {
 		t.Errorf("TestFilterInsertWithTweak failure: got %v want %v\n",
-			hex.EncodeToString(got.Bytes()), want)
+			hex.EncodeToString(got.Bytes()), hex.EncodeToString(want))
 		return
 	}
 }

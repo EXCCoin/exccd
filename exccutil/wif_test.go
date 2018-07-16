@@ -11,8 +11,67 @@ import (
 
 	"github.com/EXCCoin/exccd/chaincfg"
 	"github.com/EXCCoin/exccd/chaincfg/chainec"
+	"github.com/EXCCoin/exccd/exccec/secp256k1"
 	"github.com/EXCCoin/exccd/exccutil"
 )
+
+func TestEncodeDecodeUncompressedWIF(t *testing.T) {
+	priv1, _ := secp256k1.PrivKeyFromBytes([]byte{
+		0x0c, 0x28, 0xfc, 0xa3, 0x86, 0xc7, 0xa2, 0x27,
+		0x60, 0x0b, 0x2f, 0xe5, 0x0b, 0x7c, 0xae, 0x11,
+		0xec, 0x86, 0xd3, 0xbf, 0x1f, 0xbe, 0x47, 0x1b,
+		0xe8, 0x98, 0x27, 0xe1, 0x9d, 0x72, 0xaa, 0x1d})
+
+	priv2, _ := secp256k1.PrivKeyFromBytes([]byte{
+		0xdd, 0xa3, 0x5a, 0x14, 0x88, 0xfb, 0x97, 0xb6,
+		0xeb, 0x3f, 0xe6, 0xe9, 0xef, 0x2a, 0x25, 0x81,
+		0x4e, 0x39, 0x6f, 0xb5, 0xdc, 0x29, 0x5f, 0xe9,
+		0x94, 0xb9, 0x67, 0x89, 0xb2, 0x1a, 0x03, 0x98})
+
+	wif1, err := exccutil.NewUncompressedWIF(priv1, &chaincfg.MainNetParams)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wif2, err := exccutil.NewUncompressedWIF(priv2, &chaincfg.TestNet2Params)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		wif     *exccutil.WIF
+		encoded string
+	}{
+		{
+			wif1,
+			"5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ",
+		},
+		{
+			wif2,
+			"93GXcP5BqkAxXrV7N2EjmjAeGwfvrX7ALLXTnfZExxtn4QXMjjs",
+		},
+	}
+
+	for _, test := range tests {
+		// Test that encoding the WIF structure matches the expected string.
+		s := test.wif.String()
+		if s != test.encoded {
+			t.Errorf("TestEncodeDecodePrivateKey failed: want '%s', got '%s'",
+				test.encoded, s)
+			continue
+		}
+
+		// Test that decoding the expected string results in the original WIF
+		// structure.
+		w, err := exccutil.DecodeWIF(test.encoded)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		if got := w.String(); got != test.encoded {
+			t.Errorf("NewWIF failed: want '%v', got '%v'", test.wif, got)
+		}
+	}
+}
 
 func TestEncodeDecodeWIF(t *testing.T) {
 	suites := []int{
@@ -20,9 +79,9 @@ func TestEncodeDecodeWIF(t *testing.T) {
 		chainec.ECTypeEdwards,
 		chainec.ECTypeSecSchnorr,
 	}
-	for _, suite := range suites {
+	for _, ecType := range suites {
 		var priv1, priv2 chainec.PrivateKey
-		switch suite {
+		switch ecType {
 		case chainec.ECTypeSecp256k1:
 			priv1, _ = chainec.Secp256k1.PrivKeyFromBytes([]byte{
 				0x0c, 0x28, 0xfc, 0xa3, 0x86, 0xc7, 0xa2, 0x27,
@@ -61,15 +120,11 @@ func TestEncodeDecodeWIF(t *testing.T) {
 				0x94, 0xb9, 0x67, 0x89, 0xb2, 0x1a, 0x03, 0x98})
 		}
 
-		wif1, err := exccutil.NewWIF(priv1, &chaincfg.MainNetParams, suite)
+		wif1, err := exccutil.NewWIF(priv1, &chaincfg.MainNetParams, ecType)
 		if err != nil {
 			t.Fatal(err)
 		}
-		wif2, err := exccutil.NewWIF(priv2, &chaincfg.TestNet2Params, suite)
-		if err != nil {
-			t.Fatal(err)
-		}
-		wif3, err := exccutil.NewWIF(priv2, &chaincfg.SimNetParams, suite)
+		wif2, err := exccutil.NewWIF(priv2, &chaincfg.TestNet2Params, ecType)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -79,7 +134,7 @@ func TestEncodeDecodeWIF(t *testing.T) {
 			encoded string
 		}
 
-		switch suite {
+		switch ecType {
 		case chainec.ECTypeSecp256k1:
 			tests = []struct {
 				wif     *exccutil.WIF
@@ -87,15 +142,11 @@ func TestEncodeDecodeWIF(t *testing.T) {
 			}{
 				{
 					wif1,
-					"2SaK6sPt88Z6kTPRWW9DUmvCAemUvH6zhEAyeTJdN7L5FekA343hrp",
+					"KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617",
 				},
 				{
 					wif2,
-					"PtWVDUidYaiiNT5e2Sfb1Ah4evbaSopZJkkpFBuzkJYcYtetndyqj",
-				},
-				{
-					wif3,
-					"PsURoUb7FMeJQdTYea8pkbUQFBZAsxtfDcfTLGja5sCLZvLVpvcnU",
+					"cV1Y7ARUr9Yx7BR55nTdnR7ZXNJphZtCCMBTEZBJe1hXt2kB684q",
 				},
 			}
 		case chainec.ECTypeEdwards:
@@ -105,15 +156,11 @@ func TestEncodeDecodeWIF(t *testing.T) {
 			}{
 				{
 					wif1,
-					"2SaK8p94MaaxB8cZL5r84Pv9VFYQ2tpeQ53mHXQsWoE4uf8ee18hdW",
+					"KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvWxyf5d",
 				},
 				{
 					wif2,
-					"PtWVaBGeCfbFQfgqFew8YvdrSH5TH439K7rvpo3aWnSfDvyKh8zEG",
-				},
-				{
-					wif3,
-					"PsUSAB97uSWqSr4jsnQNJMRC2Y33iD7FDymZuss9rM6PExexj7Byr",
+					"cN1GXHxgB3dbmzxcgKJux56FfyU7chi5BtbejZsYHFk8ptuDeyhf",
 				},
 			}
 		case chainec.ECTypeSecSchnorr:
@@ -123,15 +170,11 @@ func TestEncodeDecodeWIF(t *testing.T) {
 			}{
 				{
 					wif1,
-					"2SaKAktEb2coboqh9fZ2e1v6orKK9WYJ6uvYvbX7fV84ZfX9GRfd1N",
+					"KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvbMrQyG",
 				},
 				{
 					wif2,
-					"PtWZ6y56SeRZiuMHBrUkFAbhrURogF7xzWL6PQQJ86XvZfe8mYSQ4",
-				},
-				{
-					wif3,
-					"PsUVgxwa9RM9m5jBoywyzbP3SjPQ7QC4uNEjUVDsTfBeahKkpNFux",
+					"cV1Y7ARUr9Yx7BR55nTdnR7ZXNJphZtCCMBTEZBJe1hXt32Z7LP9",
 				},
 			}
 		}
