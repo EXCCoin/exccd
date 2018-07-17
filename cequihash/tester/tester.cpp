@@ -7,8 +7,6 @@
 #include "vector"
 #include "ctime"
 
-#define ARRAY_LEN(arr)  (sizeof(arr) / sizeof(arr[0]))
-
 inline size_t EquihashSolutionLen(unsigned int N, unsigned int K) {
     return (1 << K) * (N / (K + 1) + 1) / 8;
 }
@@ -322,6 +320,7 @@ int decodeHex(const uint8_t* hex, uint8_t* out, size_t outlen) {
 
 
 #define ARRAY_LEN(arr)  (sizeof(arr)/sizeof(arr[0]))
+
 #define TEST_VALIDATOR(arr) {\
     int nTests = ARRAY_LEN(arr); \
     for (int i = 0; i < nTests; i++) {  \

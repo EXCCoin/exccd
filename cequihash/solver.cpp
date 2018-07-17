@@ -2,8 +2,6 @@
 #include <vector>
 #include "cequihash.h"
 
-#define ARRAY_LEN(arr) (sizeof(arr) / sizeof(arr[0]))
-
 typedef verify_code (*verify_ptr)(uint32_t *indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
 typedef int (*solve_ptr)(const unsigned char *input, uint32_t input_len, int64_t nonce, const void *userData);
 typedef void (*compress_ptr)(const uint32_t *sol, uint8_t *csol);
@@ -33,7 +31,7 @@ struct solver_record {
         : N(n), solution_size(size), proof_size(psize), vfn(vptr), sfn(sptr), cfn(cptr) {}
 };
 
-solver_record solvers[] = {
+std::vector<solver_record> solvers = {
     {48, equihash_solution_size(48, 5), 1 << 5, verify<48, 5>, solve<48, 5>, compress_solution<48, 5>},
     {96, equihash_solution_size(96, 5), 1 << 5, verify<96, 5>, solve<96, 5>, compress_solution<96, 5>},
     {144, equihash_solution_size(144, 5), 1 << 5, verify<144, 5>, solve<144, 5>, compress_solution<144, 5>},
@@ -41,7 +39,7 @@ solver_record solvers[] = {
 };
 
 static solver_record *find_solver(uint32_t n) {
-    for (uint32_t i = 0; i < ARRAY_LEN(solvers); i++) {
+    for (uint32_t i = 0; i < solvers.size(); i++) {
         if (solvers[i].N == (uint32_t)n) {
             return &solvers[i];
         }
@@ -103,9 +101,12 @@ std::vector<uint32_t> to_indices(const unsigned char *minimal, uint32_t sol_size
     std::vector<unsigned char> array(lenIndices);
     expand_array(minimal, sol_size, array.data(), lenIndices, cBitLen + 1, bytePad);
     std::vector<uint32_t> result;
+    result.reserve(lenIndices);
+
     for (size_t i = 0; i < lenIndices; i += sizeof(uint32_t)) {
         result.push_back(array_to_index(array.data() + i));
     }
+
     return result;
 }
 
@@ -124,6 +125,7 @@ int EquihashValidate(int n, int k, const void *input, int len, int64_t nonce, co
 
     auto indices = to_indices((uint8_t *)soln, solver->solution_size, collision_bit_length);
     auto result  = solver->vfn(indices.data(), indices.size(), (uint8_t *)input, len, nonce);
+
     return static_cast<std::underlying_type<verify_code>::type>(result);
 }
 
@@ -145,6 +147,7 @@ void *IndicesFromSolution(int n, int k, void *soln) {
     uint32_t lenIndices = indices.size() * sizeof(uint32_t);
     void *   result     = malloc(lenIndices);
     memcpy(result, indices.data(), lenIndices);
+
     return result;
 }
 
