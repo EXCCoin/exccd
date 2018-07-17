@@ -2,14 +2,14 @@
 #include "solver.h"
 #include "cequihash.h"
 
-typedef int (*verify_ptr)(uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
+typedef verify_code (*verify_ptr)(uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
 typedef int (*solve_ptr)(const unsigned char* input, uint32_t input_len, int64_t nonce, const void* userData);
 typedef void (*compress_ptr)(const uint32_t* sol, uint8_t *csol);
 
-template int verify<48, 5> (uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
-template int verify<96, 5> (uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
-template int verify<144, 5>(uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
-template int verify<200, 9>(uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
+template verify_code verify<48, 5> (uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
+template verify_code verify<96, 5> (uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
+template verify_code verify<144, 5>(uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
+template verify_code verify<200, 9>(uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
 template int solve<48, 5> (const unsigned char* input, uint32_t input_len, int64_t nonce, const void* userData);
 template int solve<96, 5> (const unsigned char* input, uint32_t input_len, int64_t nonce, const void* userData);
 template int solve<144, 5>(const unsigned char* input, uint32_t input_len, int64_t nonce, const void* userData);
@@ -113,20 +113,20 @@ std::vector<uint32_t> to_indices(const unsigned char *minimal, uint32_t sol_size
 
 int EquihashValidate(int n, int k, const void *input, int len, int64_t nonce, const void *soln) {
     if (n <= 0 || k <= 0) {
-        return POW_UNKNOWN_PARAMS;
+        return static_cast<std::underlying_type<verify_code>::type>(verify_code::POW_UNKNOWN_PARAMS);
     }
 
     auto solver = find_solver(n);
 
     if (!solver) {
-        return POW_UNKNOWN_PARAMS;
+        return static_cast<std::underlying_type<verify_code>::type>(verify_code::POW_UNKNOWN_PARAMS);
     }
 
     size_t collision_bit_length = n/(k+1);
 
     auto indices = to_indices((uint8_t *) soln, solver->solution_size, collision_bit_length);
-
-    return solver->vfn(indices.data(), indices.size(), (uint8_t*)input, len, nonce);
+    auto result = solver->vfn(indices.data(), indices.size(), (uint8_t*)input, len, nonce);
+    return static_cast<std::underlying_type<verify_code>::type>(result);
 }
 
 int EquihashSolve(int n, int k, const void *input, int len, int64_t nonce, const void *validBlockData) {

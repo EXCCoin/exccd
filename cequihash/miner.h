@@ -59,7 +59,7 @@
 #define CONSTEXPR
 #endif
 
-enum verify_code {
+enum class verify_code {
     POW_OK = 0,
     POW_INVALID_HEADER_LENGTH = 1,
     POW_DUPLICATE = 2,
@@ -847,22 +847,22 @@ struct TrompEquihash {
         return ret;
     }
 
-    static int verifyrec(const blake2b_state *ctx, uint32_t *indices, uint8_t *hash, uint32_t r) {
+    static verify_code verifyrec(const blake2b_state *ctx, uint32_t *indices, uint8_t *hash, uint32_t r) {
         if (r == 0) {
             TrompEquihash::genhash(ctx, *indices, hash);
-            return POW_OK;
+            return verify_code::POW_OK;
         }
         uint32_t *indices1 = indices + (1 << (r - 1));
         if (*indices >= *indices1)
-            return POW_OUT_OF_ORDER;
+            return verify_code::POW_OUT_OF_ORDER;
 
         uint8_t hash0[WN / 8], hash1[WN / 8];
-        int vrf0 = verifyrec(ctx, indices, hash0, r - 1);
-        if (vrf0 != POW_OK)
+        verify_code vrf0 = verifyrec(ctx, indices, hash0, r - 1);
+        if (vrf0 != verify_code::POW_OK)
             return vrf0;
 
-        int vrf1 = verifyrec(ctx, indices1, hash1, r - 1);
-        if (vrf1 != POW_OK)
+        verify_code vrf1 = verifyrec(ctx, indices1, hash1, r - 1);
+        if (vrf1 != verify_code::POW_OK)
             return vrf1;
 
         for (uint32_t i = 0; i < WN / 8; i++)
@@ -872,11 +872,12 @@ struct TrompEquihash {
 
         for (i = 0; i < b / 8; i++)
             if (hash[i])
-                return POW_NONZERO_XOR;
+                return verify_code::POW_NONZERO_XOR;
 
         if ((b % 8) && hash[i] >> (8 - (b % 8)))
-            return POW_NONZERO_XOR;
-        return POW_OK;
+            return verify_code::POW_NONZERO_XOR;
+
+        return verify_code::POW_OK;
     }
 };
 
@@ -887,13 +888,16 @@ void compress_solution(const uint32_t* sol, uint8_t *csol) {
 }
 
 template<uint32_t WN, uint32_t WK>
-int verify(uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce) {
+verify_code verify(uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce) {
     if (input_len > HEADERNONCELEN)
-        return POW_INVALID_HEADER_LENGTH;
+        return verify_code::POW_INVALID_HEADER_LENGTH;
+
     if (proofsize != TrompEquihash<WN, WK>::PROOFSIZE)
-        return POW_SOL_SIZE_MISMATCH;
+        return verify_code::POW_SOL_SIZE_MISMATCH;
+
     if (TrompEquihash<WN, WK>::duped(indices))
-        return POW_DUPLICATE;
+        return verify_code::POW_DUPLICATE;
+
     blake2b_state ctx;
     TrompEquihash<WN, WK>::setheader(&ctx, input, input_len, nonce);
     uint8_t hash[WN / 8];
