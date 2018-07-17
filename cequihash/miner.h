@@ -59,13 +59,13 @@
 #endif
 
 enum class verify_code {
-    POW_OK = 0,
+    POW_OK                    = 0,
     POW_INVALID_HEADER_LENGTH = 1,
-    POW_DUPLICATE = 2,
-    POW_OUT_OF_ORDER = 3,
-    POW_NONZERO_XOR = 4,
-    POW_SOL_SIZE_MISMATCH = 5,
-    POW_UNKNOWN_PARAMS = 6,
+    POW_DUPLICATE             = 2,
+    POW_OUT_OF_ORDER          = 3,
+    POW_NONZERO_XOR           = 4,
+    POW_SOL_SIZE_MISMATCH     = 5,
+    POW_UNKNOWN_PARAMS        = 6,
 };
 
 extern "C" int equihashProxy(const void *blockData, void *solution);
@@ -112,37 +112,37 @@ struct TrompEquihash {
     //----------------------------------------------
     // Constants and typedefs
     //----------------------------------------------
-    static constexpr bool CANTOR = (WN == 200 && WK == 9) ? true : false;
+    static constexpr bool     CANTOR   = (WN == 200 && WK == 9) ? true : false;
     static constexpr uint32_t RESTBITS = (WN == 200 && WK == 9) ? 10 : 4;
 
-    static constexpr uint32_t NDIGITS = (WK + 1);
-    static constexpr uint32_t DIGITBITS = (WN / (NDIGITS));
-    static constexpr uint32_t PROOFSIZE = (uint32_t)(1 << WK);
-    static constexpr uint32_t BASE = (uint32_t)(1 << DIGITBITS);
-    static constexpr uint32_t NHASHES = (uint32_t)(2 * BASE);
+    static constexpr uint32_t NDIGITS        = (WK + 1);
+    static constexpr uint32_t DIGITBITS      = (WN / (NDIGITS));
+    static constexpr uint32_t PROOFSIZE      = (uint32_t)(1 << WK);
+    static constexpr uint32_t BASE           = (uint32_t)(1 << DIGITBITS);
+    static constexpr uint32_t NHASHES        = (uint32_t)(2 * BASE);
     static constexpr uint32_t HASHESPERBLAKE = (uint32_t)(512 / WN);
-    static constexpr uint32_t HASHOUT = (uint32_t)(HASHESPERBLAKE * WN / 8);
+    static constexpr uint32_t HASHOUT        = (uint32_t)(HASHESPERBLAKE * WN / 8);
     // 2_log of number of buckets
     static constexpr uint32_t BUCKBITS = (DIGITBITS - RESTBITS);
     // 2_log of number of slots per bucket
     static constexpr uint32_t SLOTBITS = (RESTBITS + 1 + 1);
 
-    static constexpr double SAVEMEM = (RESTBITS < 8) ? 1.0f : 9.0f / 14.0f;
-    static constexpr uint32_t NBUCKETS = (1 << BUCKBITS);
-    static constexpr uint32_t BUCKMASK = (NBUCKETS - 1);
+    static constexpr double   SAVEMEM   = (RESTBITS < 8) ? 1.0f : 9.0f / 14.0f;
+    static constexpr uint32_t NBUCKETS  = (1 << BUCKBITS);
+    static constexpr uint32_t BUCKMASK  = (NBUCKETS - 1);
     static constexpr uint32_t SLOTRANGE = (1 << SLOTBITS);
-    static constexpr uint32_t SLOTMASK = (SLOTRANGE - 1);
-    static constexpr uint32_t NSLOTS = (SLOTRANGE * SAVEMEM);
-    static constexpr uint32_t NRESTS = (1 << RESTBITS);
-    static constexpr uint32_t MAXSOLS = (8);
+    static constexpr uint32_t SLOTMASK  = (SLOTRANGE - 1);
+    static constexpr uint32_t NSLOTS    = (SLOTRANGE * SAVEMEM);
+    static constexpr uint32_t NRESTS    = (1 << RESTBITS);
+    static constexpr uint32_t MAXSOLS   = (8);
 
     // tree node identifying its children as two different slots in
     // a bucket on previous layer with matching rest bits (x-tra hash)
-    static constexpr uint32_t CANTORBITS = (CANTOR) ? (2 * SLOTBITS - 2) : 0;
-    static constexpr uint32_t CANTORMASK = (CANTOR) ? ((1 << CANTORBITS) - 1) : 0;
+    static constexpr uint32_t CANTORBITS    = (CANTOR) ? (2 * SLOTBITS - 2) : 0;
+    static constexpr uint32_t CANTORMASK    = (CANTOR) ? ((1 << CANTORBITS) - 1) : 0;
     static constexpr uint32_t CANTORMAXSQRT = (CANTOR) ? (2 * NSLOTS) : 0;
-    static constexpr uint32_t NSLOTPAIRS = (CANTOR) ? ((NSLOTS - 1) * (NSLOTS + 2) / 2) : 0;
-    static constexpr uint32_t TREEMINBITS = (CANTOR) ? (BUCKBITS + CANTORBITS) : (BUCKBITS + 2 * SLOTBITS);
+    static constexpr uint32_t NSLOTPAIRS    = (CANTOR) ? ((NSLOTS - 1) * (NSLOTS + 2) / 2) : 0;
+    static constexpr uint32_t TREEMINBITS   = (CANTOR) ? (BUCKBITS + CANTORBITS) : (BUCKBITS + 2 * SLOTBITS);
     static_assert(!CANTOR || (NSLOTPAIRS <= 1 << CANTORBITS), "cantor throws a fit");
 
     static constexpr uint32_t NBLAKES = 1;
@@ -151,8 +151,8 @@ struct TrompEquihash {
 
     using tree_t = typename std::conditional<TREEMINBITS <= 16, uint16_t, uint32_t>::type;
 
-    static constexpr uint32_t TREEBYTES = sizeof(tree_t);
-    static constexpr uint32_t TREEBITS = TREEBYTES * 8;
+    static constexpr uint32_t TREEBYTES           = sizeof(tree_t);
+    static constexpr uint32_t TREEBITS            = TREEBYTES * 8;
     static constexpr uint32_t COMPRESSED_SOL_SIZE = (PROOFSIZE * (DIGITBITS + 1) / 8);
 
     static constexpr uint32_t HASHWORDS0 = ((WN - DIGITBITS + RESTBITS) + TREEBITS - 1) / TREEBITS;
@@ -239,8 +239,8 @@ struct TrompEquihash {
     // the hash is sometimes accessed 32 bits at a time (word)
     // and sometimes 8 bits at a time (bytes)
     union htunit {
-        tree tag;
-        tree_t word;
+        tree    tag;
+        tree_t  word;
         uint8_t bytes[sizeof(tree_t)];
     };
 
@@ -252,8 +252,8 @@ struct TrompEquihash {
     typedef slot1 bucket1[NSLOTS];
     // the N-bit hash consists of K+1 n-bit "digits"
     // each of which corresponds to a layer of NBUCKETS buckets
-    typedef bucket0 digit0[NBUCKETS];
-    typedef bucket1 digit1[NBUCKETS];
+    typedef bucket0  digit0[NBUCKETS];
+    typedef bucket1  digit1[NBUCKETS];
     typedef uint32_t bsizes[NBUCKETS];
 
     // manages hash and tree data
@@ -287,19 +287,19 @@ struct TrompEquihash {
     // Equihash solver data
     //----------------------------------------------
     typedef uint32_t proof[PROOFSIZE];
-    blake2b_state blake_ctx;  // holds blake2b midstate after call to setheadernounce
-    htalloc hta;              // holds allocated heaps
-    bsizes *nslots;           // counts number of slots used in buckets
-    proof *sols;              // store found solutions here (only first MAXSOLS)
-    uint32_t nsols;           // number of solutions found
-    const void *user_data;
+    blake2b_state    blake_ctx;  // holds blake2b midstate after call to setheadernounce
+    htalloc          hta;        // holds allocated heaps
+    bsizes *         nslots;     // counts number of slots used in buckets
+    proof *          sols;       // store found solutions here (only first MAXSOLS)
+    uint32_t         nsols;      // number of solutions found
+    const void *     user_data;
 
     TrompEquihash(const void *userData) : user_data(userData) {
         static_assert(sizeof(htunit) == sizeof(tree_t), "");
         static_assert(WK & 1, "K assumed odd in candidate() calling indices1()");
         hta.alloctrees();
         nslots = (bsizes *)hta.alloc(2 * NBUCKETS, sizeof(uint32_t));
-        sols = (proof *)hta.alloc(MAXSOLS, sizeof(proof));
+        sols   = (proof *)hta.alloc(MAXSOLS, sizeof(proof));
     }
 
     ~TrompEquihash() {
@@ -331,17 +331,17 @@ struct TrompEquihash {
 
     // get old heap0 bucket size and clear it for next round
     uint32_t getnslots0(const uint32_t bid) {
-        uint32_t &nslot = nslots[0][bid];
-        const uint32_t n = std::min(nslot, NSLOTS);
-        nslot = 0;
+        uint32_t &     nslot = nslots[0][bid];
+        const uint32_t n     = std::min(nslot, NSLOTS);
+        nslot                = 0;
         return n;
     }
 
     // get old heap1 bucket size and clear it for next round
     uint32_t getnslots1(const uint32_t bid) {
-        uint32_t &nslot = nslots[1][bid];
-        const uint32_t n = std::min(nslot, NSLOTS);
-        nslot = 0;
+        uint32_t &     nslot = nslots[1][bid];
+        const uint32_t n     = std::min(nslot, NSLOTS);
+        nslot                = 0;
         return n;
     }
 
@@ -351,8 +351,8 @@ struct TrompEquihash {
         if (indices[0] > indices[size]) {
             for (uint32_t i = 0; i < size; i++) {
                 const uint32_t tmp = indices[i];
-                indices[i] = indices[size + i];
-                indices[size + i] = tmp;
+                indices[i]         = indices[size + i];
+                indices[size + i]  = tmp;
             }
         }
         return false;
@@ -364,21 +364,21 @@ struct TrompEquihash {
             *indices = t.getindex();
             return false;
         }
-        const slot1 *buck = hta.heap1[t.bucketid()];
+        const slot1 *  buck = hta.heap1[t.bucketid()];
         const uint32_t size = 1 << --r;
-        uint32_t tagi = hashwords(hashsize(r));
-        uint32_t s1 = t.slotid1(), s0 = t.slotid0(CANTOR ? s1 : 0);
-        tree t0 = buck[s0][tagi].tag, t1 = buck[s1][tagi].tag;
+        uint32_t       tagi = hashwords(hashsize(r));
+        uint32_t       s1 = t.slotid1(), s0 = t.slotid0(CANTOR ? s1 : 0);
+        tree           t0 = buck[s0][tagi].tag, t1 = buck[s1][tagi].tag;
         return !t0.prob_disjoint(t1) || listindices1(r, t0, indices) || listindices1(r, t1, indices + size) || orderindices(indices, size) || indices[0] == indices[size];
     }
 
     // need separate instance for accessing (differently typed) heap1
     bool listindices1(uint32_t r, const tree t, uint32_t *indices) {
-        const slot0 *buck = hta.heap0[t.bucketid()];
+        const slot0 *  buck = hta.heap0[t.bucketid()];
         const uint32_t size = 1 << --r;
-        uint32_t tagi = hashwords(hashsize(r));
-        uint32_t s1 = t.slotid1(), s0 = t.slotid0(CANTOR ? s1 : 0);
-        tree t0 = buck[s0][tagi].tag, t1 = buck[s1][tagi].tag;
+        uint32_t       tagi = hashwords(hashsize(r));
+        uint32_t       s1 = t.slotid1(), s0 = t.slotid0(CANTOR ? s1 : 0);
+        tree           t0 = buck[s0][tagi].tag, t1 = buck[s1][tagi].tag;
         return listindices0(r, t0, indices) || listindices0(r, t1, indices + size) || orderindices(indices, size) || indices[0] == indices[size];
     }
 
@@ -397,21 +397,21 @@ struct TrompEquihash {
     // thread-local object that precomputes various slot metrics for each round
     // facilitating access to various bits in the variable size slots
     struct htlayout {
-        htalloc hta;
+        htalloc  hta;
         uint32_t prevhtunits;
         uint32_t nexthtunits;
         uint32_t dunits;
         uint32_t prevbo;
 
         htlayout(TrompEquihash *eq, uint32_t r) : hta(eq->hta), prevhtunits(0), dunits(0) {
-            uint32_t nexthashbytes = hashsize(r);    // number of bytes occupied by round r hash
-            nexthtunits = hashwords(nexthashbytes);  // number of TREEBITS words taken up by those bytes
-            prevbo = 0;                              // byte offset for accessing hash form previous round
-            if (r) {                                 // similar measure for previous round
+            uint32_t nexthashbytes = hashsize(r);               // number of bytes occupied by round r hash
+            nexthtunits            = hashwords(nexthashbytes);  // number of TREEBITS words taken up by those bytes
+            prevbo                 = 0;                         // byte offset for accessing hash form previous round
+            if (r) {                                            // similar measure for previous round
                 uint32_t prevhashbytes = hashsize(r - 1);
-                prevhtunits = hashwords(prevhashbytes);
-                prevbo = prevhtunits * sizeof(htunit) - prevhashbytes;  // 0-1 or 0-3
-                dunits = prevhtunits - nexthtunits;                     // number of words by which hash shrinks
+                prevhtunits            = hashwords(prevhashbytes);
+                prevbo                 = prevhtunits * sizeof(htunit) - prevhashbytes;  // 0-1 or 0-3
+                dunits                 = prevhtunits - nexthtunits;                     // number of words by which hash shrinks
             }
         }
 
@@ -441,7 +441,6 @@ struct TrompEquihash {
     // by linking together slots that have identical rest bits
     // (which is in essense a 2nd stage bucket sort)
     struct collisiondata {
-
 // the bitmap is an early experiment in a bitmap encoding
 // that works only for at most 64 slots
 // it might as well be obsoleted as it performs worse even in that case
@@ -455,11 +454,11 @@ struct TrompEquihash {
         // slots in each list are found through nextxhashslot[]
         // since 0 is already a valid slot number, use ~0 as nil value
 
-        using xslot = typename std::conditional<RESTBITS <= 6, uint8_t, uint16_t>::type;
+        using xslot             = typename std::conditional<RESTBITS <= 6, uint8_t, uint16_t>::type;
         static const xslot xnil = ~0;
-        xslot xhashslots[NRESTS];
-        xslot nextxhashslot[NSLOTS];
-        xslot nextslot;
+        xslot              xhashslots[NRESTS];
+        xslot              nextxhashslot[NSLOTS];
+        xslot              nextslot;
 #endif
         uint32_t s0;
 
@@ -478,9 +477,9 @@ struct TrompEquihash {
             xhashmap[xh] |= (u64)1 << s1;
             s0 = -1;
 #else
-            nextslot = xhashslots[xh];
+            nextslot          = xhashslots[xh];
             nextxhashslot[s1] = nextslot;
-            xhashslots[xh] = s1;
+            xhashslots[xh]    = s1;
 #endif
         }
 
@@ -510,15 +509,15 @@ struct TrompEquihash {
     static const uint32_t NBLOCKS = (NHASHES + HASHESPERBLOCK - 1) / HASHESPERBLOCK;
 
     void digitZero() {
-        htlayout htl(this, 0);
+        htlayout       htl(this, 0);
         const uint32_t hashbytes = hashsize(0);
-        uint8_t hashes[NBLAKES * 64];
-        blake2b_state state0 = blake_ctx;  // local copy on stack can be copied faster
+        uint8_t        hashes[NBLAKES * 64];
+        blake2b_state  state0 = blake_ctx;  // local copy on stack can be copied faster
         for (uint32_t block = 0; block < NBLOCKS; block++) {
             static_assert(NBLAKES == 1, "Support for other NBLAKES values is not implemented");
 
             blake2b_state state = state0;  // make another copy since blake2b_final modifies it
-            uint32_t leb = htole32(block);
+            uint32_t      leb   = htole32(block);
             blake2b_update(&state, (uint8_t *)&leb, sizeof(uint32_t));
             blake2b_final(&state, hashes, HASHOUT);
 
@@ -555,24 +554,24 @@ struct TrompEquihash {
     }
 
     void digitodd(const uint32_t r) {
-        htlayout htl(this, r);
+        htlayout      htl(this, r);
         collisiondata cd;
         // threads process buckets in round-robin fashion
         for (uint32_t bucketid = 0; bucketid < NBUCKETS; bucketid++) {
             cd.clear();                                // could have made this the constructor, and declare here
-            slot0 *buck = htl.hta.heap0[bucketid];     // point to first slot of this bucket
+            slot0 *  buck  = htl.hta.heap0[bucketid];  // point to first slot of this bucket
             uint32_t bsize = getnslots0(bucketid);     // grab and reset bucket size
             for (uint32_t s1 = 0; s1 < bsize; s1++) {  // loop over slots
                 const htunit *slot1 = buck[s1];
                 cd.addslot(s1, htl.getxhash0(slot1));  // identify list of previous colliding slots
                 for (; cd.nextcollision();) {
-                    const uint32_t s0 = cd.slot();
-                    const htunit *slot0 = buck[s0];
+                    const uint32_t s0    = cd.slot();
+                    const htunit * slot0 = buck[s0];
                     if (htl.equal(slot0, slot1)) {  // expect difference in last 32 bits unless duped
                         continue;
                     }
 
-                    uint32_t xorbucketid;  // determine bucket for s0 xor s1
+                    uint32_t       xorbucketid;  // determine bucket for s0 xor s1
                     const uint8_t *bytes0 = slot0->bytes, *bytes1 = slot1->bytes;
 
                     if CONSTEXPR (WN == 200 && BUCKBITS == 12 && RESTBITS == 8) {
@@ -609,12 +608,12 @@ struct TrompEquihash {
     }
 
     void digiteven(const uint32_t r) {
-        htlayout htl(this, r);
+        htlayout      htl(this, r);
         collisiondata cd;
 
         for (uint32_t bucketid = 0; bucketid < NBUCKETS; bucketid++) {
             cd.clear();
-            slot1 *buck = htl.hta.heap1[bucketid];
+            slot1 *  buck  = htl.hta.heap1[bucketid];
             uint32_t bsize = getnslots1(bucketid);
 
             for (uint32_t s1 = 0; s1 < bsize; s1++) {
@@ -622,14 +621,14 @@ struct TrompEquihash {
                 cd.addslot(s1, htl.getxhash1(slot1));
 
                 for (; cd.nextcollision();) {
-                    const uint32_t s0 = cd.slot();
-                    const htunit *slot0 = buck[s0];
+                    const uint32_t s0    = cd.slot();
+                    const htunit * slot0 = buck[s0];
 
                     if (htl.equal(slot0, slot1)) {
                         continue;
                     }
 
-                    uint32_t xorbucketid;
+                    uint32_t       xorbucketid;
                     const uint8_t *bytes0 = slot0->bytes, *bytes1 = slot1->bytes;
 
                     if CONSTEXPR (WN == 200 && BUCKBITS == 12 && RESTBITS == 8) {
@@ -670,21 +669,21 @@ struct TrompEquihash {
     // final round looks simpler
     void digitK() {
         collisiondata cd;
-        htlayout htl(this, WK);
-        uint32_t nc = 0;
+        htlayout      htl(this, WK);
+        uint32_t      nc = 0;
 
         for (uint32_t bucketid = 0; bucketid < NBUCKETS; bucketid++) {
             cd.clear();
-            slot0 *buck = htl.hta.heap0[bucketid];  // assume WK odd
-            uint32_t bsize = getnslots0(bucketid);  // assume WK odd
+            slot0 *  buck  = htl.hta.heap0[bucketid];  // assume WK odd
+            uint32_t bsize = getnslots0(bucketid);     // assume WK odd
 
             for (uint32_t s1 = 0; s1 < bsize; s1++) {
                 const htunit *slot1 = buck[s1];
                 cd.addslot(s1, htl.getxhash0(slot1));  // assume WK odd
 
                 for (; cd.nextcollision();) {
-                    const uint32_t s0 = cd.slot();
-                    const htunit *slot0 = buck[s0];
+                    const uint32_t s0    = cd.slot();
+                    const htunit * slot0 = buck[s0];
 
                     // there is only 1 word of hash left
                     if (htl.equal(slot0, slot1) && slot0[1].tag.prob_disjoint(slot1[1].tag)) {
@@ -736,7 +735,7 @@ struct TrompEquihash {
 
     static void hashNonce(blake2b_state *S, uint32_t nonce) {
         uint32_t expandedNonce[8] = {0};
-        expandedNonce[0] = htole32(nonce);
+        expandedNonce[0]          = htole32(nonce);
 
         blake2b_update(S, (uint8_t *)&expandedNonce, sizeof(expandedNonce));
     }
@@ -745,11 +744,11 @@ struct TrompEquihash {
         blake2b_param P;
         memset(&P, 0, sizeof(blake2b_param));
 
-        P.fanout = 1;
-        P.depth = 1;
+        P.fanout        = 1;
+        P.depth         = 1;
         P.digest_length = (512 / WN) * WN / 8;
         memcpy(P.personal, "ZcashPoW", 8);
-        *(uint32_t *)(P.personal + 8) = htole32(WN);
+        *(uint32_t *)(P.personal + 8)  = htole32(WN);
         *(uint32_t *)(P.personal + 12) = htole32(WK);
 
         blake2b_init_param(ctx, &P);
@@ -762,7 +761,7 @@ struct TrompEquihash {
 
     static void genhash(const blake2b_state *ctx, uint32_t idx, uint8_t *hash) {
         blake2b_state state = *ctx;
-        uint32_t leb = htole32(idx / HASHESPERBLAKE);
+        uint32_t      leb   = htole32(idx / HASHESPERBLAKE);
         blake2b_update(&state, (uint8_t *)&leb, sizeof(uint32_t));
         uint8_t blakehash[HASHOUT];
         blake2b_final(&state, blakehash, HASHOUT);
@@ -780,7 +779,7 @@ struct TrompEquihash {
 
         // The acc_bits least-significant bits of acc_value represent a bit sequence
         // in big-endian order.
-        size_t acc_bits = 0;
+        size_t   acc_bits  = 0;
         uint32_t acc_value = 0;
 
         size_t j = 0;
@@ -809,9 +808,9 @@ struct TrompEquihash {
     static std::vector<unsigned char> GetMinimalFromIndices(const uint32_t *indices, uint32_t indices_len) {
         size_t cBitLen{WN / (WK + 1)};
         assert(((cBitLen + 1) + 7) / 8 <= sizeof(uint32_t));
-        size_t lenIndices{indices_len * sizeof(uint32_t)};
-        size_t minLen{(cBitLen + 1) * lenIndices / (8 * sizeof(uint32_t))};
-        size_t bytePad{sizeof(uint32_t) - ((cBitLen + 1) + 7) / 8};
+        size_t                     lenIndices{indices_len * sizeof(uint32_t)};
+        size_t                     minLen{(cBitLen + 1) * lenIndices / (8 * sizeof(uint32_t))};
+        size_t                     bytePad{sizeof(uint32_t) - ((cBitLen + 1) + 7) / 8};
         std::vector<unsigned char> array(lenIndices);
 
         for (uint32_t i = 0; i < indices_len; i++) {
@@ -831,7 +830,7 @@ struct TrompEquihash {
         uint32_t *indices1 = indices + (1 << (r - 1));
         if (*indices >= *indices1) return verify_code::POW_OUT_OF_ORDER;
 
-        uint8_t hash0[WN / 8], hash1[WN / 8];
+        uint8_t     hash0[WN / 8], hash1[WN / 8];
         verify_code vrf0 = verifyrec(ctx, indices, hash0, r - 1);
         if (vrf0 != verify_code::POW_OK) return vrf0;
 
@@ -878,7 +877,7 @@ int solve(const unsigned char *input, uint32_t input_len, int64_t nonce, const v
     eq.worker();
 
     uint32_t maxsols = std::min(TrompEquihash<WN, WK>::MAXSOLS, eq.nsols);
-    uint8_t csol[TrompEquihash<WN, WK>::COMPRESSED_SOL_SIZE];
+    uint8_t  csol[TrompEquihash<WN, WK>::COMPRESSED_SOL_SIZE];
 
     for (uint32_t nsols = 0; nsols < maxsols; nsols++) {
         compress_solution<WN, WK>(eq.sols[nsols], csol);

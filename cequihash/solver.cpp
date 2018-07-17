@@ -22,11 +22,11 @@ template void compress_solution<144, 5>(const uint32_t *sol, uint8_t *csol);
 template void compress_solution<200, 9>(const uint32_t *sol, uint8_t *csol);
 
 struct solver_record {
-    uint32_t N;
-    uint32_t solution_size;
-    uint32_t proof_size;
-    verify_ptr vfn;
-    solve_ptr sfn;
+    uint32_t     N;
+    uint32_t     solution_size;
+    uint32_t     proof_size;
+    verify_ptr   vfn;
+    solve_ptr    sfn;
     compress_ptr cfn;
 
     solver_record(uint32_t n, uint32_t size, uint32_t psize, verify_ptr vptr, solve_ptr sptr, compress_ptr cptr)
@@ -66,7 +66,7 @@ static void expand_array(const unsigned char *in, size_t in_len, unsigned char *
 
     // The acc_bits least-significant bits of acc_value represent a bit sequence
     // in big-endian order.
-    size_t acc_bits = 0;
+    size_t   acc_bits  = 0;
     uint32_t acc_value = 0;
 
     size_t j = 0;
@@ -123,7 +123,7 @@ int EquihashValidate(int n, int k, const void *input, int len, int64_t nonce, co
     size_t collision_bit_length = n / (k + 1);
 
     auto indices = to_indices((uint8_t *)soln, solver->solution_size, collision_bit_length);
-    auto result = solver->vfn(indices.data(), indices.size(), (uint8_t *)input, len, nonce);
+    auto result  = solver->vfn(indices.data(), indices.size(), (uint8_t *)input, len, nonce);
     return static_cast<std::underlying_type<verify_code>::type>(result);
 }
 
@@ -138,12 +138,12 @@ int EquihashSolve(int n, int k, const void *input, int len, int64_t nonce, const
 
 void *IndicesFromSolution(int n, int k, void *soln) {
     size_t collision_bit_length = n / (k + 1);
-    size_t solution_width = (1 << k) * (collision_bit_length + 1) / 8;
+    size_t solution_width       = (1 << k) * (collision_bit_length + 1) / 8;
 
     auto indices = to_indices((uint8_t *)soln, solution_width, collision_bit_length);
 
     uint32_t lenIndices = indices.size() * sizeof(uint32_t);
-    void *result = malloc(lenIndices);
+    void *   result     = malloc(lenIndices);
     memcpy(result, indices.data(), lenIndices);
     return result;
 }
