@@ -204,11 +204,11 @@ struct TrompEquihash {
         // retrieve second slot index
         uint32_t slotid1() const {
             if CONSTEXPR (CANTOR) {
-                    uint32_t k, q, sqr = 8 * (bid_s0_s1 & CANTORMASK) + 1;
-                    // this k=sqrt(sqr) computing loop averages 3.4 iterations out of
-                    // maximum 9
-                    for (k = CANTORMAXSQRT; (q = sqr / k) < k; k = (k + q) / 2) { }
-                    return (k - 1) / 2;
+                uint32_t k, q, sqr = 8 * (bid_s0_s1 & CANTORMASK) + 1;
+                // this k=sqrt(sqr) computing loop averages 3.4 iterations out of
+                // maximum 9
+                for (k = CANTORMAXSQRT; (q = sqr / k) < k; k = (k + q) / 2) { }
+                return (k - 1) / 2;
             }
             else {
                 return bid_s0_s1 & SLOTMASK;
@@ -218,10 +218,10 @@ struct TrompEquihash {
         // returns false for trees sharing a child subtree
         bool prob_disjoint(const tree other) const {
             if CONSTEXPR (CANTOR) {
-                    if (bucketid() != other.bucketid()) return true;
-                    uint32_t s1 = slotid1(), s0 = slotid0(s1);
-                    uint32_t os1 = other.slotid1(), os0 = other.slotid0(os1);
-                    return s1 != os1 && s0 != os0;
+                if (bucketid() != other.bucketid()) return true;
+                uint32_t s1 = slotid1(), s0 = slotid0(s1);
+                uint32_t os1 = other.slotid1(), os0 = other.slotid0(os1);
+                return s1 != os1 && s0 != os0;
             }
             else {
                 tree xort(bid_s0_s1 ^ other.bid_s0_s1);
@@ -633,17 +633,17 @@ struct TrompEquihash {
                     const uint8_t *bytes0 = slot0->bytes, *bytes1 = slot1->bytes;
 
                     if CONSTEXPR (WN == 200 && BUCKBITS == 12 && RESTBITS == 8) {
-                            xorbucketid = ((uint32_t)(bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) << 4) | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]) >> 4;
+                        xorbucketid = ((uint32_t)(bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) << 4) | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]) >> 4;
                     }
                     if CONSTEXPR (WN == 200 && BUCKBITS == 10 && RESTBITS == 10) {
-                            xorbucketid = ((uint32_t)(bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]) << 2) | (bytes0[htl.prevbo + 3] ^ bytes1[htl.prevbo + 3]) >> 6;
+                        xorbucketid = ((uint32_t)(bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]) << 2) | (bytes0[htl.prevbo + 3] ^ bytes1[htl.prevbo + 3]) >> 6;
                     }
                     if CONSTEXPR (WN % 24 == 0 && BUCKBITS == 20 && RESTBITS == 4) {
-                            xorbucketid = ((((uint32_t)(bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) << 8) | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2])) << 4) |
+                        xorbucketid = ((((uint32_t)(bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) << 8) | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2])) << 4) |
                                           (bytes0[htl.prevbo + 3] ^ bytes1[htl.prevbo + 3]) >> 4;
                     }
                     if CONSTEXPR (WN == 96 && BUCKBITS == 12 && RESTBITS == 4) {
-                            xorbucketid = ((uint32_t)(bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) << 4) | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]) >> 4;
+                        xorbucketid = ((uint32_t)(bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) << 4) | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]) >> 4;
                     }
                     if CONSTEXPR (WN == 48 && BUCKBITS == 4 && RESTBITS == 4) {
                         xorbucketid = (uint32_t)(bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) >> 4;
