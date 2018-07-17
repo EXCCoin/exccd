@@ -5,7 +5,7 @@
 package cequihash
 
 /*
-#cgo CFLAGS: -O3 -march=native -std=c99
+#cgo CXXFLAGS: -O3 -march=native -std=c++17 -Wall -Wno-strict-aliasing -Wno-shift-count-overflow -Werror
 #include "cequihash.h"
 */
 import "C"
@@ -66,7 +66,7 @@ func SolveEquihash(n, k int, input []byte, nonce int64, callback EquihashCallbac
 	callbackptr := cptr.Save(&callback)
 	defer cptr.Unref(callbackptr)
 
-	C.EquihashSolve(unsafe.Pointer(&input[0]), C.int(len(input)), C.int64_t(nonce), callbackptr, C.int(n), C.int(k))
+	C.EquihashSolve(C.int(n), C.int(k), unsafe.Pointer(&input[0]), C.int(len(input)), C.int64_t(nonce), callbackptr)
 }
 
 func ValidateEquihash(n, k int, input []byte, nonce int64, solution []byte) bool {
@@ -77,7 +77,7 @@ func ValidateEquihash(n, k int, input []byte, nonce int64, solution []byte) bool
 	}
 
 	return C.EquihashValidate(C.int(n), C.int(k), unsafe.Pointer(&input[0]), C.int(len(input)), C.int64_t(nonce),
-		unsafe.Pointer(&solution[0])) != 0
+		unsafe.Pointer(&solution[0])) == 0
 }
 
 func EquihashSolutionSize(n, k int) int {

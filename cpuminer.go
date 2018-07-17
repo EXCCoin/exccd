@@ -196,59 +196,63 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 }
 
 type solutionValidatorData struct {
-	n       int
-	k       int
-	solved  *bool
-	exiting *bool
-	header  *wire.BlockHeader
-	quit    chan struct{}
+	n        int
+	k        int
+	solved   *bool
+	exiting  *bool
+	msgBlock *wire.MsgBlock
+	miner    *CPUMiner
+	quit     chan struct{}
 }
 
-func (data solutionValidatorData) Validate(solution unsafe.Pointer) (stopMining int) {
+// returns 1 when mining should be stopped for any reason
+func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
+	bestBlock, _ := data.miner.server.blockManager.chainState.Best()
+	if data.msgBlock.Header.PrevBlock != *bestBlock {
+		*data.exiting = true
+		return 1
+	}
+
 	if uintptr(solution) == 0 {
 		if *data.exiting {
 			minrLog.Infof("Shutdown is pending. Bailing out")
-			stopMining = 1
-			return
+			return 1
 		}
 		select {
 		case <-data.quit:
 			minrLog.Infof("Miner is stopping")
 			*data.exiting = true
-			stopMining = 1
-			return
+			return 1
 		default:
 		}
 
-		return
+		return 0
 	}
 
-	minrLog.Debugf("Validating found solution")
 	bytes := equihash.ExtractSolution(data.n, data.k, solution)
+	copy(data.msgBlock.Header.EquihashSolution[:], bytes)
+	hash := data.msgBlock.Header.BlockHash()
 
-	copy(data.header.EquihashSolution[:], bytes)
-
-	hash := data.header.BlockHash()
-
-	if blockchain.HashToBig(&hash).Cmp(blockchain.CompactToBig(data.header.Bits)) <= 0 {
+	if blockchain.HashToBig(&hash).Cmp(blockchain.CompactToBig(data.msgBlock.Header.Bits)) <= 0 {
+		data.miner.submitBlock(exccutil.NewBlock(data.msgBlock))
+		data.miner.minedOnParents[data.msgBlock.Header.PrevBlock]++
 		*data.solved = true
-		stopMining = 1
-		return
+		return 1
 	}
 
-	return
+	return 0
 }
 
-// solveBlock attempts to find some combination of a nonce, extra nonce, and
+// solveAndSubmitBlock attempts to find some combination of a nonce, extra nonce, and
 // current timestamp which makes the passed block hash to a value less than the
-// target difficulty.  The timestamp is updated periodically and the passed
-// block is modified with all tweaks during this process.  This means that
-// when the function returns true, the block is ready for submission.
+// target difficulty. After that, new block is submitted. The timestamp is
+// updated periodically and the passed block is modified with all tweaks
+// during this process. This means that when the function returns true, the block is submitted.
 //
 // This function will return early with false when conditions that trigger a
 // stale block such as a new block showing up or periodically when there are
 // new transactions and enough time has elapsed without finding a solution.
-func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit chan struct{}) bool {
+func (m *CPUMiner) solveAndSubmitBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit chan struct{}) bool {
 	// Choose a random extra nonce offset for this block template and
 	// worker.
 	enOffset, err := wire.RandomUint64()
@@ -268,8 +272,8 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 
 	solved := false
 	exiting := false
-	validator := solutionValidatorData{chaincfg.MainNetParams.N, chaincfg.MainNetParams.K,
-		&solved, &exiting, header, quit}
+	validatorData := solutionValidatorData{m.server.chainParams.N, m.server.chainParams.K,
+		&solved, &exiting, msgBlock, m, quit}
 
 	// Note that the entire extra nonce range is iterated and the offset is
 	// added relying on the fact that overflow will wrap around 0 as
@@ -330,9 +334,7 @@ func (m *CPUMiner) solveBlock(msgBlock *wire.MsgBlock, ticker *time.Ticker, quit
 			}
 
 			header.Nonce = i
-
-			equihash.SolveEquihash(m.server.chainParams.N, m.server.chainParams.K, headerBytes, int64(i), validator)
-
+			equihash.SolveEquihash(validatorData.n, validatorData.k, headerBytes, int64(i), validatorData)
 			hashesCompleted++
 		}
 	}
@@ -419,15 +421,10 @@ out:
 			}
 		}
 
-		// Attempt to solve the block.  The function will exit early
-		// with false when conditions that trigger a stale block, so
-		// a new block template can be generated.  When the return is
-		// true a solution was found, so submit the solved block.
-		if m.solveBlock(template.Block, ticker, quit) {
-			block := exccutil.NewBlock(template.Block)
-			m.submitBlock(block)
-			m.minedOnParents[template.Block.Header.PrevBlock]++
-		}
+		// Attempt to solve the block and submit solution.
+		// The function will exit early with false when conditions
+		// that trigger a stale block, so a new block template can be generated.
+		m.solveAndSubmitBlock(template.Block, ticker, quit)
 	}
 
 	m.workerWg.Done()
@@ -640,7 +637,7 @@ func (m *CPUMiner) GenerateNBlocks(n uint32) ([]*chainhash.Hash, error) {
 	if m.started || m.discreteMining {
 		m.Unlock()
 		return nil, errors.New("server is already CPU mining. Please call " +
-			"`setgenerate 0` before calling discrete `generate` commands.")
+			"`setgenerate 0` before calling discrete `generate` commands")
 	}
 
 	m.started = true
@@ -700,11 +697,10 @@ func (m *CPUMiner) GenerateNBlocks(n uint32) ([]*chainhash.Hash, error) {
 		// with false when conditions that trigger a stale block, so
 		// a new block template can be generated.  When the return is
 		// true a solution was found, so submit the solved block.
-		if m.solveBlock(template.Block, ticker, nil) {
-			block := exccutil.NewBlock(template.Block)
-			m.submitBlock(block)
-			blockHashes[i] = block.Hash()
+		if m.solveAndSubmitBlock(template.Block, ticker, nil) {
+			blockHashes[i] = exccutil.NewBlock(template.Block).Hash()
 			i++
+
 			if i == n {
 				minrLog.Tracef("Generated %d blocks", i)
 				m.Lock()

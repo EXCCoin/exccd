@@ -15,6 +15,7 @@ import (
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/wire"
+	"runtime"
 )
 
 // These variables are the chain proof-of-work limit parameters for each default
@@ -25,15 +26,12 @@ var (
 	bigOne = big.NewInt(1)
 
 	// mainPowLimit is the highest proof of work value a ExchangeCoin block can
-	// have for the main network.  It is the value 2^555 - 1.
-	// TODO: restore production parameters
-	// TODO: Restore original pow limit for mainnet: 2^224 - 1.
-	mainPowLimit        = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 511), bigOne)
-	mainNetPowLimitBits = bigToCompact(mainPowLimit)
+	// have for the main network.  It is the value 2^254 - 1.
+	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 254), bigOne)
 
 	// testNetPowLimit is the highest proof of work value a ExchangeCoin block
-	// can have for the test network.  It is the value 2^232 - 1.
-	testNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 232), bigOne)
+	// can have for the test network.  It is the value 2^256 - 1.
+	testNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 256), bigOne)
 
 	// defaultTargetTimePerBlock is the ideal ExchangeCoin block time.
 	// It is the value of 2.5 minute.
@@ -47,16 +45,9 @@ var (
 	simTicketMaturity       = uint16(16)
 	simStakeVersionInterval = int64(8 * 2 * 7)
 
-	// Fastest settings, but not all tests pass
-	// simTicketPoolSize = uint16(16)
-	// simCoinbaseMaturity = uint16(4)
-	// simTicketMaturity = uint16(4)
-	// simStakeVersionInterval = int64(6 * 2 * 7)
-
 	// simNetPowLimit is the highest proof of work value a ExchangeCoin block
-	// can have for the simulation test network.  It is the value 2^255 - 1.
-	simNetPowLimit     = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
-	simNetPowLimitBits = bigToCompact(simNetPowLimit)
+	// can have for the simulation test network.  It is the value 2^256 - 1.
+	simNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 256), bigOne)
 )
 
 // SigHashOptimization is an optimization for verification of transactions that
@@ -79,7 +70,13 @@ var CheckForDuplicateHashes = false
 
 // CPUMinerThreads is the default number of threads to utilize with the
 // CPUMiner when mining.
-var CPUMinerThreads = 1
+var CPUMinerThreads = func() int {
+	if runtime.NumCPU() == 1 {
+		return 1
+	} else {
+		return runtime.NumCPU() / 2
+	}
+}()
 
 // Checkpoint identifies a known good point in the block chain.  Using
 // checkpoints allows a few optimizations for old blocks during initial download
@@ -476,17 +473,14 @@ var MainNetParams = Params{
 		{"excc-seed.pragmaticcoders.com", true},
 		{"seed.exccited.com", true},
 	},
-	// TODO: restore production parameters
-	// N:           200,
-	// K:           9,
-	N: 96,
-	K: 5,
+	N: wire.MainEquihashN,
+	K: wire.MainEquihashK,
 
 	// Chain parameters
 	GenesisBlock:             &genesisBlock,
 	GenesisHash:              &genesisHash,
 	PowLimit:                 mainPowLimit,
-	PowLimitBits:             mainNetPowLimitBits,
+	PowLimitBits:             bigToCompact(mainPowLimit),
 	ReduceMinDifficulty:      false,
 	MinDiffReductionTime:     0,
 	GenerateSupported:        false,
@@ -501,8 +495,8 @@ var MainNetParams = Params{
 
 	// Subsidy parameters.
 	BaseSubsidy:              38 * 1e8,
-	MulSubsidy:               10000,
-	DivSubsidy:               10309,
+	MulSubsidy:               100000,
+	DivSubsidy:               103183,
 	SubsidyReductionInterval: 16128, // 4 weeks
 	WorkRewardProportion:     7,
 	StakeRewardProportion:    3,
@@ -568,7 +562,7 @@ var MainNetParams = Params{
 	StakeDiffAlpha:          1, // Minimal
 	StakeDiffWindowSize:     144,
 	StakeDiffWindows:        20,
-	StakeVersionInterval:    144 * 2 * 7, // ~1 week
+	StakeVersionInterval:    144 * 2 * 7, // ~3.5 day
 	MaxFreshStakePerBlock:   20,          // 4*TicketsPerBlock
 	StakeEnabledHeight:      256 + 256,   // CoinbaseMaturity + TicketMaturity
 	StakeValidationHeight:   768,         // ~32 hours
@@ -588,14 +582,14 @@ var TestNet2Params = Params{
 	Net:         wire.TestNet2,
 	DefaultPort: "11999",
 	DNSSeeds:    []DNSSeed{},
-	N:           200,
-	K:           9,
+	N:           96,
+	K:           5,
 
 	// Chain parameters
 	GenesisBlock:             &testNet2GenesisBlock,
 	GenesisHash:              &testNet2GenesisHash,
 	PowLimit:                 testNetPowLimit,
-	PowLimitBits:             0x1e00ffff,
+	PowLimitBits:             bigToCompact(testNetPowLimit),
 	ReduceMinDifficulty:      false,
 	MinDiffReductionTime:     0, // Does not apply since ReduceMinDifficulty false
 	GenerateSupported:        true,
@@ -696,14 +690,14 @@ var SimNetParams = Params{
 	Net:         wire.SimNet,
 	DefaultPort: "11998",
 	DNSSeeds:    []DNSSeed{}, // NOTE: There must NOT be any seeds.
-	N:           96,
+	N:           48,
 	K:           5,
 
 	// Chain parameters
 	GenesisBlock:             &simNetGenesisBlock,
 	GenesisHash:              &simNetGenesisHash,
 	PowLimit:                 simNetPowLimit,
-	PowLimitBits:             simNetPowLimitBits,
+	PowLimitBits:             bigToCompact(simNetPowLimit),
 	ReduceMinDifficulty:      false,
 	MinDiffReductionTime:     0, // Does not apply since ReduceMinDifficulty false
 	GenerateSupported:        true,

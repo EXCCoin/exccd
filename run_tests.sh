@@ -79,7 +79,7 @@ mkdir -p ~/.cache
 
 if [ -f ~/.cache/$DOCKER_IMAGE_TAG.tar ]; then
 	# load via cache
-	docker load -i ~/.cache/$DOCKER_IMAGE_TAG.tar
+	docker load -i ~/.cache/$DOCKER_IMAGE_TAG.tar || docker import $_ 
 	if [ $? != 0 ]; then
 		echo 'docker load failed'
 		exit 1

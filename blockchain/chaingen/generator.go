@@ -1272,17 +1272,14 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 	}
 
 	solutionBytes := cequihash.ExtractSolution(data.params.N, data.params.K, solution)
-
 	copy(data.header.EquihashSolution[:], solutionBytes)
-
 	hash := data.header.BlockHash()
 
 	if hashToBig(&hash).Cmp(compactToBig(data.header.Bits)) <= 0 {
 		*data.solved = true
 		return 1
-	} else {
-		return 0
 	}
+	return 0
 }
 
 const (
