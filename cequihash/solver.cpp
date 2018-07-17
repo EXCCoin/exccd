@@ -1,23 +1,25 @@
-#include <vector>
 #include "solver.h"
+#include <vector>
 #include "cequihash.h"
 
-typedef verify_code (*verify_ptr)(uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
-typedef int (*solve_ptr)(const unsigned char* input, uint32_t input_len, int64_t nonce, const void* userData);
-typedef void (*compress_ptr)(const uint32_t* sol, uint8_t *csol);
+#define ARRAY_LEN(arr) (sizeof(arr) / sizeof(arr[0]))
 
-template verify_code verify<48, 5> (uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
-template verify_code verify<96, 5> (uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
-template verify_code verify<144, 5>(uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
-template verify_code verify<200, 9>(uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
-template int solve<48, 5> (const unsigned char* input, uint32_t input_len, int64_t nonce, const void* userData);
-template int solve<96, 5> (const unsigned char* input, uint32_t input_len, int64_t nonce, const void* userData);
-template int solve<144, 5>(const unsigned char* input, uint32_t input_len, int64_t nonce, const void* userData);
-template int solve<200, 9>(const unsigned char* input, uint32_t input_len, int64_t nonce, const void* userData);
-template void compress_solution<48, 5> (const uint32_t* sol, uint8_t *csol);
-template void compress_solution<96, 5> (const uint32_t* sol, uint8_t *csol);
-template void compress_solution<144, 5>(const uint32_t* sol, uint8_t *csol);
-template void compress_solution<200, 9>(const uint32_t* sol, uint8_t *csol);
+typedef verify_code (*verify_ptr)(uint32_t *indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
+typedef int (*solve_ptr)(const unsigned char *input, uint32_t input_len, int64_t nonce, const void *userData);
+typedef void (*compress_ptr)(const uint32_t *sol, uint8_t *csol);
+
+template verify_code verify<48, 5>(uint32_t *indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
+template verify_code verify<96, 5>(uint32_t *indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
+template verify_code verify<144, 5>(uint32_t *indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
+template verify_code verify<200, 9>(uint32_t *indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce);
+template int solve<48, 5>(const unsigned char *input, uint32_t input_len, int64_t nonce, const void *userData);
+template int solve<96, 5>(const unsigned char *input, uint32_t input_len, int64_t nonce, const void *userData);
+template int solve<144, 5>(const unsigned char *input, uint32_t input_len, int64_t nonce, const void *userData);
+template int solve<200, 9>(const unsigned char *input, uint32_t input_len, int64_t nonce, const void *userData);
+template void compress_solution<48, 5>(const uint32_t *sol, uint8_t *csol);
+template void compress_solution<96, 5>(const uint32_t *sol, uint8_t *csol);
+template void compress_solution<144, 5>(const uint32_t *sol, uint8_t *csol);
+template void compress_solution<200, 9>(const uint32_t *sol, uint8_t *csol);
 
 struct solver_record {
     uint32_t N;
@@ -28,19 +30,19 @@ struct solver_record {
     compress_ptr cfn;
 
     solver_record(uint32_t n, uint32_t size, uint32_t psize, verify_ptr vptr, solve_ptr sptr, compress_ptr cptr)
-            :N(n), solution_size(size), proof_size(psize), vfn(vptr), sfn(sptr), cfn(cptr) {}
+        : N(n), solution_size(size), proof_size(psize), vfn(vptr), sfn(sptr), cfn(cptr) {}
 };
 
 solver_record solvers[] = {
-        { 48, equihash_solution_size(48, 5) , 1 << 5, verify<48,5> , solve<48,5> , compress_solution<48,5> },
-        { 96, equihash_solution_size(96, 5) , 1 << 5, verify<96,5> , solve<96,5> , compress_solution<96,5> },
-        {144, equihash_solution_size(144, 5), 1 << 5, verify<144,5>, solve<144,5>, compress_solution<144,5>},
-        {200, equihash_solution_size(200, 9), 1 << 9, verify<200,9>, solve<200,9>, compress_solution<200,9>},
+    {48, equihash_solution_size(48, 5), 1 << 5, verify<48, 5>, solve<48, 5>, compress_solution<48, 5>},
+    {96, equihash_solution_size(96, 5), 1 << 5, verify<96, 5>, solve<96, 5>, compress_solution<96, 5>},
+    {144, equihash_solution_size(144, 5), 1 << 5, verify<144, 5>, solve<144, 5>, compress_solution<144, 5>},
+    {200, equihash_solution_size(200, 9), 1 << 9, verify<200, 9>, solve<200, 9>, compress_solution<200, 9>},
 };
 
-static solver_record* find_solver(uint32_t n) {
-    for(uint32_t i = 0; i < ARRAY_LEN(solvers); i++) {
-        if(solvers[i].N == (uint32_t)n) {
+static solver_record *find_solver(uint32_t n) {
+    for (uint32_t i = 0; i < ARRAY_LEN(solvers); i++) {
+        if (solvers[i].N == (uint32_t)n) {
             return &solvers[i];
         }
     }
@@ -53,16 +55,14 @@ static uint32_t array_to_index(const unsigned char *array) {
     return be32toh(bei);
 }
 
-static void expand_array(const unsigned char *in, size_t in_len,
-                         unsigned char *out, size_t out_len,
-                         size_t bit_len, size_t byte_pad) {
+static void expand_array(const unsigned char *in, size_t in_len, unsigned char *out, size_t out_len, size_t bit_len, size_t byte_pad) {
     assert(bit_len >= 8);
-    assert(8*sizeof(uint32_t) >= 7+bit_len);
+    assert(8 * sizeof(uint32_t) >= 7 + bit_len);
 
-    size_t out_width { (bit_len+7)/8 + byte_pad };
-    assert(out_len == 8*out_width*in_len/bit_len);
+    size_t out_width{(bit_len + 7) / 8 + byte_pad};
+    assert(out_len == 8 * out_width * in_len / bit_len);
 
-    uint32_t bit_len_mask { ((uint32_t)1 << bit_len) - 1 };
+    uint32_t bit_len_mask{((uint32_t)1 << bit_len) - 1};
 
     // The acc_bits least-significant bits of acc_value represent a bit sequence
     // in big-endian order.
@@ -79,28 +79,26 @@ static void expand_array(const unsigned char *in, size_t in_len,
         if (acc_bits >= bit_len) {
             acc_bits -= bit_len;
             for (size_t x = 0; x < byte_pad; x++) {
-                out[j+x] = 0;
+                out[j + x] = 0;
             }
             for (size_t x = byte_pad; x < out_width; x++) {
-                out[j+x] = (
-                                   // Big-endian
-                                   acc_value >> (acc_bits+(8*(out_width-x-1)))
-                           ) & (
-                                   // Apply bit_len_mask across byte boundaries
-                                   (bit_len_mask >> (8*(out_width-x-1))) & 0xFF
-                           );
+                out[j + x] = (
+                                 // Big-endian
+                                 acc_value >> (acc_bits + (8 * (out_width - x - 1)))) &
+                             (
+                                 // Apply bit_len_mask across byte boundaries
+                                 (bit_len_mask >> (8 * (out_width - x - 1))) & 0xFF);
             }
             j += out_width;
         }
     }
 }
 
-std::vector<uint32_t> to_indices(const unsigned char *minimal, uint32_t sol_size, size_t cBitLen)
-{
-    assert(((cBitLen+1)+7)/8 <= sizeof(uint32_t));
+std::vector<uint32_t> to_indices(const unsigned char *minimal, uint32_t sol_size, size_t cBitLen) {
+    assert(((cBitLen + 1) + 7) / 8 <= sizeof(uint32_t));
 
-    size_t lenIndices { 8*sizeof(uint32_t) * sol_size/(cBitLen+1) };
-    size_t bytePad { sizeof(uint32_t) - ((cBitLen+1)+7)/8 };
+    size_t lenIndices{8 * sizeof(uint32_t) * sol_size / (cBitLen + 1)};
+    size_t bytePad{sizeof(uint32_t) - ((cBitLen + 1) + 7) / 8};
 
     std::vector<unsigned char> array(lenIndices);
     expand_array(minimal, sol_size, array.data(), lenIndices, cBitLen + 1, bytePad);
@@ -122,10 +120,10 @@ int EquihashValidate(int n, int k, const void *input, int len, int64_t nonce, co
         return static_cast<std::underlying_type<verify_code>::type>(verify_code::POW_UNKNOWN_PARAMS);
     }
 
-    size_t collision_bit_length = n/(k+1);
+    size_t collision_bit_length = n / (k + 1);
 
-    auto indices = to_indices((uint8_t *) soln, solver->solution_size, collision_bit_length);
-    auto result = solver->vfn(indices.data(), indices.size(), (uint8_t*)input, len, nonce);
+    auto indices = to_indices((uint8_t *)soln, solver->solution_size, collision_bit_length);
+    auto result = solver->vfn(indices.data(), indices.size(), (uint8_t *)input, len, nonce);
     return static_cast<std::underlying_type<verify_code>::type>(result);
 }
 
@@ -135,14 +133,14 @@ int EquihashSolve(int n, int k, const void *input, int len, int64_t nonce, const
     }
 
     auto solver = find_solver(n);
-    return (solver) ? solver->sfn((uint8_t*)input, len, nonce, validBlockData) : 0;
+    return (solver) ? solver->sfn((uint8_t *)input, len, nonce, validBlockData) : 0;
 }
 
 void *IndicesFromSolution(int n, int k, void *soln) {
-    size_t collision_bit_length = n/(k+1);
-    size_t solution_width = (1 << k)*(collision_bit_length + 1)/8;
+    size_t collision_bit_length = n / (k + 1);
+    size_t solution_width = (1 << k) * (collision_bit_length + 1) / 8;
 
-    auto indices = to_indices((uint8_t *) soln, solution_width, collision_bit_length);
+    auto indices = to_indices((uint8_t *)soln, solution_width, collision_bit_length);
 
     uint32_t lenIndices = indices.size() * sizeof(uint32_t);
     void *result = malloc(lenIndices);
@@ -161,12 +159,12 @@ void *SolutionFromIndices(int n, int k, const void *indices, uint32_t numIndices
         return nullptr;
     }
 
-    void* result = malloc(solver->solution_size);
+    void *result = malloc(solver->solution_size);
 
     if (!result) {
         return nullptr;
     }
 
-    solver->cfn((const uint32_t*)indices, (uint8_t*)result);
+    solver->cfn((const uint32_t *)indices, (uint8_t *)result);
     return result;
 }

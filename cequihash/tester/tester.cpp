@@ -7,6 +7,8 @@
 #include "vector"
 #include "ctime"
 
+#define ARRAY_LEN(arr)  (sizeof(arr) / sizeof(arr[0]))
+
 inline size_t EquihashSolutionLen(unsigned int N, unsigned int K) {
     return (1 << K) * (N / (K + 1) + 1) / 8;
 }

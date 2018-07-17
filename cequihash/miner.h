@@ -37,14 +37,14 @@
 #ifndef __EQUI_MINER_H
 #define __EQUI_MINER_H
 
-#include <cstdio>
+#include <algorithm>
 #include <cassert>
+#include <cctype>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <type_traits>
-#include <algorithm>
 #include <vector>
-#include <cctype>
 #include "blake2.h"
 #include "portable_endian.h"
 
@@ -53,7 +53,7 @@
 #endif
 
 #if __cplusplus >= 201703L
-#define CONSTEXPR   constexpr
+#define CONSTEXPR constexpr
 #else
 #define CONSTEXPR
 #endif
@@ -68,7 +68,7 @@ enum class verify_code {
     POW_UNKNOWN_PARAMS = 6,
 };
 
-extern "C" int equihashProxy(const void* blockData, void* solution);
+extern "C" int equihashProxy(const void *blockData, void *solution);
 
 // The algorithm proceeds in K+1 rounds, one for each digit
 // All data is stored in two heaps,
@@ -112,37 +112,37 @@ struct TrompEquihash {
     //----------------------------------------------
     // Constants and typedefs
     //----------------------------------------------
-    static constexpr bool CANTOR = (WN == 200 && WK == 9) ? true:false;
+    static constexpr bool CANTOR = (WN == 200 && WK == 9) ? true : false;
     static constexpr uint32_t RESTBITS = (WN == 200 && WK == 9) ? 10 : 4;
 
-    static constexpr uint32_t NDIGITS         = (WK+1);
-    static constexpr uint32_t DIGITBITS       = (WN/(NDIGITS));
-    static constexpr uint32_t PROOFSIZE       = (uint32_t)(1 << WK);
-    static constexpr uint32_t BASE            = (uint32_t)(1 << DIGITBITS);
-    static constexpr uint32_t NHASHES         = (uint32_t)(2 * BASE);
-    static constexpr uint32_t HASHESPERBLAKE  = (uint32_t)(512 / WN);
-    static constexpr uint32_t HASHOUT         = (uint32_t)(HASHESPERBLAKE * WN / 8);
+    static constexpr uint32_t NDIGITS = (WK + 1);
+    static constexpr uint32_t DIGITBITS = (WN / (NDIGITS));
+    static constexpr uint32_t PROOFSIZE = (uint32_t)(1 << WK);
+    static constexpr uint32_t BASE = (uint32_t)(1 << DIGITBITS);
+    static constexpr uint32_t NHASHES = (uint32_t)(2 * BASE);
+    static constexpr uint32_t HASHESPERBLAKE = (uint32_t)(512 / WN);
+    static constexpr uint32_t HASHOUT = (uint32_t)(HASHESPERBLAKE * WN / 8);
     // 2_log of number of buckets
-    static constexpr uint32_t BUCKBITS = (DIGITBITS-RESTBITS);
+    static constexpr uint32_t BUCKBITS = (DIGITBITS - RESTBITS);
     // 2_log of number of slots per bucket
-    static constexpr uint32_t SLOTBITS = (RESTBITS+1+1);
+    static constexpr uint32_t SLOTBITS = (RESTBITS + 1 + 1);
 
-    static constexpr double SAVEMEM = (RESTBITS < 8) ? 1.0f : 9.0f/14.0f;
-    static constexpr uint32_t NBUCKETS  = (1 << BUCKBITS);
-    static constexpr uint32_t BUCKMASK  = (NBUCKETS - 1);
+    static constexpr double SAVEMEM = (RESTBITS < 8) ? 1.0f : 9.0f / 14.0f;
+    static constexpr uint32_t NBUCKETS = (1 << BUCKBITS);
+    static constexpr uint32_t BUCKMASK = (NBUCKETS - 1);
     static constexpr uint32_t SLOTRANGE = (1 << SLOTBITS);
-    static constexpr uint32_t SLOTMASK  = (SLOTRANGE - 1);
-    static constexpr uint32_t NSLOTS    = (SLOTRANGE * SAVEMEM);
-    static constexpr uint32_t NRESTS    = (1 << RESTBITS);
-    static constexpr uint32_t MAXSOLS   = (8);
+    static constexpr uint32_t SLOTMASK = (SLOTRANGE - 1);
+    static constexpr uint32_t NSLOTS = (SLOTRANGE * SAVEMEM);
+    static constexpr uint32_t NRESTS = (1 << RESTBITS);
+    static constexpr uint32_t MAXSOLS = (8);
 
     // tree node identifying its children as two different slots in
     // a bucket on previous layer with matching rest bits (x-tra hash)
-    static constexpr uint32_t CANTORBITS = (CANTOR) ? (2*SLOTBITS-2):0;
-    static constexpr uint32_t CANTORMASK = (CANTOR) ? ((1<<CANTORBITS) - 1):0;
-    static constexpr uint32_t CANTORMAXSQRT = (CANTOR) ? (2 * NSLOTS):0;
-    static constexpr uint32_t NSLOTPAIRS = (CANTOR) ? ((NSLOTS-1) * (NSLOTS+2) / 2):0;
-    static constexpr uint32_t TREEMINBITS = (CANTOR) ? (BUCKBITS + CANTORBITS):(BUCKBITS + 2 * SLOTBITS );
+    static constexpr uint32_t CANTORBITS = (CANTOR) ? (2 * SLOTBITS - 2) : 0;
+    static constexpr uint32_t CANTORMASK = (CANTOR) ? ((1 << CANTORBITS) - 1) : 0;
+    static constexpr uint32_t CANTORMAXSQRT = (CANTOR) ? (2 * NSLOTS) : 0;
+    static constexpr uint32_t NSLOTPAIRS = (CANTOR) ? ((NSLOTS - 1) * (NSLOTS + 2) / 2) : 0;
+    static constexpr uint32_t TREEMINBITS = (CANTOR) ? (BUCKBITS + CANTORBITS) : (BUCKBITS + 2 * SLOTBITS);
     static_assert(!CANTOR || (NSLOTPAIRS <= 1 << CANTORBITS), "cantor throws a fit");
 
     static constexpr uint32_t NBLAKES = 1;
@@ -152,11 +152,11 @@ struct TrompEquihash {
     using tree_t = typename std::conditional<TREEMINBITS <= 16, uint16_t, uint32_t>::type;
 
     static constexpr uint32_t TREEBYTES = sizeof(tree_t);
-    static constexpr uint32_t TREEBITS = TREEBYTES*8;
+    static constexpr uint32_t TREEBITS = TREEBYTES * 8;
     static constexpr uint32_t COMPRESSED_SOL_SIZE = (PROOFSIZE * (DIGITBITS + 1) / 8);
 
     static constexpr uint32_t HASHWORDS0 = ((WN - DIGITBITS + RESTBITS) + TREEBITS - 1) / TREEBITS;
-    static constexpr uint32_t HASHWORDS1 = ((WN - 2*DIGITBITS + RESTBITS) + TREEBITS - 1) / TREEBITS;
+    static constexpr uint32_t HASHWORDS1 = ((WN - 2 * DIGITBITS + RESTBITS) + TREEBITS - 1) / TREEBITS;
 
     //----------------------------------------------
     // Helper structs
@@ -165,33 +165,29 @@ struct TrompEquihash {
         tree_t bid_s0_s1;
 
         // constructor for height 0 trees stores index instead
-        tree(const uint32_t idx) {
-            bid_s0_s1 = idx;
-        }
+        tree(const uint32_t idx) { bid_s0_s1 = idx; }
 
-        static uint32_t cantor(uint32_t s0, uint32_t s1) {
-            return s1 * (s1 + 1) / 2 + s0;
-        }
+        static uint32_t cantor(uint32_t s0, uint32_t s1) { return s1 * (s1 + 1) / 2 + s0; }
 
         tree(const uint32_t bid, const uint32_t s0, const uint32_t s1) {
             // CANTOR saves 2 bits by Cantor pairing
             if CONSTEXPR (CANTOR) {
                 bid_s0_s1 = (bid << CANTORBITS) | cantor(s0, s1);
-            } else {
+            }
+            else {
                 bid_s0_s1 = (((bid << SLOTBITS) | s0) << SLOTBITS) | s1;
             }
         }
 
         // retrieve hash index from tree(const uint32_t idx) constructor
-        uint32_t getindex() const {
-            return bid_s0_s1;
-        }
+        uint32_t getindex() const { return bid_s0_s1; }
 
         // retrieve bucket index
         uint32_t bucketid() const {
             if CONSTEXPR (CANTOR) {
                 return bid_s0_s1 >> (2 * SLOTBITS - 2);
-            } else {
+            }
+            else {
                 return bid_s0_s1 >> (2 * SLOTBITS);
             }
         }
@@ -199,7 +195,8 @@ struct TrompEquihash {
         uint32_t slotid0(uint32_t s1) const {
             if CONSTEXPR (CANTOR) {
                 return (bid_s0_s1 & CANTORMASK) - cantor(0, s1);
-            } else {
+            }
+            else {
                 return (bid_s0_s1 >> SLOTBITS) & SLOTMASK;
             }
         }
@@ -207,11 +204,13 @@ struct TrompEquihash {
         // retrieve second slot index
         uint32_t slotid1() const {
             if CONSTEXPR (CANTOR) {
-                uint32_t k, q, sqr = 8 * (bid_s0_s1 & CANTORMASK) + 1;;
-                // this k=sqrt(sqr) computing loop averages 3.4 iterations out of maximum 9
-                for (k = CANTORMAXSQRT; (q = sqr / k) < k; k = (k + q) / 2);
-                return (k - 1) / 2;
-            } else {
+                    uint32_t k, q, sqr = 8 * (bid_s0_s1 & CANTORMASK) + 1;
+                    // this k=sqrt(sqr) computing loop averages 3.4 iterations out of
+                    // maximum 9
+                    for (k = CANTORMAXSQRT; (q = sqr / k) < k; k = (k + q) / 2) { }
+                    return (k - 1) / 2;
+            }
+            else {
                 return bid_s0_s1 & SLOTMASK;
             }
         }
@@ -219,12 +218,12 @@ struct TrompEquihash {
         // returns false for trees sharing a child subtree
         bool prob_disjoint(const tree other) const {
             if CONSTEXPR (CANTOR) {
-                if (bucketid() != other.bucketid())
-                    return true;
-                uint32_t s1 = slotid1(), s0 = slotid0(s1);
-                uint32_t os1 = other.slotid1(), os0 = other.slotid0(os1);
-                return s1 != os1 && s0 != os0;
-            } else {
+                    if (bucketid() != other.bucketid()) return true;
+                    uint32_t s1 = slotid1(), s0 = slotid0(s1);
+                    uint32_t os1 = other.slotid1(), os0 = other.slotid0(os1);
+                    return s1 != os1 && s0 != os0;
+            }
+            else {
                 tree xort(bid_s0_s1 ^ other.bid_s0_s1);
                 return xort.bucketid() || (xort.slotid0(0) && xort.slotid1());
                 // next two tests catch much fewer cases and are therefore skipped
@@ -263,14 +262,12 @@ struct TrompEquihash {
         bucket1 *heap1;
         uint32_t alloced;
 
-        htalloc() {
-            alloced = 0;
-        }
+        htalloc() { alloced = 0; }
 
         void alloctrees() {
             static_assert(2 * DIGITBITS >= TREEBITS, "needed to ensure hashes shorten by 1 unit every 2 digits");
-            heap0 = (bucket0 *) alloc(NBUCKETS, sizeof(bucket0));
-            heap1 = (bucket1 *) alloc(NBUCKETS, sizeof(bucket1));
+            heap0 = (bucket0 *)alloc(NBUCKETS, sizeof(bucket0));
+            heap1 = (bucket1 *)alloc(NBUCKETS, sizeof(bucket1));
         }
 
         void dealloctrees() {
@@ -290,19 +287,19 @@ struct TrompEquihash {
     // Equihash solver data
     //----------------------------------------------
     typedef uint32_t proof[PROOFSIZE];
-    blake2b_state blake_ctx; // holds blake2b midstate after call to setheadernounce
-    htalloc hta;             // holds allocated heaps
-    bsizes *nslots;          // counts number of slots used in buckets
-    proof *sols;             // store found solutions here (only first MAXSOLS)
-    uint32_t nsols;              // number of solutions found
-    const void* user_data;
+    blake2b_state blake_ctx;  // holds blake2b midstate after call to setheadernounce
+    htalloc hta;              // holds allocated heaps
+    bsizes *nslots;           // counts number of slots used in buckets
+    proof *sols;              // store found solutions here (only first MAXSOLS)
+    uint32_t nsols;           // number of solutions found
+    const void *user_data;
 
-    TrompEquihash(const void* userData):user_data(userData) {
+    TrompEquihash(const void *userData) : user_data(userData) {
         static_assert(sizeof(htunit) == sizeof(tree_t), "");
         static_assert(WK & 1, "K assumed odd in candidate() calling indices1()");
         hta.alloctrees();
-        nslots = (bsizes *) hta.alloc(2 * NBUCKETS, sizeof(uint32_t));
-        sols = (proof *) hta.alloc(MAXSOLS, sizeof(proof));
+        nslots = (bsizes *)hta.alloc(2 * NBUCKETS, sizeof(uint32_t));
+        sols = (proof *)hta.alloc(MAXSOLS, sizeof(proof));
     }
 
     ~TrompEquihash() {
@@ -318,9 +315,7 @@ struct TrompEquihash {
     }
 
     // convert bytes into words,rounding up
-    static uint32_t hashwords(uint32_t bytes) {
-        return (bytes + TREEBYTES - 1) / TREEBYTES;
-    }
+    static uint32_t hashwords(uint32_t bytes) { return (bytes + TREEBYTES - 1) / TREEBYTES; }
 
     // prepare blake2b midstate for new run and initialize counters
     void setheadernonce(const unsigned char *input, const uint32_t len, int64_t nonce) {
@@ -329,14 +324,10 @@ struct TrompEquihash {
     }
 
     // get heap0 bucket size in threadsafe manner
-    uint32_t getslot0(const uint32_t bucketi) {
-        return nslots[0][bucketi]++;
-    }
+    uint32_t getslot0(const uint32_t bucketi) { return nslots[0][bucketi]++; }
 
     // get heap1 bucket size in threadsafe manner
-    uint32_t getslot1(const uint32_t bucketi) {
-        return nslots[1][bucketi]++;
-    }
+    uint32_t getslot1(const uint32_t bucketi) { return nslots[1][bucketi]++; }
 
     // get old heap0 bucket size and clear it for next round
     uint32_t getnslots0(const uint32_t bid) {
@@ -354,7 +345,8 @@ struct TrompEquihash {
         return n;
     }
 
-    // recognize most (but not all) remaining dupes while Wagner-ordering the indices
+    // recognize most (but not all) remaining dupes while Wagner-ordering the
+    // indices
     bool orderindices(uint32_t *indices, uint32_t size) {
         if (indices[0] > indices[size]) {
             for (uint32_t i = 0; i < size; i++) {
@@ -377,9 +369,7 @@ struct TrompEquihash {
         uint32_t tagi = hashwords(hashsize(r));
         uint32_t s1 = t.slotid1(), s0 = t.slotid0(CANTOR ? s1 : 0);
         tree t0 = buck[s0][tagi].tag, t1 = buck[s1][tagi].tag;
-        return !t0.prob_disjoint(t1)
-               || listindices1(r, t0, indices) || listindices1(r, t1, indices + size)
-               || orderindices(indices, size) || indices[0] == indices[size];
+        return !t0.prob_disjoint(t1) || listindices1(r, t0, indices) || listindices1(r, t1, indices + size) || orderindices(indices, size) || indices[0] == indices[size];
     }
 
     // need separate instance for accessing (differently typed) heap1
@@ -389,8 +379,7 @@ struct TrompEquihash {
         uint32_t tagi = hashwords(hashsize(r));
         uint32_t s1 = t.slotid1(), s0 = t.slotid0(CANTOR ? s1 : 0);
         tree t0 = buck[s0][tagi].tag, t1 = buck[s1][tagi].tag;
-        return listindices0(r, t0, indices) || listindices0(r, t1, indices + size)
-               || orderindices(indices, size) || indices[0] == indices[size];
+        return listindices0(r, t0, indices) || listindices0(r, t1, indices + size) || orderindices(indices, size) || indices[0] == indices[size];
     }
 
     // check a candidate that resulted in 0 xor
@@ -398,13 +387,11 @@ struct TrompEquihash {
     void candidate(const tree t) {
         proof prf;
         // listindices combines index tree reconstruction with probably dupe test
-        if (listindices1(WK, t, prf) || duped(prf))
-            return; // assume WK odd
+        if (listindices1(WK, t, prf) || duped(prf)) return;  // assume WK odd
         // and now we have ourselves a genuine solution
         uint32_t soli = nsols++;
         // copy solution into final place
-        if (soli < MAXSOLS)
-            memcpy(sols[soli], prf, sizeof(proof));
+        if (soli < MAXSOLS) memcpy(sols[soli], prf, sizeof(proof));
     }
 
     // thread-local object that precomputes various slot metrics for each round
@@ -417,61 +404,49 @@ struct TrompEquihash {
         uint32_t prevbo;
 
         htlayout(TrompEquihash *eq, uint32_t r) : hta(eq->hta), prevhtunits(0), dunits(0) {
-            uint32_t nexthashbytes = hashsize(r);        // number of bytes occupied by round r hash
-            nexthtunits = hashwords(nexthashbytes); // number of TREEBITS words taken up by those bytes
-            prevbo = 0;                  // byte offset for accessing hash form previous round
-            if (r) {     // similar measure for previous round
+            uint32_t nexthashbytes = hashsize(r);    // number of bytes occupied by round r hash
+            nexthtunits = hashwords(nexthashbytes);  // number of TREEBITS words taken up by those bytes
+            prevbo = 0;                              // byte offset for accessing hash form previous round
+            if (r) {                                 // similar measure for previous round
                 uint32_t prevhashbytes = hashsize(r - 1);
                 prevhtunits = hashwords(prevhashbytes);
-                prevbo = prevhtunits * sizeof(htunit) - prevhashbytes; // 0-1 or 0-3
-                dunits = prevhtunits - nexthtunits; // number of words by which hash shrinks
+                prevbo = prevhtunits * sizeof(htunit) - prevhashbytes;  // 0-1 or 0-3
+                dunits = prevhtunits - nexthtunits;                     // number of words by which hash shrinks
             }
         }
 
-        // extract remaining bits in digit slots in same bucket still need to collide on
+        // extract remaining bits in digit slots in same bucket still need to
+        // collide on
         uint32_t getxhash0(const htunit *slot) const {
-            if CONSTEXPR (DIGITBITS % 8 == 4 && RESTBITS == 4) {
-                return slot->bytes[prevbo] >> 4;
-            } else if CONSTEXPR (DIGITBITS % 8 == 4 && RESTBITS == 8) {
-                return (slot->bytes[prevbo] & 0xf) << 4 | slot->bytes[prevbo + 1] >> 4;
-            } else if CONSTEXPR (DIGITBITS % 8 == 4 && RESTBITS == 10) {
-                return (slot->bytes[prevbo] & 0x3f) << 4 | slot->bytes[prevbo + 1] >> 4;
-            } else if CONSTEXPR (DIGITBITS % 8 == 0 && RESTBITS == 4) {
-                return slot->bytes[prevbo] & 0xf;
-            } else if CONSTEXPR (RESTBITS == 0) {
-                return 0;
-            }
+            if CONSTEXPR (DIGITBITS % 8 == 4 && RESTBITS == 4) { return slot->bytes[prevbo] >> 4; }
+            else if CONSTEXPR (DIGITBITS % 8 == 4 && RESTBITS == 8) { return (slot->bytes[prevbo] & 0xf) << 4 | slot->bytes[prevbo + 1] >> 4; }
+            else if CONSTEXPR (DIGITBITS % 8 == 4 && RESTBITS == 10) { return (slot->bytes[prevbo] & 0x3f) << 4 | slot->bytes[prevbo + 1] >> 4; }
+            else if CONSTEXPR (DIGITBITS % 8 == 0 && RESTBITS == 4) { return slot->bytes[prevbo] & 0xf; }
+            else if CONSTEXPR (RESTBITS == 0) { return 0; }
         }
 
         // similar but accounting for possible change in hashsize modulo 4 bits
         uint32_t getxhash1(const htunit *slot) const {
-            if CONSTEXPR (DIGITBITS % 4 == 0 && RESTBITS == 4) {
-                return slot->bytes[prevbo] & 0xf;
-            } else if CONSTEXPR (DIGITBITS % 4 == 0 && RESTBITS == 8) {
-                return slot->bytes[prevbo];
-            } else if CONSTEXPR (DIGITBITS % 4 == 0 && RESTBITS == 10) {
-                return (slot->bytes[prevbo] & 0x3) << 8 | slot->bytes[prevbo + 1];
-            } else if CONSTEXPR (RESTBITS == 0) {
-                return 0;
-            }
+            if CONSTEXPR (DIGITBITS % 4 == 0 && RESTBITS == 4) { return slot->bytes[prevbo] & 0xf; }
+            else if CONSTEXPR (DIGITBITS % 4 == 0 && RESTBITS == 8) { return slot->bytes[prevbo]; }
+            else if CONSTEXPR (DIGITBITS % 4 == 0 && RESTBITS == 10) { return (slot->bytes[prevbo] & 0x3) << 8 | slot->bytes[prevbo + 1]; }
+            else if CONSTEXPR (RESTBITS == 0) { return 0; }
         }
 
         // test whether two hashes match in last TREEBITS bits
-        bool equal(const htunit *hash0, const htunit *hash1) const {
-            return hash0[prevhtunits - 1].word == hash1[prevhtunits - 1].word;
-        }
+        bool equal(const htunit *hash0, const htunit *hash1) const { return hash0[prevhtunits - 1].word == hash1[prevhtunits - 1].word; }
     };
 
     // this thread-local object performs in-bucket collisions
     // by linking together slots that have identical rest bits
     // (which is in essense a 2nd stage bucket sort)
     struct collisiondata {
-        // the bitmap is an early experiment in a bitmap encoding
-        // that works only for at most 64 slots
-        // it might as well be obsoleted as it performs worse even in that case
-#ifdef XBITMAP
-        static_assert(NSLOTS <= 64, "cant use XBITMAP with more than 64 slots")
 
+// the bitmap is an early experiment in a bitmap encoding
+// that works only for at most 64 slots
+// it might as well be obsoleted as it performs worse even in that case
+#ifdef XBITMAP
+        static_assert(NSLOTS <= 64, "cant use XBITMAP with more than 64 slots");
         u64 xhashmap[NRESTS];
         u64 xmap;
 #else
@@ -520,7 +495,8 @@ struct TrompEquihash {
         uint32_t slot() {
 #ifdef XBITMAP
             const uint32_t ffs = __builtin_ffsll(xmap);
-            s0 += ffs; xmap >>= ffs;
+            s0 += ffs;
+            xmap >>= ffs;
 #else
             nextslot = nextxhashslot[s0 = nextslot];
 #endif
@@ -543,7 +519,7 @@ struct TrompEquihash {
 
             blake2b_state state = state0;  // make another copy since blake2b_final modifies it
             uint32_t leb = htole32(block);
-            blake2b_update(&state, (uint8_t *) &leb, sizeof(uint32_t));
+            blake2b_update(&state, (uint8_t *)&leb, sizeof(uint32_t));
             blake2b_final(&state, hashes, HASHOUT);
 
             for (uint32_t i = 0; i < NBLAKES; i++) {
@@ -553,12 +529,15 @@ struct TrompEquihash {
 
                     uint32_t bucketid;
                     if CONSTEXPR (BUCKBITS <= 8) {
-                        bucketid = (uint32_t) (ph[0] >> (8 - BUCKBITS));
-                    } else if CONSTEXPR (BUCKBITS > 8 && BUCKBITS <= 16) {
-                        bucketid = ((uint32_t) ph[0] << (BUCKBITS - 8)) | ph[1] >> (16 - BUCKBITS);
-                    } else if CONSTEXPR (BUCKBITS > 16) {
-                        bucketid = ((((uint32_t) ph[0] << 8) | ph[1]) << (BUCKBITS - 16)) | ph[2] >> (24 - BUCKBITS);
+                        bucketid = (uint32_t)(ph[0] >> (8 - BUCKBITS));
                     }
+                    else if CONSTEXPR (BUCKBITS > 8 && BUCKBITS <= 16) {
+                        bucketid = ((uint32_t)ph[0] << (BUCKBITS - 8)) | ph[1] >> (16 - BUCKBITS);
+                    }
+                    else if CONSTEXPR (BUCKBITS > 16) {
+                        bucketid = ((((uint32_t)ph[0] << 8) | ph[1]) << (BUCKBITS - 16)) | ph[2] >> (24 - BUCKBITS);
+                    }
+
                     // grab next available slot in that bucket
                     const uint32_t slot = getslot0(bucketid);
                     if (slot >= NSLOTS) {
@@ -580,40 +559,37 @@ struct TrompEquihash {
         collisiondata cd;
         // threads process buckets in round-robin fashion
         for (uint32_t bucketid = 0; bucketid < NBUCKETS; bucketid++) {
-            cd.clear(); // could have made this the constructor, and declare here
-            slot0 *buck = htl.hta.heap0[bucketid]; // point to first slot of this bucket
-            uint32_t bsize = getnslots0(bucketid);    // grab and reset bucket size
-            for (uint32_t s1 = 0; s1 < bsize; s1++) {   // loop over slots
+            cd.clear();                                // could have made this the constructor, and declare here
+            slot0 *buck = htl.hta.heap0[bucketid];     // point to first slot of this bucket
+            uint32_t bsize = getnslots0(bucketid);     // grab and reset bucket size
+            for (uint32_t s1 = 0; s1 < bsize; s1++) {  // loop over slots
                 const htunit *slot1 = buck[s1];
-                cd.addslot(s1, htl.getxhash0(slot1));// identify list of previous colliding slots
+                cd.addslot(s1, htl.getxhash0(slot1));  // identify list of previous colliding slots
                 for (; cd.nextcollision();) {
                     const uint32_t s0 = cd.slot();
                     const htunit *slot0 = buck[s0];
-                    if (htl.equal(slot0, slot1)) {     // expect difference in last 32 bits unless duped
+                    if (htl.equal(slot0, slot1)) {  // expect difference in last 32 bits unless duped
                         continue;
                     }
-                    uint32_t xorbucketid;                   // determine bucket for s0 xor s1
+
+                    uint32_t xorbucketid;  // determine bucket for s0 xor s1
                     const uint8_t *bytes0 = slot0->bytes, *bytes1 = slot1->bytes;
 
                     if CONSTEXPR (WN == 200 && BUCKBITS == 12 && RESTBITS == 8) {
-                        xorbucketid = (((uint32_t) (bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) & 0xf) << 8)
-                                      | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]);
+                        xorbucketid = (((uint32_t)(bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) & 0xf) << 8) | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]);
                     }
                     if CONSTEXPR (WN == 200 && BUCKBITS == 10 && RESTBITS == 10) {
-                        xorbucketid = (((uint32_t) (bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) & 0xf) << 6)
-                                      | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]) >> 2;
+                        xorbucketid = (((uint32_t)(bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) & 0xf) << 6) | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]) >> 2;
                     }
                     if CONSTEXPR (WN % 24 == 0 && BUCKBITS == 20 && RESTBITS == 4) {
-                        xorbucketid = ((((uint32_t) (bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) << 8)
-                                        | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2])) << 4)
-                                      | (bytes0[htl.prevbo + 3] ^ bytes1[htl.prevbo + 3]) >> 4;
+                        xorbucketid = ((((uint32_t)(bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) << 8) | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2])) << 4) |
+                                          (bytes0[htl.prevbo + 3] ^ bytes1[htl.prevbo + 3]) >> 4;
                     }
                     if CONSTEXPR (WN == 96 && BUCKBITS == 12 && RESTBITS == 4) {
-                        xorbucketid = ((uint32_t) (bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) << 4)
-                                      | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]) >> 4;
+                        xorbucketid = ((uint32_t)(bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) << 4) | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]) >> 4;
                     }
                     if CONSTEXPR (WN == 48 && BUCKBITS == 4 && RESTBITS == 4) {
-                        xorbucketid = (uint32_t) (bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) >> 4;
+                        xorbucketid = (uint32_t)(bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) >> 4;
                     }
 
                     // grab next available slot in that bucket
@@ -624,8 +600,7 @@ struct TrompEquihash {
                     // start of slot for s0 ^ s1
                     htunit *xs = htl.hta.heap1[xorbucketid][xorslot];
                     // store xor of hashes possibly minus initial 0 word due to collision
-                    for (uint32_t i = htl.dunits; i < htl.prevhtunits; i++)
-                        xs++->word = slot0[i].word ^ slot1[i].word;
+                    for (uint32_t i = htl.dunits; i < htl.prevhtunits; i++) xs++->word = slot0[i].word ^ slot1[i].word;
                     // store tree node right after hash
                     xs->tag = tree(bucketid, s0, s1);
                 }
@@ -636,49 +611,56 @@ struct TrompEquihash {
     void digiteven(const uint32_t r) {
         htlayout htl(this, r);
         collisiondata cd;
+
         for (uint32_t bucketid = 0; bucketid < NBUCKETS; bucketid++) {
             cd.clear();
             slot1 *buck = htl.hta.heap1[bucketid];
             uint32_t bsize = getnslots1(bucketid);
+
             for (uint32_t s1 = 0; s1 < bsize; s1++) {
                 const htunit *slot1 = buck[s1];
                 cd.addslot(s1, htl.getxhash1(slot1));
+
                 for (; cd.nextcollision();) {
                     const uint32_t s0 = cd.slot();
                     const htunit *slot0 = buck[s0];
+
                     if (htl.equal(slot0, slot1)) {
                         continue;
                     }
+
                     uint32_t xorbucketid;
                     const uint8_t *bytes0 = slot0->bytes, *bytes1 = slot1->bytes;
+
                     if CONSTEXPR (WN == 200 && BUCKBITS == 12 && RESTBITS == 8) {
-                        xorbucketid = ((uint32_t) (bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) << 4)
-                                      | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]) >> 4;
+                            xorbucketid = ((uint32_t)(bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) << 4) | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]) >> 4;
                     }
                     if CONSTEXPR (WN == 200 && BUCKBITS == 10 && RESTBITS == 10) {
-                        xorbucketid = ((uint32_t) (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]) << 2)
-                                      | (bytes0[htl.prevbo + 3] ^ bytes1[htl.prevbo + 3]) >> 6;
+                            xorbucketid = ((uint32_t)(bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]) << 2) | (bytes0[htl.prevbo + 3] ^ bytes1[htl.prevbo + 3]) >> 6;
                     }
                     if CONSTEXPR (WN % 24 == 0 && BUCKBITS == 20 && RESTBITS == 4) {
-                        xorbucketid = ((((uint32_t) (bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) << 8)
-                                        | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2])) << 4)
-                                      | (bytes0[htl.prevbo + 3] ^ bytes1[htl.prevbo + 3]) >> 4;
+                            xorbucketid = ((((uint32_t)(bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) << 8) | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2])) << 4) |
+                                          (bytes0[htl.prevbo + 3] ^ bytes1[htl.prevbo + 3]) >> 4;
                     }
                     if CONSTEXPR (WN == 96 && BUCKBITS == 12 && RESTBITS == 4) {
-                        xorbucketid = ((uint32_t) (bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) << 4)
-                                      | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]) >> 4;
+                            xorbucketid = ((uint32_t)(bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) << 4) | (bytes0[htl.prevbo + 2] ^ bytes1[htl.prevbo + 2]) >> 4;
                     }
                     if CONSTEXPR (WN == 48 && BUCKBITS == 4 && RESTBITS == 4) {
-                        xorbucketid = (uint32_t) (bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) >> 4;
+                        xorbucketid = (uint32_t)(bytes0[htl.prevbo + 1] ^ bytes1[htl.prevbo + 1]) >> 4;
                     }
+
                     const uint32_t xorslot = getslot0(xorbucketid);
+
                     if (xorslot >= NSLOTS) {
                         continue;
                     }
+
                     htunit *xs = htl.hta.heap0[xorbucketid][xorslot];
+
                     for (uint32_t i = htl.dunits; i < htl.prevhtunits; i++) {
                         xs++->word = slot0[i].word ^ slot1[i].word;
                     }
+
                     xs->tag = tree(bucketid, s0, s1);
                 }
             }
@@ -690,19 +672,23 @@ struct TrompEquihash {
         collisiondata cd;
         htlayout htl(this, WK);
         uint32_t nc = 0;
+
         for (uint32_t bucketid = 0; bucketid < NBUCKETS; bucketid++) {
             cd.clear();
-            slot0 *buck = htl.hta.heap0[bucketid];   // assume WK odd
-            uint32_t bsize = getnslots0(bucketid);      // assume WK odd
+            slot0 *buck = htl.hta.heap0[bucketid];  // assume WK odd
+            uint32_t bsize = getnslots0(bucketid);  // assume WK odd
+
             for (uint32_t s1 = 0; s1 < bsize; s1++) {
                 const htunit *slot1 = buck[s1];
                 cd.addslot(s1, htl.getxhash0(slot1));  // assume WK odd
+
                 for (; cd.nextcollision();) {
                     const uint32_t s0 = cd.slot();
                     const htunit *slot0 = buck[s0];
+
                     // there is only 1 word of hash left
                     if (htl.equal(slot0, slot1) && slot0[1].tag.prob_disjoint(slot1[1].tag)) {
-                        candidate(tree(bucketid, s0, s1)); // so a match gives a solution candidate
+                        candidate(tree(bucketid, s0, s1));  // so a match gives a solution candidate
                         nc++;
                     }
                 }
@@ -712,28 +698,25 @@ struct TrompEquihash {
 
     int worker() {
         digitZero();
-        if (equihashProxy(user_data, 0))
-            return 0;
+        if (equihashProxy(user_data, 0)) return 0;
 
         for (uint32_t r = 1; r < WK; r++) {
-            r&1 ? digitodd(r) : digiteven(r);
-            if (equihashProxy(user_data, 0))
-                return 0;
+            r & 1 ? digitodd(r) : digiteven(r);
+            if (equihashProxy(user_data, 0)) return 0;
         }
 
         digitK();
-        if (equihashProxy(user_data, 0))
-            return 0;
+        if (equihashProxy(user_data, 0)) return 0;
         return 1;
     }
 
-    static bool duped(uint32_t* prf) {
+    static bool duped(uint32_t *prf) {
         uint32_t sortprf[PROOFSIZE];
         memcpy(sortprf, prf, sizeof(sortprf));
         std::sort(sortprf, sortprf + PROOFSIZE);
 
-        constexpr size_t cBitLen { WN/(WK+1) };
-        constexpr size_t maxValue { (1 << (cBitLen + 1)) - 1};
+        constexpr size_t cBitLen{WN / (WK + 1)};
+        constexpr size_t maxValue{(1 << (cBitLen + 1)) - 1};
 
         if (sortprf[0] > maxValue) {
             return true;
@@ -755,7 +738,7 @@ struct TrompEquihash {
         uint32_t expandedNonce[8] = {0};
         expandedNonce[0] = htole32(nonce);
 
-        blake2b_update(S, (uint8_t *) &expandedNonce, sizeof(expandedNonce));
+        blake2b_update(S, (uint8_t *)&expandedNonce, sizeof(expandedNonce));
     }
 
     static void setheader(blake2b_state *ctx, const uint8_t *input, uint32_t input_len, int64_t nonce) {
@@ -766,8 +749,8 @@ struct TrompEquihash {
         P.depth = 1;
         P.digest_length = (512 / WN) * WN / 8;
         memcpy(P.personal, "ZcashPoW", 8);
-        *(uint32_t *) (P.personal + 8) = htole32(WN);
-        *(uint32_t *) (P.personal + 12) = htole32(WK);
+        *(uint32_t *)(P.personal + 8) = htole32(WN);
+        *(uint32_t *)(P.personal + 12) = htole32(WK);
 
         blake2b_init_param(ctx, &P);
         blake2b_update(ctx, input, input_len);
@@ -780,23 +763,20 @@ struct TrompEquihash {
     static void genhash(const blake2b_state *ctx, uint32_t idx, uint8_t *hash) {
         blake2b_state state = *ctx;
         uint32_t leb = htole32(idx / HASHESPERBLAKE);
-        blake2b_update(&state, (uint8_t *) &leb, sizeof(uint32_t));
+        blake2b_update(&state, (uint8_t *)&leb, sizeof(uint32_t));
         uint8_t blakehash[HASHOUT];
         blake2b_final(&state, blakehash, HASHOUT);
         memcpy(hash, blakehash + (idx % HASHESPERBLAKE) * WN / 8, WN / 8);
     }
 
-    static void CompressArray(const unsigned char* in, size_t in_len,
-                              unsigned char* out, size_t out_len,
-                              size_t bit_len, size_t byte_pad)
-    {
+    static void CompressArray(const unsigned char *in, size_t in_len, unsigned char *out, size_t out_len, size_t bit_len, size_t byte_pad) {
         assert(bit_len >= 8);
-        assert(8*sizeof(uint32_t) >= 7+bit_len);
+        assert(8 * sizeof(uint32_t) >= 7 + bit_len);
 
-        size_t in_width { (bit_len+7)/8 + byte_pad };
-        assert(out_len == bit_len*in_len/(8*in_width));
+        size_t in_width{(bit_len + 7) / 8 + byte_pad};
+        assert(out_len == bit_len * in_len / (8 * in_width));
 
-        uint32_t bit_len_mask { ((uint32_t)1 << bit_len) - 1 };
+        uint32_t bit_len_mask{((uint32_t)1 << bit_len) - 1};
 
         // The acc_bits least-significant bits of acc_value represent a bit sequence
         // in big-endian order.
@@ -810,7 +790,7 @@ struct TrompEquihash {
             if (acc_bits < 8) {
                 acc_value = acc_value << bit_len;
                 for (size_t x = byte_pad; x < in_width; x++) {
-                    acc_value = acc_value | ((in[j+x] & ((bit_len_mask >> (8*(in_width-x-1))) & 0xFF)) << (8*(in_width-x-1)));
+                    acc_value = acc_value | ((in[j + x] & ((bit_len_mask >> (8 * (in_width - x - 1))) & 0xFF)) << (8 * (in_width - x - 1)));
                 }
                 j += in_width;
                 acc_bits += bit_len;
@@ -821,28 +801,25 @@ struct TrompEquihash {
         }
     }
 
-    static void EhIndexToArray(const uint32_t i, unsigned char* array)
-    {
+    static void EhIndexToArray(const uint32_t i, unsigned char *array) {
         uint32_t bei = htobe32(i);
         memcpy(array, &bei, sizeof(uint32_t));
     }
 
-    static std::vector<unsigned char> GetMinimalFromIndices(const uint32_t* indices, uint32_t indices_len)
-    {
-        size_t cBitLen { WN/(WK+1) };
-        assert(((cBitLen+1)+7)/8 <= sizeof(uint32_t));
-        size_t lenIndices { indices_len*sizeof(uint32_t) };
-        size_t minLen { (cBitLen+1)*lenIndices/(8*sizeof(uint32_t)) };
-        size_t bytePad { sizeof(uint32_t) - ((cBitLen+1)+7)/8 };
+    static std::vector<unsigned char> GetMinimalFromIndices(const uint32_t *indices, uint32_t indices_len) {
+        size_t cBitLen{WN / (WK + 1)};
+        assert(((cBitLen + 1) + 7) / 8 <= sizeof(uint32_t));
+        size_t lenIndices{indices_len * sizeof(uint32_t)};
+        size_t minLen{(cBitLen + 1) * lenIndices / (8 * sizeof(uint32_t))};
+        size_t bytePad{sizeof(uint32_t) - ((cBitLen + 1) + 7) / 8};
         std::vector<unsigned char> array(lenIndices);
 
         for (uint32_t i = 0; i < indices_len; i++) {
-            EhIndexToArray(indices[i], array.data()+(i*sizeof(uint32_t)));
+            EhIndexToArray(indices[i], array.data() + (i * sizeof(uint32_t)));
         }
 
         std::vector<unsigned char> ret(minLen);
-        CompressArray(array.data(), lenIndices,
-                      ret.data(), minLen, cBitLen+1, bytePad);
+        CompressArray(array.data(), lenIndices, ret.data(), minLen, cBitLen + 1, bytePad);
         return ret;
     }
 
@@ -852,50 +829,41 @@ struct TrompEquihash {
             return verify_code::POW_OK;
         }
         uint32_t *indices1 = indices + (1 << (r - 1));
-        if (*indices >= *indices1)
-            return verify_code::POW_OUT_OF_ORDER;
+        if (*indices >= *indices1) return verify_code::POW_OUT_OF_ORDER;
 
         uint8_t hash0[WN / 8], hash1[WN / 8];
         verify_code vrf0 = verifyrec(ctx, indices, hash0, r - 1);
-        if (vrf0 != verify_code::POW_OK)
-            return vrf0;
+        if (vrf0 != verify_code::POW_OK) return vrf0;
 
         verify_code vrf1 = verifyrec(ctx, indices1, hash1, r - 1);
-        if (vrf1 != verify_code::POW_OK)
-            return vrf1;
+        if (vrf1 != verify_code::POW_OK) return vrf1;
 
-        for (uint32_t i = 0; i < WN / 8; i++)
-            hash[i] = hash0[i] ^ hash1[i];
+        for (uint32_t i = 0; i < WN / 8; i++) hash[i] = hash0[i] ^ hash1[i];
 
         uint32_t i, b = r < WK ? r * DIGITBITS : WN;
 
         for (i = 0; i < b / 8; i++)
-            if (hash[i])
-                return verify_code::POW_NONZERO_XOR;
+            if (hash[i]) return verify_code::POW_NONZERO_XOR;
 
-        if ((b % 8) && hash[i] >> (8 - (b % 8)))
-            return verify_code::POW_NONZERO_XOR;
+        if ((b % 8) && hash[i] >> (8 - (b % 8))) return verify_code::POW_NONZERO_XOR;
 
         return verify_code::POW_OK;
     }
 };
 
-template<uint32_t WN, uint32_t WK>
-void compress_solution(const uint32_t* sol, uint8_t *csol) {
+template <uint32_t WN, uint32_t WK>
+void compress_solution(const uint32_t *sol, uint8_t *csol) {
     auto compressed = TrompEquihash<WN, WK>::GetMinimalFromIndices(sol, TrompEquihash<WN, WK>::PROOFSIZE);
     memcpy(csol, compressed.data(), TrompEquihash<WN, WK>::COMPRESSED_SOL_SIZE);
 }
 
-template<uint32_t WN, uint32_t WK>
-verify_code verify(uint32_t* indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce) {
-    if (input_len > HEADERNONCELEN)
-        return verify_code::POW_INVALID_HEADER_LENGTH;
+template <uint32_t WN, uint32_t WK>
+verify_code verify(uint32_t *indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce) {
+    if (input_len > HEADERNONCELEN) return verify_code::POW_INVALID_HEADER_LENGTH;
 
-    if (proofsize != TrompEquihash<WN, WK>::PROOFSIZE)
-        return verify_code::POW_SOL_SIZE_MISMATCH;
+    if (proofsize != TrompEquihash<WN, WK>::PROOFSIZE) return verify_code::POW_SOL_SIZE_MISMATCH;
 
-    if (TrompEquihash<WN, WK>::duped(indices))
-        return verify_code::POW_DUPLICATE;
+    if (TrompEquihash<WN, WK>::duped(indices)) return verify_code::POW_DUPLICATE;
 
     blake2b_state ctx;
     TrompEquihash<WN, WK>::setheader(&ctx, input, input_len, nonce);
@@ -903,8 +871,8 @@ verify_code verify(uint32_t* indices, uint32_t proofsize, const unsigned char *i
     return TrompEquihash<WN, WK>::verifyrec(&ctx, indices, hash, WK);
 }
 
-template<uint32_t WN, uint32_t WK>
-int solve(const unsigned char* input, uint32_t input_len, int64_t nonce, const void* userData) {
+template <uint32_t WN, uint32_t WK>
+int solve(const unsigned char *input, uint32_t input_len, int64_t nonce, const void *userData) {
     TrompEquihash<WN, WK> eq(userData);
     eq.setheadernonce(input, input_len, nonce);
     eq.worker();
@@ -929,4 +897,4 @@ int solve(const unsigned char* input, uint32_t input_len, int64_t nonce, const v
 
 #undef CONSTEXPR
 #undef HEADERNONCELEN
-#endif // __EQUI_MINER_H
+#endif  // __EQUI_MINER_H
