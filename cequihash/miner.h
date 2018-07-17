@@ -40,7 +40,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cctype>
-#include <cstdint>
+#include <stdint.h>
 #include <cstdio>
 #include <cstring>
 #include <type_traits>

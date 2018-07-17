@@ -1,8 +1,8 @@
 #ifndef __CEQUIHASH_H
 #define __CEQUIHASH_H
 
-#include <cstdint>
-#include <cstdlib>
+#include <stdint.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
