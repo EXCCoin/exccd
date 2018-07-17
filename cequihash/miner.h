@@ -37,16 +37,15 @@
 #ifndef __EQUI_MINER_H
 #define __EQUI_MINER_H
 
-#include <stdio.h>
-#include <assert.h>
-#include <stdint.h> // for types uint32_t,uint64_t
-#include <string.h> // for functions memset
-#include "blake2.h"
+#include <cstdio>
+#include <cassert>
+#include <cstdint>
+#include <cstring>
 #include <type_traits>
 #include <algorithm>
 #include <vector>
-#include <unistd.h>
-#include <ctype.h>
+#include <cctype>
+#include "blake2.h"
 #include "portable_endian.h"
 
 #ifndef HEADERNONCELEN
@@ -929,5 +928,5 @@ int solve(const unsigned char* input, uint32_t input_len, int64_t nonce, const v
 }
 
 #undef CONSTEXPR
-
+#undef HEADERNONCELEN
 #endif // __EQUI_MINER_H
