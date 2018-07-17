@@ -205,6 +205,7 @@ type solutionValidatorData struct {
 	quit     chan struct{}
 }
 
+// returns 1 when mining should be stopped for any reason
 func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 	bestBlock, _ := data.miner.server.blockManager.chainState.Best()
 	if data.msgBlock.Header.PrevBlock != *bestBlock {

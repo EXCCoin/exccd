@@ -70,7 +70,13 @@ var CheckForDuplicateHashes = false
 
 // CPUMinerThreads is the default number of threads to utilize with the
 // CPUMiner when mining.
-var CPUMinerThreads = runtime.NumCPU() / 2
+var CPUMinerThreads = func() int {
+	if runtime.NumCPU() == 1 {
+		return 1
+	} else {
+		return runtime.NumCPU() / 2
+	}
+}()
 
 // Checkpoint identifies a known good point in the block chain.  Using
 // checkpoints allows a few optimizations for old blocks during initial download
