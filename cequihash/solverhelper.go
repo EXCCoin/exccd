@@ -1,10 +1,11 @@
 // Copyright (c) 2018 The ExchangeCoin team
 // Use of this source code is governed by an ISC
 // license that can be found in the LICENSE file.
+
 package cequihash
 
 /*
-#cgo CXXFLAGS: -O3 -march=corei7 -std=c++17 -Wall -Wno-strict-aliasing -Wno-shift-count-overflow -Werror
+#cgo CXXFLAGS: -O3 -march=x86-64 -mtune=generic -std=c++17 -Wall -Wno-strict-aliasing -Wno-shift-count-overflow -Werror
 #include "cequihash.h"
 */
 import "C"
