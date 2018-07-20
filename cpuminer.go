@@ -7,13 +7,10 @@
 package main
 
 import (
+	"container/list"
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"math/rand"
-	"sync"
-	"time"
-
 	"github.com/EXCCoin/exccd/blockchain"
 	equihash "github.com/EXCCoin/exccd/cequihash"
 	"github.com/EXCCoin/exccd/chaincfg"
@@ -21,6 +18,9 @@ import (
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/mining"
 	"github.com/EXCCoin/exccd/wire"
+	"math/rand"
+	"sync"
+	"time"
 	"unsafe"
 )
 
@@ -34,7 +34,7 @@ const (
 
 	// hpsUpdateSecs is the number of seconds to wait in between each
 	// update to the hashes per second monitor.
-	hpsUpdateSecs = 10
+	hpsUpdateSecs = 60
 
 	// hashUpdateSec is the number of seconds each worker waits in between
 	// notifying the speed monitor with how many hashes have been completed
@@ -107,29 +107,48 @@ func (m *CPUMiner) getMiningAddr() exccutil.Address {
 func (m *CPUMiner) speedMonitor() {
 	minrLog.Tracef("CPU miner speed monitor started")
 
-	var hashesPerSec float64
+	var updateCount uint64
 	var totalHashes uint64
+	var hashesCompletedInLastHour list.List
+	var hashesPerSec float64
 	ticker := time.NewTicker(time.Second * hpsUpdateSecs)
 	defer ticker.Stop()
 
 out:
 	for {
 		select {
-		// Periodic updates from the workers with how many hashes they
-		// have performed.
+		// Periodic updates from the workers with how many hashes they have performed.
 		case numHashes := <-m.updateHashes:
 			totalHashes += numHashes
+			for i := uint64(0); i < numHashes; i++ {
+				hashesCompletedInLastHour.PushBack(time.Now().Unix())
+			}
 
 		case <-ticker.C: // Time to update the hashes per second.
-			curHashesPerSec := float64(totalHashes) / hpsUpdateSecs
-			if hashesPerSec == 0 {
-				hashesPerSec = curHashesPerSec
+			var toRemove []*list.Element
+			now := time.Now()
+			for e := hashesCompletedInLastHour.Front(); e != nil; e = e.Next() {
+				if now.Sub(time.Unix(e.Value.(int64), 0)).Hours() > 1 {
+					toRemove = append(toRemove, e)
+				} else {
+					break
+				}
 			}
-			hashesPerSec = (hashesPerSec + curHashesPerSec) / 2
-			totalHashes = 0
-			if hashesPerSec != 0 {
-				minrLog.Debugf("Hash speed: %6.0f kilohashes/s",
-					hashesPerSec/1000)
+
+			for _, e := range toRemove {
+				hashesCompletedInLastHour.Remove(e)
+			}
+
+			updateCount += 1
+			startedSecsAgo := hpsUpdateSecs * updateCount
+			if float64(startedSecsAgo) < time.Hour.Seconds() {
+				hashesPerSec = float64(hashesCompletedInLastHour.Len()) / float64(startedSecsAgo)
+			} else {
+				hashesPerSec = float64(hashesCompletedInLastHour.Len()) / time.Hour.Seconds()
+			}
+			hashesPerHour := hashesPerSec * time.Hour.Seconds()
+			if hashesPerHour != 0 {
+				minrLog.Infof("Hash speed: %.2f hashes/hour, hashes completed: %d", hashesPerHour, totalHashes)
 			}
 
 		case m.queryHashesPerSec <- hashesPerSec: // Request for the number of hashes per second.
@@ -158,8 +177,7 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 		// so log that error as an internal error.
 		rErr, ok := err.(blockchain.RuleError)
 		if !ok {
-			minrLog.Errorf("Unexpected error while processing "+
-				"block submitted via CPU miner: %v", err)
+			minrLog.Errorf("Unexpected error while processing block submitted via CPU miner: %v", err)
 			return false
 		}
 		// Occasionally errors are given out for timing errors with
@@ -167,9 +185,8 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 		// the target. Feed these to debug.
 		if m.server.chainParams.ReduceMinDifficulty &&
 			rErr.ErrorCode == blockchain.ErrHighHash {
-			minrLog.Debugf("Block submitted via CPU miner rejected "+
-				"because of ReduceMinDifficulty time sync failure: %v",
-				err)
+			minrLog.Debugf("Block submitted via CPU miner rejected because of ReduceMinDifficulty time sync "+
+				"failure: %v", err)
 			return false
 		}
 		// Other rule errors should be reported.
@@ -178,8 +195,8 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 
 	}
 	if isOrphan {
-		minrLog.Errorf("Block submitted via CPU miner is an orphan building "+
-			"on parent %v", block.MsgBlock().Header.PrevBlock)
+		minrLog.Errorf("Block submitted via CPU miner is an orphan building on parent %v",
+			block.MsgBlock().Header.PrevBlock)
 		return false
 	}
 
@@ -189,15 +206,12 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 	for _, out := range coinbaseTxOuts {
 		coinbaseTxGenerated += out.Value
 	}
-	minrLog.Infof("Block submitted via CPU miner accepted (hash %s, "+
-		"height %v, amount %v)", block.Hash(), block.Height(),
-		exccutil.Amount(coinbaseTxGenerated))
+	minrLog.Infof("Block submitted via CPU miner accepted (hash %s, height %v, amount %v)",
+		block.Hash(), block.Height(), exccutil.Amount(coinbaseTxGenerated))
 	return true
 }
 
 type solutionValidatorData struct {
-	n        int
-	k        int
 	solved   *bool
 	exiting  *bool
 	msgBlock *wire.MsgBlock
@@ -229,7 +243,9 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 		return 0
 	}
 
-	bytes := equihash.ExtractSolution(data.n, data.k, solution)
+	data.miner.updateHashes <- 1
+
+	bytes := equihash.ExtractSolution(data.miner.server.chainParams.N, data.miner.server.chainParams.K, solution)
 	copy(data.msgBlock.Header.EquihashSolution[:], bytes)
 	hash := data.msgBlock.Header.BlockHash()
 
@@ -257,8 +273,7 @@ func (m *CPUMiner) solveAndSubmitBlock(msgBlock *wire.MsgBlock, ticker *time.Tic
 	// worker.
 	enOffset, err := wire.RandomUint64()
 	if err != nil {
-		minrLog.Errorf("Unexpected error while generating random "+
-			"extra nonce offset: %v", err)
+		minrLog.Errorf("Unexpected error while generating random extra nonce offset: %v", err)
 		enOffset = 0
 	}
 
@@ -268,12 +283,10 @@ func (m *CPUMiner) solveAndSubmitBlock(msgBlock *wire.MsgBlock, ticker *time.Tic
 	// Initial state.
 	lastGenerated := time.Now()
 	lastTxUpdate := m.txSource.LastUpdated()
-	hashesCompleted := uint64(0)
 
 	solved := false
 	exiting := false
-	validatorData := solutionValidatorData{m.server.chainParams.N, m.server.chainParams.K,
-		&solved, &exiting, msgBlock, m, quit}
+	validatorData := solutionValidatorData{&solved, &exiting, msgBlock, m, quit}
 
 	// Note that the entire extra nonce range is iterated and the offset is
 	// added relying on the fact that overflow will wrap around 0 as
@@ -298,8 +311,6 @@ func (m *CPUMiner) solveAndSubmitBlock(msgBlock *wire.MsgBlock, ticker *time.Tic
 
 			case <-ticker.C:
 				minrLog.Debugf("Miner is updating time for currently mined block")
-				m.updateHashes <- hashesCompleted
-				hashesCompleted = 0
 
 				// The current block is stale if the memory pool
 				// has been updated since the block template was
@@ -315,8 +326,7 @@ func (m *CPUMiner) solveAndSubmitBlock(msgBlock *wire.MsgBlock, ticker *time.Tic
 				err = UpdateBlockTime(msgBlock, m.server.blockManager)
 
 				if err != nil {
-					minrLog.Warnf("CPU miner unable to update block template "+
-						"time: %v", err)
+					minrLog.Warnf("CPU miner unable to update block template time: %v", err)
 					return false
 				}
 
@@ -334,8 +344,7 @@ func (m *CPUMiner) solveAndSubmitBlock(msgBlock *wire.MsgBlock, ticker *time.Tic
 			}
 
 			header.Nonce = i
-			equihash.SolveEquihash(validatorData.n, validatorData.k, headerBytes, int64(i), validatorData)
-			hashesCompleted++
+			equihash.SolveEquihash(m.server.chainParams.N, m.server.chainParams.K, headerBytes, int64(i), validatorData)
 		}
 	}
 
@@ -398,8 +407,7 @@ out:
 		template, err := NewBlockTemplate(m.policy, m.server, payToAddr)
 		m.submitBlockLock.Unlock()
 		if err != nil {
-			errStr := fmt.Sprintf("Failed to create new block "+
-				"template: %v", err)
+			errStr := fmt.Sprintf("Failed to create new block template: %v", err)
 			minrLog.Errorf(errStr)
 			continue
 		}
@@ -415,8 +423,7 @@ out:
 			if m.minedOnParents[template.Block.Header.PrevBlock] >=
 				maxSimnetToMine {
 				minrLog.Tracef("too many blocks mined on parent, stopping " +
-					"until there are enough votes on these to make a new " +
-					"block")
+					"until there are enough votes on these to make a new block")
 				continue
 			}
 		}
@@ -628,9 +635,8 @@ func (m *CPUMiner) GenerateNBlocks(n uint32) ([]*chainhash.Hash, error) {
 	// Respond with an error if there's virtually 0 chance of CPU-mining a block.
 	if !m.server.chainParams.GenerateSupported {
 		m.Unlock()
-		return nil, errors.New("no support for `generate` on the current " +
-			"network, " + m.server.chainParams.Net.String() +
-			", as it's unlikely to be possible to CPU-mine a block.")
+		return nil, errors.New("no support for `generate` on the current network, " +
+			m.server.chainParams.Net.String() + ", as it's unlikely to be possible to CPU-mine a block.")
 	}
 
 	// Respond with an error if server is already mining.
@@ -681,14 +687,12 @@ func (m *CPUMiner) GenerateNBlocks(n uint32) ([]*chainhash.Hash, error) {
 		template, err := NewBlockTemplate(m.policy, m.server, payToAddr)
 		m.submitBlockLock.Unlock()
 		if err != nil {
-			errStr := fmt.Sprintf("Failed to create new block "+
-				"template: %v", err)
+			errStr := fmt.Sprintf("Failed to create new block template: %v", err)
 			minrLog.Errorf(errStr)
 			continue
 		}
 		if template == nil {
-			errStr := fmt.Sprintf("Not enough voters on parent block " +
-				"and failed to pull parent template")
+			errStr := fmt.Sprintf("Not enough voters on parent block and failed to pull parent template")
 			minrLog.Debugf(errStr)
 			continue
 		}
