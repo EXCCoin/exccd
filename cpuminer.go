@@ -7,13 +7,10 @@
 package main
 
 import (
+	"container/list"
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"math/rand"
-	"sync"
-	"time"
-
 	"github.com/EXCCoin/exccd/blockchain"
 	equihash "github.com/EXCCoin/exccd/cequihash"
 	"github.com/EXCCoin/exccd/chaincfg"
@@ -21,6 +18,9 @@ import (
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/mining"
 	"github.com/EXCCoin/exccd/wire"
+	"math/rand"
+	"sync"
+	"time"
 	"unsafe"
 )
 
@@ -34,7 +34,7 @@ const (
 
 	// hpsUpdateSecs is the number of seconds to wait in between each
 	// update to the hashes per second monitor.
-	hpsUpdateSecs = 10
+	hpsUpdateSecs = 60
 
 	// hashUpdateSec is the number of seconds each worker waits in between
 	// notifying the speed monitor with how many hashes have been completed
@@ -107,29 +107,48 @@ func (m *CPUMiner) getMiningAddr() exccutil.Address {
 func (m *CPUMiner) speedMonitor() {
 	minrLog.Tracef("CPU miner speed monitor started")
 
-	var hashesPerSec float64
+	var updateCount uint64
 	var totalHashes uint64
+	var hashesCompletedInLastHour list.List
+	var hashesPerSec float64
 	ticker := time.NewTicker(time.Second * hpsUpdateSecs)
 	defer ticker.Stop()
 
 out:
 	for {
 		select {
-		// Periodic updates from the workers with how many hashes they
-		// have performed.
+		// Periodic updates from the workers with how many hashes they have performed.
 		case numHashes := <-m.updateHashes:
 			totalHashes += numHashes
+			for i := uint64(0); i < numHashes; i++ {
+				hashesCompletedInLastHour.PushBack(time.Now().Unix())
+			}
 
 		case <-ticker.C: // Time to update the hashes per second.
-			curHashesPerSec := float64(totalHashes) / hpsUpdateSecs
-			if hashesPerSec == 0 {
-				hashesPerSec = curHashesPerSec
+			var toRemove []*list.Element
+			now := time.Now()
+			for e := hashesCompletedInLastHour.Front(); e != nil; e = e.Next() {
+				if now.Sub(time.Unix(e.Value.(int64), 0)).Hours() > 1 {
+					toRemove = append(toRemove, e)
+				} else {
+					break
+				}
 			}
-			hashesPerSec = (hashesPerSec + curHashesPerSec) / 2
-			totalHashes = 0
-			if hashesPerSec != 0 {
-				minrLog.Debugf("Hash speed: %6.0f kilohashes/s",
-					hashesPerSec/1000)
+
+			for _, e := range toRemove {
+				hashesCompletedInLastHour.Remove(e)
+			}
+
+			updateCount += 1
+			startedSecsAgo := hpsUpdateSecs * updateCount
+			if float64(startedSecsAgo) < time.Hour.Seconds() {
+				hashesPerSec = float64(hashesCompletedInLastHour.Len()) / float64(startedSecsAgo)
+			} else {
+				hashesPerSec = float64(hashesCompletedInLastHour.Len()) / time.Hour.Seconds()
+			}
+			hashesPerHour := hashesPerSec * time.Hour.Seconds()
+			if hashesPerHour != 0 {
+				minrLog.Infof("Hash speed: %.2f hashes/hour, hashes completed: %d", hashesPerHour, totalHashes)
 			}
 
 		case m.queryHashesPerSec <- hashesPerSec: // Request for the number of hashes per second.
@@ -229,6 +248,8 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 		return 0
 	}
 
+	data.miner.updateHashes <- 1
+
 	bytes := equihash.ExtractSolution(data.n, data.k, solution)
 	copy(data.msgBlock.Header.EquihashSolution[:], bytes)
 	hash := data.msgBlock.Header.BlockHash()
@@ -268,7 +289,6 @@ func (m *CPUMiner) solveAndSubmitBlock(msgBlock *wire.MsgBlock, ticker *time.Tic
 	// Initial state.
 	lastGenerated := time.Now()
 	lastTxUpdate := m.txSource.LastUpdated()
-	hashesCompleted := uint64(0)
 
 	solved := false
 	exiting := false
@@ -298,8 +318,6 @@ func (m *CPUMiner) solveAndSubmitBlock(msgBlock *wire.MsgBlock, ticker *time.Tic
 
 			case <-ticker.C:
 				minrLog.Debugf("Miner is updating time for currently mined block")
-				m.updateHashes <- hashesCompleted
-				hashesCompleted = 0
 
 				// The current block is stale if the memory pool
 				// has been updated since the block template was
@@ -315,8 +333,7 @@ func (m *CPUMiner) solveAndSubmitBlock(msgBlock *wire.MsgBlock, ticker *time.Tic
 				err = UpdateBlockTime(msgBlock, m.server.blockManager)
 
 				if err != nil {
-					minrLog.Warnf("CPU miner unable to update block template "+
-						"time: %v", err)
+					minrLog.Warnf("CPU miner unable to update block template time: %v", err)
 					return false
 				}
 
@@ -335,7 +352,6 @@ func (m *CPUMiner) solveAndSubmitBlock(msgBlock *wire.MsgBlock, ticker *time.Tic
 
 			header.Nonce = i
 			equihash.SolveEquihash(validatorData.n, validatorData.k, headerBytes, int64(i), validatorData)
-			hashesCompleted++
 		}
 	}
 

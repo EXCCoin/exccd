@@ -3269,7 +3269,7 @@ func handleGetMiningInfo(s *rpcServer, cmd interface{}, closeChan <-chan struct{
 		StakeDifficulty:  nextStakeDiff,
 		Generate:         s.server.cpuMiner.IsMining(),
 		GenProcLimit:     s.server.cpuMiner.NumWorkers(),
-		HashesPerSec:     int64(s.server.cpuMiner.HashesPerSecond()),
+		HashesPerSec:     s.server.cpuMiner.HashesPerSecond(),
 		NetworkHashPS:    networkHashesPerSec,
 		PooledTx:         uint64(s.server.txMemPool.Count()),
 		TestNet:          cfg.TestNet,
