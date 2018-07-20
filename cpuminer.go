@@ -177,8 +177,7 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 		// so log that error as an internal error.
 		rErr, ok := err.(blockchain.RuleError)
 		if !ok {
-			minrLog.Errorf("Unexpected error while processing "+
-				"block submitted via CPU miner: %v", err)
+			minrLog.Errorf("Unexpected error while processing block submitted via CPU miner: %v", err)
 			return false
 		}
 		// Occasionally errors are given out for timing errors with
@@ -186,9 +185,8 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 		// the target. Feed these to debug.
 		if m.server.chainParams.ReduceMinDifficulty &&
 			rErr.ErrorCode == blockchain.ErrHighHash {
-			minrLog.Debugf("Block submitted via CPU miner rejected "+
-				"because of ReduceMinDifficulty time sync failure: %v",
-				err)
+			minrLog.Debugf("Block submitted via CPU miner rejected because of ReduceMinDifficulty time sync "+
+				"failure: %v", err)
 			return false
 		}
 		// Other rule errors should be reported.
@@ -197,8 +195,8 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 
 	}
 	if isOrphan {
-		minrLog.Errorf("Block submitted via CPU miner is an orphan building "+
-			"on parent %v", block.MsgBlock().Header.PrevBlock)
+		minrLog.Errorf("Block submitted via CPU miner is an orphan building on parent %v",
+			block.MsgBlock().Header.PrevBlock)
 		return false
 	}
 
@@ -208,9 +206,8 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 	for _, out := range coinbaseTxOuts {
 		coinbaseTxGenerated += out.Value
 	}
-	minrLog.Infof("Block submitted via CPU miner accepted (hash %s, "+
-		"height %v, amount %v)", block.Hash(), block.Height(),
-		exccutil.Amount(coinbaseTxGenerated))
+	minrLog.Infof("Block submitted via CPU miner accepted (hash %s, height %v, amount %v)",
+		block.Hash(), block.Height(), exccutil.Amount(coinbaseTxGenerated))
 	return true
 }
 
@@ -278,8 +275,7 @@ func (m *CPUMiner) solveAndSubmitBlock(msgBlock *wire.MsgBlock, ticker *time.Tic
 	// worker.
 	enOffset, err := wire.RandomUint64()
 	if err != nil {
-		minrLog.Errorf("Unexpected error while generating random "+
-			"extra nonce offset: %v", err)
+		minrLog.Errorf("Unexpected error while generating random extra nonce offset: %v", err)
 		enOffset = 0
 	}
 
@@ -292,8 +288,7 @@ func (m *CPUMiner) solveAndSubmitBlock(msgBlock *wire.MsgBlock, ticker *time.Tic
 
 	solved := false
 	exiting := false
-	validatorData := solutionValidatorData{m.server.chainParams.N, m.server.chainParams.K,
-		&solved, &exiting, msgBlock, m, quit}
+	validatorData := solutionValidatorData{&solved, &exiting, msgBlock, m, quit}
 
 	// Note that the entire extra nonce range is iterated and the offset is
 	// added relying on the fact that overflow will wrap around 0 as
@@ -414,8 +409,7 @@ out:
 		template, err := NewBlockTemplate(m.policy, m.server, payToAddr)
 		m.submitBlockLock.Unlock()
 		if err != nil {
-			errStr := fmt.Sprintf("Failed to create new block "+
-				"template: %v", err)
+			errStr := fmt.Sprintf("Failed to create new block template: %v", err)
 			minrLog.Errorf(errStr)
 			continue
 		}
@@ -431,8 +425,7 @@ out:
 			if m.minedOnParents[template.Block.Header.PrevBlock] >=
 				maxSimnetToMine {
 				minrLog.Tracef("too many blocks mined on parent, stopping " +
-					"until there are enough votes on these to make a new " +
-					"block")
+					"until there are enough votes on these to make a new block")
 				continue
 			}
 		}
@@ -644,9 +637,8 @@ func (m *CPUMiner) GenerateNBlocks(n uint32) ([]*chainhash.Hash, error) {
 	// Respond with an error if there's virtually 0 chance of CPU-mining a block.
 	if !m.server.chainParams.GenerateSupported {
 		m.Unlock()
-		return nil, errors.New("no support for `generate` on the current " +
-			"network, " + m.server.chainParams.Net.String() +
-			", as it's unlikely to be possible to CPU-mine a block.")
+		return nil, errors.New("no support for `generate` on the current network, "+
+			m.server.chainParams.Net.String() + ", as it's unlikely to be possible to CPU-mine a block.")
 	}
 
 	// Respond with an error if server is already mining.
@@ -697,14 +689,12 @@ func (m *CPUMiner) GenerateNBlocks(n uint32) ([]*chainhash.Hash, error) {
 		template, err := NewBlockTemplate(m.policy, m.server, payToAddr)
 		m.submitBlockLock.Unlock()
 		if err != nil {
-			errStr := fmt.Sprintf("Failed to create new block "+
-				"template: %v", err)
+			errStr := fmt.Sprintf("Failed to create new block template: %v", err)
 			minrLog.Errorf(errStr)
 			continue
 		}
 		if template == nil {
-			errStr := fmt.Sprintf("Not enough voters on parent block " +
-				"and failed to pull parent template")
+			errStr := fmt.Sprintf("Not enough voters on parent block and failed to pull parent template")
 			minrLog.Debugf(errStr)
 			continue
 		}
