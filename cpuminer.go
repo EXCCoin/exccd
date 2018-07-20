@@ -18,7 +18,6 @@ import (
 	"github.com/EXCCoin/exccd/exccutil"
 	"github.com/EXCCoin/exccd/mining"
 	"github.com/EXCCoin/exccd/wire"
-	"math/rand"
 	"sync"
 	"time"
 	"unsafe"
@@ -90,16 +89,6 @@ type CPUMiner struct {
 	// exhaustion. It should not race because it's only
 	// accessed in a single threaded loop below.
 	minedOnParents map[chainhash.Hash]uint8
-}
-
-// getMiningAddr gets payToAddr from mining address field
-// or fallbacks to configuration addresses (--miningaddr parameter)
-func (m *CPUMiner) getMiningAddr() exccutil.Address {
-	if m.miningAddr != nil {
-		return *m.miningAddr
-	}
-	rand.Seed(time.Now().UnixNano())
-	return cfg.miningAddrs[rand.Intn(len(cfg.miningAddrs))]
 }
 
 // speedMonitor handles tracking the number of hashes per second the mining
@@ -398,8 +387,11 @@ out:
 			}
 		}
 
-		// Choose a payment address at random.
-		payToAddr := m.getMiningAddr()
+		payToAddr, err := m.server.blockManager.GetMiningAddr()
+		if err != nil {
+			minrLog.Errorf("Failed to get mining address: %v", err)
+			continue
+		}
 
 		// Create a new block template using the available transactions
 		// in the memory pool as a source of transactions to potentially
@@ -573,17 +565,6 @@ func (m *CPUMiner) HashesPerSecond() float64 {
 	return <-m.queryHashesPerSec
 }
 
-// SetMiningAddr sets the mining addresses that optionally overwrite
-// addresses specified using --miningaddr flag
-//
-// This function is safe for concurrent access.
-func (m *CPUMiner) SetMiningAddr(addr *exccutil.Address) {
-	m.submitBlockLock.Lock()
-	defer m.submitBlockLock.Unlock()
-
-	m.miningAddr = addr
-}
-
 // SetNumWorkers sets the number of workers to create which solve blocks.  Any
 // negative values will cause a default number of workers to be used which is
 // based on the number of processor cores in the system.  A value of 0 will
@@ -679,7 +660,11 @@ func (m *CPUMiner) GenerateNBlocks(n uint32) ([]*chainhash.Hash, error) {
 		// template on a block that is in the process of becoming stale.
 		m.submitBlockLock.Lock()
 
-		payToAddr := m.getMiningAddr()
+		payToAddr, err := m.server.blockManager.GetMiningAddr()
+		if err != nil {
+			minrLog.Errorf("Failed to get mining address: %v", err)
+			continue
+		}
 
 		// Create a new block template using the available transactions
 		// in the memory pool as a source of transactions to potentially
