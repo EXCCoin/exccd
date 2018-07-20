@@ -212,8 +212,6 @@ func (m *CPUMiner) submitBlock(block *exccutil.Block) bool {
 }
 
 type solutionValidatorData struct {
-	n        int
-	k        int
 	solved   *bool
 	exiting  *bool
 	msgBlock *wire.MsgBlock
@@ -247,7 +245,7 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 
 	data.miner.updateHashes <- 1
 
-	bytes := equihash.ExtractSolution(data.n, data.k, solution)
+	bytes := equihash.ExtractSolution(data.miner.server.chainParams.N, data.miner.server.chainParams.K, solution)
 	copy(data.msgBlock.Header.EquihashSolution[:], bytes)
 	hash := data.msgBlock.Header.BlockHash()
 
@@ -346,7 +344,7 @@ func (m *CPUMiner) solveAndSubmitBlock(msgBlock *wire.MsgBlock, ticker *time.Tic
 			}
 
 			header.Nonce = i
-			equihash.SolveEquihash(validatorData.n, validatorData.k, headerBytes, int64(i), validatorData)
+			equihash.SolveEquihash(m.server.chainParams.N, m.server.chainParams.K, headerBytes, int64(i), validatorData)
 		}
 	}
 
