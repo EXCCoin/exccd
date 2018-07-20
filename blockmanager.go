@@ -396,6 +396,8 @@ type blockManager struct {
 	chainState          chainState
 	wg                  sync.WaitGroup
 	quit                chan struct{}
+	miningAddr          *exccutil.Address
+	miningAddrMutex     sync.RWMutex
 
 	// The following fields are used for headers-first mode.
 	headersFirstMode bool
@@ -908,11 +910,16 @@ func (b *blockManager) checkBlockForHiddenVotes(block *exccutil.Block) {
 			"block with extra found voters")
 		return
 	}
+	payToAddr, err := b.GetMiningAddr()
+	if err != nil {
+		bmgrLog.Errorf("Failed to get mining address: %v", err)
+		return
+	}
 	coinbase, err := createCoinbaseTx(b.chain.FetchSubsidyCache(),
 		template.Block.Transactions[0].TxIn[0].SignatureScript,
 		opReturnPkScript,
 		int64(template.Block.Header.Height),
-		cfg.miningAddrs[rand.Intn(len(cfg.miningAddrs))],
+		payToAddr,
 		uint16(votesTotal),
 		b.server.chainParams)
 	if err != nil {
@@ -2510,6 +2517,36 @@ func (b *blockManager) SetParentTemplate(bt *BlockTemplate) {
 	reply := make(chan setParentTemplateResponse)
 	b.msgChan <- setParentTemplateMsg{Template: bt, reply: reply}
 	<-reply
+}
+
+// SetMiningAddr sets the mining addresses that optionally overwrite
+// addresses specified using --miningaddr flag
+//
+// This function is safe for concurrent access.
+func (b *blockManager) SetMiningAddr(addr *exccutil.Address) {
+	b.miningAddrMutex.Lock()
+	b.miningAddr = addr
+	b.miningAddrMutex.Unlock()
+}
+
+// GetMiningAddr gets payToAddr from mining address field
+// or fallbacks to configuration addresses (--miningaddr parameter)
+func (b *blockManager) GetMiningAddr() (exccutil.Address, error) {
+	b.miningAddrMutex.RLock()
+
+	if b.miningAddr != nil {
+		addr := *b.miningAddr
+		b.miningAddrMutex.RUnlock()
+		return addr, nil
+	}
+	b.miningAddrMutex.RUnlock()
+
+	if len(cfg.miningAddrs) > 0 {
+		rand.Seed(time.Now().UnixNano())
+		return cfg.miningAddrs[rand.Intn(len(cfg.miningAddrs))], nil
+	}
+
+	return nil, fmt.Errorf("No payment address specified via --miningaddr or setgenerate")
 }
 
 // newBlockManager returns a new ExchangeCoin block manager.

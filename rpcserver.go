@@ -1753,9 +1753,9 @@ func handleExistsMempoolTxs(s *rpcServer, cmd interface{}, closeChan <-chan stru
 func handleGenerate(s *rpcServer, cmd interface{}, closeChan <-chan struct{}) (interface{}, error) {
 	// Respond with an error if there are no addresses to pay the
 	// created blocks to.
-	if len(cfg.miningAddrs) == 0 {
-		return nil, rpcInternalError("No payment addresses specified "+
-			"via --miningaddr", "Configuration")
+	_, err := s.server.blockManager.GetMiningAddr()
+	if err != nil {
+		return nil, rpcInternalError(err.Error(), "Configuration")
 	}
 
 	c := cmd.(*exccjson.GenerateCmd)
@@ -2343,7 +2343,11 @@ func (state *gbtWorkState) updateBlockTemplate(s *rpcServer, useCoinbaseValue bo
 		// to create their own coinbase.
 		var payAddr exccutil.Address
 		if !useCoinbaseValue {
-			payAddr = cfg.miningAddrs[rand.Intn(len(cfg.miningAddrs))]
+			var err error
+			payAddr, err = s.server.blockManager.GetMiningAddr()
+			if err != nil {
+				return rpcInternalError(err.Error(), "")
+			}
 		}
 
 		// Create a new block template that has a coinbase which anyone
@@ -3001,11 +3005,11 @@ func handleGetBlockTemplate(s *rpcServer, cmd interface{}, closeChan <-chan stru
 			"Please disable CPU mining and try again.")
 	}
 
-	// Respond with an error if there are no addresses to pay the created
-	// blocks to.
-	if len(cfg.miningAddrs) == 0 {
-		return nil, rpcInternalError("No payment addresses specified "+
-			"via --miningaddr", "Configuration")
+	// Respond with an error if there are no addresses to pay the
+	// created blocks to.
+	_, err := s.server.blockManager.GetMiningAddr()
+	if err != nil {
+		return nil, rpcInternalError(err.Error(), "Configuration")
 	}
 
 	c := cmd.(*exccjson.GetBlockTemplateCmd)
@@ -4051,8 +4055,11 @@ func handleGetWorkRequest(s *rpcServer) (interface{}, error) {
 		// invocation to try again.
 		state.prevHash = nil
 
-		// Choose a payment address at random.
-		payToAddr := cfg.miningAddrs[rand.Intn(len(cfg.miningAddrs))]
+		payToAddr, err := s.server.blockManager.GetMiningAddr()
+		if err != nil {
+			context := "Failed to get mining address"
+			return nil, rpcInternalError(err.Error(), context)
+		}
 
 		template, err := NewBlockTemplate(s.policy, s.server, payToAddr)
 		if err != nil {
@@ -5103,13 +5110,13 @@ func handleSetGenerate(s *rpcServer, cmd interface{}, closeChan <-chan struct{})
 				return nil, rpcInternalError("Mining address is on wrong network",
 					"Address check")
 			}
-			s.server.cpuMiner.SetMiningAddr(&miningAddr)
+			s.server.blockManager.SetMiningAddr(&miningAddr)
 		} else if len(cfg.miningAddrs) == 0 {
 			return nil, rpcInternalError("No payment addresses specified via --miningaddr",
 				"Configuration")
 		} else {
 			// Reset miningaddr and fallback to startup configuration
-			s.server.cpuMiner.SetMiningAddr(nil)
+			s.server.blockManager.SetMiningAddr(nil)
 		}
 
 		// It's safe to call start even if it's already started.
