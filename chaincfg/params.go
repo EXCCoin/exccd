@@ -669,7 +669,7 @@ var TestNetParams = Params{
 	StakeVersionInterval:    144 * 2 * 7, // ~3.5 day
 	MaxFreshStakePerBlock:   20,          // 4*TicketsPerBlock
 	StakeEnabledHeight:      16 + 16,     // CoinbaseMaturity + TicketMaturity
-	StakeValidationHeight:   768,         // ~32 hours
+	StakeValidationHeight:   192,         // ~8 hours
 	StakeBaseSigScript:      []byte{0x00, 0x00},
 	StakeMajorityMultiplier: 3,
 	StakeMajorityDivisor:    4,
