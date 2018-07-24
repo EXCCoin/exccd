@@ -32,7 +32,7 @@ func TestEncodeDecodeUncompressedWIF(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wif2, err := exccutil.NewUncompressedWIF(priv2, &chaincfg.TestNet2Params)
+	wif2, err := exccutil.NewUncompressedWIF(priv2, &chaincfg.TestNetParams)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,7 +124,7 @@ func TestEncodeDecodeWIF(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		wif2, err := exccutil.NewWIF(priv2, &chaincfg.TestNet2Params, ecType)
+		wif2, err := exccutil.NewWIF(priv2, &chaincfg.TestNetParams, ecType)
 		if err != nil {
 			t.Fatal(err)
 		}

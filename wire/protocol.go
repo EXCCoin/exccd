@@ -112,8 +112,8 @@ const (
 	// RegTest represents the regression test network.
 	RegTest CurrencyNet = 0xeceb6037
 
-	// TestNet2 represents the 2nd test network.
-	TestNet2 CurrencyNet = 0x5aa4752a
+	// TestNet represents the 2nd test network.
+	TestNet CurrencyNet = 0x5aa4752a
 
 	// SimNet represents the simulation test network.
 	SimNet CurrencyNet = 0xbc8776ff
@@ -122,10 +122,10 @@ const (
 // bnStrings is a map of ExchangeCoin networks back to their constant names for
 // pretty printing.
 var bnStrings = map[CurrencyNet]string{
-	MainNet:  "MainNet",
-	TestNet2: "TestNet2",
-	RegTest:  "RegNet",
-	SimNet:   "SimNet",
+	MainNet: "MainNet",
+	TestNet: "TestNet",
+	RegTest: "RegNet",
+	SimNet:  "SimNet",
 }
 
 // String returns the CurrencyNet in human-readable form.

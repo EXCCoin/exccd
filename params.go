@@ -33,10 +33,10 @@ var mainNetParams = params{
 	rpcPort: "9109",
 }
 
-// testNet2Params contains parameters specific to the test network (version 2)
-// (wire.TestNet2).
-var testNet2Params = params{
-	Params:  &chaincfg.TestNet2Params,
+// testNetParams contains parameters specific to the test network
+// (wire.TestNet).
+var testNetParams = params{
+	Params:  &chaincfg.TestNetParams,
 	rpcPort: "19109",
 }
 
@@ -48,18 +48,18 @@ var simNetParams = params{
 }
 
 // netName returns the name used when referring to a ExchangeCoin network.  At the
-// time of writing, exccd currently places blocks for testnet version 0 in the
+// time of writing, exccd currently places blocks for testnet in the
 // data and log directory "testnet", which does not match the Name field of the
 // chaincfg parameters.  This function can be used to override this directory name
-// as "testnet2" when the passed active network matches wire.TestNet2.
+// as "testnet" when the passed active network matches wire.TestNet.
 //
 // A proper upgrade to move the data and log directories for this network to
 // "testnet" is planned for the future, at which point this function can be
 // removed and the network parameter's name used instead.
 func netName(chainParams *params) string {
 	switch chainParams.Net {
-	case wire.TestNet2:
-		return "testnet2"
+	case wire.TestNet:
+		return "testnet"
 	default:
 		return chainParams.Name
 	}

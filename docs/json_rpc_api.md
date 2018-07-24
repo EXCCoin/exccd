@@ -625,7 +625,7 @@ the method name for further details such as parameter and return information.
 |Parameters|None|
 |Description|Get ExchangeCoin network exccd is running on.|
 |Returns|`numeric`|
-|Example Return|`(mainnet)` `3652501241` <br /> `(testnet)` `118034699`  <br /> `(testnet2)` `1223139429` |
+|Example Return|`(mainnet)` `3652501241` <br /> `(testnet)` `118034699` |
 [Return to Overview](#ExtMethodOverview)<br />
 
 ***

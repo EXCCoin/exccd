@@ -142,22 +142,22 @@ var genesisCoinbaseTxLegacy = wire.MsgTx{
 	Expiry:   0,
 }
 
-// TestNet2 ------------------------------------------------------------------------
+// TestNet ------------------------------------------------------------------------
 
 // testNetGenesisMerkleRoot is the hash of the first transaction in the genesis block
 // for the test network.
-var testNet2GenesisMerkleRoot = genesisCoinbaseTxLegacy.TxHash()
+var testNetGenesisMerkleRoot = genesisCoinbaseTxLegacy.TxHash()
 
 // testNetGenesisBlock defines the genesis block of the block chain which
 // serves as the public transaction ledger for the test network (version 3).
-var testNet2GenesisBlock = wire.MsgBlock{
+var testNetGenesisBlock = wire.MsgBlock{
 	Header: wire.BlockHeader{
 		Version:      4,
 		PrevBlock:    chainhash.Hash{},
-		MerkleRoot:   testNet2GenesisMerkleRoot,
-		Timestamp:    time.Unix(1489550400, 0), // 2017-03-15 TestNet10
-		Bits:         bigToCompact(new(big.Int).Div(testNetPowLimit, initialDifficulty)),
-		SBits:        20000000,
+		MerkleRoot:   testNetGenesisMerkleRoot,
+		Timestamp:    time.Unix(1532420489, 0), // Tuesday, 24-Jul-18 08:21:29 UTC
+		Bits:         bigToCompact(new(big.Int).Div(testNetPowLimit, big.NewInt(10))),
+		SBits:        2 * 1e7, // 0.2 Coin
 		Nonce:        0x18aea41a,
 		StakeVersion: 0,
 	},
@@ -166,7 +166,7 @@ var testNet2GenesisBlock = wire.MsgBlock{
 
 // testNetGenesisHash is the hash of the first block in the block chain for the
 // test network.
-var testNet2GenesisHash = testNet2GenesisBlock.BlockHash()
+var testNetGenesisHash = testNetGenesisBlock.BlockHash()
 
 // SimNet -------------------------------------------------------------------------
 
