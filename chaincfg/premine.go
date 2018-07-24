@@ -3322,6 +3322,10 @@ var BlockOneLedgerMainNet = []*TokenPayout{
 // network.
 var BlockOneLedgerTestNet2 = []*TokenPayout{
 	{"TsaZEuKujndudza1tS4Y5NQZWBcrXnETFoL", 100000 * 1e8},
+	{"TsU8YSM68CXGqYaNshaXouEhm8emNbJayFR", 100000 * 1e8},
+	{"TsjLjiLQbZg9jNZp6TQ1eqaqumtg2S4u2H5", 100000 * 1e8},
+	{"Tsb4vtLHNKwbkvUwkc3Kd1P6VdUqE3jBnZD", 100000 * 1e8},
+	{"TsRdfxYZXLGft9JPgx4uNHq9UDP5F9PgXEH", 100000 * 1e8},
 }
 
 // BlockOneLedgerSimNet is the block one output ledger for the simulation

@@ -30,8 +30,8 @@ var (
 	mainPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 254), bigOne)
 
 	// testNetPowLimit is the highest proof of work value a ExchangeCoin block
-	// can have for the test network.  It is the value 2^256 - 1.
-	testNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 256), bigOne)
+	// can have for the test network.  It is the value 2^254 - 1.
+	testNetPowLimit = new(big.Int).Sub(new(big.Int).Lsh(bigOne, 254), bigOne)
 
 	// defaultTargetTimePerBlock is the ideal ExchangeCoin block time.
 	// It is the value of 2.5 minute.
@@ -582,7 +582,7 @@ var TestNet2Params = Params{
 	Net:         wire.TestNet2,
 	DefaultPort: "11999",
 	DNSSeeds:    []DNSSeed{},
-	N:           96,
+	N:           144,
 	K:           5,
 
 	// Chain parameters
@@ -593,8 +593,8 @@ var TestNet2Params = Params{
 	ReduceMinDifficulty:      false,
 	MinDiffReductionTime:     0, // Does not apply since ReduceMinDifficulty false
 	GenerateSupported:        true,
-	MaximumBlockSizes:        []int{1310720},
-	MaxTxSize:                1000000,
+	MaximumBlockSizes:        []int{393216},
+	MaxTxSize:                393216,
 	TargetTimePerBlock:       defaultTargetTimePerBlock,
 	WorkDiffAlpha:            1,
 	WorkDiffWindowSize:       144,
@@ -603,10 +603,10 @@ var TestNet2Params = Params{
 	RetargetAdjustmentFactor: 4,
 
 	// Subsidy parameters.
-	BaseSubsidy:              2500000000, // 25 Coin
-	MulSubsidy:               100,
-	DivSubsidy:               101,
-	SubsidyReductionInterval: 2048,
+	BaseSubsidy:              38 * 1e8, // 38 Coin
+	MulSubsidy:               100000,
+	DivSubsidy:               103183,
+	SubsidyReductionInterval: 16128, // 4 weeks
 	WorkRewardProportion:     7,
 	StakeRewardProportion:    3,
 
@@ -617,21 +617,21 @@ var TestNet2Params = Params{
 	//
 	// The miner confirmation window is defined as:
 	//   target proof of work timespan / target proof of work spacing
-	RuleChangeActivationQuorum:     2520, // 10 % of RuleChangeActivationInterval * TicketsPerBlock
+	RuleChangeActivationQuorum:     4032, // 10 % of RuleChangeActivationInterval * TicketsPerBlock
 	RuleChangeActivationMultiplier: 3,    // 75%
 	RuleChangeActivationDivisor:    4,
-	RuleChangeActivationInterval:   5040, // 1 week
+	RuleChangeActivationInterval:   2016 * 4, // 4 weeks
 	Deployments:                    map[uint32][]ConsensusDeployment{},
 
 	// Enforce current block version once majority of the network has
 	// upgraded.
-	// 51% (51 / 100)
+	// 75% (750 / 1000)
 	// Reject previous block versions once a majority of the network has
 	// upgraded.
-	// 75% (75 / 100)
-	BlockEnforceNumRequired: 51,
-	BlockRejectNumRequired:  75,
-	BlockUpgradeNumToCheck:  100,
+	// 95% (950 / 1000)
+	BlockEnforceNumRequired: 750,
+	BlockRejectNumRequired:  950,
+	BlockUpgradeNumToCheck:  1000,
 
 	// AcceptNonStdTxs is a mempool param to either accept and relay
 	// non standard txs to the network or reject them
@@ -652,10 +652,10 @@ var TestNet2Params = Params{
 
 	// BIP44 coin type used in the hierarchical deterministic path for
 	// address generation.
-	HDCoinType: 1,
+	HDCoinType: 0,
 
 	// ExchangeCoin PoS parameters
-	MinimumStakeDiff:        20000000, // 0.2 Coin
+	MinimumStakeDiff:        2 * 1e7, // 0.2 Coin
 	TicketPoolSize:          1024,
 	TicketsPerBlock:         5,
 	TicketMaturity:          16,
@@ -666,10 +666,10 @@ var TestNet2Params = Params{
 	StakeDiffAlpha:          1,
 	StakeDiffWindowSize:     144,
 	StakeDiffWindows:        20,
-	StakeVersionInterval:    144 * 2 * 7, // ~1 week
+	StakeVersionInterval:    144 * 2 * 7, // ~3.5 day
 	MaxFreshStakePerBlock:   20,          // 4*TicketsPerBlock
 	StakeEnabledHeight:      16 + 16,     // CoinbaseMaturity + TicketMaturity
-	StakeValidationHeight:   768,         // Arbitrary
+	StakeValidationHeight:   768,         // ~32 hours
 	StakeBaseSigScript:      []byte{0x00, 0x00},
 	StakeMajorityMultiplier: 3,
 	StakeMajorityDivisor:    4,

@@ -155,9 +155,9 @@ var testNet2GenesisBlock = wire.MsgBlock{
 		Version:      4,
 		PrevBlock:    chainhash.Hash{},
 		MerkleRoot:   testNet2GenesisMerkleRoot,
-		Timestamp:    time.Unix(1489550400, 0), // 2017-03-15 TestNet10
-		Bits:         bigToCompact(new(big.Int).Div(testNetPowLimit, initialDifficulty)),
-		SBits:        20000000,
+		Timestamp:    time.Unix(1532420489, 0), // Tuesday, 24-Jul-18 08:21:29 UTC
+		Bits:         bigToCompact(new(big.Int).Div(testNetPowLimit, big.NewInt(10))),
+		SBits:        2 * 1e7, // 0.2 Coin
 		Nonce:        0x18aea41a,
 		StakeVersion: 0,
 	},
