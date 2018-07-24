@@ -574,20 +574,20 @@ var MainNetParams = Params{
 	BlockOneLedger: BlockOneLedgerMainNet,
 }
 
-// TestNet2Params defines the network parameters for the test currency network.
+// TestNetParams defines the network parameters for the test currency network.
 // This network is sometimes simply called "testnet".
 // This is the second public iteration of testnet.
-var TestNet2Params = Params{
-	Name:        "testnet2",
-	Net:         wire.TestNet2,
+var TestNetParams = Params{
+	Name:        "testnet",
+	Net:         wire.TestNet,
 	DefaultPort: "11999",
 	DNSSeeds:    []DNSSeed{},
 	N:           144,
 	K:           5,
 
 	// Chain parameters
-	GenesisBlock:             &testNet2GenesisBlock,
-	GenesisHash:              &testNet2GenesisHash,
+	GenesisBlock:             &testNetGenesisBlock,
+	GenesisHash:              &testNetGenesisHash,
 	PowLimit:                 testNetPowLimit,
 	PowLimitBits:             bigToCompact(testNetPowLimit),
 	ReduceMinDifficulty:      false,
@@ -675,7 +675,7 @@ var TestNet2Params = Params{
 	StakeMajorityDivisor:    4,
 
 	// ExchangeCoin organization related parameters.
-	BlockOneLedger: BlockOneLedgerTestNet2,
+	BlockOneLedger: BlockOneLedgerTestNet,
 }
 
 // SimNetParams defines the network parameters for the simulation test ExchangeCoin
@@ -991,7 +991,7 @@ func (p *Params) LatestCheckpointHeight() int64 {
 func init() {
 	// Register all default networks when the package is initialized.
 	mustRegister(&MainNetParams)
-	mustRegister(&TestNet2Params)
+	mustRegister(&TestNetParams)
 	mustRegister(&SimNetParams)
 }
 

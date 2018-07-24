@@ -58,7 +58,7 @@ func TestRegister(t *testing.T) {
 				},
 				{
 					name:   "duplicate testnet",
-					params: &TestNet2Params,
+					params: &TestNetParams,
 					err:    ErrDuplicateNet,
 				},
 				{
@@ -73,7 +73,7 @@ func TestRegister(t *testing.T) {
 					valid: true,
 				},
 				{
-					magic: TestNet2Params.PubKeyHashAddrID,
+					magic: TestNetParams.PubKeyHashAddrID,
 					valid: true,
 				},
 				{
@@ -95,7 +95,7 @@ func TestRegister(t *testing.T) {
 					valid: true,
 				},
 				{
-					magic: TestNet2Params.ScriptHashAddrID,
+					magic: TestNetParams.ScriptHashAddrID,
 					valid: true,
 				},
 				{
@@ -118,8 +118,8 @@ func TestRegister(t *testing.T) {
 					err:  nil,
 				},
 				{
-					priv: TestNet2Params.HDPrivateKeyID[:],
-					want: TestNet2Params.HDPublicKeyID[:],
+					priv: TestNetParams.HDPrivateKeyID[:],
+					want: TestNetParams.HDPublicKeyID[:],
 					err:  nil,
 				},
 				{
@@ -156,7 +156,7 @@ func TestRegister(t *testing.T) {
 					valid: true,
 				},
 				{
-					magic: TestNet2Params.PubKeyHashAddrID,
+					magic: TestNetParams.PubKeyHashAddrID,
 					valid: true,
 				},
 				{
@@ -178,7 +178,7 @@ func TestRegister(t *testing.T) {
 					valid: true,
 				},
 				{
-					magic: TestNet2Params.ScriptHashAddrID,
+					magic: TestNetParams.ScriptHashAddrID,
 					valid: true,
 				},
 				{
@@ -212,7 +212,7 @@ func TestRegister(t *testing.T) {
 				},
 				{
 					name:   "duplicate testnet",
-					params: &TestNet2Params,
+					params: &TestNetParams,
 					err:    ErrDuplicateNet,
 				},
 				{
@@ -232,7 +232,7 @@ func TestRegister(t *testing.T) {
 					valid: true,
 				},
 				{
-					magic: TestNet2Params.PubKeyHashAddrID,
+					magic: TestNetParams.PubKeyHashAddrID,
 					valid: true,
 				},
 				{
@@ -254,7 +254,7 @@ func TestRegister(t *testing.T) {
 					valid: true,
 				},
 				{
-					magic: TestNet2Params.ScriptHashAddrID,
+					magic: TestNetParams.ScriptHashAddrID,
 					valid: true,
 				},
 				{
@@ -277,8 +277,8 @@ func TestRegister(t *testing.T) {
 					err:  nil,
 				},
 				{
-					priv: TestNet2Params.HDPrivateKeyID[:],
-					want: TestNet2Params.HDPublicKeyID[:],
+					priv: TestNetParams.HDPrivateKeyID[:],
+					want: TestNetParams.HDPublicKeyID[:],
 					err:  nil,
 				},
 				{
