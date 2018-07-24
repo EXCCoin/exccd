@@ -4,6 +4,7 @@ exccd
 [![Build Status](https://travis-ci.org/EXCCoin/exccd.png?branch=master)](https://travis-ci.org/EXCCoin/exccd)
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd)
+[![GoReportCard](https://goreportcard.com/badge/github.com/EXCCoin/exccd)](https://goreportcard.com/report/github.com/EXCCoin/exccd)
 
 exccd is a ExchangeCoin full node implementation written in Go (golang).
 
