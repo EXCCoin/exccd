@@ -581,9 +581,11 @@ var TestNetParams = Params{
 	Name:        "testnet",
 	Net:         wire.TestNet,
 	DefaultPort: "11999",
-	DNSSeeds:    []DNSSeed{},
-	N:           144,
-	K:           5,
+	DNSSeeds: []DNSSeed{
+		{"testnet-seed.excc.co", true},
+	},
+	N: 144,
+	K: 5,
 
 	// Chain parameters
 	GenesisBlock:             &testNetGenesisBlock,
