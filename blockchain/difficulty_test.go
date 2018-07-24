@@ -177,10 +177,10 @@ func assertStakeDiffParamsTestNet(t *testing.T, params *chaincfg.Params) {
 		t.Fatalf("%s:%d -- expect params with ticket maturity of "+
 			"%d, got %d", file, line, 16, params.TicketMaturity)
 	}
-	if params.StakeValidationHeight != 768 {
+	if params.StakeValidationHeight != 192 {
 		_, file, line, _ := runtime.Caller(1)
 		t.Fatalf("%s:%d -- expect params with stake val height of %d, "+
-			"got %d", file, line, 768, params.StakeValidationHeight)
+			"got %d", file, line, 192, params.StakeValidationHeight)
 	}
 	if params.StakeDiffWindowSize != 144 {
 		_, file, line, _ := runtime.Caller(1)
@@ -836,7 +836,7 @@ func TestEstimateNextStakeDiff(t *testing.T) {
 				{256, 20, minStakeDiffTestNet}, // 288
 			},
 			useMaxTickets: true,
-			expectedDiff:  44505494,
+			expectedDiff:  37020184,
 		},
 		{
 			// Next retarget is at 432.
@@ -848,10 +848,10 @@ func TestEstimateNextStakeDiff(t *testing.T) {
 			ticketInfo: []ticketInfo{
 				{16, 0, minStakeDiffTestNet},   // 16
 				{271, 20, minStakeDiffTestNet}, // 287
-				{134, 20, 44505494},            // 421
+				{134, 20, 37020184},            // 421
 			},
 			useMaxTickets: true,
-			expectedDiff:  108661875,
+			expectedDiff:  72561909,
 		},
 		{
 			// Next retarget is at 576.
@@ -860,11 +860,11 @@ func TestEstimateNextStakeDiff(t *testing.T) {
 			ticketInfo: []ticketInfo{
 				{16, 0, minStakeDiffTestNet},   // 16
 				{271, 20, minStakeDiffTestNet}, // 287
-				{144, 20, 44505494},            // 431
-				{1, 20, 108661875},             // 432
+				{144, 20, 37020184},            // 431
+				{1, 20, 72561909},              // 432
 			},
 			useMaxTickets: true,
-			expectedDiff:  314319918,
+			expectedDiff:  168336902,
 		},
 		{
 			// Next retarget is at 576.
@@ -873,11 +873,11 @@ func TestEstimateNextStakeDiff(t *testing.T) {
 			ticketInfo: []ticketInfo{
 				{16, 0, minStakeDiffTestNet},   // 16
 				{271, 20, minStakeDiffTestNet}, // 287
-				{144, 20, 44505494},            // 431
-				{2, 20, 108661875},             // 433
+				{144, 20, 37020184},            // 431
+				{2, 20, 72561909},              // 433
 			},
 			useMaxTickets: true,
-			expectedDiff:  314319918,
+			expectedDiff:  168336902,
 		},
 		{
 			// Next retarget is at 576.
@@ -886,11 +886,11 @@ func TestEstimateNextStakeDiff(t *testing.T) {
 			ticketInfo: []ticketInfo{
 				{16, 0, minStakeDiffTestNet},   // 16
 				{271, 20, minStakeDiffTestNet}, // 287
-				{144, 20, 44505494},            // 431
-				{144, 20, 108661875},           // 575
+				{144, 20, 37020184},            // 431
+				{144, 20, 72561909},            // 575
 			},
 			useMaxTickets: true,
-			expectedDiff:  314319918,
+			expectedDiff:  168336902,
 		},
 		{
 			// Next retarget is at 1152.
@@ -900,27 +900,27 @@ func TestEstimateNextStakeDiff(t *testing.T) {
 				{16, 0, minStakeDiffTestNet},   // 16
 				{127, 20, minStakeDiffTestNet}, // 143
 				{144, 10, minStakeDiffTestNet}, // 287
-				{144, 20, 24055097},            // 431
-				{144, 10, 54516186},            // 575
-				{144, 20, 105335577},           // 719
-				{144, 10, 304330579},           // 863
-				{144, 20, 772249463},           // 1007
-				{76, 10, 2497324513},           // 1083
-				{9, 0, 2497324513},             // 1092
-				{1, 10, 2497324513},            // 1093
-				{8, 0, 2497324513},             // 1101
-				{1, 10, 2497324513},            // 1102
-				{12, 0, 2497324513},            // 1114
-				{1, 10, 2497324513},            // 1115
-				{9, 0, 2497324513},             // 1124
-				{1, 10, 2497324513},            // 1125
-				{8, 0, 2497324513},             // 1133
-				{1, 10, 2497324513},            // 1134
-				{10, 0, 2497324513},            // 1144
+				{144, 20, 20000000},            // 431
+				{144, 10, 35067706},            // 575
+				{144, 20, 48551253},            // 719
+				{144, 10, 106440200},           // 863
+				{144, 20, 205665192},           // 1007
+				{76, 10, 555867916},            // 1083
+				{9, 0, 555867916},              // 1092
+				{1, 10, 555867916},             // 1093
+				{8, 0, 555867916},              // 1101
+				{1, 10, 555867916},             // 1102
+				{12, 0, 555867916},             // 1114
+				{1, 10, 555867916},             // 1115
+				{9, 0, 555867916},              // 1124
+				{1, 10, 555867916},             // 1125
+				{8, 0, 555867916},              // 1133
+				{1, 10, 555867916},             // 1134
+				{10, 0, 555867916},             // 1144
 			},
 			useMaxTickets: false,
 			newTickets:    10,
-			expectedDiff:  6976183842,
+			expectedDiff:  1244958408,
 		},
 		{
 			// Next retarget is at 1440.  The estimated number of
@@ -936,18 +936,18 @@ func TestEstimateNextStakeDiff(t *testing.T) {
 			ticketInfo: []ticketInfo{
 				{16, 0, minStakeDiffTestNet},   // 16
 				{271, 10, minStakeDiffTestNet}, // 287
-				{144, 10, 22252747},            // 431
-				{144, 10, 27165468},            // 575
-				{144, 10, 39289988},            // 719
-				{144, 10, 66729608},            // 863
-				{144, 10, 116554208},           // 1007
-				{144, 10, 212709675},           // 1151
-				{144, 10, 417424410},           // 1295
-				{127, 10, 876591473},           // 1422
+				{144, 10, 20000000},            // 431
+				{144, 10, 20000000},            // 575
+				{144, 10, 20000000},            // 719
+				{144, 10, 20178638},            // 863
+				{144, 10, 23062713},            // 1007
+				{144, 10, 29478349},            // 1151
+				{144, 10, 41689163},            // 1295
+				{127, 10, 64651918},            // 1422
 			},
 			useMaxTickets: false,
 			newTickets:    170, // 17 * 10
-			expectedDiff:  1965171141,
+			expectedDiff:  109390444,
 		},
 		{
 			// Next retarget is at 1440.  This is similar to the
@@ -960,18 +960,18 @@ func TestEstimateNextStakeDiff(t *testing.T) {
 			ticketInfo: []ticketInfo{
 				{16, 0, minStakeDiffTestNet},   // 16
 				{271, 10, minStakeDiffTestNet}, // 287
-				{144, 10, 22252747},            // 431
-				{144, 10, 27165468},            // 575
-				{144, 10, 39289988},            // 719
-				{144, 10, 66729608},            // 863
-				{144, 10, 116554208},           // 1007
-				{144, 10, 212709675},           // 1151
-				{144, 10, 417424410},           // 1295
-				{128, 10, 876591473},           // 1423
+				{144, 10, 20000000},            // 431
+				{144, 10, 20000000},            // 575
+				{144, 10, 20000000},            // 719
+				{144, 10, 20178638},            // 863
+				{144, 10, 23062713},            // 1007
+				{144, 10, 29478349},            // 1151
+				{144, 10, 41689163},            // 1295
+				{128, 10, 64651918},            // 1423
 			},
 			useMaxTickets: false,
 			newTickets:    160, // 16 * 10
-			expectedDiff:  1961558695,
+			expectedDiff:  109116968,
 		},
 	}
 
