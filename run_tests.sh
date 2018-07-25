@@ -27,8 +27,9 @@ DOCKER_IMAGE_TAG=exchangecoin-golang-builder-$GOVERSION
 
 testrepo () {
   TMPFILE=$(mktemp)
-
-  # Check lockfile
+  touch Gopkg.lock
+  
+  # Check lockfile 
   cp Gopkg.lock $TMPFILE && dep ensure && diff Gopkg.lock $TMPFILE >/dev/null
   if [ $? != 0 ]; then
     echo 'lockfile must be updated with dep ensure'
