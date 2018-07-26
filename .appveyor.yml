@@ -1,0 +1,52 @@
+version: 0.{build}
+
+platform:
+  - x64
+
+environment:
+  GOPATH: C:\gopath
+  GOROOT: C:\go
+  DEP_TAG: v0.4.1
+  GLIDE_TAG: v0.13.1
+  GOMETALINTER_TAG: v2.0.5
+  CLONE_FOLDER: C:\gopath\src\github.com\EXCCoin\exccd
+  
+init:
+  - git config --global core.autocrlf input
+  - set PATH=%GOROOT%\bin;%GOPATH%\bin;%PATH%
+  - ps: Update-AppveyorBuild -Version "$env:APPVEYOR_REPO_TAG_NAME"
+  - set PATH=C:\msys64\mingw64\bin;%PATH%;C:\msys64\usr\bin
+  - set CGO_LDFLAGS=-g -O2 -static -static-libgcc -static-libstdc++
+  - g++ --version
+  - go version
+  - go env
+  # dep
+  - go get -v github.com/golang/dep/cmd/dep
+  - cd %GOPATH%\src\github.com\golang\dep
+  - git checkout %DEP_TAG%
+  - go install ./...
+  # gometalinter
+  - go get -v github.com/alecthomas/gometalinter
+  - cd %GOPATH%\src\github.com\alecthomas\gometalinter
+  - git checkout %GOMETALINTER_TAG%
+  - go install
+  - gometalinter --install
+  # tools, glide, ...
+  - go get -u honnef.co/go/tools/...
+  - if not exist %CLONE_FOLDER% mkdir %CLONE_FOLDER%
+  - cd %CLONE_FOLDER%
+
+clone_folder: C:\gopath\src\github.com\EXCCoin\exccd
+clone_depth: 15
+
+build_script:
+  - cd %CLONE_FOLDER%
+  - git reset --hard HEAD
+  - dep ensure
+
+test_script:
+  - gometalinter --vendor --disable-all --deadline=10m --enable=gofmt --enable=vet --enable=gosimple --enable=unconvert --enable=ineffassign ./...
+  - go install . ./cmd/...
+  - set GORACE='halt_on_error=1'
+  - go test -short -race -tags rpctest ./...
+
