@@ -2,6 +2,7 @@ exccd
 ====
 
 [![Build Status](https://travis-ci.org/EXCCoin/exccd.png?branch=master)](https://travis-ci.org/EXCCoin/exccd)
+[![Build status](https://ci.appveyor.com/api/projects/status/tvt75xws84hc0ulg?svg=true)](https://ci.appveyor.com/project/Excc/exccd)
 [![ISC License](http://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](http://godoc.org/github.com/EXCCoin/exccd)
 [![GoReportCard](https://goreportcard.com/badge/github.com/EXCCoin/exccd)](https://goreportcard.com/report/github.com/EXCCoin/exccd)
