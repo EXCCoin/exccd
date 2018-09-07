@@ -1,6 +1,4 @@
-#ifndef __CEQUIHASH_H
-#define __CEQUIHASH_H
-
+#pragma once
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -16,4 +14,3 @@ void *IndicesFromSolution(int n, int k, void *soln);
 #ifdef __cplusplus
 }
 #endif
-#endif  //__CEQUIHASH_H

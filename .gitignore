@@ -44,3 +44,5 @@ cmd/exccctl/exccctl
 cmd/findcheckpoint/findcheckpoint
 cmd/gencerts/gencerts
 cmd/promptsecret/promptsecret
+
+cequihash/tester/cmake-build-debug/
