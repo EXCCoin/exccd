@@ -2,8 +2,8 @@
 
 #include "stdio.h"
 #include "string.h"
-#include "cequihash.h"
-#include "miner.h"
+#include "../cequihash.h"
+#include "../miner.h"
 #include "vector"
 #include "ctime"
 
@@ -344,11 +344,6 @@ int decodeHex(const uint8_t* hex, uint8_t* out, size_t outlen) {
     }}
 
 int main() {
-    printf("tree_t<48,5> : %d\n", sizeof(TrompEquihash<48,5> ::tree_t));
-    printf("tree_t<96,5> : %d\n", sizeof(TrompEquihash<96,5> ::tree_t));
-    printf("tree_t<144,5>: %d\n", sizeof(TrompEquihash<144,5>::tree_t));
-    printf("tree_t<200,9>: %d\n", sizeof(TrompEquihash<200,9>::tree_t));
-
     int numFailed = 0;
     int numPassed = 0;
     TEST_VALIDATOR(validatorTests965);
