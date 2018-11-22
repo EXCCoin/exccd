@@ -286,12 +286,15 @@ func (m *CPUMiner) solveAndSubmitBlock(msgBlock *wire.MsgBlock, ticker *time.Tic
 		littleEndian.PutUint64(header.ExtraData[:], extraNonce+enOffset)
 
 		// Update equihash solver input bytes
-		headerBytes, _ := header.SerializeAllHeaderBytes()
+		algo := m.server.chainParams.Algorithm(header.Height)
+		headerBytes, _ := header.SerializeEquihashHeaderBytes(algo)
 
 		// Search through the entire nonce range for a solution while
 		// periodically checking for early quit and stale block
 		// conditions along with updates to the speed monitor.
 		for i := uint32(0); i <= maxNonce && !solved && !exiting; i++ {
+			header.Nonce = i
+
 			select {
 			case <-quit:
 				minrLog.Infof("Miner is stopping")
@@ -320,7 +323,7 @@ func (m *CPUMiner) solveAndSubmitBlock(msgBlock *wire.MsgBlock, ticker *time.Tic
 				}
 
 				// Rebuild all input data
-				headerBytes, err = header.SerializeAllHeaderBytes()
+				headerBytes, err = header.SerializeEquihashHeaderBytes(algo)
 
 				if err != nil {
 					minrLog.Warnf("CPU miner unable to rebuild header data for updated block template "+
@@ -332,8 +335,7 @@ func (m *CPUMiner) solveAndSubmitBlock(msgBlock *wire.MsgBlock, ticker *time.Tic
 				// Non-blocking select to fall through
 			}
 
-			header.Nonce = i
-			equihash.SolveEquihash(m.server.chainParams.N, m.server.chainParams.K, headerBytes, int64(i), validatorData)
+			equihash.SolveEquihash(m.server.chainParams.N, m.server.chainParams.K, headerBytes, i, algo.Version, validatorData)
 		}
 	}
 

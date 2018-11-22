@@ -2,8 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(cequihash_tromp)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_COMPILER g++)
-set(CMAKE_CXX_FLAGS "-O3 -march=x86-64 -mtune=generic -std=c++17 -Wall -Wno-strict-aliasing -Wno-shift-count-overflow -Werror -Og")
+set(CMAKE_CXX_FLAGS "-O3 -march=x86-64 -mtune=generic -std=c++17 -Wall -Wno-strict-aliasing -Wno-shift-count-overflow -Werror")
 
 set(MAIN_SOURCES
         ../blake2b.cpp

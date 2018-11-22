@@ -28,8 +28,8 @@ DOCKER_IMAGE_TAG=exchangecoin-golang-builder-$GOVERSION
 testrepo () {
   TMPFILE=$(mktemp)
   touch Gopkg.lock
-  
-  # Check lockfile 
+
+  # Check lockfile
   cp Gopkg.lock $TMPFILE && dep ensure && diff Gopkg.lock $TMPFILE >/dev/null
   if [ $? != 0 ]; then
     echo 'lockfile must be updated with dep ensure'
@@ -80,7 +80,7 @@ mkdir -p ~/.cache
 
 if [ -f ~/.cache/$DOCKER_IMAGE_TAG.tar ]; then
 	# load via cache
-	docker load -i ~/.cache/$DOCKER_IMAGE_TAG.tar || docker import $_ 
+	docker load -i ~/.cache/$DOCKER_IMAGE_TAG.tar || docker import $_
 	if [ $? != 0 ]; then
 		echo 'docker load failed'
 		exit 1
