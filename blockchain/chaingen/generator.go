@@ -757,6 +757,13 @@ func (g *Generator) CalcNextRequiredDifficulty() uint32 {
 	// Target difficulty before the first retarget interval is the pow
 	// limit.
 	nextHeight := g.tip.Header.Height + 1
+
+	spec := g.params.Algorithm(nextHeight)
+
+	if nextHeight == spec.Height {
+		return spec.Bits
+	}
+
 	windowSize := g.params.WorkDiffWindowSize
 	if int64(nextHeight) < windowSize {
 		return g.params.PowLimitBits
@@ -1305,8 +1312,13 @@ func SolveBlockWithEquihash(header *wire.BlockHeader, chainParams *chaincfg.Para
 		// new value.
 		binary.LittleEndian.PutUint64(header.ExtraData[:], extraNonce+enOffset)
 
+		algo := chainParams.Algorithm(header.Height)
+
 		// Update equihash solver input bytes
-		headerBytes, _ := header.SerializeAllHeaderBytes()
+		headerBytes, err := header.SerializeEquihashHeaderBytes(algo)
+		if err != nil {
+			return false
+		}
 
 		// Search through the entire nonce range for a solution while
 		// periodically checking for early quit and stale block
@@ -1314,7 +1326,7 @@ func SolveBlockWithEquihash(header *wire.BlockHeader, chainParams *chaincfg.Para
 		for i := uint32(0); i <= maxNonce && !solved; i++ {
 			header.Nonce = i
 
-			cequihash.SolveEquihash(chainParams.N, chainParams.K, headerBytes, int64(i), validator)
+			cequihash.SolveEquihash(chainParams.N, chainParams.K, headerBytes, i, algo.Version, validator)
 		}
 	}
 

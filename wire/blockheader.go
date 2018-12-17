@@ -8,6 +8,7 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"time"
 
@@ -29,7 +30,7 @@ const MainEquihashK = 5
 
 const EquihashSolutionLen = 1 << uint32(MainEquihashK) * (MainEquihashN/(MainEquihashK+1) + 1) / 8
 
-// --> Total 1524 bytes
+// --> 180 bytes + EquihashSolutionLen (100 bytes for N = 144, K = 5) = 280 bytes
 const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + EquihashSolutionLen
 
 // BlockHeader defines information about a block and is used in the ExchangeCoin
@@ -173,11 +174,25 @@ func (h *BlockHeader) Bytes() ([]byte, error) {
 }
 
 // TODO: add tests
-func (h *BlockHeader) SerializeAllHeaderBytes() ([]byte, error) {
-	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
+// SerializeEquihashHeaderBytes returns byte slice containing the serialized contents
+// of the block header that should be used for Equihash calculation
+func (h *BlockHeader) SerializeEquihashHeaderBytes(algo AlgorithmSpec) ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, algo.HeaderSize))
 
 	sec := uint32(h.Timestamp.Unix())
-	err := writeElements(buf, h.Version, &h.PrevBlock, &h.MerkleRoot, h.Bits, sec, h.ExtraData)
+
+	var err error
+	switch algo.Version {
+	case 0:
+		err = writeElements(buf, h.Version, &h.PrevBlock, &h.MerkleRoot, h.Bits, sec, h.ExtraData)
+	case 1:
+		err = writeElements(buf, h.Version, &h.PrevBlock, &h.MerkleRoot, &h.StakeRoot,
+			h.VoteBits, h.FinalState, h.Voters, h.FreshStake,
+			h.Revocations, h.PoolSize, h.Bits, h.SBits,
+			h.Height, h.Size, sec, h.Nonce, h.ExtraData, h.StakeVersion)
+	default:
+		err = errors.New("invalid algorithm version")
+	}
 
 	if err != nil {
 		return nil, err

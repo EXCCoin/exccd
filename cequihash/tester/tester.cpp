@@ -6,6 +6,7 @@
 #include "../miner.h"
 #include "vector"
 #include "ctime"
+#include "memory"
 
 inline size_t EquihashSolutionLen(unsigned int N, unsigned int K) {
     return (1 << K) * (N / (K + 1) + 1) / 8;
@@ -228,12 +229,24 @@ SolverTest9 solverTests2009[] = {
                 }},
 };
 
+std::unique_ptr<uint8_t[]> createExpandedInput(const char *input, size_t input_len, uint32_t nonce) {
+    uint32_t expandedNonce[8] = {htole32(nonce)};
+
+    auto inputCopy = std::make_unique<uint8_t[]>(input_len + sizeof(expandedNonce));
+    memcpy(inputCopy.get(), input, input_len);
+    memcpy(inputCopy.get()+input_len, expandedNonce, sizeof(expandedNonce));
+
+    return inputCopy;
+}
 
 template<typename T>
 bool singleValidatorTest(T *test) {
-    size_t inputLen = strlen(test->input);
+    size_t input_len = strlen(test->input);
     void *equihashSolution = SolutionFromIndices(test->n, test->k, test->indices, 32);
-    bool result = EquihashValidate(test->n, test->k, test->input, inputLen, test->nonce, equihashSolution);
+
+    auto input = createExpandedInput(test->input, input_len, test->nonce);
+
+    bool result = EquihashValidate(test->n, test->k, input.get(), input_len+32, equihashSolution);
 
     free(equihashSolution);
 
@@ -242,11 +255,11 @@ bool singleValidatorTest(T *test) {
 
 template <typename T>
 bool singleSolverTest(T* test) {
-    size_t inputLen = strlen(test->input);
+    size_t input_len = strlen(test->input);
 
     SolverData sd(test->n, test->k);
 
-    EquihashSolve(test->n, test->k, test->input, inputLen, test->nonce, &sd);
+    EquihashSolve(test->n, test->k, test->input, input_len, test->nonce, 0, &sd);
 
     fprintf(stderr, " got %d solutions, want %d ... ", (uint32_t)sd.solutions.size(), (uint32_t)test->nsols);
     int proof_size = 1 << test->k;
@@ -272,7 +285,9 @@ bool singleSolverTest(T* test) {
             }
         }
 
-        int rc = EquihashValidate(test->n, test->k, test->input, inputLen, test->nonce, sol);
+        auto input = createExpandedInput(test->input, input_len, test->nonce);
+
+        int rc = EquihashValidate(test->n, test->k, input.get(), input_len+32, sol);
 
         if (rc != 0) {
             fprintf(stderr, " does not pass validation ...");

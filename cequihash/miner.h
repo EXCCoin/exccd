@@ -48,10 +48,6 @@
 #include "blake2.h"
 #include "portable_endian.h"
 
-#ifndef HEADERNONCELEN
-#define HEADERNONCELEN ((uint32_t)180)
-#endif
-
 #if __cplusplus >= 201703L
 #define CONSTEXPR constexpr
 #else
@@ -60,7 +56,6 @@
 
 enum class verify_code {
     POW_OK                    = 0,
-    POW_INVALID_HEADER_LENGTH = 1,
     POW_DUPLICATE             = 2,
     POW_OUT_OF_ORDER          = 3,
     POW_NONZERO_XOR           = 4,
@@ -287,7 +282,7 @@ struct TrompEquihash {
     // Equihash solver data
     //----------------------------------------------
     typedef uint32_t proof[PROOFSIZE];
-    blake2b_state    blake_ctx;  // holds blake2b midstate after call to setheadernounce
+    blake2b_state    blake_ctx;  // holds blake2b midstate after call to setstate
     htalloc          hta;        // holds allocated heaps
     bsizes *         nslots;     // counts number of slots used in buckets
     proof *          sols;       // store found solutions here (only first MAXSOLS)
@@ -318,8 +313,9 @@ struct TrompEquihash {
     static uint32_t hashwords(uint32_t bytes) { return (bytes + TREEBYTES - 1) / TREEBYTES; }
 
     // prepare blake2b midstate for new run and initialize counters
-    void setheadernonce(const unsigned char *input, const uint32_t len, int64_t nonce) {
-        setheader(&blake_ctx, input, len, nonce);
+    void setstate(const unsigned char *input, const uint32_t len, uint32_t nonce, uint8_t algo_version) {
+        setperson(&blake_ctx);
+        setheader(&blake_ctx, input, len, nonce, algo_version);
         nsols = 0;
     }
 
@@ -733,30 +729,65 @@ struct TrompEquihash {
         return false;
     }
 
-    static void hashNonce(blake2b_state *S, uint32_t nonce) {
-        uint32_t expandedNonce[8] = {0};
-        expandedNonce[0]          = htole32(nonce);
-
-        blake2b_update(S, (uint8_t *)&expandedNonce, sizeof(expandedNonce));
-    }
-
-    static void setheader(blake2b_state *ctx, const uint8_t *input, uint32_t input_len, int64_t nonce) {
+    static void setperson(blake2b_state *ctx) {
         blake2b_param P;
         memset(&P, 0, sizeof(blake2b_param));
 
         P.fanout        = 1;
         P.depth         = 1;
         P.digest_length = (512 / WN) * WN / 8;
+
         memcpy(P.personal, "ZcashPoW", 8);
         *(uint32_t *)(P.personal + 8)  = htole32(WN);
         *(uint32_t *)(P.personal + 12) = htole32(WK);
 
         blake2b_init_param(ctx, &P);
+    }
+
+    static void setheader(blake2b_state *ctx, const uint8_t *input, uint32_t input_len, uint32_t nonce, uint8_t algo_version) {
+        switch (algo_version) {
+        case 0: return setheaderv0(ctx, input, input_len, nonce);
+        default: return setheaderv1(ctx, input, input_len, nonce);
+        }
+    }
+
+    static void setheaderv0(blake2b_state *ctx, const uint8_t *input, uint32_t input_len, uint32_t nonce) {
         blake2b_update(ctx, input, input_len);
 
-        if (nonce >= 0) {
-            hashNonce(ctx, (uint32_t)nonce);
-        }
+        uint32_t expandedNonce[8] = {0};
+        expandedNonce[0]          = htole32(nonce);
+
+        blake2b_update(ctx, reinterpret_cast<uint8_t *>(&expandedNonce), sizeof(expandedNonce));
+    }
+
+    static void setheaderv1(blake2b_state *ctx, const uint8_t *input, uint32_t input_len, uint32_t nonce) {
+        uint8_t *localInput = static_cast<uint8_t*>(malloc(input_len));
+        memcpy(localInput, input, input_len);
+
+        nonce = htole32(nonce);
+        constexpr int nonceOffset =
+            sizeof(int32_t) + // Version
+            32 + // PrevBlock
+            32 + // MerkleRoot
+            32 + // StakeRoot
+            sizeof(uint16_t) + // VoteBits
+            6 + // FinalState
+            sizeof(uint16_t) + // Voters
+            sizeof(uint8_t) + // FreshStake
+            sizeof(uint8_t) + // Revocations
+            sizeof(uint32_t) + // PoolSize
+            sizeof(uint32_t) + // Bits
+            sizeof(int64_t) + // SBits
+            sizeof(uint32_t) + // Height
+            sizeof(uint32_t) + // Size
+            sizeof(uint32_t); // Timestamp
+
+        static_assert(nonceOffset == 140, "Nonce offset is required to be 140");
+        memcpy(localInput+nonceOffset, &nonce, sizeof(nonce));
+
+        blake2b_update(ctx, localInput, input_len);
+
+        free(localInput);
     }
 
     static void genhash(const blake2b_state *ctx, uint32_t idx, uint8_t *hash) {
@@ -857,23 +888,22 @@ void compress_solution(const uint32_t *sol, uint8_t *csol) {
 }
 
 template <uint32_t WN, uint32_t WK>
-verify_code verify(uint32_t *indices, uint32_t proofsize, const unsigned char *input, const uint32_t input_len, int64_t nonce) {
-    if (input_len > HEADERNONCELEN) return verify_code::POW_INVALID_HEADER_LENGTH;
-
+verify_code verify(uint32_t *indices, uint32_t proofsize, const unsigned char *input, uint32_t input_len) {
     if (proofsize != TrompEquihash<WN, WK>::PROOFSIZE) return verify_code::POW_SOL_SIZE_MISMATCH;
 
     if (TrompEquihash<WN, WK>::duped(indices)) return verify_code::POW_DUPLICATE;
 
     blake2b_state ctx;
-    TrompEquihash<WN, WK>::setheader(&ctx, input, input_len, nonce);
+    TrompEquihash<WN, WK>::setperson(&ctx);
+    blake2b_update(&ctx, input, input_len);
     uint8_t hash[WN / 8];
     return TrompEquihash<WN, WK>::verifyrec(&ctx, indices, hash, WK);
 }
 
 template <uint32_t WN, uint32_t WK>
-int solve(const unsigned char *input, uint32_t input_len, int64_t nonce, const void *userData) {
+void solve(const unsigned char *input, uint32_t input_len, uint32_t nonce, uint8_t algo_version, const void *userData) {
     TrompEquihash<WN, WK> eq(userData);
-    eq.setheadernonce(input, input_len, nonce);
+    eq.setstate(input, input_len, nonce, algo_version);
     eq.worker();
 
     uint32_t maxsols = std::min(TrompEquihash<WN, WK>::MAXSOLS, eq.nsols);
@@ -882,18 +912,11 @@ int solve(const unsigned char *input, uint32_t input_len, int64_t nonce, const v
     for (uint32_t nsols = 0; nsols < maxsols; nsols++) {
         compress_solution<WN, WK>(eq.sols[nsols], csol);
 
-        int rc = equihashProxy(eq.user_data, csol);
-
-        if (rc == 1) {
-            return 1;
-        } else if (rc == 2) {
-            return 0;
+        if (equihashProxy(eq.user_data, csol)) {
+            return;
         }
     }
-
-    return eq.nsols;
 }
 
 #undef CONSTEXPR
-#undef HEADERNONCELEN
 #endif  // __EQUI_MINER_H

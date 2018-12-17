@@ -388,14 +388,22 @@ func checkProofOfWork(header *wire.BlockHeader, chainParams *chaincfg.Params, fl
 
 // Validate equihash solution for given block
 func ValidateEquihashSolution(header *wire.BlockHeader, chainParams *chaincfg.Params) error {
-	headerBytes, err := header.SerializeAllHeaderBytes()
+	algo := chainParams.Algorithm(header.Height)
+	headerBytes, err := header.SerializeEquihashHeaderBytes(algo)
 
 	if err != nil {
 		return ruleError(ErrInvalidEquihashSolution, "unable to deserialize required header fields")
 	}
 
-	result := equihash.ValidateEquihash(chainParams.N, chainParams.K, headerBytes,
-		int64(header.Nonce), header.EquihashSolution[:])
+	if len(headerBytes) != algo.HeaderSize {
+		return ruleError(ErrInvalidEquihashSolution, "invalid header size")
+	}
+
+	if algo.Version == 0 {
+		headerBytes = equihash.AppendExpandedNonce(headerBytes, header.Nonce)
+	}
+
+	result := equihash.ValidateEquihash(chainParams.N, chainParams.K, headerBytes, header.EquihashSolution[:])
 
 	if !result {
 		return ruleError(ErrInvalidEquihashSolution, "provided equihash solution is invalid")

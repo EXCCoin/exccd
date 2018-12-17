@@ -460,6 +460,9 @@ type Params struct {
 	// Equihash parameters
 	N int
 	K int
+
+	// Algorithms is sorted by block height list of the algorithm versions
+	Algorithms []wire.AlgorithmSpec
 }
 
 // MainNetParams defines the network parameters for the main ExchangeCoin network.
@@ -471,7 +474,6 @@ var MainNetParams = Params{
 		{"seed.excc.co", true},
 		{"seed.xchange.me", true},
 		{"excc-seed.pragmaticcoders.com", true},
-		{"seed.exccited.com", true},
 	},
 	N: wire.MainEquihashN,
 	K: wire.MainEquihashK,
@@ -502,7 +504,9 @@ var MainNetParams = Params{
 	StakeRewardProportion:    3,
 
 	// Checkpoints ordered from oldest to newest.
-	Checkpoints: []Checkpoint{},
+	Checkpoints: []Checkpoint{
+		{87550, newHashFromStr("000187f6de1d0a99db6eb832f09d803cd95723b2e95d2a7d051e7a6f3809ba63")},
+	},
 
 	// The miner confirmation window is defined as:
 	//   target proof of work timespan / target proof of work spacing
@@ -572,6 +576,16 @@ var MainNetParams = Params{
 
 	// ExchangeCoin organization related parameters
 	BlockOneLedger: BlockOneLedgerMainNet,
+
+	Algorithms: []wire.AlgorithmSpec{
+		{Height: 0, HeaderSize: 108, Version: 0, Bits: bigToCompact(mainPowLimit)},
+		{
+			Height:     87550,
+			HeaderSize: wire.MaxBlockHeaderPayload - wire.EquihashSolutionLen,
+			Version:    1,
+			Bits:       bigToCompact(new(big.Int).Sub(new(big.Int).Lsh(bigOne, 241), bigOne)),
+		},
+	},
 }
 
 // TestNetParams defines the network parameters for the test currency network.
@@ -678,6 +692,16 @@ var TestNetParams = Params{
 
 	// ExchangeCoin organization related parameters.
 	BlockOneLedger: BlockOneLedgerTestNet,
+
+	Algorithms: []wire.AlgorithmSpec{
+		{Height: 0, HeaderSize: 108, Version: 0, Bits: bigToCompact(testNetPowLimit)},
+		{
+			Height:     72415,
+			HeaderSize: wire.MaxBlockHeaderPayload - wire.EquihashSolutionLen,
+			Version:    1,
+			Bits:       bigToCompact(new(big.Int).Sub(new(big.Int).Lsh(bigOne, 252), bigOne)),
+		},
+	},
 }
 
 // SimNetParams defines the network parameters for the simulation test ExchangeCoin
@@ -815,6 +839,10 @@ var SimNetParams = Params{
 
 	// ExchangeCoin organization related parameters
 	BlockOneLedger: BlockOneLedgerSimNet,
+
+	Algorithms: []wire.AlgorithmSpec{
+		{Height: 0, HeaderSize: 108, Version: 0, Bits: bigToCompact(simNetPowLimit)},
+	},
 }
 
 var (
@@ -959,6 +987,21 @@ func hexDecode(hexStr string) []byte {
 		panic(err)
 	}
 	return b
+}
+
+// GetAlgorithm returns the current algorithm for the given block
+func (p *Params) Algorithm(height uint32) wire.AlgorithmSpec {
+	i := 0
+	for i < len(p.Algorithms) && height >= p.Algorithms[i].Height {
+		i++
+	}
+
+	i-- // unroll last loop iteration
+	if i < 0 {
+		panic("invalid Algorithms")
+	}
+
+	return p.Algorithms[i]
 }
 
 // BlockOneSubsidy returns the total subsidy of block height 1 for the

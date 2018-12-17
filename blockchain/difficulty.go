@@ -168,7 +168,7 @@ func CalcWork(bits uint32) *big.Int {
 // can have given starting difficulty bits and a duration.  It is mainly used to
 // verify that claimed proof of work by a block is sane as compared to a
 // known good checkpoint.
-func (b *BlockChain) calcEasiestDifficulty(bits uint32, duration time.Duration) uint32 {
+func (b *BlockChain) calcEasiestDifficulty(bits uint32, duration time.Duration, height uint32) uint32 {
 	// Convert types used in the calculations below.
 	durationVal := int64(duration)
 	adjustmentFactor := big.NewInt(b.chainParams.RetargetAdjustmentFactor)
@@ -181,6 +181,12 @@ func (b *BlockChain) calcEasiestDifficulty(bits uint32, duration time.Duration) 
 		if durationVal > int64(b.chainParams.MinDiffReductionTime) {
 			return b.chainParams.PowLimitBits
 		}
+	}
+
+	spec := b.chainParams.Algorithm(height)
+
+	if spec.Height == height {
+		return spec.Bits
 	}
 
 	// Since easier difficulty equates to higher numbers, the easiest
@@ -247,6 +253,14 @@ func (b *BlockChain) calcNextRequiredDifficulty(curNode *blockNode, newBlockTime
 	// Genesis block.
 	if curNode == nil {
 		return b.chainParams.PowLimitBits, nil
+	}
+
+	nextHeight := uint32(curNode.height + 1)
+
+	spec := b.chainParams.Algorithm(nextHeight)
+
+	if nextHeight == spec.Height {
+		return spec.Bits, nil
 	}
 
 	// Get the old difficulty; if we aren't at a block height where it changes,
@@ -336,7 +350,7 @@ func (b *BlockChain) calcNextRequiredDifficulty(curNode *blockNode, newBlockTime
 
 			// Just assume we're at the target (no change) if we've
 			// gone all the way back to the genesis block.
-			if oldNode.height == 0 {
+			if oldNode.height == 0 || oldNode.height == int64(spec.Height) {
 				timeDifference = int64(b.chainParams.TargetTimespan /
 					time.Second)
 			}
@@ -383,7 +397,9 @@ func (b *BlockChain) calcNextRequiredDifficulty(curNode *blockNode, newBlockTime
 
 		// If we're at the genesis block, reset the oldNode
 		// so that it stays at the genesis block.
-		if oldNode == nil {
+		// Or if we've reached fork height while traversing blocks back in time
+		// then just stay at this block just like we do with the genesis block.
+		if oldNode == nil || tempNode.height == int64(spec.Height) {
 			oldNode = tempNode
 		}
 	}

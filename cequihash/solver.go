@@ -10,6 +10,8 @@ package cequihash
 */
 import "C"
 import (
+	"bytes"
+	"encoding/binary"
 	cptr "github.com/mattn/go-pointer"
 	"unsafe"
 )
@@ -62,24 +64,36 @@ func ExtractSolution(n, k int, solptr unsafe.Pointer) []byte {
 	return C.GoBytes(solptr, C.int(size))
 }
 
-func SolveEquihash(n, k int, input []byte, nonce int64, callback EquihashCallback) {
+func SolveEquihash(n, k int, input []byte, nonce uint32, algoVersion uint8, callback EquihashCallback) {
 	callbackptr := cptr.Save(&callback)
 	defer cptr.Unref(callbackptr)
 
-	C.EquihashSolve(C.int(n), C.int(k), unsafe.Pointer(&input[0]), C.int(len(input)), C.int64_t(nonce), callbackptr)
+	C.EquihashSolve(C.int(n), C.int(k), unsafe.Pointer(&input[0]), C.int(len(input)), C.uint32_t(nonce),
+		C.uint8_t(algoVersion), callbackptr)
 }
 
-func ValidateEquihash(n, k int, input []byte, nonce int64, solution []byte) bool {
+func ValidateEquihash(n, k int, input []byte, solution []byte) bool {
 	equihashSolutionSize := EquihashSolutionSize(n, k)
 
 	if len(solution) < equihashSolutionSize {
 		return false
 	}
 
-	return C.EquihashValidate(C.int(n), C.int(k), unsafe.Pointer(&input[0]), C.int(len(input)), C.int64_t(nonce),
+	return C.EquihashValidate(C.int(n), C.int(k), unsafe.Pointer(&input[0]), C.int(len(input)),
 		unsafe.Pointer(&solution[0])) == 0
 }
 
 func EquihashSolutionSize(n, k int) int {
 	return 1 << uint32(k) * (n/(k+1) + 1) / 8
+}
+
+func AppendExpandedNonce(headerBytes []byte, nonce uint32) []byte {
+	nonceBytes := make([]byte, 32, 32)
+	binary.LittleEndian.PutUint32(nonceBytes, nonce)
+
+	buf := bytes.NewBuffer(make([]byte, 0, len(headerBytes)+len(nonceBytes)))
+	buf.Write(headerBytes)
+	buf.Write(nonceBytes)
+
+	return buf.Bytes()
 }
