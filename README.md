@@ -28,7 +28,7 @@ database optimization and other blockchain related technology improvements.
 
 ## Requirements
 
-[Go](http://golang.org) 1.9 or newer.
+[Go](http://golang.org) >= 1.11 
 
 ## Getting Started
 
@@ -45,28 +45,14 @@ Install a newer MSI
 
 #### Linux/BSD/MacOSX/POSIX - Build from Source
 
-- **Dep**
-
-  Dep is used to manage project dependencies and provide reproducible builds.
-  To install:
-
-  `go get -u github.com/golang/dep/cmd/dep`
-
-Unfortunately, the use of `dep` prevents a handy tool such as `go get` from
-automatically downloading, building, and installing the source in a single
-command.  Instead, the latest project and dependency sources must be first
-obtained manually with `git` and `dep`, and then `go` is used to build and
-install the project.
-
 **Getting the source**:
 
 For a first time installation, the project and dependency sources can be
 obtained manually with `git` and `dep` (create directories as needed):
 
 ```
-git clone https://github.com/EXCCoin/exccd $GOPATH/src/github.com/EXCCoin/exccd
-cd $GOPATH/src/github.com/EXCCoin/exccd
-dep ensure
+git clone https://github.com/EXCCoin/exccd
+cd exccd
 go install . ./cmd/...
 ```
 
@@ -74,19 +60,17 @@ To update an existing source tree, pull the latest changes and install the
 matching dependencies:
 
 ```
-cd $GOPATH/src/github.com/EXCCoin/exccd
 git pull
-dep ensure
 go install . ./cmd/...
 ```
 
-## Docker
+## Tests
 
 All tests and linters may be run in a docker container using the script
 `run_tests.sh`.  This script defaults to using the current supported version of
 go.  You can run it with the major version of Go you would like to use as the
 only arguement to test a previous on a previous version of Go (generally ExchangeCoin
-supports the current version of Go and the previous one).
+supports the current version of Go and the previous one). The script requires `GOPATH` to be set.
 
 ```
 ./run_tests.sh 1.9
