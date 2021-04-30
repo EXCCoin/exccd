@@ -1,0 +1,23 @@
+image: golang:1.11.13
+
+stages:
+  - build
+  - test
+build:
+  stage: build
+  cache:
+    paths:
+      - .cache
+  script:
+    - mkdir -p .cache
+    - export GOPATH="$CI_PROJECT_DIR/.cache"
+    - go build
+test:
+  stage: test
+  cache:
+    paths:
+      - .cache
+  script:
+    - ls -ltr $CI_PROJECT_DIR/.cache/bin
+    - export GOPATH="$CI_PROJECT_DIR/.cache"
+    - go test -short -race ./...
