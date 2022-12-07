@@ -73,7 +73,8 @@ var (
 // (2) The difficulty starts off at the value given by bits.
 // (3) The stake difficulty starts off at the value given by SBits.
 // (4) The timestamp, which guides when blocks can be built on top of it
-//      and what the initial difficulty calculations come out to be.
+//
+//	and what the initial difficulty calculations come out to be.
 //
 // The genesis block is valid by definition and none of the fields within
 // it are validated for correctness.
@@ -107,19 +108,8 @@ var genesisCoinbaseTxLegacy = wire.MsgTx{
 				Hash:  chainhash.Hash{},
 				Index: 0xffffffff,
 			},
-			SignatureScript: []byte{
-				0x04, 0xff, 0xff, 0x00, 0x1d, 0x01, 0x04, 0x45, /* |.......E| */
-				0x54, 0x68, 0x65, 0x20, 0x54, 0x69, 0x6d, 0x65, /* |The Time| */
-				0x73, 0x20, 0x30, 0x33, 0x2f, 0x4a, 0x61, 0x6e, /* |s 03/Jan| */
-				0x2f, 0x32, 0x30, 0x30, 0x39, 0x20, 0x43, 0x68, /* |/2009 Ch| */
-				0x61, 0x6e, 0x63, 0x65, 0x6c, 0x6c, 0x6f, 0x72, /* |ancellor| */
-				0x20, 0x6f, 0x6e, 0x20, 0x62, 0x72, 0x69, 0x6e, /* | on brin| */
-				0x6b, 0x20, 0x6f, 0x66, 0x20, 0x73, 0x65, 0x63, /* |k of sec|*/
-				0x6f, 0x6e, 0x64, 0x20, 0x62, 0x61, 0x69, 0x6c, /* |ond bail| */
-				0x6f, 0x75, 0x74, 0x20, 0x66, 0x6f, 0x72, 0x20, /* |out for |*/
-				0x62, 0x61, 0x6e, 0x6b, 0x73, /* |banks| */
-			},
-			Sequence: 0xffffffff,
+			SignatureScript: []byte("Apple GPU drivers now in Asahi Linux (2022-12-07)"),
+			Sequence:        0xffffffff,
 		},
 	},
 	TxOut: []*wire.TxOut{
@@ -155,10 +145,10 @@ var testNetGenesisBlock = wire.MsgBlock{
 		Version:      4,
 		PrevBlock:    chainhash.Hash{},
 		MerkleRoot:   testNetGenesisMerkleRoot,
-		Timestamp:    time.Unix(1532420489, 0), // Tuesday, 24-Jul-18 08:21:29 UTC
+		Timestamp:    time.Unix(1670419362, 0), // Wednesday, 7 December 2022 13:22:42 UTC
 		Bits:         bigToCompact(new(big.Int).Div(testNetPowLimit, big.NewInt(10))),
 		SBits:        2 * 1e7, // 0.2 Coin
-		Nonce:        0x18aea41a,
+		Nonce:        0x18dae22b,
 		StakeVersion: 0,
 	},
 	Transactions: []*wire.MsgTx{&genesisCoinbaseTxLegacy},
