@@ -628,7 +628,7 @@ var TestNetParams = Params{
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: []Checkpoint{
-		{72415, newHashFromStr("014bb03c915aec501942c6d37220d78e406b4fa3552f1e9fbb58ef019dae9b81")},
+		{555, newHashFromStr("22d8ad8e7761a6e238388c5b40f85d273748d567a51a6bdd61f5b7ac03cee020")},
 	},
 
 	// Consensus rule change deployments.
@@ -698,7 +698,7 @@ var TestNetParams = Params{
 	Algorithms: []wire.AlgorithmSpec{
 		{Height: 0, HeaderSize: 108, Version: 0, Bits: bigToCompact(testNetPowLimit)},
 		{
-			Height:     72415,
+			Height:     28,
 			HeaderSize: wire.MaxBlockHeaderPayload - wire.EquihashSolutionLen,
 			Version:    1,
 			Bits:       bigToCompact(new(big.Int).Sub(new(big.Int).Lsh(bigOne, 252), bigOne)),
