@@ -666,7 +666,6 @@ struct TrompEquihash {
     void digitK() {
         collisiondata cd;
         htlayout      htl(this, WK);
-        uint32_t      nc = 0;
 
         for (uint32_t bucketid = 0; bucketid < NBUCKETS; bucketid++) {
             cd.clear();
@@ -684,7 +683,6 @@ struct TrompEquihash {
                     // there is only 1 word of hash left
                     if (htl.equal(slot0, slot1) && slot0[1].tag.prob_disjoint(slot1[1].tag)) {
                         candidate(tree(bucketid, s0, s1));  // so a match gives a solution candidate
-                        nc++;
                     }
                 }
             }
