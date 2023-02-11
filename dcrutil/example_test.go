@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/decred/dcrd/dcrutil/v4"
+	"github.com/EXCCoin/exccd/dcrutil/v4"
 )
 
 func ExampleAmount() {

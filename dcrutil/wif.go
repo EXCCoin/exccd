@@ -11,11 +11,11 @@ import (
 	"fmt"
 
 	"github.com/EXCCoin/base58"
-	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/chaincfg/v3"
-	"github.com/decred/dcrd/dcrec"
-	"github.com/decred/dcrd/dcrec/edwards/v2"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/chaincfg/v3"
+	"github.com/EXCCoin/exccd/dcrec"
+	"github.com/EXCCoin/exccd/dcrec/edwards/v2"
+	"github.com/EXCCoin/exccd/dcrec/secp256k1/v4"
 )
 
 var (

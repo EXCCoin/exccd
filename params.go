@@ -6,7 +6,7 @@
 package main
 
 import (
-	"github.com/decred/dcrd/chaincfg/v3"
+	"github.com/EXCCoin/exccd/chaincfg/v3"
 )
 
 // params is used to group parameters for various networks such as the main

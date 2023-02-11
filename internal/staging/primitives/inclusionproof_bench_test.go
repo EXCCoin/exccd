@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/decred/dcrd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 )
 
 // BenchmarkGenerateInclusionProof benchmarks generating inclusion proofs for

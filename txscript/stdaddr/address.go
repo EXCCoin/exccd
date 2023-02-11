@@ -9,7 +9,7 @@ package stdaddr
 import (
 	"fmt"
 
-	"github.com/decred/dcrd/crypto/ripemd160"
+	"github.com/EXCCoin/exccd/crypto/ripemd160"
 )
 
 // AddressParams defines an interface that is used to provide the parameters

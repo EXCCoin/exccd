@@ -8,8 +8,8 @@ package dcrutil
 import (
 	"testing"
 
-	"github.com/decred/dcrd/chaincfg/v3"
-	"github.com/decred/dcrd/dcrec"
+	"github.com/EXCCoin/exccd/chaincfg/v3"
+	"github.com/EXCCoin/exccd/dcrec"
 )
 
 func TestEncodeDecodeUncompressedWIF(t *testing.T) {

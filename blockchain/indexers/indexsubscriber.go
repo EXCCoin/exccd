@@ -10,9 +10,9 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/decred/dcrd/blockchain/v4/internal/progresslog"
-	"github.com/decred/dcrd/database/v3"
-	"github.com/decred/dcrd/dcrutil/v4"
+	"github.com/EXCCoin/exccd/blockchain/v4/internal/progresslog"
+	"github.com/EXCCoin/exccd/database/v3"
+	"github.com/EXCCoin/exccd/dcrutil/v4"
 )
 
 // IndexNtfnType represents an index notification type.

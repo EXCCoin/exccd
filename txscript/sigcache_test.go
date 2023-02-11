@@ -12,10 +12,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
-	"github.com/decred/dcrd/wire"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/dcrec/secp256k1/v4"
+	"github.com/EXCCoin/exccd/dcrec/secp256k1/v4/ecdsa"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 // testDataPath is the path where txscript test fixtures reside.

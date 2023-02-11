@@ -12,14 +12,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/decred/dcrd/blockchain/v4/chaingen"
-	"github.com/decred/dcrd/blockchain/v4/internal/spendpruner"
-	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/chaincfg/v3"
-	"github.com/decred/dcrd/database/v3"
-	_ "github.com/decred/dcrd/database/v3/ffldb"
-	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/wire"
+	"github.com/EXCCoin/exccd/blockchain/v4/chaingen"
+	"github.com/EXCCoin/exccd/blockchain/v4/internal/spendpruner"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/chaincfg/v3"
+	"github.com/EXCCoin/exccd/database/v3"
+	_ "github.com/EXCCoin/exccd/database/v3/ffldb"
+	"github.com/EXCCoin/exccd/dcrutil/v4"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 // testChain represents a mock implementation of a block chain as

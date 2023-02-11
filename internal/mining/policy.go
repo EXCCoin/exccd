@@ -6,9 +6,9 @@
 package mining
 
 import (
-	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/txscript/v4"
-	"github.com/decred/dcrd/wire"
+	"github.com/EXCCoin/exccd/dcrutil/v4"
+	"github.com/EXCCoin/exccd/txscript/v4"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 const (

@@ -16,7 +16,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/decred/dcrd/wire"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 const (

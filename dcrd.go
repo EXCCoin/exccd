@@ -17,10 +17,10 @@ import (
 	"runtime/pprof"
 	"strings"
 
-	"github.com/decred/dcrd/blockchain/v4"
-	"github.com/decred/dcrd/blockchain/v4/indexers"
-	"github.com/decred/dcrd/internal/limits"
-	"github.com/decred/dcrd/internal/version"
+	"github.com/EXCCoin/exccd/blockchain/v4"
+	"github.com/EXCCoin/exccd/blockchain/v4/indexers"
+	"github.com/EXCCoin/exccd/internal/limits"
+	"github.com/EXCCoin/exccd/internal/version"
 )
 
 var cfg *config

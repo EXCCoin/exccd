@@ -9,15 +9,15 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/decred/dcrd/dcrec"
-	"github.com/decred/dcrd/dcrec/edwards/v2"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4/schnorr"
-	"github.com/decred/dcrd/txscript/v4"
-	"github.com/decred/dcrd/txscript/v4/stdaddr"
-	"github.com/decred/dcrd/txscript/v4/stdscript"
-	"github.com/decred/dcrd/wire"
+	"github.com/EXCCoin/exccd/dcrec"
+	"github.com/EXCCoin/exccd/dcrec/edwards/v2"
+	"github.com/EXCCoin/exccd/dcrec/secp256k1/v4"
+	"github.com/EXCCoin/exccd/dcrec/secp256k1/v4/ecdsa"
+	"github.com/EXCCoin/exccd/dcrec/secp256k1/v4/schnorr"
+	"github.com/EXCCoin/exccd/txscript/v4"
+	"github.com/EXCCoin/exccd/txscript/v4/stdaddr"
+	"github.com/EXCCoin/exccd/txscript/v4/stdscript"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 // RawTxInSignature returns the serialized ECDSA signature for the input idx of

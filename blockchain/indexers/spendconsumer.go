@@ -7,7 +7,7 @@ package indexers
 import (
 	"sync"
 
-	"github.com/decred/dcrd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 )
 
 // SpendConsumer represents an indexer dependent on

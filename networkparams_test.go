@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"github.com/EXCCoin/base58"
-	"github.com/decred/dcrd/blockchain/standalone/v2"
-	"github.com/decred/dcrd/chaincfg/v3"
+	"github.com/EXCCoin/exccd/blockchain/standalone/v2"
+	"github.com/EXCCoin/exccd/chaincfg/v3"
 )
 
 // checkPowLimitsAreConsistent ensures PowLimit and PowLimitBits are consistent

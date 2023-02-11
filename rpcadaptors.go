@@ -11,17 +11,17 @@ import (
 	"net"
 	"time"
 
-	"github.com/decred/dcrd/blockchain/v4"
-	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/chaincfg/v3"
-	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/internal/mempool"
-	"github.com/decred/dcrd/internal/mining"
-	"github.com/decred/dcrd/internal/mining/cpuminer"
-	"github.com/decred/dcrd/internal/netsync"
-	"github.com/decred/dcrd/internal/rpcserver"
-	"github.com/decred/dcrd/peer/v3"
-	"github.com/decred/dcrd/wire"
+	"github.com/EXCCoin/exccd/blockchain/v4"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/chaincfg/v3"
+	"github.com/EXCCoin/exccd/dcrutil/v4"
+	"github.com/EXCCoin/exccd/internal/mempool"
+	"github.com/EXCCoin/exccd/internal/mining"
+	"github.com/EXCCoin/exccd/internal/mining/cpuminer"
+	"github.com/EXCCoin/exccd/internal/netsync"
+	"github.com/EXCCoin/exccd/internal/rpcserver"
+	"github.com/EXCCoin/exccd/peer/v3"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 // rpcPeer provides a peer for use with the RPC server and implements the

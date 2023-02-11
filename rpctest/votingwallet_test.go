@@ -13,8 +13,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/decred/dcrd/chaincfg/v3"
-	"github.com/decred/dcrd/rpcclient/v7"
+	"github.com/EXCCoin/exccd/chaincfg/v3"
+	"github.com/EXCCoin/exccd/rpcclient/v7"
 )
 
 // testCanPassSVH tests whether the wallet can maintain the chain going past SVH

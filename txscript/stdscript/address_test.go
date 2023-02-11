@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/decred/dcrd/txscript/v4/stdaddr"
+	"github.com/EXCCoin/exccd/txscript/v4/stdaddr"
 )
 
 // addressTest describes tests for scripts that are used to ensure various

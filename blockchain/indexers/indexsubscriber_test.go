@@ -8,8 +8,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/decred/dcrd/blockchain/v4/chaingen"
-	"github.com/decred/dcrd/chaincfg/v3"
+	"github.com/EXCCoin/exccd/blockchain/v4/chaingen"
+	"github.com/EXCCoin/exccd/chaincfg/v3"
 )
 
 // TestIndexSubscriberAsync ensures the index subscriber

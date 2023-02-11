@@ -1,3 +1,3 @@
-module github.com/decred/dcrd/lru
+module github.com/EXCCoin/exccd/lru
 
 go 1.11

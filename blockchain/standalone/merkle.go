@@ -5,8 +5,8 @@
 package standalone
 
 import (
-	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/wire"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 // CalcMerkleRootInPlace is an in-place version of CalcMerkleRoot that reuses

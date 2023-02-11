@@ -13,10 +13,10 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/decred/dcrd/blockchain/standalone/v2"
-	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/rpcclient/v7"
-	"github.com/decred/dcrd/wire"
+	"github.com/EXCCoin/exccd/blockchain/standalone/v2"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/rpcclient/v7"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 // solveBlock attempts to find a nonce which makes the passed block header hash

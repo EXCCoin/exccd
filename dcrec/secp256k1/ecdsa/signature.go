@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/EXCCoin/exccd/dcrec/secp256k1/v4"
 )
 
 // References:

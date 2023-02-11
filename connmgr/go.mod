@@ -1,12 +1,3 @@
-module github.com/decred/dcrd/connmgr/v3
+module github.com/EXCCoin/exccd/connmgr/v3
 
 go 1.13
-
-require (
-	github.com/decred/dcrd/wire v1.5.0
-	github.com/decred/slog v1.2.0
-)
-
-replace (
-	github.com/decred/dcrd/wire => ../wire
-)

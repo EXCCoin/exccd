@@ -13,12 +13,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/decred/dcrd/blockchain/stake/v4/internal/dbnamespace"
-	"github.com/decred/dcrd/blockchain/stake/v4/internal/tickettreap"
-	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/chaincfg/v3"
-	"github.com/decred/dcrd/database/v3"
-	_ "github.com/decred/dcrd/database/v3/ffldb"
+	"github.com/EXCCoin/exccd/blockchain/stake/v4/internal/dbnamespace"
+	"github.com/EXCCoin/exccd/blockchain/stake/v4/internal/tickettreap"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/chaincfg/v3"
+	"github.com/EXCCoin/exccd/database/v3"
+	_ "github.com/EXCCoin/exccd/database/v3/ffldb"
 )
 
 const (

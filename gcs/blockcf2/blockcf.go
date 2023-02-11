@@ -19,11 +19,11 @@ package blockcf2
 import (
 	"fmt"
 
-	"github.com/decred/dcrd/blockchain/stake/v4"
-	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/gcs/v3"
-	"github.com/decred/dcrd/txscript/v4"
-	"github.com/decred/dcrd/wire"
+	"github.com/EXCCoin/exccd/blockchain/stake/v4"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/gcs/v3"
+	"github.com/EXCCoin/exccd/txscript/v4"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 const (

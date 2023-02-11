@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/decred/dcrd/internal/version"
+	"github.com/EXCCoin/exccd/internal/version"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/eventlog"
 	"golang.org/x/sys/windows/svc/mgr"

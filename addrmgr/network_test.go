@@ -9,7 +9,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/decred/dcrd/wire"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 // TestIPTypes ensures the various functions which determine the type of an IP

@@ -7,8 +7,8 @@ package primitives
 import (
 	"fmt"
 
-	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/math/uint256"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/math/uint256"
 )
 
 // DiffBitsToUint256 converts the compact representation used to encode

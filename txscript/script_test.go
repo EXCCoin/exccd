@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/decred/dcrd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 )
 
 // TestGetSigOpCount tests that the GetSigOpCount function behaves as expected.

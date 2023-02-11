@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/decred/dcrd/wire"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 // NetAddress defines information about a peer on the network.

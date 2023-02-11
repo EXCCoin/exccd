@@ -5,7 +5,7 @@
 package spendpruner
 
 import (
-	"github.com/decred/dcrd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 )
 
 // SpendConsumer describes the requirements for implementing a spend journal

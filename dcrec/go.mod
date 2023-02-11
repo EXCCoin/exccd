@@ -1,3 +1,3 @@
-module github.com/decred/dcrd/dcrec
+module github.com/EXCCoin/exccd/dcrec
 
 go 1.16

@@ -1,3 +1,3 @@
-module github.com/decred/dcrd/bech32
+module github.com/EXCCoin/exccd/bech32
 
 go 1.11

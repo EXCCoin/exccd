@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	dcrdtypes "github.com/decred/dcrd/rpc/jsonrpc/types/v3"
-	"github.com/decred/dcrd/rpcclient/v7"
+	dcrdtypes "github.com/EXCCoin/exccd/rpc/jsonrpc/types/v3"
+	"github.com/EXCCoin/exccd/rpcclient/v7"
 )
 
 // JoinType is an enum representing a particular type of "node join". A node

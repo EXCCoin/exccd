@@ -12,6 +12,6 @@
 package main
 
 import (
-	_ "github.com/decred/dcrd/bech32"
-	_ "github.com/decred/dcrd/dcrec/secp256k1/v4"
+	_ "github.com/EXCCoin/exccd/bech32"
+	_ "github.com/EXCCoin/exccd/dcrec/secp256k1/v4"
 )

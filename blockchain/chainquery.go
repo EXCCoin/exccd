@@ -9,7 +9,7 @@ import (
 	"math"
 	"sort"
 
-	"github.com/decred/dcrd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 )
 
 // nodeHeightSorter implements sort.Interface to allow a slice of nodes to

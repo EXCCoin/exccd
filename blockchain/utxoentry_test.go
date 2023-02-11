@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/decred/dcrd/blockchain/stake/v4"
+	"github.com/EXCCoin/exccd/blockchain/stake/v4"
 )
 
 // TestEncodeUtxoFlags validates that the correct bit representation is returned

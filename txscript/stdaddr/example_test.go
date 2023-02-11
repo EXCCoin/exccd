@@ -7,8 +7,8 @@ package stdaddr_test
 import (
 	"fmt"
 
-	"github.com/decred/dcrd/chaincfg/v3"
-	"github.com/decred/dcrd/txscript/v4/stdaddr"
+	"github.com/EXCCoin/exccd/chaincfg/v3"
+	"github.com/EXCCoin/exccd/txscript/v4/stdaddr"
 )
 
 // This example demonstrates decoding addresses, generating their payment

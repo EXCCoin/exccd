@@ -19,8 +19,8 @@
 //          "fmt"
 //          "log"
 //
-//          "github.com/decred/dcrd/dcrutil/v2"
-//          "github.com/decred/dcrd/chaincfg/v3"
+//          "github.com/EXCCoin/exccd/dcrutil/v2"
+//          "github.com/EXCCoin/exccd/chaincfg/v3"
 //  )
 //
 //  var testnet = flag.Bool("testnet", false, "operate on the testnet Decred network")

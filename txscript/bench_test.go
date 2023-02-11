@@ -10,7 +10,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/decred/dcrd/wire"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 const (

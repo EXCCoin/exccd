@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/decred/dcrd/database/v3"
-	_ "github.com/decred/dcrd/database/v3/ffldb"
-	"github.com/decred/dcrd/wire"
+	"github.com/EXCCoin/exccd/database/v3"
+	_ "github.com/EXCCoin/exccd/database/v3/ffldb"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 // TestSerializeConsumerDeps ensures consumer dependencies serialize as
