@@ -24,7 +24,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/EXCCoin/exccd/addrmgr/v2"
 	"github.com/EXCCoin/exccd/blockchain/stake/v4"
 	"github.com/EXCCoin/exccd/blockchain/standalone/v2"
@@ -46,6 +45,7 @@ import (
 	"github.com/EXCCoin/exccd/txscript/v4/stdaddr"
 	"github.com/EXCCoin/exccd/txscript/v4/stdscript"
 	"github.com/EXCCoin/exccd/wire"
+	"github.com/davecgh/go-spew/spew"
 )
 
 const (
