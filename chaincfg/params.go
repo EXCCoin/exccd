@@ -15,9 +15,15 @@ import (
 	"github.com/decred/dcrd/wire"
 )
 
-// bigOne is 1 represented as a big.Int.  It is defined here to avoid the
-// overhead of creating it multiple times.
-var bigOne = big.NewInt(1)
+var (
+	// bigOne is 1 represented as a big.Int.  It is defined here to avoid
+	// the overhead of creating it multiple times.
+	bigOne = big.NewInt(1)
+
+	// defaultTargetTimePerBlock is the ideal ExchangeCoin block time.
+	// It is the value of 2.5 minute.
+	defaultTargetTimePerBlock = time.Second * (60 * 2.5)
+)
 
 // Checkpoint identifies a known good point in the block chain.  Using
 // checkpoints allows a few optimizations for old blocks during initial download
@@ -118,10 +124,6 @@ const (
 	// VoteIDMaxBlockSize is the vote ID for the maximum block size
 	// increase agenda used for the hard fork demo.
 	VoteIDMaxBlockSize = "maxblocksize"
-
-	// VoteIDSDiffAlgorithm is the vote ID for the new stake difficulty
-	// algorithm (aka ticket price) agenda defined by DCP0001.
-	VoteIDSDiffAlgorithm = "sdiffalgorithm"
 
 	// VoteIDLNSupport is the vote ID for determining if the developers
 	// should work on integrating Lightning Network support.
@@ -324,25 +326,10 @@ type Params struct {
 	// defined in DCP0010.
 	WorkRewardProportion uint16
 
-	// WorkRewardProportionV2 is the comparative amount of the subsidy given for
-	// creating a block using the proportions defined in DCP0010.
-	WorkRewardProportionV2 uint16
-
 	// StakeRewardProportion is the comparative amount of the subsidy given for
 	// casting stake votes (collectively, per block) using the proportions prior
 	// to the modified values defined in DCP0010.
 	StakeRewardProportion uint16
-
-	// StakeRewardProportionV2 is the comparative amount of the subsidy given
-	// for casting stake votes (collectively, per block) using the proportions
-	// defined in DCP0010.
-	StakeRewardProportionV2 uint16
-
-	// BlockTaxProportion is the inverse of the percentage of funds for each
-	// block to allocate to the developer organization.
-	// e.g. 10% --> 10 (or 1 / (1/10))
-	// Special case: disable taxes with a value of 0
-	BlockTaxProportion uint16
 
 	// Checkpoints ordered from oldest to newest.
 	//
@@ -403,23 +390,15 @@ type Params struct {
 	PKHEdwardsAddrID [2]byte // First 2 bytes of an Edwards P2PKH address
 	PKHSchnorrAddrID [2]byte // First 2 bytes of a secp256k1 Schnorr P2PKH address
 	ScriptHashAddrID [2]byte // First 2 bytes of a P2SH address
-	PrivateKeyID     [2]byte // First 2 bytes of a WIF private key
+	PrivateKeyID     byte    // First byte of a WIF private key
 
 	// BIP32 hierarchical deterministic extended key magics
 	HDPrivateKeyID [4]byte
 	HDPublicKeyID  [4]byte
 
-	// SLIP-0044 registered coin type used for BIP44, used in the hierarchical
-	// deterministic path for address generation.
-	// All SLIP-0044 registered coin types are defined here:
-	// https://github.com/satoshilabs/slips/blob/master/slip-0044.md
-	SLIP0044CoinType uint32
-
-	// Legacy BIP44 coin type used in the hierarchical deterministic path for
-	// address generation. Previous name was HDCoinType, the LegacyCoinType
-	// was introduced for backwards compatibility. Usually, SLIP0044CoinType
-	// should be used instead.
-	LegacyCoinType uint32
+	// BIP44 coin type used in the hierarchical deterministic path for
+	// address generation.
+	HDCoinType uint32
 
 	// MinimumStakeDiff if the minimum amount of Atoms required to purchase a
 	// stake ticket.
@@ -492,18 +471,17 @@ type Params struct {
 	StakeMajorityMultiplier int32
 	StakeMajorityDivisor    int32
 
-	// OrganizationPkScript is the output script for block taxes to be
-	// distributed to in every block's coinbase. It should ideally be a P2SH
-	// multisignature address.  OrganizationPkScriptVersion is the version
-	// of the output script.  Until PoS hardforking is implemented, this
-	// version must always match for a block to validate.
-	OrganizationPkScript        []byte
-	OrganizationPkScriptVersion uint16
-
 	// BlockOneLedger specifies the list of payouts in the coinbase of
 	// block height 1. If there are no payouts to be given, set this
 	// to an empty slice.
 	BlockOneLedger []TokenPayout
+
+	// Equihash parameters
+	N int
+	K int
+
+	// Algorithms is sorted by block height list of the algorithm versions
+	Algorithms []wire.AlgorithmSpec
 
 	// PiKeys is the list of sanctioned Politeia keys. There should be at
 	// least two of them at any given time. The corresponding private keys
@@ -511,39 +489,6 @@ type Params struct {
 	// the other hand simnet and regnet have these values hardcoded for
 	// easier testing.
 	PiKeys [][]byte
-
-	// TreasuryVoteInterval dictates when a TSpend transaction is allowed
-	// in a block.
-	TreasuryVoteInterval uint64
-
-	// TreasuryVoteIntervalMultiplier is the multiplier to the
-	// TreasuryVoteInterval that is needed to calculate Expiry.
-	TreasuryVoteIntervalMultiplier uint64
-
-	// TreasuryVoteQuorumMultiplier and TreasuryVoteQuorumDivisor are used
-	// to calculate the TSpend vote quorum percentage.
-	TreasuryVoteQuorumMultiplier uint64
-	TreasuryVoteQuorumDivisor    uint64
-
-	// TreasuryVoteRequiredMultiplier and TreasuryVoteRequiredDivisor are
-	// used to calculate the required number of votes percentage.
-	TreasuryVoteRequiredMultiplier uint64
-	TreasuryVoteRequiredDivisor    uint64
-
-	// TreasuryExpenditureWindow is the number of TVI*Multiplier windows
-	// that define a single "expenditure window".
-	TreasuryExpenditureWindow uint64
-
-	// TreasuryExpenditurePolicy is the number of previous
-	// TreasuryExpenditureWindows that defines how far back to calculate
-	// the average expenditure of the treasury for an expenditure policy
-	// check.
-	TreasuryExpenditurePolicy uint64
-
-	// TreasuryExpenditureBootstrap is the value to use as previous average
-	// expenditure when there are no treasury spends inside the entire
-	// window defined by TreasuryExpenditurePolicy.
-	TreasuryExpenditureBootstrap uint64
 
 	// seeders defines a list of seeders for the network that are used
 	// as one method to discover peers.
@@ -648,13 +593,6 @@ func (p *Params) StakeSubsidyProportion() uint16 {
 	return p.StakeRewardProportion
 }
 
-// TreasurySubsidyProportion returns the comparative proportion of the
-// subsidy allocated to the project treasury.  See the documentation for
-// WorkSubsidyProportion for more details on how the parameter is used.
-func (p *Params) TreasurySubsidyProportion() uint16 {
-	return p.BlockTaxProportion
-}
-
 // VotesPerBlock returns the maximum number of votes a block must contain to
 // receive full subsidy.
 func (p *Params) VotesPerBlock() uint16 {
@@ -723,6 +661,21 @@ func hexToBigInt(hexStr string) *big.Int {
 	return val
 }
 
+// Algorithm returns the current algorithm for the given block
+func (p *Params) Algorithm(height uint32) wire.AlgorithmSpec {
+	i := 0
+	for i < len(p.Algorithms) && height >= p.Algorithms[i].Height {
+		i++
+	}
+
+	i-- // unroll last loop iteration
+	if i < 0 {
+		panic("invalid Algorithms")
+	}
+
+	return p.Algorithms[i]
+}
+
 // BlockOneSubsidy returns the total subsidy of block height 1 for the
 // network.
 func (p *Params) BlockOneSubsidy() int64 {
@@ -738,10 +691,9 @@ func (p *Params) BlockOneSubsidy() int64 {
 	return sum
 }
 
-// TotalSubsidyProportions is the sum of WorkReward, StakeReward, and BlockTax
-// proportions.
+// TotalSubsidyProportions is the sum of WorkReward, StakeReward proportions.
 func (p *Params) TotalSubsidyProportions() uint16 {
-	return p.WorkRewardProportion + p.StakeRewardProportion + p.BlockTaxProportion
+	return p.WorkRewardProportion + p.StakeRewardProportion
 }
 
 // LatestCheckpointHeight is the height of the latest checkpoint block in the
@@ -766,4 +718,46 @@ func (p *Params) PiKeyExists(key []byte) bool {
 // Seeders returns the list of HTTP seeders.
 func (p *Params) Seeders() []string {
 	return p.seeders
+}
+
+// BigToCompact converts a whole number N to a compact representation using
+// an unsigned 32-bit number.  The compact representation only provides 23 bits
+// of precision, so values larger than (2^23 - 1) only encode the most
+// significant digits of the number.  See CompactToBig for details.
+func bigToCompact(n *big.Int) uint32 {
+	// No need to do any work if it's zero.
+	if n.Sign() == 0 {
+		return 0
+	}
+
+	// Since the base for the exponent is 256, the exponent can be treated
+	// as the number of bytes.  So, shift the number right or left
+	// accordingly.  This is equivalent to:
+	// mantissa = mantissa / 256^(exponent-3)
+	var mantissa uint32
+	exponent := uint(len(n.Bytes()))
+	if exponent <= 3 {
+		mantissa = uint32(n.Bits()[0])
+		mantissa <<= 8 * (3 - exponent)
+	} else {
+		// Use a copy to avoid modifying the caller's original number.
+		tn := new(big.Int).Set(n)
+		mantissa = uint32(tn.Rsh(tn, 8*(exponent-3)).Bits()[0])
+	}
+
+	// When the mantissa already has the sign bit set, the number is too
+	// large to fit into the available 23-bits, so divide the number by 256
+	// and increment the exponent accordingly.
+	if mantissa&0x00800000 != 0 {
+		mantissa >>= 8
+		exponent++
+	}
+
+	// Pack the exponent, sign bit, and mantissa into an unsigned 32-bit
+	// int and return it.
+	compact := uint32(exponent<<24) | mantissa
+	if n.Sign() < 0 {
+		compact |= 0x00800000
+	}
+	return compact
 }

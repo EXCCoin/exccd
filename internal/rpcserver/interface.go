@@ -384,9 +384,6 @@ type Chain interface {
 	// parent of the current tip.
 	TipGeneration() ([]chainhash.Hash, error)
 
-	// TreasuryBalance returns the treasury balance at the provided block.
-	TreasuryBalance(*chainhash.Hash) (*blockchain.TreasuryBalanceInfo, error)
-
 	// IsTreasuryAgendaActive returns whether or not the treasury agenda vote, as
 	// defined in DCP0006, has passed and is now active for the block AFTER the
 	// given block.
@@ -401,14 +398,6 @@ type Chain interface {
 	// split agenda vote, as defined in DCP0010, has passed and is now active
 	// for the block AFTER the given block.
 	IsSubsidySplitAgendaActive(*chainhash.Hash) (bool, error)
-
-	// FetchTSpend returns all blocks where the treasury spend tx
-	// identified by the specified hash can be found.
-	FetchTSpend(chainhash.Hash) ([]chainhash.Hash, error)
-
-	// TSpendCountVotes returns the votes for the specified tspend up to
-	// the specified block.
-	TSpendCountVotes(*chainhash.Hash, *dcrutil.Tx) (int64, int64, error)
 
 	// InvalidateBlock manually invalidates the provided block as if the block
 	// had violated a consensus rule and marks all of its descendants as having

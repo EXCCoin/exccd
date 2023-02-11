@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"sort"
 	"time"
+	"unsafe"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
@@ -156,6 +157,10 @@ func (t stakeTicketSorter) Less(i, j int) bool {
 	return bytes.Compare(iHash, jHash) < 0
 }
 
+type ChainInterface interface {
+	GetPrevStakeNode(blockHeader *wire.BlockHeader) (*stake.Node, error)
+}
+
 // spendableOutsSnap houses a snapshot of the spendable outputs state.  It is
 // useful to allow callers to reset back to known good points.
 type spendableOutsSnap struct {
@@ -192,11 +197,14 @@ type Generator struct {
 	expiredTickets  []*stakeTicket
 	revokedTickets  map[chainhash.Hash][]*stakeTicket
 	missedVotes     map[chainhash.Hash]*stakeTicket
+
+	// Blockchain we're generating blocks for
+	chain ChainInterface
 }
 
 // MakeGenerator returns a generator instance initialized with the genesis block
 // as the tip as well as a cached generic pay-to-script-hash script for OP_TRUE.
-func MakeGenerator(params *chaincfg.Params) (Generator, error) {
+func MakeGenerator(params *chaincfg.Params, chain ChainInterface) (Generator, error) {
 	// Generate a generic pay-to-script-hash script that is a simple
 	// OP_TRUE.  This allows the tests to avoid needing to generate and
 	// track actual public keys and signatures.
@@ -224,6 +232,7 @@ func MakeGenerator(params *chaincfg.Params) (Generator, error) {
 		wonTickets:          make(map[chainhash.Hash][]*stakeTicket),
 		revokedTickets:      make(map[chainhash.Hash][]*stakeTicket),
 		missedVotes:         make(map[chainhash.Hash]*stakeTicket),
+		chain:               chain,
 	}, nil
 }
 
@@ -417,19 +426,12 @@ func newTxOut(amount int64, pkScriptVer uint16, pkScript []byte) *wire.TxOut {
 
 // addCoinbaseTxOutputs adds the following outputs to the provided transaction
 // which is assumed to be a coinbase transaction:
-// - First output pays the development subsidy portion to the dev org
-// - Second output is a standard provably prunable data-only coinbase output
-// - Third and subsequent outputs pay the pow subsidy portion to the generic
-//   OP_TRUE p2sh script hash
-func (g *Generator) addCoinbaseTxOutputs(tx *wire.MsgTx, blockHeight uint32, devSubsidy, powSubsidy dcrutil.Amount) {
-	// First output is the developer subsidy.
-	tx.AddTxOut(&wire.TxOut{
-		Value:    int64(devSubsidy),
-		Version:  g.params.OrganizationPkScriptVersion,
-		PkScript: g.params.OrganizationPkScript,
-	})
+//   - First output is a standard provably prunable data-only coinbase output
+//   - Second and subsequent outputs pay the pow subsidy portion to the generic
+//     OP_TRUE p2sh script hash
+func (g *Generator) addCoinbaseTxOutputs(tx *wire.MsgTx, blockHeight uint32, powSubsidy dcrutil.Amount) {
 
-	// Second output is a provably prunable data-only output that is used
+	// First output is a provably prunable data-only output that is used
 	// to ensure the coinbase is unique.
 	tx.AddTxOut(wire.NewTxOut(0, standardCoinbaseOpReturnScript(blockHeight)))
 
@@ -449,8 +451,7 @@ func (g *Generator) addCoinbaseTxOutputs(tx *wire.MsgTx, blockHeight uint32, dev
 }
 
 // CreateCoinbaseTx returns a coinbase transaction paying an appropriate
-// subsidy based on the passed block height and number of votes to the dev org
-// and proof-of-work miner.
+// subsidy based on the passed block height and number of votes to proof-of-work miner.
 //
 // See the addCoinbaseTxOutputs documentation for a breakdown of the outputs
 // the transaction contains.
@@ -458,7 +459,6 @@ func (g *Generator) CreateCoinbaseTx(blockHeight uint32, numVotes uint16) *wire.
 	// Calculate the subsidy proportions based on the block height and the
 	// number of votes the block will include.
 	fullSubsidy := g.calcFullSubsidy(blockHeight)
-	devSubsidy := g.calcDevSubsidy(fullSubsidy, blockHeight, numVotes)
 	powSubsidy := g.calcPoWSubsidy(fullSubsidy, blockHeight, numVotes)
 
 	tx := wire.NewMsgTx()
@@ -468,13 +468,13 @@ func (g *Generator) CreateCoinbaseTx(blockHeight uint32, numVotes uint16) *wire.
 		PreviousOutPoint: *wire.NewOutPoint(&chainhash.Hash{},
 			wire.MaxPrevOutIndex, wire.TxTreeRegular),
 		Sequence:        wire.MaxTxInSequenceNum,
-		ValueIn:         int64(devSubsidy + powSubsidy),
+		ValueIn:         int64(powSubsidy),
 		BlockHeight:     wire.NullBlockHeight,
 		BlockIndex:      wire.NullBlockIndex,
 		SignatureScript: coinbaseSigScript,
 	})
 
-	g.addCoinbaseTxOutputs(tx, blockHeight, devSubsidy, powSubsidy)
+	g.addCoinbaseTxOutputs(tx, blockHeight, powSubsidy)
 
 	return tx
 }
@@ -516,128 +516,6 @@ func (g *Generator) CreateTicketPurchaseTx(spend *SpendableOut, ticketPrice, fee
 	tx.AddTxOut(newTxOut(0, commitScriptVer, commitScript))
 	tx.AddTxOut(newTxOut(int64(change), changeScriptVer, changeScript))
 	return tx
-}
-
-// CreateTreasuryTAddChange creates a new transaction that spends the provided
-// output to the treasury.  If the amount minus fee is zero the returned
-// transaction does not have a change output.
-//
-// The transaction consists of the following outputs:
-// - First output is an OP_TADD
-// - Second output is optional and when used it is an OP_SSTXCHANGE paying to
-// the provided changeAddr
-func (g *Generator) CreateTreasuryTAddChange(spend *SpendableOut,
-	amount, fee dcrutil.Amount, changeAddr stdaddr.StakeAddress) *wire.MsgTx {
-
-	// Calculate change and generate script to deliver it.
-	var changeScriptVer uint16
-	var changeScript []byte
-	change := spend.amount - amount - fee
-	if change < 0 {
-		panic(fmt.Sprintf("negative change %v", change))
-	}
-	if change > 0 {
-		changeScriptVer, changeScript = changeAddr.StakeChangeScript()
-	}
-
-	// Generate and return the transaction spending from the provided
-	// spendable output with the previously described outputs.
-	tx := wire.NewMsgTx()
-	tx.AddTxIn(&wire.TxIn{
-		PreviousOutPoint: spend.prevOut,
-		Sequence:         wire.MaxTxInSequenceNum,
-		ValueIn:          int64(spend.amount),
-		BlockHeight:      spend.blockHeight,
-		BlockIndex:       spend.blockIndex,
-		SignatureScript:  opTrueRedeemScript,
-	})
-	tx.AddTxOut(wire.NewTxOut(int64(amount), []byte{txscript.OP_TADD}))
-	if len(changeScript) > 0 {
-		tx.AddTxOut(newTxOut(int64(change), changeScriptVer, changeScript))
-	}
-	return tx
-}
-
-// CreateTreasuryTAdd creates a new transaction that spends the provided output
-// to the treasury and uses the standard chaingen OP_TRUE P2SH as change address.
-func (g *Generator) CreateTreasuryTAdd(spend *SpendableOut, amount, fee dcrutil.Amount) *wire.MsgTx {
-	return g.CreateTreasuryTAddChange(spend, amount, fee, g.p2shOpTrueAddr)
-}
-
-// AddressAmountTuple wraps address+amount in a tuple for easy parameter
-// passing.
-type AddressAmountTuple struct {
-	Address stdaddr.Address
-	Amount  dcrutil.Amount
-}
-
-// CreateTreasuryTSpend creates a new transaction that spends treasury funds to
-// outputs.
-//
-// The transaction consists of the following outputs:
-// - First input is <signature> <pi pubkey> OP_TSPEND
-// - First output is an OP_RETURN <32 byte random data>
-// - Second and other outputs are OP_TGEN P2PKH/P2SH accounting.
-//
-// If an address is specified for a payout then it is used, otherwise the
-// standard OP_TRUE p2sh script is used as payout address.
-func (g *Generator) CreateTreasuryTSpend(privKey []byte, payouts []AddressAmountTuple, fee dcrutil.Amount, expiry uint32) *wire.MsgTx {
-	// Calculate total payout.
-	totalPayout := int64(0)
-	for _, v := range payouts {
-		totalPayout += int64(v.Amount)
-	}
-	valueIn := int64(fee) + totalPayout
-
-	// OP_RETURN <8 byte LE ValueIn><24 byte random>
-	// The TSpend TxIn ValueIn is encoded in the first 8 bytes to ensure
-	// that it becomes signed. This is consensus enforced.
-	var payload [32]byte
-	binary.LittleEndian.PutUint64(payload[0:8], uint64(valueIn))
-	_, err := rand.Read(payload[8:])
-	if err != nil {
-		panic(err)
-	}
-	opretScript := opReturnScript(payload[:])
-	msgTx := wire.NewMsgTx()
-	msgTx.Version = wire.TxVersionTreasury
-	msgTx.Expiry = expiry
-	msgTx.AddTxOut(wire.NewTxOut(0, opretScript))
-
-	// OP_TGEN
-	for _, v := range payouts {
-		addr := g.p2shOpTrueAddr.(stdaddr.Address)
-		if v.Address != nil {
-			addr = v.Address
-		}
-		scriptVer, script := addr.PaymentScript()
-		tgenScript := make([]byte, len(script)+1)
-		tgenScript[0] = txscript.OP_TGEN
-		copy(tgenScript[1:], script)
-		msgTx.AddTxOut(newTxOut(int64(v.Amount), scriptVer, tgenScript))
-	}
-
-	// Treasury spend transactions have no inputs since the funds are
-	// sourced from a special account, so previous outpoint is zero hash
-	// and max index.
-	msgTx.AddTxIn(&wire.TxIn{
-		PreviousOutPoint: *wire.NewOutPoint(&chainhash.Hash{},
-			wire.MaxPrevOutIndex, wire.TxTreeRegular),
-		Sequence:        wire.MaxTxInSequenceNum,
-		ValueIn:         int64(fee) + totalPayout,
-		BlockHeight:     wire.NullBlockHeight,
-		BlockIndex:      wire.NullBlockIndex,
-		SignatureScript: nil,
-	})
-
-	// Calculate TSpend signature without SigHashType.
-	sigscript, err := sign.TSpendSignatureScript(msgTx, privKey)
-	if err != nil {
-		panic(err)
-	}
-	msgTx.TxIn[0].SignatureScript = sigscript
-
-	return msgTx
 }
 
 // isTicketPurchaseTx returns whether or not the passed transaction is a stake
@@ -898,6 +776,13 @@ func (g *Generator) CalcNextRequiredDifficulty() uint32 {
 	// Target difficulty before the first retarget interval is the pow
 	// limit.
 	nextHeight := g.tip.Header.Height + 1
+
+	spec := g.params.Algorithm(nextHeight)
+
+	if nextHeight == spec.Height {
+		return spec.Bits
+	}
+
 	windowSize := g.params.WorkDiffWindowSize
 	if int64(nextHeight) < windowSize {
 		return g.params.PowLimitBits
@@ -1281,35 +1166,18 @@ func winningTickets(voteBlock *wire.MsgBlock, liveTickets []*stakeTicket, numVot
 	// Construct list of winners by generating successive values from the
 	// deterministic prng and using them as indices into the sorted live
 	// ticket pool while skipping any duplicates that might occur.
-	prng := newHash256PRNG(buf.Bytes())
+	seed := stake.CalcHash256PRNGIV(buf.Bytes())
+	prng := stake.NewHash256PRNGFromIV(seed)
 	winners := make([]*stakeTicket, 0, numVotes)
 	usedOffsets := make(map[uint32]struct{})
 	for uint16(len(winners)) < numVotes {
-		ticketIndex := prng.uniformRandom(uint32(numLiveTickets))
+		ticketIndex := prng.Hash256Rand() % uint32(numLiveTickets)
 		if _, exists := usedOffsets[ticketIndex]; !exists {
 			usedOffsets[ticketIndex] = struct{}{}
 			winners = append(winners, liveTickets[ticketIndex])
 		}
 	}
-	return winners, prng.State(), nil
-}
-
-// calcFinalLotteryState calculates the final lottery state for a set of winning
-// tickets and the associated deterministic prng state hash after selecting the
-// winners.  It is the first 6 bytes of:
-//   blake256(firstTicketHash || ... || lastTicketHash || prngStateHash)
-func calcFinalLotteryState(winners []*stakeTicket, prngStateHash chainhash.Hash) [6]byte {
-	data := make([]byte, (len(winners)+1)*chainhash.HashSize)
-	for i := 0; i < len(winners); i++ {
-		h := winners[i].tx.CachedTxHash()
-		copy(data[chainhash.HashSize*i:], h[:])
-	}
-	copy(data[chainhash.HashSize*len(winners):], prngStateHash[:])
-	dataHash := chainhash.HashH(data)
-
-	var finalState [6]byte
-	copy(finalState[:], dataHash[0:6])
-	return finalState
+	return winners, prng.StateHash(), nil
 }
 
 // nextPowerOfTwo returns the next highest power of two from a given number if
@@ -1500,71 +1368,70 @@ func IsSolved(header *wire.BlockHeader) bool {
 	return hashToBig(&hash).Cmp(targetDifficulty) <= 0
 }
 
-// solveBlock attempts to find a nonce which makes the passed block header hash
-// to a value less than the target difficulty.  When a successful solution is
-// found, true is returned and the nonce field of the passed header is updated
-// with the solution.  False is returned if no solution exists.
-//
-// NOTE: This function will never solve blocks with a nonce of 0.  This is done
-// so the 'NextBlock' function can properly detect when a nonce was modified by
-// a munge function.
-func solveBlock(header *wire.BlockHeader) bool {
-	// sbResult is used by the solver goroutines to send results.
-	type sbResult struct {
-		found bool
-		nonce uint32
+type solutionValidatorData struct {
+	params *chaincfg.Params
+	solved *bool
+	header *wire.BlockHeader
+}
+
+func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
+	if uintptr(solution) == 0 {
+		return 0
 	}
 
-	// solver accepts a block header and a nonce range to test. It is
-	// intended to be run as a goroutine.
-	targetDifficulty := compactToBig(header.Bits)
-	quit := make(chan bool)
-	results := make(chan sbResult)
-	solver := func(hdr wire.BlockHeader, startNonce, stopNonce uint32) {
-		// We need to modify the nonce field of the header, so make sure
-		// we work with a copy of the original header.
-		for i := startNonce; i >= startNonce && i <= stopNonce; i++ {
-			select {
-			case <-quit:
-				results <- sbResult{false, 0}
-				return
-			default:
-				hdr.Nonce = i
-				hash := hdr.BlockHash()
-				if hashToBig(&hash).Cmp(
-					targetDifficulty) <= 0 {
+	solutionBytes := cequihash.ExtractSolution(data.params.N, data.params.K, solution)
+	copy(data.header.EquihashSolution[:], solutionBytes)
+	hash := data.header.BlockHash()
 
-					results <- sbResult{true, i}
-					return
-				}
-			}
+	if hashToBig(&hash).Cmp(compactToBig(data.header.Bits)) <= 0 {
+		*data.solved = true
+		return 1
+	}
+	return 0
+}
+
+const (
+	// maxNonce is the maximum value a nonce can be in a block header.
+	maxNonce = ^uint32(0) // 2^32 - 1
+
+	// maxExtraNonce is the maximum value an extra nonce used in a coinbase
+	// transaction can be.
+	maxExtraNonce = ^uint64(0) // 2^64 - 1
+)
+
+func SolveBlockWithEquihash(header *wire.BlockHeader, chainParams *chaincfg.Params) bool {
+	enOffset, err := wire.RandomUint64()
+	if err != nil {
+		enOffset = 0
+	}
+
+	solved := false
+	validator := solutionValidatorData{chainParams, &solved, header}
+
+	for extraNonce := uint64(0); extraNonce < maxExtraNonce && !solved; extraNonce++ {
+		// Update the extra nonce in the block template header with the
+		// new value.
+		binary.LittleEndian.PutUint64(header.ExtraData[:], extraNonce+enOffset)
+
+		algo := chainParams.Algorithm(header.Height)
+
+		// Update equihash solver input bytes
+		headerBytes, err := header.SerializeEquihashHeaderBytes(algo)
+		if err != nil {
+			return false
 		}
-		results <- sbResult{false, 0}
-	}
 
-	startNonce := uint32(1)
-	stopNonce := uint32(math.MaxUint32)
-	numCores := uint32(runtime.NumCPU())
-	noncesPerCore := (stopNonce - startNonce) / numCores
-	for i := uint32(0); i < numCores; i++ {
-		rangeStart := startNonce + (noncesPerCore * i)
-		rangeStop := startNonce + (noncesPerCore * (i + 1)) - 1
-		if i == numCores-1 {
-			rangeStop = stopNonce
-		}
-		go solver(*header, rangeStart, rangeStop)
-	}
-	var foundResult bool
-	for i := uint32(0); i < numCores; i++ {
-		result := <-results
-		if !foundResult && result.found {
-			close(quit)
-			header.Nonce = result.nonce
-			foundResult = true
+		// Search through the entire nonce range for a solution while
+		// periodically checking for early quit and stale block
+		// conditions along with updates to the speed monitor.
+		for i := uint32(0); i <= maxNonce && !solved; i++ {
+			header.Nonce = i
+
+			cequihash.SolveEquihash(chainParams.N, chainParams.K, headerBytes, i, algo.Version, validator)
 		}
 	}
 
-	return foundResult
+	return solved
 }
 
 // ReplaceWithNVotes returns a function that itself takes a block and modifies
@@ -1616,12 +1483,11 @@ func (g *Generator) ReplaceWithNVotes(numVotes uint16) func(*wire.MsgBlock) {
 		// subsidy is accounted for.
 		height := b.Header.Height
 		fullSubsidy := g.calcFullSubsidy(height)
-		devSubsidy := g.calcDevSubsidy(fullSubsidy, height, numVotes)
 		powSubsidy := g.calcPoWSubsidy(fullSubsidy, height, numVotes)
 		cbTx := b.Transactions[0]
-		cbTx.TxIn[0].ValueIn = int64(devSubsidy + powSubsidy)
+		cbTx.TxIn[0].ValueIn = int64(powSubsidy)
 		cbTx.TxOut = nil
-		g.addCoinbaseTxOutputs(cbTx, height, devSubsidy, powSubsidy)
+		g.addCoinbaseTxOutputs(cbTx, height, powSubsidy)
 	}
 }
 
@@ -2242,7 +2108,6 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 	// current tip block and provided ticket spendable outputs.
 	var ticketWinners []*stakeTicket
 	var stakeTxns []*wire.MsgTx
-	var finalState [6]byte
 	nextHeight := g.tip.Header.Height + 1
 	if nextHeight > uint32(g.params.CoinbaseMaturity) {
 		// Generate votes once the stake validation height has been
@@ -2251,7 +2116,7 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 			// Generate and add the vote transactions for the
 			// winning tickets to the stake tree.
 			numVotes := g.params.TicketsPerBlock
-			winners, stateHash, err := winningTickets(g.tip,
+			winners, _, err := winningTickets(g.tip,
 				g.liveTickets, numVotes)
 			if err != nil {
 				panic(err)
@@ -2261,10 +2126,6 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 				voteTx := g.createVoteTxFromTicket(g.tip, ticket)
 				stakeTxns = append(stakeTxns, voteTx)
 			}
-
-			// Calculate the final lottery state hash for use in the
-			// block header.
-			finalState = calcFinalLotteryState(winners, stateHash)
 		}
 
 		// Generate ticket purchases (sstx) using the provided spendable
@@ -2324,14 +2185,14 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 
 		// Increase the PoW subsidy to account for any fees in the stake
 		// tree.
-		coinbaseTx.TxOut[2].Value += int64(stakeTreeFees)
+		coinbaseTx.TxOut[1].Value += int64(stakeTreeFees)
 
 		// Create a transaction to spend the provided utxo if needed.
 		if spend != nil {
 			// Create the transaction with a fee of 1 atom for the
 			// miner and increase the PoW subsidy accordingly.
 			fee := dcrutil.Amount(1)
-			coinbaseTx.TxOut[2].Value += int64(fee)
+			coinbaseTx.TxOut[1].Value += int64(fee)
 
 			// Create a transaction that spends from the provided
 			// spendable output and includes an additional unique
@@ -2375,7 +2236,7 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 			MerkleRoot:   calcMerkleRoot(regularTxns),
 			StakeRoot:    calcMerkleRoot(stakeTxns),
 			VoteBits:     1,
-			FinalState:   finalState,
+			FinalState:   [6]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 			Voters:       numVotes,
 			FreshStake:   numTicketPurchases,
 			Revocations:  numTicketRevocations,
@@ -2393,6 +2254,21 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 		STransactions: stakeTxns,
 	}
 	block.Header.Size = uint32(block.SerializeSize())
+
+	if g.chain != nil {
+		// Update final state
+		stakeNode, _ := g.chain.GetPrevStakeNode(&block.Header)
+		block.Header.FinalState = stakeNode.FinalState()
+		block.Header.PoolSize = uint32(stakeNode.PoolSize())
+
+		var extraWinners []chainhash.Hash
+
+		for _, winner := range ticketWinners {
+			extraWinners = append(extraWinners, *winner.tx.CachedTxHash())
+		}
+
+		stakeNode.ReplaceWinners(extraWinners)
+	}
 
 	// Perform any block munging just before solving.  Once stake validation
 	// height has been reached, update the vote commitments accordingly if the
@@ -2423,7 +2299,7 @@ func (g *Generator) NextBlock(blockName string, spend *SpendableOut, ticketSpend
 
 	// Only solve the block if the nonce wasn't manually changed by a munge
 	// function.
-	if block.Header.Nonce == curNonce && !solveBlock(&block.Header) {
+	if block.Header.Nonce == curNonce && !SolveBlockWithEquihash(&block.Header, g.params) {
 		panic(fmt.Sprintf("unable to solve block at height %d",
 			block.Header.Height))
 	}
@@ -2540,12 +2416,12 @@ func (g *Generator) NumSpendableCoinbaseOuts() int {
 // passed block to the list of spendable outputs.
 func (g *Generator) saveCoinbaseOuts(b *wire.MsgBlock) {
 	g.spendableOuts = append(g.spendableOuts, []SpendableOut{
+		MakeSpendableOut(b, 0, 1),
 		MakeSpendableOut(b, 0, 2),
 		MakeSpendableOut(b, 0, 3),
 		MakeSpendableOut(b, 0, 4),
 		MakeSpendableOut(b, 0, 5),
 		MakeSpendableOut(b, 0, 6),
-		MakeSpendableOut(b, 0, 7),
 	})
 	g.prevCollectedHash = b.BlockHash()
 }

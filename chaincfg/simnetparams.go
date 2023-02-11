@@ -6,6 +6,7 @@
 package chaincfg
 
 import (
+	"math"
 	"math/big"
 	"time"
 
@@ -28,6 +29,12 @@ func SimNetParams() *Params {
 	// simNetPowLimit is the highest proof of work value a Decred block can have
 	// for the simulation test network.  It is the value 2^255 - 1.
 	simNetPowLimit := new(big.Int).Sub(new(big.Int).Lsh(bigOne, 255), bigOne)
+
+	// Original settings
+	simTicketPoolSize       := uint16(64)
+	simCoinbaseMaturity     := uint16(16)
+	simTicketMaturity       := uint16(16)
+	simStakeVersionInterval := int64(8 * 2 * 7)
 
 	// genesisBlock defines the genesis block of the block chain which serves
 	// as the public transaction ledger for the simulation test network.
@@ -53,23 +60,43 @@ func SimNetParams() *Params {
 		Transactions: []*wire.MsgTx{{
 			SerType: wire.TxSerializeFull,
 			Version: 1,
-			TxIn: []*wire.TxIn{{
-				PreviousOutPoint: wire.OutPoint{
-					Hash:  chainhash.Hash{},
-					Index: 0xffffffff,
+			TxIn: []*wire.TxIn{
+				{
+					PreviousOutPoint: wire.OutPoint{
+						Hash:  chainhash.Hash{},
+						Index: 0xffffffff,
+					},
+					SignatureScript: []byte{
+						0x04, 0xff, 0xff, 0x00, 0x1d, 0x01, 0x04, 0x45, /* |.......E| */
+						0x54, 0x68, 0x65, 0x20, 0x54, 0x69, 0x6d, 0x65, /* |The Time| */
+						0x73, 0x20, 0x30, 0x33, 0x2f, 0x4a, 0x61, 0x6e, /* |s 03/Jan| */
+						0x2f, 0x32, 0x30, 0x30, 0x39, 0x20, 0x43, 0x68, /* |/2009 Ch| */
+						0x61, 0x6e, 0x63, 0x65, 0x6c, 0x6c, 0x6f, 0x72, /* |ancellor| */
+						0x20, 0x6f, 0x6e, 0x20, 0x62, 0x72, 0x69, 0x6e, /* | on brin| */
+						0x6b, 0x20, 0x6f, 0x66, 0x20, 0x73, 0x65, 0x63, /* |k of sec|*/
+						0x6f, 0x6e, 0x64, 0x20, 0x62, 0x61, 0x69, 0x6c, /* |ond bail| */
+						0x6f, 0x75, 0x74, 0x20, 0x66, 0x6f, 0x72, 0x20, /* |out for |*/
+						0x62, 0x61, 0x6e, 0x6b, 0x73, /* |banks| */
+					},
+					Sequence: 0xffffffff,
 				},
-				SignatureScript: hexDecode("04ffff001d0104455468652054696d65" +
-					"732030332f4a616e2f32303039204368616e63656c6c6f72206f6e" +
-					"206272696e6b206f66207365636f6e64206261696c6f757420666f" +
-					"722062616e6b73"),
-				Sequence: 0xffffffff,
-			}},
-			TxOut: []*wire.TxOut{{
-				Value: 0x00000000,
-				PkScript: hexDecode("4104678afdb0fe5548271967f1a67130b7105c" +
-					"d6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e5" +
-					"1ec112de5c384df7ba0b8d578a4c702b6bf11d5fac"),
-			}},
+			},
+			TxOut: []*wire.TxOut{
+				{
+					Value: 0x00000000,
+					PkScript: []byte{
+						0x41, 0x04, 0x67, 0x8a, 0xfd, 0xb0, 0xfe, 0x55, /* |A.g....U| */
+						0x48, 0x27, 0x19, 0x67, 0xf1, 0xa6, 0x71, 0x30, /* |H'.g..q0| */
+						0xb7, 0x10, 0x5c, 0xd6, 0xa8, 0x28, 0xe0, 0x39, /* |..\..(.9| */
+						0x09, 0xa6, 0x79, 0x62, 0xe0, 0xea, 0x1f, 0x61, /* |..yb...a| */
+						0xde, 0xb6, 0x49, 0xf6, 0xbc, 0x3f, 0x4c, 0xef, /* |..I..?L.| */
+						0x38, 0xc4, 0xf3, 0x55, 0x04, 0xe5, 0x1e, 0xc1, /* |8..U....| */
+						0x12, 0xde, 0x5c, 0x38, 0x4d, 0xf7, 0xba, 0x0b, /* |..\8M...| */
+						0x8d, 0x57, 0x8a, 0x4c, 0x70, 0x2b, 0x6b, 0xf1, /* |.W.Lp+k.| */
+						0x1d, 0x5f, 0xac, /* |._.| */
+					},
+				},
+			},
 			LockTime: 0,
 			Expiry:   0,
 		}},
@@ -79,14 +106,16 @@ func SimNetParams() *Params {
 	return &Params{
 		Name:        "simnet",
 		Net:         wire.SimNet,
-		DefaultPort: "18555",
+		DefaultPort: "11998",
 		DNSSeeds:    nil, // NOTE: There must NOT be any seeds.
+		N:           48,
+		K:           5,
 
 		// Chain parameters
 		GenesisBlock:             &genesisBlock,
 		GenesisHash:              genesisBlock.BlockHash(),
 		PowLimit:                 simNetPowLimit,
-		PowLimitBits:             0x207fffff,
+		PowLimitBits:             bigToCompact(simNetPowLimit),
 		ReduceMinDifficulty:      false,
 		MinDiffReductionTime:     0, // Does not apply since ReduceMinDifficulty false
 		GenerateSupported:        true,
@@ -105,10 +134,7 @@ func SimNetParams() *Params {
 		DivSubsidy:               101,
 		SubsidyReductionInterval: 128,
 		WorkRewardProportion:     6,
-		WorkRewardProportionV2:   1,
 		StakeRewardProportion:    3,
-		StakeRewardProportionV2:  8,
-		BlockTaxProportion:       1,
 
 		// Checkpoints ordered from oldest to newest.
 		Checkpoints: nil,
@@ -133,6 +159,36 @@ func SimNetParams() *Params {
 		RuleChangeActivationMultiplier: 3,   // 75%
 		RuleChangeActivationDivisor:    4,
 		RuleChangeActivationInterval:   320, // 320 seconds
+		Deployments: map[uint32][]ConsensusDeployment{
+			4: {{
+				Vote: Vote{
+					Id:          VoteIDMaxBlockSize,
+					Description: "Change maximum allowed block size from 1MiB to 1.25MB",
+					Mask:        0x0006, // Bits 1 and 2
+					Choices: []Choice{{
+						Id:          "abstain",
+						Description: "abstain voting for change",
+						Bits:        0x0000,
+						IsAbstain:   true,
+						IsNo:        false,
+					}, {
+						Id:          "no",
+						Description: "reject changing max allowed block size",
+						Bits:        0x0002, // Bit 1
+						IsAbstain:   false,
+						IsNo:        true,
+					}, {
+						Id:          "yes",
+						Description: "accept changing max allowed block size",
+						Bits:        0x0004, // Bit 2
+						IsAbstain:   false,
+						IsNo:        false,
+					}},
+				},
+				StartTime:  0,             // Always available for vote
+				ExpireTime: math.MaxInt64, // Never expires
+			}},
+		},
 
 		// Enforce current block version once majority of the network has
 		// upgraded.
@@ -155,7 +211,7 @@ func SimNetParams() *Params {
 		PKHEdwardsAddrID:     [2]byte{0x0e, 0x71}, // starts with Se
 		PKHSchnorrAddrID:     [2]byte{0x0e, 0x53}, // starts with SS
 		ScriptHashAddrID:     [2]byte{0x0e, 0x6c}, // starts with Sc
-		PrivateKeyID:         [2]byte{0x23, 0x07}, // starts with Ps
+		PrivateKeyID:         0xef,                // starts with 9 (uncompressed) or c (compressed)
 
 		// BIP32 hierarchical deterministic extended key magics
 		HDPrivateKeyID: [4]byte{0x04, 0x20, 0xb9, 0x03}, // starts with sprv
@@ -163,26 +219,25 @@ func SimNetParams() *Params {
 
 		// BIP44 coin type used in the hierarchical deterministic path for
 		// address generation.
-		SLIP0044CoinType: 1,   // SLIP0044, Testnet (all coins)
-		LegacyCoinType:   115, // ASCII for s, for backwards compatibility
+		HDCoinType: 2,
 
 		// Decred PoS parameters
 		MinimumStakeDiff:        20000,
-		TicketPoolSize:          64,
+		TicketPoolSize:          simTicketPoolSize,
 		TicketsPerBlock:         5,
-		TicketMaturity:          16,
-		TicketExpiry:            384, // 6*TicketPoolSize
-		CoinbaseMaturity:        16,
+		TicketMaturity:          simTicketMaturity,
+		TicketExpiry:            uint32(6 * simTicketPoolSize), // 6*TicketPoolSize
+		CoinbaseMaturity:        simCoinbaseMaturity,
 		SStxChangeMaturity:      1,
 		TicketPoolSizeWeight:    4,
 		StakeDiffAlpha:          1,
 		StakeDiffWindowSize:     8,
 		StakeDiffWindows:        8,
-		StakeVersionInterval:    8 * 2 * 7,
+		StakeVersionInterval:    simStakeVersionInterval,
 		MaxFreshStakePerBlock:   20,            // 4*TicketsPerBlock
-		StakeEnabledHeight:      16 + 16,       // CoinbaseMaturity + TicketMaturity
-		StakeValidationHeight:   16 + (64 * 2), // CoinbaseMaturity + TicketPoolSize*2
-		StakeBaseSigScript:      []byte{0x00, 0x00},
+		StakeEnabledHeight:      int64(simCoinbaseMaturity + simTicketMaturity),   // CoinbaseMaturity + TicketMaturity
+		StakeValidationHeight:   int64(simCoinbaseMaturity + simTicketPoolSize*2), // CoinbaseMaturity + TicketPoolSize*2
+		StakeBaseSigScript:      []byte{0xDE, 0xAD, 0xBE, 0xEF},
 		StakeMajorityMultiplier: 3,
 		StakeMajorityDivisor:    4,
 
@@ -215,8 +270,6 @@ func SimNetParams() *Params {
 		//   SkQkfkHZeBbMW8129tZ3KspEh1XBFC1btbkgzs6cjSyPbrgxzsKqk
 		//
 		// Organization address is ScuQxvveKGfpG1ypt6u27F99Anf7EW3cqhq
-		OrganizationPkScript:        hexDecode("a914cbb08d6ca783b533b2c7d24a51fbca92d937bf9987"),
-		OrganizationPkScriptVersion: 0,
 		BlockOneLedger:              tokenPayouts_SimNetParams(),
 
 		// Commands to generate simnet Pi keys:
@@ -234,17 +287,9 @@ func SimNetParams() *Params {
 			hexDecode("02b2c110e7b560aa9e1545dd18dd9f7e74a3ba036297a696050c0256f1f69479d7"),
 		},
 
-		TreasuryVoteInterval:           16 * 3, // 3 times coinbase (48 blocks).
-		TreasuryVoteIntervalMultiplier: 3,      // 3 * 48 block Expiry.
-
-		TreasuryExpenditureWindow:    4,         // 4 * 2 * 48 blocks for policy check
-		TreasuryExpenditurePolicy:    3,         // Avg of 3*4*2*48 blocks for policy check
-		TreasuryExpenditureBootstrap: 100 * 1e8, // 100 dcr/tew as expense bootstrap
-
-		TreasuryVoteQuorumMultiplier:   1, // 20% quorum required
-		TreasuryVoteQuorumDivisor:      5,
-		TreasuryVoteRequiredMultiplier: 3, // 60% yes votes required
-		TreasuryVoteRequiredDivisor:    5,
+		Algorithms: []wire.AlgorithmSpec{
+			{Height: 0, HeaderSize: 108, Version: 0, Bits: bigToCompact(simNetPowLimit)},
+		},
 
 		seeders: nil, // NOTE: There must NOT be any seeds.
 	}

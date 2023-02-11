@@ -831,11 +831,6 @@ func (idx *AddrIndex) indexBlock(data writeIndexData, block *dcrutil.Block, prev
 		var (
 			isTSpend, isTreasuryBase bool
 		)
-		if isTreasuryEnabled {
-			// Short circuit expensive Is* calls.
-			isTreasuryBase = !isSSGen && stake.IsTreasuryBase(msgTx)
-			isTSpend = !isTreasuryBase && stake.IsTSpend(msgTx)
-		}
 		for i, txIn := range msgTx.TxIn {
 			// Skip stakebases.
 			if isSSGen && i == 0 {

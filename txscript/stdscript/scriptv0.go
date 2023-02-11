@@ -526,9 +526,6 @@ func ExtractStakePubKeyHashV0(script []byte) []byte {
 	if h := ExtractStakeChangePubKeyHashV0(script); h != nil {
 		return h
 	}
-	if h := ExtractTreasuryGenPubKeyHashV0(script); h != nil {
-		return h
-	}
 
 	return nil
 }
@@ -662,44 +659,6 @@ func IsStakeChangeScriptHashScriptV0(script []byte) bool {
 	return ExtractStakeChangeScriptHashV0(script) != nil
 }
 
-// IsTreasuryAddScriptV0 returns whether or not the passed script is a supported
-// version 0 treasury add script.
-func IsTreasuryAddScriptV0(script []byte) bool {
-	return len(script) == 1 && script[0] == txscript.OP_TADD
-}
-
-// ExtractTreasuryGenPubKeyHashV0 extracts the public key hash from the
-// passed script if it is a standard version 0 treasury generation
-// pay-to-pubkey-hash script.  It will return nil otherwise.
-func ExtractTreasuryGenPubKeyHashV0(script []byte) []byte {
-	// A treasury generation pay-to-pubkey-hash script is of the form:
-	//  OP_TGEN <standard-pay-to-pubkey-hash script>
-	const stakeOpcode = txscript.OP_TGEN
-	return extractStakePubKeyHashV0(script, stakeOpcode)
-}
-
-// IsTreasuryGenPubKeyHashScriptV0 returns whether or not the passed script is a
-// standard version 0 treasury generation pay-to-pubkey-hash script.
-func IsTreasuryGenPubKeyHashScriptV0(script []byte) bool {
-	return ExtractTreasuryGenPubKeyHashV0(script) != nil
-}
-
-// ExtractTreasuryGenScriptHashV0 extracts the script hash from the passed
-// script if it is a standard version 0 treasury generation pay-to-script-hash
-// script.  It will return nil otherwise.
-func ExtractTreasuryGenScriptHashV0(script []byte) []byte {
-	// A treasury generation pay-to-script-hash script is of the form:
-	//  OP_TGEN <standard-pay-to-script-hash script>
-	const stakeOpcode = txscript.OP_TGEN
-	return extractStakeScriptHashV0(script, stakeOpcode)
-}
-
-// IsTreasuryGenScriptHashScriptV0 returns whether or not the passed script is a
-// standard version 0 treasury generation pay-to-script-hash script.
-func IsTreasuryGenScriptHashScriptV0(script []byte) bool {
-	return ExtractTreasuryGenScriptHashV0(script) != nil
-}
-
 // ExtractStakeScriptHashV0 extracts the script hash from the passed script if
 // it is any one of the supported standard version 0 stake-tagged
 // pay-to-script-hash scripts.  It will return nil otherwise.
@@ -714,9 +673,6 @@ func ExtractStakeScriptHashV0(script []byte) []byte {
 		return h
 	}
 	if h := ExtractStakeChangeScriptHashV0(script); h != nil {
-		return h
-	}
-	if h := ExtractTreasuryGenScriptHashV0(script); h != nil {
 		return h
 	}
 
@@ -764,12 +720,6 @@ func DetermineScriptTypeV0(script []byte) ScriptType {
 		return STStakeChangePubKeyHash
 	case IsStakeChangeScriptHashScriptV0(script):
 		return STStakeChangeScriptHash
-	case IsTreasuryAddScriptV0(script):
-		return STTreasuryAdd
-	case IsTreasuryGenPubKeyHashScriptV0(script):
-		return STTreasuryGenPubKeyHash
-	case IsTreasuryGenScriptHashScriptV0(script):
-		return STTreasuryGenScriptHash
 	}
 
 	return STNonStandard

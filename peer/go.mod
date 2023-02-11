@@ -11,3 +11,10 @@ require (
 	github.com/decred/go-socks v1.1.0
 	github.com/decred/slog v1.2.0
 )
+
+replace (
+	github.com/decred/dcrd/chaincfg/chainhash => ../chaincfg/chainhash
+	github.com/decred/dcrd/lru => ../lru
+	github.com/decred/dcrd/txscript/v2 => ../txscript
+	github.com/decred/dcrd/wire => ../wire
+)

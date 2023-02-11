@@ -85,12 +85,6 @@ type StakeAddress interface {
 	// The script is only valid when used in stake revocation transactions whose
 	// associated tickets have been missed or have expired.
 	PayRevokeCommitmentScript() (uint16, []byte)
-
-	// PayFromTreasuryScript returns the script version associated with the
-	// address along with a script that pays funds from the treasury to the
-	// address.  The script is only valid when used in treasury spend
-	// transactions.
-	PayFromTreasuryScript() (uint16, []byte)
 }
 
 // SerializedPubKeyer is an interface for public key addresses that allows the
@@ -421,7 +415,7 @@ func NewAddressScriptHash(scriptVersion uint16, redeemScript []byte,
 func probablyV0Base58Addr(s string) bool {
 	// Ensure the length is one of the possible values for supported version 0
 	// addresses.
-	if len(s) != 35 && len(s) != 53 {
+	if len(s) != 35 && len(s) != 36 && len(s) != 53 {
 		return false
 	}
 

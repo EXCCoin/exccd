@@ -355,6 +355,14 @@ func NewBgBlkTmplGenerator(cfg *BgBlkTmplConfig) *BgBlkTmplGenerator {
 	}
 }
 
+func (g *BgBlkTmplGenerator) BestSnapshot() *blockchain.BestState {
+	return g.tg.cfg.BestSnapshot()
+}
+
+func (g *BgBlkTmplGenerator) TxSource() TxSource {
+	return g.tg.cfg.TxSource
+}
+
 // UpdateBlockTime updates the timestamp in the passed header to the current
 // time while taking into account the median time of the last several blocks to
 // ensure the new time is after that time per the chain consensus rules.

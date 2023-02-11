@@ -1055,6 +1055,8 @@ func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time, msgCmd st
 
 	case wire.CmdGetBlocks:
 		// Expects an inv message.
+		// Since Equihash significantly slows down block rate, make timeout much longer
+		deadline = time.Now().Add(stallResponseTimeout * 30)
 		pendingResponses[wire.CmdInv] = deadline
 		addedDeadline = true
 
@@ -1064,6 +1066,14 @@ func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time, msgCmd st
 		pendingResponses[wire.CmdTx] = deadline
 		pendingResponses[wire.CmdNotFound] = deadline
 		addedDeadline = true
+
+	case wire.CmdGetHeaders:
+		// Expects a headers message.  Use a longer deadline since it
+		// can take a while for the remote peer to load all of the
+		// headers.
+		// Since Equihash significantly slows down block rate, make timeout much longer
+		deadline = time.Now().Add(stallResponseTimeout * 30)
+		pendingResponses[wire.CmdHeaders] = deadline
 
 	case wire.CmdGetMiningState:
 		pendingResponses[wire.CmdMiningState] = deadline

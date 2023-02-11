@@ -67,6 +67,17 @@ const (
 	// are allowed in the mempool. The number 7 is also the amount of
 	// physical space available for TSpend votes and thus is a hard limit.
 	MempoolMaxConcurrentTSpends = 7
+
+	// ancestorTrackingLimit is the maximum number of ancestors a transaction
+	// can have ancestor stats calculated for.
+	ancestorTrackingLimit = 25
+)
+
+var (
+	// zeroHash is the zero value for a chainhash.Hash and is defined as a
+	// package level variable to avoid the need to create a new instance
+	// every time a check is needed.
+	zeroHash = &chainhash.Hash{}
 )
 
 // Tag represents an identifier to use for tagging orphan transactions.  The
@@ -1746,79 +1757,6 @@ func (mp *TxPool) maybeAcceptTransaction(tx *dcrutil.Tx, isNew, rateLimit,
 			return nil, chainRuleError(cerr)
 		}
 		return nil, err
-	}
-
-	// Only allow TSpends that have a valid Expiry.
-	if isTreasuryEnabled && isTSpend {
-		// Shorter variable names for relevant chain parameters.
-		tvi := mp.cfg.ChainParams.TreasuryVoteInterval
-		mul := mp.cfg.ChainParams.TreasuryVoteIntervalMultiplier
-
-		// Ensure the TSpend expiry isn't too far in the future, before
-		// its voting is supposed to start. We arbitrarily define as
-		// "too far in the future" as the vote starting greater than or
-		// equal to two full voting windows in the future.
-		voteStart, _, err := standalone.CalcTSpendWindow(msgTx.Expiry, tvi, mul)
-		if err != nil {
-			str := fmt.Sprintf("Invalid tspend expiry %d: %v ",
-				msgTx.Expiry, err)
-			return nil, txRuleError(ErrTSpendInvalidExpiry, str)
-		}
-		voteStartThresh := int64(2 * tvi * mul)
-		blocksToVoteStart := int64(voteStart) - nextBlockHeight
-		voteStartDistantFuture := int64(voteStart) > nextBlockHeight &&
-			blocksToVoteStart >= voteStartThresh
-		if voteStartDistantFuture {
-			str := fmt.Sprintf("Tspend voting too far in the "+
-				"future: voting starts in %d blocks while the "+
-				"voting threshold is %d blocks",
-				blocksToVoteStart, voteStartThresh)
-			return nil, txRuleError(ErrTSpendInvalidExpiry, str)
-		}
-
-		// Only allow up to MempoolMaxConcurrentTSpends TSpends in the
-		// mempool.
-		tspends := len(mp.tspends)
-		if tspends >= MempoolMaxConcurrentTSpends {
-			str := fmt.Sprintf("Mempool can only hold %v "+
-				"concurrent TSpend transactions",
-				MempoolMaxConcurrentTSpends)
-			return nil, txRuleError(ErrTooManyTSpends, str)
-		}
-
-		// Verify that this TSpend uses a well-known Pi key and that
-		// the signature is valid.
-		signature, pubKey, err := stake.CheckTSpend(msgTx)
-		if err != nil {
-			str := fmt.Sprintf("Mempool invalid TSpend: %v", err)
-			return nil, txRuleError(ErrInvalid, str)
-		}
-		if !mp.cfg.ChainParams.PiKeyExists(pubKey) {
-			str := fmt.Sprintf("Unknown Pi Key: %x", pubKey)
-			return nil, txRuleError(ErrInvalid, str)
-		}
-		err = blockchain.VerifyTSpendSignature(msgTx, signature, pubKey)
-		if err != nil {
-			str := fmt.Sprintf("Mempool invalid TSpend signature: "+
-				"%v", err)
-			return nil, txRuleError(ErrInvalid, str)
-		}
-
-		// Verify that this tspend hash has not been included in an
-		// ancestor block yet.
-		if err := mp.cfg.TSpendMinedOnAncestor(*txHash); err != nil {
-			// err is descriptive and only needs to be wrapped.
-			return nil, txRuleError(ErrTSpendMinedOnAncestor, err.Error())
-		}
-
-		// Notify that we accepted a TSpend.
-		if mp.cfg.OnTSpendReceived != nil {
-			mp.cfg.OnTSpendReceived(tx)
-		}
-
-		log.Tracef("TSpend allowed in mempool: nbh %v expiry %v "+
-			"tvi %v tvim %v tspends %v", nextBlockHeight, msgTx.Expiry,
-			tvi, mul, tspends)
 	}
 
 	txDesc := mp.newTxDesc(utxoView, tx, txType, bestHeight, txFee, totalSigOps,

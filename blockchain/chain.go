@@ -670,10 +670,7 @@ func (b *BlockChain) connectBlock(node *blockNode, block, parent *dcrutil.Block,
 	}
 
 	// Calculate the next stake difficulty.
-	nextStakeDiff, err := b.calcNextRequiredStakeDifficulty(node)
-	if err != nil {
-		return err
-	}
+	nextStakeDiff := b.calcNextRequiredStakeDifficulty(node)
 
 	// NOTE: When more header commitments are added, the inclusion proofs
 	// will need to be generated and stored to the database here (when not
@@ -718,19 +715,6 @@ func (b *BlockChain) connectBlock(node *blockNode, block, parent *dcrutil.Block,
 		err = stake.WriteConnectedBestNode(dbTx, stakeNode, node.hash)
 		if err != nil {
 			return err
-		}
-
-		// Insert the treasury information into the database.
-		if isTreasuryEnabled {
-			err = b.dbPutTreasuryBalance(dbTx, block, node)
-			if err != nil {
-				return err
-			}
-
-			err = b.dbPutTSpend(dbTx, block)
-			if err != nil {
-				return err
-			}
 		}
 
 		// Insert the GCS filter for the block into the database.
@@ -814,10 +798,7 @@ func (b *BlockChain) connectBlock(node *blockNode, block, parent *dcrutil.Block,
 
 	// Send stake notifications about the new block.
 	if node.height >= b.chainParams.StakeEnabledHeight {
-		nextStakeDiff, err := b.calcNextRequiredStakeDifficulty(node)
-		if err != nil {
-			return err
-		}
+		nextStakeDiff := b.calcNextRequiredStakeDifficulty(node)
 
 		// Notify of spent and missed tickets.
 		b.sendNotification(NTSpentAndMissedTickets,
@@ -1017,12 +998,6 @@ func countSpentStakeOutputs(block *dcrutil.Block, isTreasuryEnabled bool) int {
 		// Exclude the vote stakebase since it has no input.
 		if stake.IsSSGen(stx, isTreasuryEnabled) {
 			numSpent++
-			continue
-		}
-
-		// Exclude treasurybase and treasury spends since neither have any
-		// inputs.
-		if stake.IsTreasuryBase(stx) || stake.IsTSpend(stx) {
 			continue
 		}
 
@@ -2089,11 +2064,6 @@ func stxosToScriptSource(block *dcrutil.Block, stxos []spentTxOut, isTreasuryEna
 	source := make(scriptSource)
 	msgBlock := block.MsgBlock()
 
-	// TSpends can only be added to TVI blocks so don't look for them
-	// except in those blocks.
-	isTVI := standalone.IsTreasuryVoteInterval(uint64(msgBlock.Header.Height),
-		chainParams.TreasuryVoteInterval)
-
 	// Loop through all of the transaction inputs in the stake transaction
 	// tree (except for the stakebases, treasurybases and treasuryspends
 	// which have no inputs) and add the scripts and associated script
@@ -2103,14 +2073,7 @@ func stxosToScriptSource(block *dcrutil.Block, stxos []spentTxOut, isTreasuryEna
 	// the regular tree when originally creating the spend journal entry, thus
 	// the spent txouts need to be processed in the same order.
 	var stxoIdx int
-	for i, tx := range msgBlock.STransactions {
-		// Ignore treasury base and tspends since they have no inputs.
-		isTreasuryBase := isTreasuryEnabled && i == 0
-		isTSpend := isTreasuryEnabled && i > 0 && isTVI && stake.IsTSpend(tx)
-		if isTreasuryBase || isTSpend {
-			continue
-		}
-
+	for _, tx := range msgBlock.STransactions {
 		isVote := stake.IsSSGen(tx, isTreasuryEnabled)
 		for txInIdx, txIn := range tx.TxIn {
 			// Ignore stakebase since it has no input.
@@ -2468,9 +2431,7 @@ func New(ctx context.Context, config *Config) (*BlockChain, error) {
 		b.index.Lock()
 		b.index.forEachChainTip(func(tip *blockNode) error {
 			node := tip.Ancestor(testNet3MaxDiffActivationHeight)
-			if node != nil && node.hash != *block962928Hash &&
-				!node.status.KnownInvalid() {
-
+			if node != nil && !node.status.KnownInvalid() {
 				invalidateNodes = append(invalidateNodes, node)
 			}
 			return nil

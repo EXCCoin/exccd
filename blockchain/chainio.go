@@ -748,17 +748,7 @@ func dbFetchSpendJournalEntry(dbTx database.Tx, block *dcrutil.Block, isTreasury
 
 	blockTxns := make([]*wire.MsgTx, 0, len(msgBlock.STransactions)+
 		len(msgBlock.Transactions[1:]))
-	if len(msgBlock.STransactions) > 0 && isTreasuryEnabled {
-		// Skip treasury base and remove tspends.
-		for _, v := range msgBlock.STransactions[1:] {
-			if stake.IsTSpend(v) {
-				continue
-			}
-			blockTxns = append(blockTxns, v)
-		}
-	} else {
-		blockTxns = append(blockTxns, msgBlock.STransactions...)
-	}
+	blockTxns = append(blockTxns, msgBlock.STransactions...)
 	blockTxns = append(blockTxns, msgBlock.Transactions[1:]...)
 	if len(blockTxns) > 0 && len(serialized) == 0 {
 		panicf("missing spend journal data for %s", block.Hash())
@@ -1464,10 +1454,7 @@ func (b *BlockChain) initChainState(ctx context.Context,
 		numTxns := uint64(len(block.Transactions))
 
 		// Calculate the next stake difficulty.
-		nextStakeDiff, err := b.calcNextRequiredStakeDifficulty(tip)
-		if err != nil {
-			return err
-		}
+		nextStakeDiff := b.calcNextRequiredStakeDifficulty(tip)
 
 		// Find the most recent checkpoint.
 		if b.latestCheckpoint != nil {

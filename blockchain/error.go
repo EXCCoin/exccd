@@ -481,6 +481,9 @@ const (
 	// failed validation.
 	ErrInvalidAncestorBlock = ErrorKind("ErrInvalidAncestorBlock")
 
+	// ErrInvalidEquihashSolution indicates that block does not passes equihash solution validation
+	ErrInvalidEquihashSolution = ErrorKind("ErrInvalidEquihashSolution")
+
 	// ErrInvalidTemplateParent indicates that a block template builds on a
 	// block that is either not the current best chain tip or its parent.
 	ErrInvalidTemplateParent = ErrorKind("ErrInvalidTemplateParent")

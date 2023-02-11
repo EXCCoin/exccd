@@ -328,6 +328,7 @@ var helpDescsEnUS = map[string]string{
 	"getblockverboseresult-finalstate":        "The block's finalstate",
 	"getblockverboseresult-extradata":         "Extra data field for the requested block",
 	"getblockverboseresult-stakeversion":      "Stake Version of the block",
+	"getblockverboseresult-equihashsolution":  "The equihash solution of the block",
 
 	// GetBlockCountCmd help.
 	"getblockcount--synopsis": "Returns the number of blocks in the longest block chain.",
@@ -371,6 +372,7 @@ var helpDescsEnUS = map[string]string{
 	"getblockheaderverboseresult-stakeroot":         "The merkle root of the stake transaction tree",
 	"getblockheaderverboseresult-extradata":         "Extra data field for the requested block",
 	"getblockheaderverboseresult-stakeversion":      "The stake version of the block",
+	"getblockheaderverboseresult-equihashsolution":  "The equihash solution of the block",
 
 	// GetBlockSubsidyCmd help.
 	"getblocksubsidy--synopsis": "Returns information regarding subsidy amounts.",
@@ -378,10 +380,9 @@ var helpDescsEnUS = map[string]string{
 	"getblocksubsidy-voters":    "The number of voters",
 
 	// GetBlockSubsidyResult help.
-	"getblocksubsidyresult-developer": "The developer subsidy",
-	"getblocksubsidyresult-pos":       "The Proof-of-Stake subsidy",
-	"getblocksubsidyresult-pow":       "The Proof-of-Work subsidy",
-	"getblocksubsidyresult-total":     "The total subsidy",
+	"getblocksubsidyresult-pos":   "The Proof-of-Stake subsidy",
+	"getblocksubsidyresult-pow":   "The Proof-of-Work subsidy",
+	"getblocksubsidyresult-total": "The total subsidy",
 
 	// GetCFilterV2Cmd help.
 	"getcfilterv2--synopsis": "Returns the version 2 block filter for the given block along with a proof that can be used to prove the filter is committed to by the block header",
@@ -773,6 +774,7 @@ var helpDescsEnUS = map[string]string{
 	"setgenerate--synopsis":    "Set the server to generate coins (mine) or not.",
 	"setgenerate-generate":     "Use true to enable generation, false to disable it",
 	"setgenerate-genproclimit": "The number of processors (cores) to limit generation to or -1 for default",
+	"setgenerate-miningaddr":   "The mining address",
 
 	// StopCmd help.
 	"stop--synopsis": "Shutdown dcrd.",

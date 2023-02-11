@@ -151,22 +151,6 @@ func ExtractAddrsV0(pkScript []byte, params stdaddr.AddressParamsV0) (ScriptType
 		return STNullData, nil
 	}
 
-	// Check for treasury add.
-	if IsTreasuryAddScriptV0(pkScript) {
-		return STTreasuryAdd, nil
-	}
-
-	// Check for treasury generation script.  Only treasury-gen-tagged
-	// pay-to-pubkey-hash and pay-to-script-hash are allowed.
-	if h := ExtractTreasuryGenPubKeyHashV0(pkScript); h != nil {
-		addr, err := stdaddr.NewAddressPubKeyHashEcdsaSecp256k1V0(h, params)
-		return STTreasuryGenPubKeyHash, addrToSlice(addr, err)
-	}
-	if h := ExtractTreasuryGenScriptHashV0(pkScript); h != nil {
-		addr, err := stdaddr.NewAddressScriptHashV0FromHash(h, params)
-		return STTreasuryGenScriptHash, addrToSlice(addr, err)
-	}
-
 	// Don't attempt to extract addresses for nonstandard transactions.
 	return STNonStandard, nil
 }

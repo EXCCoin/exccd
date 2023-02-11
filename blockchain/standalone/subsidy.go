@@ -68,11 +68,6 @@ type SubsidyParams interface {
 	// parameter is used.
 	StakeSubsidyProportion() uint16
 
-	// TreasurySubsidyProportion returns the comparative proportion of the
-	// subsidy allocated to the project treasury.  See the documentation for
-	// WorkSubsidyProportion for more details on how the parameter is used.
-	TreasurySubsidyProportion() uint16
-
 	// StakeValidationBeginHeight returns the height at which votes become
 	// required to extend a block.  This height is the first that will be voted
 	// on, but will not include any votes itself.
@@ -110,7 +105,7 @@ type SubsidyCache struct {
 	// minVotesRequired is the minimum number of votes required for a block to
 	// be consider valid by consensus.
 	//
-	// totalProportions is the sum of the PoW, PoS, and Treasury proportions.
+	// totalProportions is the sum of the PoW and PoS proportions.
 	minVotesRequired uint16
 	totalProportions uint16
 }
@@ -131,8 +126,7 @@ func NewSubsidyCache(params SubsidyParams) *SubsidyCache {
 		params:           params,
 		minVotesRequired: (params.VotesPerBlock() / 2) + 1,
 		totalProportions: params.WorkSubsidyProportion() +
-			params.StakeSubsidyProportion() +
-			params.TreasurySubsidyProportion(),
+			params.StakeSubsidyProportion(),
 	}
 }
 
@@ -441,7 +435,6 @@ func (c *SubsidyCache) CalcTreasurySubsidy(height int64, voters uint16, isTreasu
 	// Calculate the full block subsidy and reduce it according to the
 	// treasury proportion.
 	subsidy := c.CalcBlockSubsidy(height)
-	subsidy *= int64(c.params.TreasurySubsidyProportion())
 	subsidy /= int64(c.totalProportions)
 
 	// Ignore any potential subsidy reductions due to the number of votes

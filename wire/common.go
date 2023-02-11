@@ -8,9 +8,11 @@ package wire
 import (
 	"crypto/rand"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
+	"reflect"
 	"time"
 
 	"github.com/decred/dcrd/chaincfg/chainhash"
@@ -353,6 +355,14 @@ func readElement(r io.Reader, element interface{}) error {
 		}
 		*e = RejectCode(rv)
 		return nil
+
+		// Equihash solution
+	case *[EquihashSolutionLen]byte:
+		_, err := io.ReadFull(r, e[:])
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
 	// Fall back to the slower binary.Read if a fast path was not available
@@ -475,6 +485,14 @@ func writeElement(w io.Writer, element interface{}) error {
 			return err
 		}
 		return nil
+
+		// Equihash solution
+	case *[EquihashSolutionLen]byte:
+		_, err := w.Write(e[:])
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
 	// Fall back to the slower binary.Write if a fast path was not available
@@ -492,6 +510,90 @@ func writeElements(w io.Writer, elements ...interface{}) error {
 		}
 	}
 	return nil
+}
+
+func marshalElement(w io.Writer, element interface{}) error {
+	val := reflect.ValueOf(element)
+
+	if val.Kind() != reflect.Struct {
+		elementVal, err := json.Marshal(element)
+
+		if err != nil {
+			return err
+		}
+
+		_, err = w.Write(elementVal)
+
+		return err
+	}
+
+	w.Write([]byte("{"))
+
+	for i := 0; i < val.NumField(); i++ {
+		valueField := val.Field(i)
+		typeField := val.Type().Field(i)
+
+		// Skip nil pointers
+		if valueField.Kind() == reflect.Ptr {
+			if valueField.IsNil() {
+				continue
+			}
+		}
+
+		err := writeFieldNameAndPrefix(w, typeField.Name)
+
+		if err != nil {
+			return err
+		}
+
+		err = writeFieldValue(w, valueField, i != (val.NumField()-1))
+
+		if err != nil {
+			return err
+		}
+	}
+
+	w.Write([]byte("}"))
+
+	return nil
+}
+
+func writeFieldValue(w io.Writer, value reflect.Value, writeComma bool) error {
+	fieldVal, err := json.Marshal(value.Interface())
+
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(fieldVal)
+
+	if err != nil {
+		return err
+	}
+
+	if writeComma {
+		_, err = w.Write([]byte(","))
+		return err
+	}
+
+	return nil
+}
+
+func writeFieldNameAndPrefix(w io.Writer, fieldName string) error {
+	_, err := w.Write([]byte("\""))
+
+	if err != nil {
+		return err
+	}
+	_, err = w.Write([]byte(fieldName))
+
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write([]byte("\" : "))
+
+	return err
 }
 
 // ReadVarInt reads a variable length integer from r and returns it as a uint64.

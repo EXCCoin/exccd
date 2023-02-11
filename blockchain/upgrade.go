@@ -2693,17 +2693,7 @@ func migrateSpendJournalVersion2To3(ctx context.Context, b *BlockChain) error {
 			// Exclude the coinbase transaction since it can't spend anything.
 			blockTxns := make([]*wire.MsgTx, 0, len(msgBlock.STransactions)+
 				len(msgBlock.Transactions[1:]))
-			if len(msgBlock.STransactions) > 0 && isTreasuryEnabled {
-				// Skip treasury base and remove tspends.
-				for _, v := range msgBlock.STransactions[1:] {
-					if stake.IsTSpend(v) {
-						continue
-					}
-					blockTxns = append(blockTxns, v)
-				}
-			} else {
-				blockTxns = append(blockTxns, msgBlock.STransactions...)
-			}
+			blockTxns = append(blockTxns, msgBlock.STransactions...)
 			blockTxns = append(blockTxns, msgBlock.Transactions[1:]...)
 
 			// Calculate the total number of stxos.

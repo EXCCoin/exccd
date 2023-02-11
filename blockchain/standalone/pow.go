@@ -9,7 +9,10 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/decred/dcrd/cequihash"
 	"github.com/decred/dcrd/chaincfg/chainhash"
+	"github.com/decred/dcrd/chaincfg/v3"
+	"github.com/decred/dcrd/wire"
 )
 
 var (
@@ -182,18 +185,50 @@ func CheckProofOfWorkRange(difficultyBits uint32, powLimit *big.Int) error {
 // CheckProofOfWork ensures the provided block hash is less than the provided
 // compact target difficulty and that the target difficulty is in min/max range
 // per the provided proof-of-work limit.
-func CheckProofOfWork(blockHash *chainhash.Hash, difficultyBits uint32, powLimit *big.Int) error {
+func CheckProofOfWork(header *wire.BlockHeader, difficultyBits uint32, chainParams *chaincfg.Params) error {
 	target := CompactToBig(difficultyBits)
-	if err := checkProofOfWorkRange(target, powLimit); err != nil {
+	if err := checkProofOfWorkRange(target, chainParams.PowLimit); err != nil {
 		return err
 	}
 
 	// The block hash must be less than the target difficulty.
-	hashNum := HashToBig(blockHash)
+	hash := header.BlockHash()
+	hashNum := HashToBig(&hash)
 	if hashNum.Cmp(target) > 0 {
 		str := fmt.Sprintf("block hash of %064x is higher than expected max "+
 			"of %064x", hashNum, target)
 		return ruleError(ErrHighHash, str)
+	}
+
+	err := ValidateEquihashSolution(header, chainParams)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Validate equihash solution for given block
+func ValidateEquihashSolution(header *wire.BlockHeader, chainParams *chaincfg.Params) error {
+	algo := chainParams.Algorithm(header.Height)
+	headerBytes, err := header.SerializeEquihashHeaderBytes(algo)
+
+	if err != nil {
+		return fmt.Errorf("unable to deserialize required header fields")
+	}
+
+	if len(headerBytes) != algo.HeaderSize {
+		return fmt.Errorf("invalid header size")
+	}
+
+	if algo.Version == 0 {
+		headerBytes = cequihash.AppendExpandedNonce(headerBytes, header.Nonce)
+	}
+
+	result := cequihash.ValidateEquihash(chainParams.N, chainParams.K, headerBytes, header.EquihashSolution[:])
+
+	if !result {
+		fmt.Errorf("provided equihash solution is invalid")
 	}
 
 	return nil

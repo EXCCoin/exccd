@@ -8,8 +8,9 @@ package dcrutil
 import (
 	"hash"
 
-	"github.com/decred/dcrd/chaincfg/chainhash"
-	"github.com/decred/dcrd/crypto/ripemd160"
+	"golang.org/x/crypto/ripemd160"
+
+	"crypto/sha256"
 )
 
 // Calculate the hash of hasher over buf.
@@ -20,5 +21,5 @@ func calcHash(buf []byte, hasher hash.Hash) []byte {
 
 // Hash160 calculates the hash ripemd160(hash256(b)).
 func Hash160(buf []byte) []byte {
-	return calcHash(chainhash.HashB(buf), ripemd160.New())
+	return calcHash(calcHash(buf, sha256.New()), ripemd160.New())
 }

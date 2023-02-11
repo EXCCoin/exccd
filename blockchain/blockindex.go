@@ -180,6 +180,9 @@ type blockNode struct {
 	// Keep track of all vote version and bits in this block.
 	votes []stake.VoteVersionTuple
 
+	// Equihash solution bytes
+	equihashSolution [wire.EquihashSolutionLen]byte
+
 	// receivedOrderID tracks the order block data was received for the node and
 	// is only stored in memory.  It is set when the block data is received, and
 	// the block data for all parents is also already known, as opposed to when
@@ -252,6 +255,7 @@ func initBlockNode(node *blockNode, blockHeader *wire.BlockHeader, parent *block
 		extraData:    blockHeader.ExtraData,
 		stakeVersion: blockHeader.StakeVersion,
 		status:       statusNone,
+		equihashSolution: blockHeader.EquihashSolution,
 	}
 	if parent != nil {
 		node.parent = parent
@@ -279,24 +283,25 @@ func (node *blockNode) Header() wire.BlockHeader {
 		prevHash = &node.parent.hash
 	}
 	return wire.BlockHeader{
-		Version:      node.blockVersion,
-		PrevBlock:    *prevHash,
-		MerkleRoot:   node.merkleRoot,
-		StakeRoot:    node.stakeRoot,
-		VoteBits:     node.voteBits,
-		FinalState:   node.finalState,
-		Voters:       node.voters,
-		FreshStake:   node.freshStake,
-		Revocations:  node.revocations,
-		PoolSize:     node.poolSize,
-		Bits:         node.bits,
-		SBits:        node.sbits,
-		Height:       uint32(node.height),
-		Size:         node.blockSize,
-		Timestamp:    time.Unix(node.timestamp, 0),
-		Nonce:        node.nonce,
-		ExtraData:    node.extraData,
-		StakeVersion: node.stakeVersion,
+		Version:          node.blockVersion,
+		PrevBlock:        *prevHash,
+		MerkleRoot:       node.merkleRoot,
+		StakeRoot:        node.stakeRoot,
+		VoteBits:         node.voteBits,
+		FinalState:       node.finalState,
+		Voters:           node.voters,
+		FreshStake:       node.freshStake,
+		Revocations:      node.revocations,
+		PoolSize:         node.poolSize,
+		Bits:             node.bits,
+		SBits:            node.sbits,
+		Height:           uint32(node.height),
+		Size:             node.blockSize,
+		Timestamp:        time.Unix(node.timestamp, 0),
+		Nonce:            node.nonce,
+		ExtraData:        node.extraData,
+		StakeVersion:     node.stakeVersion,
+		EquihashSolution: node.equihashSolution,
 	}
 }
 

@@ -118,22 +118,16 @@ type CurrencyNet uint32
 // better idea to simply disconnect clients that are misbehaving over TCP.
 const (
 	// MainNet represents the main Decred network.
-	MainNet CurrencyNet = 0xd9b400f9
-
-	// RegNet represents the regression test network.
-	RegNet CurrencyNet = 0xdab500fa
+	MainNet CurrencyNet = 0x9917d7e1
 
 	// RegTest represents the regression test network.
-	//
-	// DEPRECATED.  This will be removed in the next major version bump.
-	// Use Regnet instead.
-	RegTest CurrencyNet = RegNet
+	RegNet CurrencyNet = 0xeceb6037
 
-	// TestNet3 represents the 3rd test network.
-	TestNet3 CurrencyNet = 0xb194aa75
+	// TestNet3 represents the 3nd test network.
+	TestNet3 CurrencyNet = 0x5aa4752a
 
 	// SimNet represents the simulation test network.
-	SimNet CurrencyNet = 0x12141c16
+	SimNet CurrencyNet = 0xbc8776ff
 )
 
 // bnStrings is a map of Decred networks back to their constant names for

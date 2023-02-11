@@ -11,3 +11,10 @@ require (
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )
+
+replace (
+	github.com/decred/dcrd/chaincfg/chainhash => ../chaincfg/chainhash
+	github.com/decred/dcrd/chaincfg/v2 => ../chaincfg
+	github.com/decred/dcrd/dcrutil/v2 => ../dcrutil
+	github.com/decred/dcrd/wire => ../wire
+)

@@ -39,10 +39,10 @@ import (
 
 const (
 	// Defaults for general application behavior options.
-	defaultConfigFilename   = "dcrd.conf"
+	defaultConfigFilename   = "exccd.conf"
 	defaultDataDirname      = "data"
 	defaultLogDirname       = "logs"
-	defaultLogFilename      = "dcrd.log"
+	defaultLogFilename      = "exccd.log"
 	defaultLogSize          = "10M"
 	defaultDbType           = "ffldb"
 	defaultLogLevel         = "info"
@@ -92,7 +92,7 @@ const (
 
 var (
 	// Constructed defaults for general application behavior options.
-	defaultHomeDir    = dcrutil.AppDataDir("dcrd", false)
+	defaultHomeDir    = dcrutil.AppDataDir("exccd", false)
 	defaultConfigFile = filepath.Join(defaultHomeDir, defaultConfigFilename)
 	defaultDataDir    = filepath.Join(defaultHomeDir, defaultDataDirname)
 	defaultLogDir     = filepath.Join(defaultHomeDir, defaultLogDirname)

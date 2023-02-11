@@ -18,10 +18,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/decred/base58"
-	"github.com/decred/dcrd/crypto/blake256"
-	"github.com/decred/dcrd/crypto/ripemd160"
+	"github.com/EXCCoin/base58"
+	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/dcrutil/v4"
 )
 
 const (
@@ -195,26 +195,27 @@ func (k *ExtendedKey) ParentFingerprint() uint32 {
 	return binary.BigEndian.Uint32(k.parentFP)
 }
 
-// hash160 returns RIPEMD160(BLAKE256(v)).
-func hash160(v []byte) []byte {
-	blake256Hash := blake256.Sum256(v)
-	h := ripemd160.New()
-	h.Write(blake256Hash[:])
-	return h.Sum(nil)
-}
-
-// doubleBlake256Cksum returns the first four bytes of BLAKE256(BLAKE256(v)).
-func doubleBlake256Cksum(v []byte) []byte {
-	first := blake256.Sum256(v)
-	second := blake256.Sum256(first[:])
-	return second[:4]
-}
-
-// child derives a child extended key at the given index. The derived key will
-// retain any leading zeros of a private key if the strict BIP32 flag is true,
-// otherwise they will be stripped.  Strict BIP32 derivation is not intended for
-// Decred wallets.  The derived extended key will be either public or private as
-// determined by the IsPrivate function.
+// Child returns a derived child extended key at the given index.  When this
+// extended key is a private extended key (as determined by the IsPrivate
+// function), a private extended key will be derived.  Otherwise, the derived
+// extended key will be also be a public extended key.
+//
+// When the index is greater to or equal than the HardenedKeyStart constant, the
+// derived extended key will be a hardened extended key.  It is only possible to
+// derive a hardened extended key from a private extended key.  Consequently,
+// this function will return ErrDeriveHardFromPublic if a hardened child
+// extended key is requested from a public extended key.
+//
+// A hardened extended key is useful since, as previously mentioned, it requires
+// a parent private extended key to derive.  In other words, normal child
+// extended public keys can be derived from a parent public extended key (no
+// knowledge of the parent private key) whereas hardened extended keys may not
+// be.
+//
+// NOTE: There is an extremely small chance (< 1 in 2^127) the specific child
+// index does not derive to a usable child.  The ErrInvalidChild error will be
+// returned if this should occur, and the caller is expected to ignore the
+// invalid child and simply increment to the next index.
 func (k *ExtendedKey) child(i uint32, strictBIP32 bool) (*ExtendedKey, error) {
 	// There are four scenarios that could happen here:
 	// 1) Private extended key -> Hardened child private extended key
@@ -342,8 +343,8 @@ func (k *ExtendedKey) child(i uint32, strictBIP32 bool) (*ExtendedKey, error) {
 	}
 
 	// The fingerprint of the parent for the derived child is the first 4
-	// bytes of the RIPEMD160(BLAKE256(parentPubKey)).
-	parentFP := hash160(k.pubKeyBytes())[:4]
+	// bytes of the RIPEMD160(SHA256(parentPubKey)).
+	parentFP := dcrutil.Hash160(k.pubKeyBytes())[:4]
 	return newExtendedKey(k.privVer, k.pubVer, childKey, childChainCode,
 		parentFP, k.depth+1, i, isPrivate), nil
 }
@@ -467,7 +468,7 @@ func (k *ExtendedKey) String() string {
 		serializedBytes = append(serializedBytes, k.pubKeyBytes()...)
 	}
 
-	checkSum := doubleBlake256Cksum(serializedBytes)
+	checkSum := chainhash.HashB(chainhash.HashB(serializedBytes))[:4]
 	serializedBytes = append(serializedBytes, checkSum...)
 	return base58.Encode(serializedBytes)
 }
@@ -550,7 +551,7 @@ func NewKeyFromString(key string, net NetworkParams) (*ExtendedKey, error) {
 	// Split the payload and checksum up and ensure the checksum matches.
 	payload := decoded[:len(decoded)-4]
 	checkSum := decoded[len(decoded)-4:]
-	expectedCheckSum := doubleBlake256Cksum(payload)
+	expectedCheckSum := chainhash.HashB(chainhash.HashB(payload))[:4]
 	if !bytes.Equal(checkSum, expectedCheckSum) {
 		return nil, ErrBadChecksum
 	}

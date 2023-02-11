@@ -13,9 +13,11 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"unsafe"
 
 	"github.com/decred/dcrd/blockchain/standalone/v2"
 	"github.com/decred/dcrd/blockchain/v4"
+	equihash "github.com/decred/dcrd/cequihash"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
@@ -27,9 +29,13 @@ const (
 	// maxNonce is the maximum value a nonce can be in a block header.
 	maxNonce = ^uint32(0) // 2^32 - 1
 
+	// maxExtraNonce is the maximum value an extra nonce used in a coinbase
+	// transaction can be.
+	maxExtraNonce = ^uint64(0) // 2^64 - 1
+
 	// hpsUpdateSecs is the number of seconds to wait in between each
 	// update to the hashes per second monitor.
-	hpsUpdateSecs = 10
+	hpsUpdateSecs = 60
 
 	// hashUpdateSec is the number of seconds each worker waits in between
 	// notifying the speed monitor with how many hashes have been completed
@@ -48,7 +54,7 @@ var (
 	// MaxNumWorkers is the maximum number of workers that will be allowed for
 	// mining and is based on the number of processor cores.  This helps ensure
 	// system stays reasonably responsive under heavy load.
-	MaxNumWorkers = uint32(runtime.NumCPU() * 2)
+	MaxNumWorkers = uint32(runtime.NumCPU())
 
 	// defaultNumWorkers is the default number of workers to use for mining.
 	defaultNumWorkers = uint32(1)
@@ -188,7 +194,7 @@ out:
 			}
 			hashesPerSec = (hashesPerSec + curHashesPerSec) / 2
 			if hashesPerSec != 0 {
-				log.Debugf("Hash speed: %6.0f kilohashes/s", hashesPerSec/1000)
+				log.Debugf("Hash speed: %6.0f hashes/s", hashesPerSec)
 			}
 
 		// Request for the number of hashes per second.
@@ -259,15 +265,64 @@ func (m *CPUMiner) submitBlock(block *dcrutil.Block) bool {
 	return true
 }
 
-// solveBlock attempts to find some combination of a nonce, extra nonce, and
-// current timestamp which makes the passed block header hash to a value less
-// than the target difficulty.  The timestamp is updated periodically and the
-// passed block header is modified with all tweaks during this process.  This
-// means that when the function returns true, the block is ready for submission.
+type solutionValidatorData struct {
+	ctx      context.Context
+	solved   *bool
+	exiting  *bool
+	msgBlock *wire.MsgBlock
+	miner    *CPUMiner
+}
+
+// Validate checks equihash solution and returns 1 when mining should be stopped for any reason
+func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
+	if uintptr(solution) == 0 {
+		if *data.exiting {
+			log.Infof("Shutdown is pending. Bailing out")
+			return 1
+		}
+		select {
+		case <-data.ctx.Done():
+			log.Infof("Miner is stopping")
+			*data.exiting = true
+			return 1
+		default:
+		}
+
+		return 0
+	}
+
+	data.miner.speedStats.AddTotalHashes(1)
+
+	bestBlock := data.miner.g.BestSnapshot().Hash
+	if data.msgBlock.Header.PrevBlock != bestBlock {
+		*data.exiting = true
+		return 1
+	}
+
+	bytes := equihash.ExtractSolution(data.miner.cfg.ChainParams.N, data.miner.cfg.ChainParams.K, solution)
+	copy(data.msgBlock.Header.EquihashSolution[:], bytes)
+	hash := data.msgBlock.Header.BlockHash()
+
+	if standalone.HashToBig(&hash).Cmp(standalone.CompactToBig(data.msgBlock.Header.Bits)) <= 0 {
+		data.miner.submitBlock(dcrutil.NewBlock(data.msgBlock))
+		data.miner.minedOnParents[data.msgBlock.Header.PrevBlock]++
+		*data.solved = true
+		return 1
+	}
+
+	return 0
+}
+
+// solveAndSubmitBlock attempts to find some combination of a nonce, extra nonce, and
+// current timestamp which makes the passed block hash to a value less than the
+// target difficulty. After that, new block is submitted. The timestamp is
+// updated periodically and the passed block is modified with all tweaks
+// during this process. This means that when the function returns true, the block is submitted.
 //
-// This function will return early with false when the provided context is
-// cancelled or an unexpected error happens.
-func (m *CPUMiner) solveBlock(ctx context.Context, header *wire.BlockHeader, stats *speedStats, ticker *time.Ticker) bool {
+// This function will return early with false when conditions that trigger a
+// stale block such as a new block showing up or periodically when there are
+// new transactions and enough time has elapsed without finding a solution.
+func (m *CPUMiner) solveAndSubmitBlock(ctx context.Context, msgBlock *wire.MsgBlock, stats *speedStats, ticker *time.Ticker) bool {
 	// Choose a random extra nonce offset for this block template and
 	// worker.
 	enOffset, err := wire.RandomUint64()
@@ -278,44 +333,68 @@ func (m *CPUMiner) solveBlock(ctx context.Context, header *wire.BlockHeader, sta
 	}
 
 	// Create some convenience variables.
-	targetDifficulty := standalone.CompactToBig(header.Bits)
+	header := &msgBlock.Header
 
 	// Initial state.
+	lastGenerated := time.Now()
+	lastTxUpdate := m.g.TxSource().LastUpdated()
 	hashesCompleted := uint64(0)
+
+	solved := false
+	exiting := false
+	validatorData := solutionValidatorData{ctx, &solved, &exiting, msgBlock, m}
 
 	// Note that the entire extra nonce range is iterated and the offset is
 	// added relying on the fact that overflow will wrap around 0 as
-	// provided by the Go spec.  Furthermore, the break condition has been
-	// intentionally omitted such that the loop will continue forever until
-	// a solution is found.
-	for extraNonce := uint64(0); ; extraNonce++ {
+	// provided by the Go spec.
+	for extraNonce := uint64(0); extraNonce < maxExtraNonce && !solved && !exiting; extraNonce++ {
 		// Update the extra nonce in the block template header with the
 		// new value.
 		littleEndian.PutUint64(header.ExtraData[:], extraNonce+enOffset)
 
+		// Update equihash solver input bytes
+		algo := m.cfg.ChainParams.Algorithm(header.Height)
+		headerBytes, _ := header.SerializeEquihashHeaderBytes(algo)
+
 		// Search through the entire nonce range for a solution while
 		// periodically checking for early quit and stale block
 		// conditions along with updates to the speed monitor.
-		//
-		// This loop differs from the outer one in that it does not run
-		// forever, thus allowing the extraNonce field to be updated
-		// between each successive iteration of the regular nonce
-		// space.  Note that this is achieved by placing the break
-		// condition at the end of the code block, as this prevents the
-		// infinite loop that would otherwise occur if we let the for
-		// statement overflow the nonce value back to 0.
-		for nonce := uint32(0); ; nonce++ {
+		for i := uint32(0); i <= maxNonce && !solved && !exiting; i++ {
+			header.Nonce = i
+
 			select {
 			case <-ctx.Done():
+				log.Info("Miner is stopping")
+				exiting = true
 				return false
 
 			case <-ticker.C:
 				stats.AddTotalHashes(hashesCompleted)
 				hashesCompleted = 0
 
+				log.Debugf("Miner is updating time for currently mined block")
+				// The current block is stale if the memory pool
+				// has been updated since the block template was
+				// generated and it has been at least 3 seconds,
+				// or if it's been one minute.
+				now := time.Now()
+				if (lastTxUpdate != m.g.TxSource().LastUpdated() &&
+					now.After(lastGenerated.Add(3*time.Second))) ||
+					now.After(lastGenerated.Add(60*time.Second)) {
+					return false
+				}
+
 				err = m.g.UpdateBlockTime(header)
 				if err != nil {
-					log.Warnf("CPU miner unable to update block template "+
+					log.Warnf("CPU miner unable to update block template time: %v", err)
+					return false
+				}
+
+				// Rebuild all input data
+				headerBytes, err = header.SerializeEquihashHeaderBytes(algo)
+
+				if err != nil {
+					log.Warnf("CPU miner unable to rebuild header data for updated block template "+
 						"time: %v", err)
 					return false
 				}
@@ -324,23 +403,13 @@ func (m *CPUMiner) solveBlock(ctx context.Context, header *wire.BlockHeader, sta
 				// Non-blocking select to fall through
 			}
 
-			// Update the nonce and hash the block header.
-			header.Nonce = nonce
-			hash := header.BlockHash()
+			equihash.SolveEquihash(m.cfg.ChainParams.N, m.cfg.ChainParams.K, headerBytes, i, algo.Version, validatorData)
 			hashesCompleted++
-
-			// The block is solved when the new block hash is less
-			// than the target difficulty.  Yay!
-			if standalone.HashToBig(&hash).Cmp(targetDifficulty) <= 0 {
-				stats.AddTotalHashes(hashesCompleted)
-				return true
-			}
-
-			if nonce == maxNonce {
-				break
-			}
 		}
 	}
+
+	stats.AddTotalHashes(hashesCompleted)
+	return solved
 }
 
 // solver is a worker that is controlled by a given generateBlocks goroutine.
@@ -401,8 +470,12 @@ func (m *CPUMiner) solver(ctx context.Context, template *mining.BlockTemplate, t
 		//
 		// The block in the template is shallow copied to avoid mutating the
 		// data of the shared template.
+		// Attempt to solve the block and submit solution.
+		// The function will exit early with false when conditions
+		// that trigger a stale block, so a new block template can be generated.
+
 		shallowBlockCopy := *template.Block
-		if m.solveBlock(ctx, &shallowBlockCopy.Header, &m.speedStats, ticker) {
+		if m.solveAndSubmitBlock(ctx, template.Block, &m.speedStats, ticker) {
 			block := dcrutil.NewBlock(&shallowBlockCopy)
 			if !m.submitBlock(block) {
 				m.Lock()
@@ -439,8 +512,9 @@ func (m *CPUMiner) generateBlocks(ctx context.Context) {
 	templateSub := m.g.Subscribe()
 	defer templateSub.Stop()
 
-	// Start a ticker which is used to signal updates to the speed monitor.
-	ticker := time.NewTicker(time.Second * hashUpdateSecs)
+	// Start a ticker which is used to signal checks for stale work and
+	// updates to the speed monitor.
+	ticker := time.NewTicker(333 * time.Millisecond)
 	defer ticker.Stop()
 
 	var solverCtx context.Context
@@ -485,8 +559,8 @@ func (m *CPUMiner) generateBlocks(ctx context.Context) {
 }
 
 // miningWorkerController launches the worker goroutines that are used to
-// subscribe for template updates and solve them.  It also provides the ability
-// to dynamically adjust the number of running worker goroutines.
+// generate block templates and solve them.  It also provides the ability to
+// dynamically adjust the number of running worker goroutines.
 //
 // It must be run as a goroutine.
 func (m *CPUMiner) miningWorkerController(ctx context.Context) {
@@ -756,15 +830,13 @@ out:
 		// The block in the template is shallow copied to avoid mutating the
 		// data of the shared template.
 		shallowBlockCopy := *templateNtfn.Template.Block
-		if m.solveBlock(ctx, &shallowBlockCopy.Header, &stats, ticker) {
+		if m.solveAndSubmitBlock(ctx, &shallowBlockCopy, &stats, ticker) {
 			block := dcrutil.NewBlock(&shallowBlockCopy)
-			if m.submitBlock(block) {
-				m.Lock()
-				m.discretePrevHash = shallowBlockCopy.Header.PrevBlock
-				m.discreteBlockHash = *block.Hash()
-				m.Unlock()
-				blockHashes = append(blockHashes, block.Hash())
-			}
+			m.Lock()
+			m.discretePrevHash = shallowBlockCopy.Header.PrevBlock
+			m.discreteBlockHash = *block.Hash()
+			m.Unlock()
+			blockHashes = append(blockHashes, block.Hash())
 		}
 
 		// Done when the requested number of blocks are mined.

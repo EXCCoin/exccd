@@ -51,7 +51,7 @@ const (
 	// It is also used to help determine if a transaction is considered dust
 	// and as a base for calculating minimum required fees for larger
 	// transactions.  This value is in Atoms/1000 bytes.
-	DefaultMinRelayTxFee = dcrutil.Amount(1e4)
+	DefaultMinRelayTxFee = dcrutil.Amount(1e5)
 
 	// maxStandardMultiSigKeys is the maximum number of public keys allowed
 	// in a multi-signature transaction output script for it to be
@@ -67,7 +67,8 @@ const (
 	BaseStandardVerifyFlags = txscript.ScriptDiscourageUpgradableNops |
 		txscript.ScriptVerifyCleanStack |
 		txscript.ScriptVerifyCheckLockTimeVerify |
-		txscript.ScriptVerifyCheckSequenceVerify
+		txscript.ScriptVerifyCheckSequenceVerify |
+		txscript.ScriptVerifySHA256
 )
 
 // calcMinRequiredTxRelayFee returns the minimum transaction fee required for a

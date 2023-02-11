@@ -471,42 +471,24 @@ func IsStakeChangeScriptHashScript(scriptVersion uint16, script []byte) bool {
 // IsTreasuryAddScript returns whether or not the passed script is a supported
 // treasury add script.
 //
-// NOTE: Version 0 scripts are the only currently supported version.  It will
-// always return false for other script versions.
+// NOTE: always false for excc
 func IsTreasuryAddScript(scriptVersion uint16, script []byte) bool {
-	switch scriptVersion {
-	case 0:
-		return IsTreasuryAddScriptV0(script)
-	}
-
 	return false
 }
 
 // IsTreasuryGenPubKeyHashScript returns whether or not the passed script is a
 // standard treasury generation pay-to-pubkey-hash script.
 //
-// NOTE: Version 0 scripts are the only currently supported version.  It will
-// always return false for other script versions.
+// NOTE: always false for excc
 func IsTreasuryGenPubKeyHashScript(scriptVersion uint16, script []byte) bool {
-	switch scriptVersion {
-	case 0:
-		return IsTreasuryGenPubKeyHashScriptV0(script)
-	}
-
 	return false
 }
 
 // IsTreasuryGenScriptHashScript returns whether or not the passed script is a
 // standard treasury generation pay-to-script-hash script.
 //
-// NOTE: Version 0 scripts are the only currently supported version.  It will
-// always return false for other script versions.
+// NOTE: always false for excc
 func IsTreasuryGenScriptHashScript(scriptVersion uint16, script []byte) bool {
-	switch scriptVersion {
-	case 0:
-		return IsTreasuryGenScriptHashScriptV0(script)
-	}
-
 	return false
 }
 

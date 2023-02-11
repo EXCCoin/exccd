@@ -15,9 +15,12 @@ import (
 
 // MainNetParams returns the network parameters for the main Decred network.
 func MainNetParams() *Params {
-	// mainPowLimit is the highest proof of work value a Decred block can have
-	// for the main network.  It is the value 2^224 - 1.
-	mainPowLimit := new(big.Int).Sub(new(big.Int).Lsh(bigOne, 224), bigOne)
+	// mainPowLimit is the highest proof of work value a Decred block can
+	// have for the main network.  It is the value 2^225 - 1.
+	mainPowLimit := new(big.Int).Sub(new(big.Int).Lsh(bigOne, 254), bigOne)
+
+	// genesis block difficulty ratio
+	initialDifficulty := big.NewInt(100)
 
 	// genesisBlock defines the genesis block of the block chain which serves as
 	// the public transaction ledger for the main network.
@@ -39,8 +42,8 @@ func MainNetParams() *Params {
 			PrevBlock: chainhash.Hash{}, // All zero.
 			// MerkleRoot: Calculated below.
 			StakeRoot:    chainhash.Hash{},
-			Timestamp:    time.Unix(1454954400, 0), // Mon, 08 Feb 2016 18:00:00 GMT
-			Bits:         0x1b01ffff,               // Difficulty 32767
+			Timestamp:    time.Unix(1531731600, 0), // Monday, 16-Jul-18 09:00:00 UTC
+			Bits:         bigToCompact(new(big.Int).Div(mainPowLimit, initialDifficulty)),
 			SBits:        2 * 1e8,                  // 2 Coin
 			Nonce:        0x00000000,
 			StakeVersion: 0,
@@ -76,46 +79,46 @@ func MainNetParams() *Params {
 	return &Params{
 		Name:        "mainnet",
 		Net:         wire.MainNet,
-		DefaultPort: "9108",
+		DefaultPort: "9666",
 		DNSSeeds: []DNSSeed{
-			{"mainnet-seed.decred.mindcry.org", true},
-			{"mainnet-seed.decred.netpurgatory.com", true},
-			{"mainnet-seed.decred.org", true},
+			{"seed.excc.co", true},
+			{"seed.xchange.me", true},
+			{"excc-seed.pragmaticcoders.com", true},
 		},
+		N: wire.MainEquihashN,
+		K: wire.MainEquihashK,
 
 		// Chain parameters
 		GenesisBlock:             &genesisBlock,
 		GenesisHash:              genesisBlock.BlockHash(),
 		PowLimit:                 mainPowLimit,
-		PowLimitBits:             0x1d00ffff,
+		PowLimitBits:             bigToCompact(mainPowLimit),
 		ReduceMinDifficulty:      false,
 		MinDiffReductionTime:     0, // Does not apply since ReduceMinDifficulty false
 		GenerateSupported:        false,
 		MaximumBlockSizes:        []int{393216},
 		MaxTxSize:                393216,
-		TargetTimePerBlock:       time.Minute * 5,
+		TargetTimePerBlock:       defaultTargetTimePerBlock,
 		WorkDiffAlpha:            1,
 		WorkDiffWindowSize:       144,
 		WorkDiffWindows:          20,
-		TargetTimespan:           time.Minute * 5 * 144, // TimePerBlock * WindowSize
+		TargetTimespan:           defaultTargetTimePerBlock * 144, // TimePerBlock * WindowSize
 		RetargetAdjustmentFactor: 4,
 
 		// Subsidy parameters.
-		BaseSubsidy:              3119582664, // 21m
-		MulSubsidy:               100,
-		DivSubsidy:               101,
-		SubsidyReductionInterval: 6144,
-		WorkRewardProportion:     6,
-		WorkRewardProportionV2:   1,
+		BaseSubsidy:              38 * 1e8,
+		MulSubsidy:               100000,
+		DivSubsidy:               103183,
+		SubsidyReductionInterval: 16128, // 4 weeks
+		WorkRewardProportion:     7,
 		StakeRewardProportion:    3,
-		StakeRewardProportionV2:  8,
-		BlockTaxProportion:       1,
 
 		// Checkpoints ordered from oldest to newest.  Note that only the latest
 		// checkpoint is provided since with headers first syncing the most recent
 		// checkpoint will be discovered before block syncing even starts.
 		Checkpoints: []Checkpoint{
-			{601900, newHashFromStr("00000000000000001c1865a45a038bb680fc076d70cd88c1843e3e669cb54942")},
+			{120, newHashFromStr("0076826c6b55e5c2d27afb67f6d087b782d7c86bea3a5f2a3acbded8f5cdab55")},
+			{87550, newHashFromStr("000187f6de1d0a99db6eb832f09d803cd95723b2e95d2a7d051e7a6f3809ba63")},
 		},
 
 		// AssumeValid is the hash of a block that has been externally verified
@@ -132,9 +135,9 @@ func MainNetParams() *Params {
 		// chain at a given point in time.  This is intended to be updated
 		// periodically with new releases.
 		//
-		// Block 00000000000000001251efb83ad1a5c71351b50fe9195f009cf0bf5a7cd99d52
-		// Height: 606000
-		MinKnownChainWork: hexToBigInt("0000000000000000000000000000000000000000001d987ec2c7f4bc1199489e"),
+		// Block 0000076fff5da5604856e135e81cfc4459ef3fdbb04b720710d30950091d8b9e
+		// Height: 899030
+		MinKnownChainWork: hexToBigInt("000000000000000000000000000000000000000000000000000000b60cab914c"),
 
 		// The miner confirmation window is defined as:
 		//   target proof of work timespan / target proof of work spacing
@@ -142,284 +145,7 @@ func MainNetParams() *Params {
 		RuleChangeActivationMultiplier: 3,    // 75%
 		RuleChangeActivationDivisor:    4,
 		RuleChangeActivationInterval:   2016 * 4, // 4 weeks
-		Deployments: map[uint32][]ConsensusDeployment{
-			4: {{
-				Vote: Vote{
-					Id:          VoteIDSDiffAlgorithm,
-					Description: "Change stake difficulty algorithm as defined in DCP0001",
-					Mask:        0x0006, // Bits 1 and 2
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain voting for change",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing algorithm",
-						Bits:        0x0002, // Bit 1
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new algorithm",
-						Bits:        0x0004, // Bit 2
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  1493164800, // Apr 26th, 2017
-				ExpireTime: 1524700800, // Apr 26th, 2018
-			}, {
-				Vote: Vote{
-					Id:          VoteIDLNSupport,
-					Description: "Request developers begin work on Lightning Network (LN) integration",
-					Mask:        0x0018, // Bits 3 and 4
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain from voting",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "no, do not work on integrating LN support",
-						Bits:        0x0008, // Bit 3
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "yes, begin work on integrating LN support",
-						Bits:        0x0010, // Bit 4
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  1493164800, // Apr 26th, 2017
-				ExpireTime: 1508976000, // Oct 26th, 2017
-			}},
-			5: {{
-				Vote: Vote{
-					Id:          VoteIDLNFeatures,
-					Description: "Enable features defined in DCP0002 and DCP0003 necessary to support Lightning Network (LN)",
-					Mask:        0x0006, // Bits 1 and 2
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain voting for change",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing consensus rules",
-						Bits:        0x0002, // Bit 1
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new consensus rules",
-						Bits:        0x0004, // Bit 2
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  1505260800, // Sep 13th, 2017
-				ExpireTime: 1536796800, // Sep 13th, 2018
-			}},
-			6: {{
-				Vote: Vote{
-					Id:          VoteIDFixLNSeqLocks,
-					Description: "Modify sequence lock handling as defined in DCP0004",
-					Mask:        0x0006, // Bits 1 and 2
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain voting for change",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing consensus rules",
-						Bits:        0x0002, // Bit 1
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new consensus rules",
-						Bits:        0x0004, // Bit 2
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  1548633600, // Jan 28th, 2019
-				ExpireTime: 1580169600, // Jan 28th, 2020
-			}},
-			7: {{
-				Vote: Vote{
-					Id:          VoteIDHeaderCommitments,
-					Description: "Enable header commitments as defined in DCP0005",
-					Mask:        0x0006, // Bits 1 and 2
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain voting for change",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing consensus rules",
-						Bits:        0x0002, // Bit 1
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new consensus rules",
-						Bits:        0x0004, // Bit 2
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  1567641600, // Sep 5th, 2019
-				ExpireTime: 1599264000, // Sep 5th, 2020
-			}},
-			8: {{
-				Vote: Vote{
-					Id:          VoteIDTreasury,
-					Description: "Enable decentralized Treasury opcodes as defined in DCP0006",
-					Mask:        0x0006, // Bits 1 and 2
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain voting for change",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing consensus rules",
-						Bits:        0x0002, // Bit 1
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new consensus rules",
-						Bits:        0x0004, // Bit 2
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  1596240000, // Aug 1st, 2020
-				ExpireTime: 1627776000, // Aug 1st, 2021
-			}},
-			9: {{
-				Vote: Vote{
-					Id:          VoteIDRevertTreasuryPolicy,
-					Description: "Change maximum treasury expenditure policy as defined in DCP0007",
-					Mask:        0x0006, // Bits 1 and 2
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain voting for change",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing consensus rules",
-						Bits:        0x0002, // Bit 1
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new consensus rules",
-						Bits:        0x0004, // Bit 2
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  1631750400, // Sep 16th, 2021
-				ExpireTime: 1694822400, // Sep 16th, 2023
-			}, {
-				Vote: Vote{
-					Id:          VoteIDExplicitVersionUpgrades,
-					Description: "Enable explicit version upgrades as defined in DCP0008",
-					Mask:        0x0018, // Bits 3 and 4
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain from voting",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing consensus rules",
-						Bits:        0x0008, // Bit 3
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new consensus rules",
-						Bits:        0x0010, // Bit 4
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  1631750400, // Sep 16th, 2021
-				ExpireTime: 1694822400, // Sep 16th, 2023
-			}, {
-				Vote: Vote{
-					Id:          VoteIDAutoRevocations,
-					Description: "Enable automatic ticket revocations as defined in DCP0009",
-					Mask:        0x0060, // Bits 5 and 6
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain voting for change",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing consensus rules",
-						Bits:        0x0020, // Bit 5
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new consensus rules",
-						Bits:        0x0040, // Bit 6
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  1631750400, // Sep 16th, 2021
-				ExpireTime: 1694822400, // Sep 16th, 2023
-			}, {
-				Vote: Vote{
-					Id:          VoteIDChangeSubsidySplit,
-					Description: "Change block reward subsidy split to 10/80/10 as defined in DCP0010",
-					Mask:        0x0180, // Bits 7 and 8
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain from voting",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing consensus rules",
-						Bits:        0x0080, // Bit 7
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new consensus rules",
-						Bits:        0x0100, // Bit 8
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  1631750400, // Sep 16th, 2021
-				ExpireTime: 1694822400, // Sep 16th, 2023
-			}},
-		},
+		Deployments: map[uint32][]ConsensusDeployment{},
 
 		// Enforce current block version once majority of the network has
 		// upgraded.
@@ -437,22 +163,21 @@ func MainNetParams() *Params {
 		AcceptNonStdTxs: false,
 
 		// Address encoding magics
-		NetworkAddressPrefix: "D",
-		PubKeyAddrID:         [2]byte{0x13, 0x86}, // starts with Dk
-		PubKeyHashAddrID:     [2]byte{0x07, 0x3f}, // starts with Ds
-		PKHEdwardsAddrID:     [2]byte{0x07, 0x1f}, // starts with De
-		PKHSchnorrAddrID:     [2]byte{0x07, 0x01}, // starts with DS
-		ScriptHashAddrID:     [2]byte{0x07, 0x1a}, // starts with Dc
-		PrivateKeyID:         [2]byte{0x22, 0xde}, // starts with Pm
+		NetworkAddressPrefix: "2",
+		PubKeyAddrID:     [2]byte{0x02, 0xdc}, // starts with 2s	-- no such addresses should exist in RL
+		PubKeyHashAddrID: [2]byte{0x21, 0xB9}, // starts with 22
+		PKHEdwardsAddrID: [2]byte{0x35, 0xcf}, // starts with 2e
+		PKHSchnorrAddrID: [2]byte{0x2f, 0x0d}, // starts with 2S
+		ScriptHashAddrID: [2]byte{0x34, 0xAF}, // starts with 2c
+		PrivateKeyID:     0x80,                // starts with 5 (uncompressed) or K (compressed)
 
 		// BIP32 hierarchical deterministic extended key magics
-		HDPrivateKeyID: [4]byte{0x02, 0xfd, 0xa4, 0xe8}, // starts with dprv
-		HDPublicKeyID:  [4]byte{0x02, 0xfd, 0xa9, 0x26}, // starts with dpub
+		HDPrivateKeyID: [4]byte{0x04, 0x88, 0xAD, 0xE4}, // starts with xprv
+		HDPublicKeyID:  [4]byte{0x04, 0x88, 0xB2, 0x1E}, // starts with xpub
 
 		// BIP44 coin type used in the hierarchical deterministic path for
 		// address generation.
-		SLIP0044CoinType: 42, // SLIP0044, Decred
-		LegacyCoinType:   20, // for backwards compatibility
+		HDCoinType: 0,
 
 		// Decred PoS parameters
 		MinimumStakeDiff:        2 * 1e8, // 2 Coin
@@ -469,15 +194,12 @@ func MainNetParams() *Params {
 		StakeVersionInterval:    144 * 2 * 7, // ~1 week
 		MaxFreshStakePerBlock:   20,          // 4*TicketsPerBlock
 		StakeEnabledHeight:      256 + 256,   // CoinbaseMaturity + TicketMaturity
-		StakeValidationHeight:   4096,        // ~14 days
+		StakeValidationHeight:   768,         // ~32 hours
 		StakeBaseSigScript:      []byte{0x00, 0x00},
 		StakeMajorityMultiplier: 3,
 		StakeMajorityDivisor:    4,
 
 		// Decred organization related parameters
-		// Organization address is Dcur2mcGjmENx4DhNqDctW5wJCVyT3Qeqkx
-		OrganizationPkScript:        hexDecode("a914f5916158e3e2c4551c1796708db8367207ed13bb87"),
-		OrganizationPkScriptVersion: 0,
 		BlockOneLedger:              tokenPayouts_MainNetParams(),
 
 		// Sanctioned Politeia keys.
@@ -486,35 +208,20 @@ func MainNetParams() *Params {
 			hexDecode("0319a37405cb4d1691971847d7719cfce70857c0f6e97d7c9174a3998cf0ab86dd"),
 		},
 
-		// ~1 day for tspend inclusion
-		TreasuryVoteInterval: 288,
-
-		// ~7.2 days for short circuit approval, ~42%
-		// target=ticket-pool-equivalent participation
-		TreasuryVoteIntervalMultiplier: 12,
-
-		// Sum of tspends within any ~24 day window cannot exceed
-		// policy check
-		TreasuryExpenditureWindow: 2,
-
-		// policy check is average of prior ~4.8 months + a 50%
-		// increase allowance
-		TreasuryExpenditurePolicy: 6,
-
-		// 16000 dcr/tew as expense bootstrap
-		TreasuryExpenditureBootstrap: 16000 * 1e8,
-
-		TreasuryVoteQuorumMultiplier:   1, // 20% quorum required
-		TreasuryVoteQuorumDivisor:      5,
-		TreasuryVoteRequiredMultiplier: 3, // 60% yes votes required
-		TreasuryVoteRequiredDivisor:    5,
-
 		seeders: []string{
-			"mainnet-seed-1.decred.org",
-			"mainnet-seed-2.decred.org",
-			"mainnet-seed.planetdecred.org",
-			"mainnet-seed.dcrdata.org",
-			"mainnet-seed.jholdstock.uk",
+			"seed.excc.co",
+			"seed.xchange.me",
+			"excc-seed.pragmaticcoders.com",
+		},
+
+		Algorithms: []wire.AlgorithmSpec{
+			{Height: 0, HeaderSize: 108, Version: 0, Bits: bigToCompact(mainPowLimit)},
+			{
+				Height:     87550,
+				HeaderSize: wire.MaxBlockHeaderPayload - wire.EquihashSolutionLen,
+				Version:    1,
+				Bits:       bigToCompact(new(big.Int).Sub(new(big.Int).Lsh(bigOne, 241), bigOne)),
+			},
 		},
 	}
 }

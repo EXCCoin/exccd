@@ -7,3 +7,8 @@ require (
 	github.com/decred/dcrd/wire v1.5.0
 	github.com/decred/slog v1.2.0
 )
+
+replace (
+	github.com/decred/dcrd/chaincfg/chainhash => ../chaincfg/chainhash
+	github.com/decred/dcrd/wire => ../wire
+)

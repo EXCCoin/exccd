@@ -7,6 +7,7 @@ package wire
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"time"
 
@@ -20,7 +21,16 @@ import (
 // + Height 4 bytes + Size 4 bytes + Timestamp 4 bytes + Nonce 4 bytes +
 // ExtraData 32 bytes + StakeVersion 4 bytes.
 // --> Total 180 bytes.
-const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3)
+// + Equihash solution (always 1344 bytes, for N = 200, K = 9)
+// + Equihash solution (always 100 bytes, for N = 144, K = 5)
+
+const MainEquihashN = 144
+const MainEquihashK = 5
+
+const EquihashSolutionLen = 1 << uint32(MainEquihashK) * (MainEquihashN/(MainEquihashK+1) + 1) / 8
+
+// --> 180 bytes + EquihashSolutionLen (100 bytes for N = 144, K = 5) = 280 bytes
+const MaxBlockHeaderPayload = 84 + (chainhash.HashSize * 3) + EquihashSolutionLen
 
 // BlockHeader defines information about a block and is used in the decred
 // block (MsgBlock) and headers (MsgHeaders) messages.
@@ -81,11 +91,21 @@ type BlockHeader struct {
 
 	// StakeVersion used for voting.
 	StakeVersion uint32
+
+	// Equihash solution bytes
+	EquihashSolution [EquihashSolutionLen]byte
 }
 
-// blockHeaderLen is a constant that represents the number of bytes for a block
-// header.
-const blockHeaderLen = 180
+func (b *BlockHeader) MarshalJSON() ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, MaxBlockHeaderPayload))
+	err := marshalElement(buf, *b)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
 
 // BlockHash computes the block identifier hash for the given block header.
 func (h *BlockHeader) BlockHash() chainhash.Hash {
@@ -152,6 +172,34 @@ func (h *BlockHeader) Bytes() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// TODO: add tests
+// SerializeEquihashHeaderBytes returns byte slice containing the serialized contents
+// of the block header that should be used for Equihash calculation
+func (h *BlockHeader) SerializeEquihashHeaderBytes(algo AlgorithmSpec) ([]byte, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, algo.HeaderSize))
+
+	sec := uint32(h.Timestamp.Unix())
+
+	var err error
+	switch algo.Version {
+	case 0:
+		err = writeElements(buf, h.Version, &h.PrevBlock, &h.MerkleRoot, h.Bits, sec, h.ExtraData)
+	case 1:
+		err = writeElements(buf, h.Version, &h.PrevBlock, &h.MerkleRoot, &h.StakeRoot,
+			h.VoteBits, h.FinalState, h.Voters, h.FreshStake,
+			h.Revocations, h.PoolSize, h.Bits, h.SBits,
+			h.Height, h.Size, sec, h.Nonce, h.ExtraData, h.StakeVersion)
+	default:
+		err = errors.New("invalid algorithm version")
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
 // NewBlockHeader returns a new BlockHeader using the provided previous block
 // hash, merkle root hash, difficulty bits, and nonce used to generate the
 // block with defaults for the remaining fields.
@@ -159,29 +207,30 @@ func NewBlockHeader(version int32, prevHash *chainhash.Hash,
 	merkleRootHash *chainhash.Hash, stakeRoot *chainhash.Hash, voteBits uint16,
 	finalState [6]byte, voters uint16, freshStake uint8, revocations uint8,
 	poolsize uint32, bits uint32, sbits int64, height uint32, size uint32,
-	nonce uint32, extraData [32]byte, stakeVersion uint32) *BlockHeader {
+	nonce uint32, extraData [32]byte, stakeVersion uint32, equihashSolution [EquihashSolutionLen]byte) *BlockHeader {
 
 	// Limit the timestamp to one second precision since the protocol
 	// doesn't support better.
 	return &BlockHeader{
-		Version:      version,
-		PrevBlock:    *prevHash,
-		MerkleRoot:   *merkleRootHash,
-		StakeRoot:    *stakeRoot,
-		VoteBits:     voteBits,
-		FinalState:   finalState,
-		Voters:       voters,
-		FreshStake:   freshStake,
-		Revocations:  revocations,
-		PoolSize:     poolsize,
-		Bits:         bits,
-		SBits:        sbits,
-		Height:       height,
-		Size:         size,
-		Timestamp:    time.Unix(time.Now().Unix(), 0),
-		Nonce:        nonce,
-		ExtraData:    extraData,
-		StakeVersion: stakeVersion,
+		Version:          version,
+		PrevBlock:        *prevHash,
+		MerkleRoot:       *merkleRootHash,
+		StakeRoot:        *stakeRoot,
+		VoteBits:         voteBits,
+		FinalState:       finalState,
+		Voters:           voters,
+		FreshStake:       freshStake,
+		Revocations:      revocations,
+		PoolSize:         poolsize,
+		Bits:             bits,
+		SBits:            sbits,
+		Height:           height,
+		Size:             size,
+		Timestamp:        time.Unix(time.Now().Unix(), 0),
+		Nonce:            nonce,
+		ExtraData:        extraData,
+		StakeVersion:     stakeVersion,
+		EquihashSolution: equihashSolution,
 	}
 }
 
@@ -193,7 +242,7 @@ func readBlockHeader(r io.Reader, pver uint32, bh *BlockHeader) error {
 		&bh.StakeRoot, &bh.VoteBits, &bh.FinalState, &bh.Voters,
 		&bh.FreshStake, &bh.Revocations, &bh.PoolSize, &bh.Bits,
 		&bh.SBits, &bh.Height, &bh.Size, (*uint32Time)(&bh.Timestamp),
-		&bh.Nonce, &bh.ExtraData, &bh.StakeVersion)
+		&bh.Nonce, &bh.ExtraData, &bh.StakeVersion, &bh.EquihashSolution)
 }
 
 // writeBlockHeader writes a Decred block header to w.  See Serialize for
@@ -205,5 +254,5 @@ func writeBlockHeader(w io.Writer, pver uint32, bh *BlockHeader) error {
 		&bh.StakeRoot, bh.VoteBits, bh.FinalState, bh.Voters,
 		bh.FreshStake, bh.Revocations, bh.PoolSize, bh.Bits, bh.SBits,
 		bh.Height, bh.Size, sec, bh.Nonce, bh.ExtraData,
-		bh.StakeVersion)
+		bh.StakeVersion, &bh.EquihashSolution)
 }

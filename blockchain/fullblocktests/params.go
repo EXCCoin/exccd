@@ -127,11 +127,8 @@ var regNetParams = &chaincfg.Params{
 	MulSubsidy:               100,
 	DivSubsidy:               101,
 	SubsidyReductionInterval: 128,
-	WorkRewardProportion:     6,
-	WorkRewardProportionV2:   1,
+	WorkRewardProportion:     7,
 	StakeRewardProportion:    3,
-	StakeRewardProportionV2:  8,
-	BlockTaxProportion:       1,
 
 	// Checkpoints ordered from oldest to newest.
 	Checkpoints: nil,
@@ -173,255 +170,6 @@ var regNetParams = &chaincfg.Params{
 			StartTime:  0,             // Always available for vote
 			ExpireTime: math.MaxInt64, // Never expires
 		}},
-		5: {{
-			Vote: chaincfg.Vote{
-				Id:          chaincfg.VoteIDSDiffAlgorithm,
-				Description: "Change stake difficulty algorithm as defined in DCP0001",
-				Mask:        0x0006, // Bits 1 and 2
-				Choices: []chaincfg.Choice{{
-					Id:          "abstain",
-					Description: "abstain voting for change",
-					Bits:        0x0000,
-					IsAbstain:   true,
-					IsNo:        false,
-				}, {
-					Id:          "no",
-					Description: "keep the existing algorithm",
-					Bits:        0x0002, // Bit 1
-					IsAbstain:   false,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "change to the new algorithm",
-					Bits:        0x0004, // Bit 2
-					IsAbstain:   false,
-					IsNo:        false,
-				}},
-			},
-			StartTime:  0,             // Always available for vote
-			ExpireTime: math.MaxInt64, // Never expires
-		}},
-		6: {{
-			Vote: chaincfg.Vote{
-				Id:          chaincfg.VoteIDLNFeatures,
-				Description: "Enable features defined in DCP0002 and DCP0003 necessary to support Lightning Network (LN)",
-				Mask:        0x0006, // Bits 1 and 2
-				Choices: []chaincfg.Choice{{
-					Id:          "abstain",
-					Description: "abstain voting for change",
-					Bits:        0x0000,
-					IsAbstain:   true,
-					IsNo:        false,
-				}, {
-					Id:          "no",
-					Description: "keep the existing consensus rules",
-					Bits:        0x0002, // Bit 1
-					IsAbstain:   false,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "change to the new consensus rules",
-					Bits:        0x0004, // Bit 2
-					IsAbstain:   false,
-					IsNo:        false,
-				}},
-			},
-			StartTime:  0,             // Always available for vote
-			ExpireTime: math.MaxInt64, // Never expires
-		}},
-		7: {{
-			Vote: chaincfg.Vote{
-				Id:          chaincfg.VoteIDFixLNSeqLocks,
-				Description: "Modify sequence lock handling as defined in DCP0004",
-				Mask:        0x0006, // Bits 1 and 2
-				Choices: []chaincfg.Choice{{
-					Id:          "abstain",
-					Description: "abstain voting for change",
-					Bits:        0x0000,
-					IsAbstain:   true,
-					IsNo:        false,
-				}, {
-					Id:          "no",
-					Description: "keep the existing consensus rules",
-					Bits:        0x0002, // Bit 1
-					IsAbstain:   false,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "change to the new consensus rules",
-					Bits:        0x0004, // Bit 2
-					IsAbstain:   false,
-					IsNo:        false,
-				}},
-			},
-			StartTime:  0,             // Always available for vote
-			ExpireTime: math.MaxInt64, // Never expires
-		}},
-		8: {{
-			Vote: chaincfg.Vote{
-				Id:          chaincfg.VoteIDHeaderCommitments,
-				Description: "Enable header commitments as defined in DCP0005",
-				Mask:        0x0006, // Bits 1 and 2
-				Choices: []chaincfg.Choice{{
-					Id:          "abstain",
-					Description: "abstain voting for change",
-					Bits:        0x0000,
-					IsAbstain:   true,
-					IsNo:        false,
-				}, {
-					Id:          "no",
-					Description: "keep the existing consensus rules",
-					Bits:        0x0002, // Bit 1
-					IsAbstain:   false,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "change to the new consensus rules",
-					Bits:        0x0004, // Bit 2
-					IsAbstain:   false,
-					IsNo:        false,
-				}},
-			},
-			StartTime:  0,             // Always available for vote
-			ExpireTime: math.MaxInt64, // Never expires
-		}},
-		9: {{
-			Vote: chaincfg.Vote{
-				Id:          chaincfg.VoteIDTreasury,
-				Description: "Enable decentralized Treasury opcodes as defined in DCP0006",
-				Mask:        0x0006, // Bits 1 and 2
-				Choices: []chaincfg.Choice{{
-					Id:          "abstain",
-					Description: "abstain voting for change",
-					Bits:        0x0000,
-					IsAbstain:   true,
-					IsNo:        false,
-				}, {
-					Id:          "no",
-					Description: "keep the existing consensus rules",
-					Bits:        0x0002, // Bit 1
-					IsAbstain:   false,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "change to the new consensus rules",
-					Bits:        0x0004, // Bit 2
-					IsAbstain:   false,
-					IsNo:        false,
-				}},
-			},
-			StartTime:  0,             // Always available for vote
-			ExpireTime: math.MaxInt64, // Never expires
-		}},
-		10: {{
-			Vote: chaincfg.Vote{
-				Id:          chaincfg.VoteIDRevertTreasuryPolicy,
-				Description: "Change maximum treasury expenditure policy as defined in DCP0007",
-				Mask:        0x0006, // Bits 1 and 2
-				Choices: []chaincfg.Choice{{
-					Id:          "abstain",
-					Description: "abstain voting for change",
-					Bits:        0x0000,
-					IsAbstain:   true,
-					IsNo:        false,
-				}, {
-					Id:          "no",
-					Description: "keep the existing consensus rules",
-					Bits:        0x0002, // Bit 1
-					IsAbstain:   false,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "change to the new consensus rules",
-					Bits:        0x0004, // Bit 2
-					IsAbstain:   false,
-					IsNo:        false,
-				}},
-			},
-			StartTime:  0,             // Always available for vote
-			ExpireTime: math.MaxInt64, // Never expires
-		}, {
-			Vote: chaincfg.Vote{
-				Id:          chaincfg.VoteIDExplicitVersionUpgrades,
-				Description: "Enable explicit version upgrades as defined in DCP0008",
-				Mask:        0x0018, // Bits 3 and 4
-				Choices: []chaincfg.Choice{{
-					Id:          "abstain",
-					Description: "abstain from voting",
-					Bits:        0x0000,
-					IsAbstain:   true,
-					IsNo:        false,
-				}, {
-					Id:          "no",
-					Description: "keep the existing consensus rules",
-					Bits:        0x0008, // Bit 3
-					IsAbstain:   false,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "change to the new consensus rules",
-					Bits:        0x0010, // Bit 4
-					IsAbstain:   false,
-					IsNo:        false,
-				}},
-			},
-			StartTime:  0,             // Always available for vote
-			ExpireTime: math.MaxInt64, // Never expires
-		}, {
-			Vote: chaincfg.Vote{
-				Id:          chaincfg.VoteIDAutoRevocations,
-				Description: "Enable automatic ticket revocations as defined in DCP0009",
-				Mask:        0x0060, // Bits 5 and 6
-				Choices: []chaincfg.Choice{{
-					Id:          "abstain",
-					Description: "abstain voting for change",
-					Bits:        0x0000,
-					IsAbstain:   true,
-					IsNo:        false,
-				}, {
-					Id:          "no",
-					Description: "keep the existing consensus rules",
-					Bits:        0x0020, // Bit 5
-					IsAbstain:   false,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "change to the new consensus rules",
-					Bits:        0x0040, // Bit 6
-					IsAbstain:   false,
-					IsNo:        false,
-				}},
-			},
-			StartTime:  0,             // Always available for vote
-			ExpireTime: math.MaxInt64, // Never expires
-		}, {
-			Vote: chaincfg.Vote{
-				Id:          chaincfg.VoteIDChangeSubsidySplit,
-				Description: "Change block reward subsidy split to 10/80/10 as defined in DCP0010",
-				Mask:        0x0180, // Bits 7 and 8
-				Choices: []chaincfg.Choice{{
-					Id:          "abstain",
-					Description: "abstain from voting",
-					Bits:        0x0000,
-					IsAbstain:   true,
-					IsNo:        false,
-				}, {
-					Id:          "no",
-					Description: "keep the existing consensus rules",
-					Bits:        0x0080, // Bit 7
-					IsAbstain:   false,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "change to the new consensus rules",
-					Bits:        0x0100, // Bit 8
-					IsAbstain:   false,
-					IsNo:        false,
-				}},
-			},
-			StartTime:  0,             // Always available for vote
-			ExpireTime: math.MaxInt64, // Never expires
-		}},
 	},
 
 	// Enforce current block version once majority of the network has
@@ -445,7 +193,7 @@ var regNetParams = &chaincfg.Params{
 	PKHEdwardsAddrID:     [2]byte{0x0d, 0xe0}, // starts with Re
 	PKHSchnorrAddrID:     [2]byte{0x0d, 0xc2}, // starts with RS
 	ScriptHashAddrID:     [2]byte{0x0d, 0xdb}, // starts with Rc
-	PrivateKeyID:         [2]byte{0x22, 0xfe}, // starts with Pr
+	PrivateKeyID:         0x64,                // starts with 4 (uncompressed) or F (compressed)
 
 	// BIP32 hierarchical deterministic extended key magics
 	HDPrivateKeyID: [4]byte{0xea, 0xb4, 0x04, 0x48}, // starts with rprv
@@ -453,8 +201,7 @@ var regNetParams = &chaincfg.Params{
 
 	// BIP44 coin type used in the hierarchical deterministic path for
 	// address generation.
-	SLIP0044CoinType: 1, // SLIP0044, Testnet (all coins)
-	LegacyCoinType:   1,
+	HDCoinType: 1, // SLIP0044, Testnet (all coins)
 
 	// Decred PoS parameters
 	MinimumStakeDiff:        20000,
@@ -472,27 +219,14 @@ var regNetParams = &chaincfg.Params{
 	MaxFreshStakePerBlock:   20,            // 4*TicketsPerBlock
 	StakeEnabledHeight:      16 + 16,       // CoinbaseMaturity + TicketMaturity
 	StakeValidationHeight:   16 + (64 * 2), // CoinbaseMaturity + TicketPoolSize*2
-	StakeBaseSigScript:      []byte{0x73, 0x57},
+	StakeBaseSigScript:      []byte{0xde, 0xad, 0xbe, 0xef},
 	StakeMajorityMultiplier: 3,
 	StakeMajorityDivisor:    4,
 
 	// Decred organization related parameters
-	OrganizationPkScript:        fromHex("a9146913bcc838bd0087fb3f6b3c868423d5e300078d87"),
-	OrganizationPkScriptVersion: 0,
-	BlockOneLedger: []chaincfg.TokenPayout{{
-		// RsKrWb7Vny1jnzL1sDLgKTAteh9RZcRr5g6
-		ScriptVersion: 0,
-		Script:        fromHex("76a9147e4765ae88ba9ad5c9e4715c484e90b34d358d5188ac"),
-		Amount:        100000 * 1e8,
-	}, {
-		// Rs8ca5cDALtsMVD4PV3xvFTC7dmuU1juvLv
-		ScriptVersion: 0,
-		Script:        fromHex("76a91402fb1ac0137666d79165e13cecd403883615270788ac"),
-		Amount:        100000 * 1e8,
-	}, {
-		// RsHzbGt6YajuHpurtpqXXHz57LmYZK8w9tX
-		ScriptVersion: 0,
-		Script:        fromHex("76a91469de627d3231b14228653dd09cba75eeb872754288ac"),
-		Amount:        100000 * 1e8,
-	}},
+	BlockOneLedger: []*chaincfg.TokenPayout{
+		{Address: "RsKrWb7Vny1jnzL1sDLgKTAteh9RZcRr5g6", Amount: 100000 * 1e8},
+		{Address: "Rs8ca5cDALtsMVD4PV3xvFTC7dmuU1juvLv", Amount: 100000 * 1e8},
+		{Address: "RsHzbGt6YajuHpurtpqXXHz57LmYZK8w9tX", Amount: 100000 * 1e8},
+	},
 }

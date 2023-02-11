@@ -216,7 +216,7 @@ const (
 	OP_WITHIN              = 0xa5 // 165
 	OP_RIPEMD160           = 0xa6 // 166
 	OP_SHA1                = 0xa7 // 167
-	OP_BLAKE256            = 0xa8 // 168
+	OP_SHA256              = 0xa8 // 168
 	OP_HASH160             = 0xa9 // 169
 	OP_HASH256             = 0xaa // 170
 	OP_CODESEPARATOR       = 0xab // 171
@@ -242,10 +242,10 @@ const (
 	OP_SSTXCHANGE          = 0xbd // 189 DECRED
 	OP_CHECKSIGALT         = 0xbe // 190 DECRED
 	OP_CHECKSIGALTVERIFY   = 0xbf // 191 DECRED
-	OP_SHA256              = 0xc0 // 192
-	OP_TADD                = 0xc1 // 193 DECRED
-	OP_TSPEND              = 0xc2 // 194 DECRED
-	OP_TGEN                = 0xc3 // 195 DECRED
+	OP_UNKNOWN192          = 0xc0 // 192
+	OP_UNKNOWN193          = 0xc1 // 193
+	OP_UNKNOWN194          = 0xc2 // 194
+	OP_UNKNOWN195          = 0xc3 // 195
 	OP_UNKNOWN196          = 0xc4 // 196
 	OP_UNKNOWN197          = 0xc5 // 197
 	OP_UNKNOWN198          = 0xc6 // 198
@@ -500,7 +500,6 @@ var opcodeArray = [256]opcode{
 	OP_RIPEMD160:           {OP_RIPEMD160, "OP_RIPEMD160", 1, opcodeRipemd160},
 	OP_SHA1:                {OP_SHA1, "OP_SHA1", 1, opcodeSha1},
 	OP_SHA256:              {OP_SHA256, "OP_SHA256", 1, opcodeSha256},
-	OP_BLAKE256:            {OP_BLAKE256, "OP_BLAKE256", 1, opcodeBlake256},
 	OP_HASH160:             {OP_HASH160, "OP_HASH160", 1, opcodeHash160},
 	OP_HASH256:             {OP_HASH256, "OP_HASH256", 1, opcodeHash256},
 	OP_CODESEPARATOR:       {OP_CODESEPARATOR, "OP_CODESEPARATOR", 1, opcodeDisabled}, // Disabled
@@ -529,12 +528,11 @@ var opcodeArray = [256]opcode{
 	OP_CHECKSIGALT:       {OP_CHECKSIGALT, "OP_CHECKSIGALT", 1, opcodeCheckSigAlt},
 	OP_CHECKSIGALTVERIFY: {OP_CHECKSIGALTVERIFY, "OP_CHECKSIGALTVERIFY", 1, opcodeCheckSigAltVerify},
 
-	// treasury opcodes.
-	OP_TADD:   {OP_TADD, "OP_TADD", 1, opcodeTAdd},
-	OP_TSPEND: {OP_TSPEND, "OP_TSPEND", 1, opcodeTSpend},
-	OP_TGEN:   {OP_TGEN, "OP_TGEN", 1, opcodeTGen},
-
 	// Undefined opcodes.
+	OP_UNKNOWN192: {OP_UNKNOWN192, "OP_UNKNOWN192", 1, opcodeNop},
+	OP_UNKNOWN193: {OP_UNKNOWN193, "OP_UNKNOWN193", 1, opcodeNop},
+	OP_UNKNOWN194: {OP_UNKNOWN194, "OP_UNKNOWN194", 1, opcodeNop},
+	OP_UNKNOWN195: {OP_UNKNOWN195, "OP_UNKNOWN195", 1, opcodeNop},
 	OP_UNKNOWN196: {OP_UNKNOWN196, "OP_UNKNOWN196", 1, opcodeNop},
 	OP_UNKNOWN197: {OP_UNKNOWN197, "OP_UNKNOWN197", 1, opcodeNop},
 	OP_UNKNOWN198: {OP_UNKNOWN198, "OP_UNKNOWN198", 1, opcodeNop},
@@ -740,6 +738,7 @@ func opcodeNop(op *opcode, data []byte, vm *Engine) error {
 	switch op.value {
 	case OP_NOP1, OP_NOP4, OP_NOP5, OP_NOP6,
 		OP_NOP7, OP_NOP8, OP_NOP9, OP_NOP10,
+		OP_UNKNOWN193, OP_UNKNOWN194, OP_UNKNOWN195,
 		OP_UNKNOWN196, OP_UNKNOWN197, OP_UNKNOWN198, OP_UNKNOWN199,
 		OP_UNKNOWN200, OP_UNKNOWN201, OP_UNKNOWN202, OP_UNKNOWN203,
 		OP_UNKNOWN204, OP_UNKNOWN205, OP_UNKNOWN206, OP_UNKNOWN207,
@@ -2344,36 +2343,11 @@ func opcodeSha1(op *opcode, data []byte, vm *Engine) error {
 	return nil
 }
 
-// opcodeBlake256 treats the top item of the data stack as raw bytes and
-// replaces it with blake256(data).
-//
-// Stack transformation: [... x1] -> [... blake256(x1)]
-func opcodeBlake256(op *opcode, data []byte, vm *Engine) error {
-	buf, err := vm.dstack.PopByteArray()
-	if err != nil {
-		return err
-	}
-
-	hash := chainhash.HashB(buf)
-	vm.dstack.PushByteArray(hash)
-	return nil
-}
-
 // opcodeSha256 treats the top item of the data stack as raw bytes and replaces
-// it with sha256(data).
+// it with hash256(data).
 //
-// Stack transformation: [... x1] -> [... sha256(x1)]
+// Stack transformation: [... x1] -> [... hash256(x1)]
 func opcodeSha256(op *opcode, data []byte, vm *Engine) error {
-	// Treat the opcode as OP_UNKNOWN192 if the flag to interpret it as the
-	// SHA256 opcode is not set.
-	if !vm.hasFlag(ScriptVerifySHA256) {
-		if vm.hasFlag(ScriptDiscourageUpgradableNops) {
-			return scriptError(ErrDiscourageUpgradableNOPs,
-				"OP_UNKNOWN192 reserved for upgrades")
-		}
-		return nil
-	}
-
 	buf, err := vm.dstack.PopByteArray()
 	if err != nil {
 		return err
@@ -2385,9 +2359,9 @@ func opcodeSha256(op *opcode, data []byte, vm *Engine) error {
 }
 
 // opcodeHash160 treats the top item of the data stack as raw bytes and replaces
-// it with ripemd160(blake256(data)).
+// it with ripemd160(hash256(data)).
 //
-// Stack transformation: [... x1] -> [... ripemd160(blake256(x1))]
+// Stack transformation: [... x1] -> [... ripemd160(hash256(x1))]
 func opcodeHash160(op *opcode, data []byte, vm *Engine) error {
 	buf, err := vm.dstack.PopByteArray()
 	if err != nil {
@@ -2400,9 +2374,9 @@ func opcodeHash160(op *opcode, data []byte, vm *Engine) error {
 }
 
 // opcodeHash256 treats the top item of the data stack as raw bytes and replaces
-// it with blake256(blake256(data)).
+// it with hash256(hash256(data)).
 //
-// Stack transformation: [... x1] -> [... blake256(blake256(x1))]
+// Stack transformation: [... x1] -> [... hash256(hash256(x1))]
 func opcodeHash256(op *opcode, data []byte, vm *Engine) error {
 	buf, err := vm.dstack.PopByteArray()
 	if err != nil {
@@ -2898,52 +2872,6 @@ func opcodeCheckSigAltVerify(op *opcode, data []byte, vm *Engine) error {
 		err = abstractVerify(op, vm, ErrCheckSigAltVerify)
 	}
 	return err
-}
-
-// opcodeTAdd is a tag used for treasurybase and credits to the treasury.
-func opcodeTAdd(op *opcode, data []byte, vm *Engine) error {
-	// Treat the opcode as OP_UNKNOWN193 if the flag to interpret it as the
-	// TADD opcode is not set.
-	if !vm.hasFlag(ScriptVerifyTreasury) {
-		if vm.hasFlag(ScriptDiscourageUpgradableNops) {
-			return scriptError(ErrDiscourageUpgradableNOPs,
-				"OP_UNKNOWN193 reserved for upgrades")
-		}
-		return nil
-	}
-
-	return nil
-}
-
-// opcodeTSpend is a tag used to designated treasury spends.
-func opcodeTSpend(op *opcode, data []byte, vm *Engine) error {
-	// Treat the opcode as OP_UNKNOWN194 if the flag to interpret it as the
-	// TSPEND opcode is not set.
-	if !vm.hasFlag(ScriptVerifyTreasury) {
-		if vm.hasFlag(ScriptDiscourageUpgradableNops) {
-			return scriptError(ErrDiscourageUpgradableNOPs,
-				"OP_UNKNOWN194 reserved for upgrades")
-		}
-		return nil
-	}
-
-	return nil
-}
-
-// opcodeTGen is a tag used in TSpend transactions to designate P2PKH or P2PH
-// payouts.
-func opcodeTGen(op *opcode, data []byte, vm *Engine) error {
-	// Treat the opcode as OP_UNKNOWN195 if the flag to interpret it as the
-	// TGEN opcode is not set.
-	if !vm.hasFlag(ScriptVerifyTreasury) {
-		if vm.hasFlag(ScriptDiscourageUpgradableNops) {
-			return scriptError(ErrDiscourageUpgradableNOPs,
-				"OP_UNKNOWN195 reserved for upgrades")
-		}
-		return nil
-	}
-
-	return nil
 }
 
 // OpcodeByName is a map that can be used to lookup an opcode by its

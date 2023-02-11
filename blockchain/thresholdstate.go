@@ -594,41 +594,42 @@ func (b *BlockChain) NextThresholdState(hash *chainhash.Hash, version uint32, de
 //
 // This function MUST be called with the chain state lock held (for writes).
 func (b *BlockChain) isLNFeaturesAgendaActive(prevNode *blockNode) (bool, error) {
-	// Determine the correct deployment version for the LN features consensus
-	// vote as defined in DCP0002 and DCP0003 or treat it as active when voting
-	// is not enabled for the current network.
-	const deploymentID = chaincfg.VoteIDLNFeatures
-	deploymentVer, ok := b.deploymentVers[deploymentID]
-	if !ok {
-		return true, nil
-	}
-
-	state, err := b.deploymentState(prevNode, deploymentVer, deploymentID)
-	if err != nil {
-		return false, err
-	}
-
-	// NOTE: The choice field of the return threshold state is not examined
-	// here because there is only one possible choice that can be active for
-	// the agenda, which is yes, so there is no need to check it.
-	return state.State == ThresholdActive, nil
+	_ = chaincfg.VoteIDLNFeatures
+	return true, nil
 }
 
 // IsLNFeaturesAgendaActive returns whether or not the LN features agenda vote,
 // as defined in DCP0002 and DCP0003 has passed and is now active for the block
-// AFTER the given block.
+// AFTER the given best chain block.
 //
 // This function is safe for concurrent access.
 func (b *BlockChain) IsLNFeaturesAgendaActive(prevHash *chainhash.Hash) (bool, error) {
-	prevNode := b.index.LookupNode(prevHash)
-	if prevNode == nil || !b.index.CanValidate(prevNode) {
-		return false, unknownBlockError(prevHash)
-	}
+	_ = chaincfg.VoteIDLNSupport // avoid unused const in chaincfg/params.go
+	return true, nil
+}
 
-	b.chainLock.Lock()
-	isActive, err := b.isLNFeaturesAgendaActive(prevNode)
-	b.chainLock.Unlock()
-	return isActive, err
+// isFixSeqLocksAgendaActive returns whether or not the fix sequence locks
+// agenda vote, as defined in DCP0004 has passed and is now active from the
+// point of view of the passed block node.
+//
+// It is important to note that, as the variable name indicates, this function
+// expects the block node prior to the block for which the deployment state is
+// desired.  In other words, the returned deployment state is for the block
+// AFTER the passed node.
+//
+// This function MUST be called with the chain state lock held (for writes).
+func (b *BlockChain) isFixSeqLocksAgendaActive(prevNode *blockNode) (bool, error) {
+	_ = chaincfg.VoteIDFixLNSeqLocks // avoid unused const in chaincfg/params.go
+	return true, nil
+}
+
+// IsFixSeqLocksAgendaActive returns whether or not the fix sequence locks
+// agenda vote, as defined in DCP0004 has passed and is now active for the block
+// AFTER the current best chain block.
+//
+// This function is safe for concurrent access.
+func (b *BlockChain) IsFixSeqLocksAgendaActive() (bool, error) {
+	return true, nil
 }
 
 // isHeaderCommitmentsAgendaActive returns whether or not the header commitments
@@ -639,27 +640,8 @@ func (b *BlockChain) IsLNFeaturesAgendaActive(prevHash *chainhash.Hash) (bool, e
 // expects the block node prior to the block for which the deployment state is
 // desired.  In other words, the returned deployment state is for the block
 // AFTER the passed node.
-//
-// This function MUST be called with the chain state lock held (for writes).
 func (b *BlockChain) isHeaderCommitmentsAgendaActive(prevNode *blockNode) (bool, error) {
-	// Determine the correct deployment version for the header commitments
-	// consensus vote as defined in DCP0005 or treat it as active when voting
-	// is not enabled for the current network.
-	const deploymentID = chaincfg.VoteIDHeaderCommitments
-	deploymentVer, ok := b.deploymentVers[deploymentID]
-	if !ok {
-		return true, nil
-	}
-
-	state, err := b.deploymentState(prevNode, deploymentVer, deploymentID)
-	if err != nil {
-		return false, err
-	}
-
-	// NOTE: The choice field of the return threshold state is not examined
-	// here because there is only one possible choice that can be active for
-	// the agenda, which is yes, so there is no need to check it.
-	return state.State == ThresholdActive, nil
+	return false, nil
 }
 
 // IsHeaderCommitmentsAgendaActive returns whether or not the header commitments
@@ -668,15 +650,7 @@ func (b *BlockChain) isHeaderCommitmentsAgendaActive(prevNode *blockNode) (bool,
 //
 // This function is safe for concurrent access.
 func (b *BlockChain) IsHeaderCommitmentsAgendaActive(prevHash *chainhash.Hash) (bool, error) {
-	node := b.index.LookupNode(prevHash)
-	if node == nil || !b.index.CanValidate(node) {
-		return false, unknownBlockError(prevHash)
-	}
-
-	b.chainLock.Lock()
-	isActive, err := b.isHeaderCommitmentsAgendaActive(node)
-	b.chainLock.Unlock()
-	return isActive, err
+	return false, nil
 }
 
 // isTreasuryAgendaActive returns whether or not the treasury agenda, as defined
@@ -690,25 +664,20 @@ func (b *BlockChain) IsHeaderCommitmentsAgendaActive(prevHash *chainhash.Hash) (
 //
 // This function MUST be called with the chain state lock held (for writes).
 func (b *BlockChain) isTreasuryAgendaActive(prevNode *blockNode) (bool, error) {
-	// Ignore block 0 and 1 because they are special.
-	if prevNode.height == 0 {
-		return false, nil
-	}
-	const deploymentID = chaincfg.VoteIDTreasury
-	deploymentVer, ok := b.deploymentVers[deploymentID]
-	if !ok {
-		return true, nil
-	}
+	return false, nil
+}
 
-	state, err := b.deploymentState(prevNode, deploymentVer, deploymentID)
-	if err != nil {
-		return false, err
-	}
-
-	// NOTE: The choice field of the return threshold state is not examined
-	// here because there is only one possible choice that can be active for
-	// the agenda, which is yes, so there is no need to check it.
-	return state.State == ThresholdActive, nil
+// isTreasuryAgendaActiveByHash returns whether or not the treasury agenda vote,
+// as defined in DCP0006, has passed and is now active for the block AFTER the
+// given block.
+//
+// NOTE: Unlike IsTreasuryAgendaActive, this version returns false to indicate
+// the it is not active in the case the hash is not found instead of an error.
+//
+// This is necessary because this particular version is needed before the full
+// context is available.
+func (b *BlockChain) isTreasuryAgendaActiveByHash(prevHash *chainhash.Hash) (bool, error) {
+	return false, nil
 }
 
 // IsTreasuryAgendaActive returns whether or not the treasury agenda vote, as
@@ -717,20 +686,7 @@ func (b *BlockChain) isTreasuryAgendaActive(prevNode *blockNode) (bool, error) {
 //
 // This function is safe for concurrent access.
 func (b *BlockChain) IsTreasuryAgendaActive(prevHash *chainhash.Hash) (bool, error) {
-	// The treasury agenda is never active for the genesis block.
-	if *prevHash == *zeroHash {
-		return false, nil
-	}
-
-	prevNode := b.index.LookupNode(prevHash)
-	if prevNode == nil || !b.index.CanValidate(prevNode) {
-		return false, unknownBlockError(prevHash)
-	}
-
-	b.chainLock.Lock()
-	isActive, err := b.isTreasuryAgendaActive(prevNode)
-	b.chainLock.Unlock()
-	return isActive, err
+	return false, nil
 }
 
 // isRevertTreasuryPolicyActive returns whether or not the revert treasury
@@ -839,21 +795,8 @@ func (b *BlockChain) IsExplicitVerUpgradesAgendaActive(prevHash *chainhash.Hash)
 //
 // This function MUST be called with the chain state lock held (for writes).
 func (b *BlockChain) isAutoRevocationsAgendaActive(prevNode *blockNode) (bool, error) {
-	const deploymentID = chaincfg.VoteIDAutoRevocations
-	deploymentVer, ok := b.deploymentVers[deploymentID]
-	if !ok {
-		return true, nil
-	}
-
-	state, err := b.deploymentState(prevNode, deploymentVer, deploymentID)
-	if err != nil {
-		return false, err
-	}
-
-	// NOTE: The choice field of the return threshold state is not examined
-	// here because there is only one possible choice that can be active for
-	// the agenda, which is yes, so there is no need to check it.
-	return state.State == ThresholdActive, nil
+	_ = chaincfg.VoteIDAutoRevocations // avoid unused const in chaincfg/params.go
+	return false, nil
 }
 
 // IsAutoRevocationsAgendaActive returns whether or not the automatic ticket
@@ -862,20 +805,7 @@ func (b *BlockChain) isAutoRevocationsAgendaActive(prevNode *blockNode) (bool, e
 //
 // This function is safe for concurrent access.
 func (b *BlockChain) IsAutoRevocationsAgendaActive(prevHash *chainhash.Hash) (bool, error) {
-	// The auto revocations agenda is never active for the genesis block.
-	if *prevHash == *zeroHash {
-		return false, nil
-	}
-
-	prevNode := b.index.LookupNode(prevHash)
-	if prevNode == nil || !b.index.CanValidate(prevNode) {
-		return false, unknownBlockError(prevHash)
-	}
-
-	b.chainLock.Lock()
-	isActive, err := b.isAutoRevocationsAgendaActive(prevNode)
-	b.chainLock.Unlock()
-	return isActive, err
+	return false, nil
 }
 
 // isSubsidySplitAgendaActive returns whether or not the agenda to change the
@@ -889,21 +819,8 @@ func (b *BlockChain) IsAutoRevocationsAgendaActive(prevHash *chainhash.Hash) (bo
 //
 // This function MUST be called with the chain state lock held (for writes).
 func (b *BlockChain) isSubsidySplitAgendaActive(prevNode *blockNode) (bool, error) {
-	const deploymentID = chaincfg.VoteIDChangeSubsidySplit
-	deploymentVer, ok := b.deploymentVers[deploymentID]
-	if !ok {
-		return true, nil
-	}
-
-	state, err := b.deploymentState(prevNode, deploymentVer, deploymentID)
-	if err != nil {
-		return false, err
-	}
-
-	// NOTE: The choice field of the return threshold state is not examined
-	// here because there is only one possible choice that can be active for
-	// the agenda, which is yes, so there is no need to check it.
-	return state.State == ThresholdActive, nil
+	_ = chaincfg.VoteIDChangeSubsidySplit // avoid unused const in chaincfg/params.go
+	return false, nil
 }
 
 // IsSubsidySplitAgendaActive returns whether or not the agenda to change the
@@ -912,20 +829,7 @@ func (b *BlockChain) isSubsidySplitAgendaActive(prevNode *blockNode) (bool, erro
 //
 // This function is safe for concurrent access.
 func (b *BlockChain) IsSubsidySplitAgendaActive(prevHash *chainhash.Hash) (bool, error) {
-	// The agenda is never active for the genesis block.
-	if *prevHash == *zeroHash {
-		return false, nil
-	}
-
-	prevNode := b.index.LookupNode(prevHash)
-	if prevNode == nil || !b.index.CanValidate(prevNode) {
-		return false, unknownBlockError(prevHash)
-	}
-
-	b.chainLock.Lock()
-	isActive, err := b.isSubsidySplitAgendaActive(prevNode)
-	b.chainLock.Unlock()
-	return isActive, err
+	return false, nil
 }
 
 // VoteCounts is a compacted struct that is used to message vote counts.

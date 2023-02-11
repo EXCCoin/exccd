@@ -68,10 +68,6 @@ func IsPushOnlyScript(script []byte) bool {
 // isStakeOpcode returns whether or not the opcode is one of the stake tagging
 // opcodes.
 func isStakeOpcode(op byte, isTreasuryEnabled bool) bool {
-	if isTreasuryEnabled {
-		return (op >= OP_SSTX && op <= OP_SSTXCHANGE) ||
-			(op >= OP_TADD && op <= OP_TGEN)
-	}
 	return op >= OP_SSTX && op <= OP_SSTXCHANGE
 }
 
@@ -323,11 +319,6 @@ func countSigOpsV0(script []byte, precise bool, isTreasuryEnabled bool) int {
 	prevOp := byte(OP_INVALIDOPCODE)
 	for tokenizer.Next() {
 		switch tokenizer.Opcode() {
-		case OP_TSPEND:
-			if isTreasuryEnabled {
-				numSigOps++
-			}
-
 		case OP_CHECKSIG, OP_CHECKSIGVERIFY, OP_CHECKSIGALT,
 			OP_CHECKSIGALTVERIFY:
 

@@ -5,13 +5,13 @@
 package stdaddr
 
 import (
+	"crypto/sha256"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"math"
 
-	"github.com/decred/base58"
-	"github.com/decred/dcrd/crypto/blake256"
+	"github.com/EXCCoin/base58"
 	"github.com/decred/dcrd/crypto/ripemd160"
 	"github.com/decred/dcrd/dcrec"
 	"github.com/decred/dcrd/dcrec/edwards/v2"
@@ -87,9 +87,9 @@ func encodeAddressV0(data []byte, netID [2]byte) string {
 	return base58.CheckEncode(data, netID)
 }
 
-// Hash160 calculates the hash ripemd160(blake256(b)).
+// Hash160 calculates the hash ripemd160(sha256(b)).
 func Hash160(buf []byte) []byte {
-	b256Hash := blake256.Sum256(buf)
+	b256Hash := sha256.Sum256(buf)
 	hasher := ripemd160.New()
 	hasher.Write(b256Hash[:])
 	return hasher.Sum(nil)
@@ -700,21 +700,6 @@ func (addr *AddressPubKeyHashEcdsaSecp256k1V0) PayRevokeCommitmentScript() (uint
 	return 0, script[:]
 }
 
-// PayFromTreasuryScript returns the script version associated with the address
-// along with a script that pays funds from the treasury to the address.  The
-// script is only valid when used in treasury spend transactions.
-//
-// This is part of the StakeAddress interface implementation.
-func (addr *AddressPubKeyHashEcdsaSecp256k1V0) PayFromTreasuryScript() (uint16, []byte) {
-	// A script that pays from the treasury as a part of a treasury spend to
-	// this address type is of the form:
-	//  TGEN [standard pay-to-pubkey-hash-ecdsa-secp256k1 script]
-	var script [p2pkhPaymentScriptLen + 1]byte
-	script[0] = txscript.OP_TGEN
-	addr.putPaymentScript(script[1:])
-	return 0, script[:]
-}
-
 // Hash160 returns the underlying array of the pubkey hash.  This can be useful
 // when an array is more appropriate than a slice (for example, when used as map
 // keys).
@@ -1077,21 +1062,6 @@ func (addr *AddressScriptHashV0) PayRevokeCommitmentScript() (uint16, []byte) {
 	//  SSRTX [standard pay-to-script-hash script]
 	var script [p2shPaymentScriptLen + 1]byte
 	script[0] = txscript.OP_SSRTX
-	addr.putPaymentScript(script[1:])
-	return 0, script[:]
-}
-
-// PayFromTreasuryScript returns the script version associated with the address
-// along with a script that pays funds from the treasury to the address.  The
-// script is only valid when used in treasury spend transactions.
-//
-// This is part of the StakeAddress interface implementation.
-func (addr *AddressScriptHashV0) PayFromTreasuryScript() (uint16, []byte) {
-	// A script that pays from the treasury as a part of a treasury spend to
-	// this address type is of the form:
-	//  TGEN [standard pay-to-script-hash script]
-	var script [p2shPaymentScriptLen + 1]byte
-	script[0] = txscript.OP_TGEN
 	addr.putPaymentScript(script[1:])
 	return 0, script[:]
 }

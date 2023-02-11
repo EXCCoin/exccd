@@ -89,6 +89,7 @@ type GetBlockVerboseResult struct {
 	ChainWork     string        `json:"chainwork"`
 	PreviousHash  string        `json:"previousblockhash"`
 	NextHash      string        `json:"nextblockhash,omitempty"`
+	EquihashSolution []byte        `json:"equihashsolution"`
 }
 
 // AgendaInfo provides an overview of an agenda in a consensus deployment.
@@ -150,15 +151,15 @@ type GetBlockHeaderVerboseResult struct {
 	ChainWork     string  `json:"chainwork"`
 	PreviousHash  string  `json:"previousblockhash,omitempty"`
 	NextHash      string  `json:"nextblockhash,omitempty"`
+	EquihashSolution []byte  `json:"equihashsolution"`
 }
 
 // GetBlockSubsidyResult models the data returned from the getblocksubsidy
 // command.
 type GetBlockSubsidyResult struct {
-	Developer int64 `json:"developer"`
-	PoS       int64 `json:"pos"`
-	PoW       int64 `json:"pow"`
-	Total     int64 `json:"total"`
+	PoS   int64 `json:"pos"`
+	PoW   int64 `json:"pow"`
+	Total int64 `json:"total"`
 }
 
 // GetChainTipsResult models the data returns from the getchaintips command.
@@ -217,7 +218,7 @@ type GetMiningInfoResult struct {
 	Errors           string  `json:"errors"`
 	Generate         bool    `json:"generate"`
 	GenProcLimit     int32   `json:"genproclimit"`
-	HashesPerSec     int64   `json:"hashespersec"`
+	HashesPerSec     float64 `json:"hashespersec"`
 	NetworkHashPS    int64   `json:"networkhashps"`
 	PooledTx         uint64  `json:"pooledtx"`
 	TestNet          bool    `json:"testnet"`

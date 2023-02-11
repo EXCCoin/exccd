@@ -12,3 +12,13 @@ require (
 	github.com/decred/dcrd/wire v1.5.0
 	github.com/decred/slog v1.2.0
 )
+
+replace (
+	github.com/decred/dcrd/chaincfg/chainhash => ../../chaincfg/chainhash
+	github.com/decred/dcrd/chaincfg/v2 => ../../chaincfg
+	github.com/decred/dcrd/database/v2 => ../../database
+	github.com/decred/dcrd/dcrec => ../../dcrec
+	github.com/decred/dcrd/dcrutil/v2 => ../../dcrutil
+	github.com/decred/dcrd/txscript/v2 => ../../txscript
+	github.com/decred/dcrd/wire => ../../wire
+)

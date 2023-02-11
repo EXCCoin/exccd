@@ -251,15 +251,6 @@ func (view *UtxoViewpoint) connectStakeTransaction(tx *dcrutil.Tx,
 		return nil
 	}
 
-	// Treasury spends don't have any inputs to spend.
-	isTreasurySpend := isTreasuryEnabled && stake.IsTSpend(msgTx)
-	if isTreasurySpend {
-		// Add the transaction's outputs as available utxos.
-		view.AddTxOuts(tx, blockHeight, blockIndex, isTreasuryEnabled,
-			isAutoRevocationsEnabled)
-		return nil
-	}
-
 	// Spend the referenced utxos by marking them spent in the view and, if a
 	// slice was provided for the spent txout details, append an entry to it.
 	isVote := stake.IsSSGen(msgTx, isTreasuryEnabled)
@@ -896,17 +887,8 @@ func (view *UtxoViewpoint) fetchInputUtxos(block *dcrutil.Block,
 	// stake tree are not allowed to access outputs of transactions earlier in
 	// the block.  This applies to both transactions earlier in the stake tree
 	// as well as those in the regular tree.
-	for txIdx, stx := range block.STransactions() {
-		// Ignore treasurybases and treasury spends since they have no inputs.
+	for _, stx := range block.STransactions() {
 		msgTx := stx.MsgTx()
-		shouldBeTreasuryBase := isTreasuryEnabled && txIdx == 0
-		if shouldBeTreasuryBase && stake.IsTreasuryBase(msgTx) {
-			continue
-		}
-		isTreasurySpend := isTreasuryEnabled && stake.IsTSpend(msgTx)
-		if isTreasurySpend {
-			continue
-		}
 
 		isVote := stake.IsSSGen(msgTx, isTreasuryEnabled)
 		for txInIdx, txIn := range msgTx.TxIn {

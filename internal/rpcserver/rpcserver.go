@@ -204,8 +204,6 @@ var rpcHandlersBeforeInit = map[types.Method]commandHandler{
 	"getstakeversioninfo":   handleGetStakeVersionInfo,
 	"getstakeversions":      handleGetStakeVersions,
 	"getticketpoolvalue":    handleGetTicketPoolValue,
-	"gettreasurybalance":    handleGetTreasuryBalance,
-	"gettreasuryspendvotes": handleGetTreasurySpendVotes,
 	"getvoteinfo":           handleGetVoteInfo,
 	"gettxout":              handleGetTxOut,
 	"gettxoutsetinfo":       handleGetTxOutSetInfo,
@@ -376,7 +374,6 @@ var rpcLimited = map[string]struct{}{
 	"getstakeversioninfo":   {},
 	"getstakeversions":      {},
 	"getrawtransaction":     {},
-	"gettreasurybalance":    {},
 	"gettxout":              {},
 	"getvoteinfo":           {},
 	"livetickets":           {},
@@ -1107,18 +1104,6 @@ func createVinList(mtx *wire.MsgTx, isTreasuryEnabled bool) []types.Vin {
 		txIn := mtx.TxIn[0]
 		vinEntry := &vinList[0]
 		vinEntry.Coinbase = hex.EncodeToString(txIn.SignatureScript)
-		vinEntry.Sequence = txIn.Sequence
-		vinEntry.AmountIn = dcrutil.Amount(txIn.ValueIn).ToCoin()
-		vinEntry.BlockHeight = txIn.BlockHeight
-		vinEntry.BlockIndex = txIn.BlockIndex
-		return vinList
-	}
-
-	// Treasury spend transactions only have a single txin by definition.
-	if isTreasuryEnabled && stake.IsTSpend(mtx) {
-		txIn := mtx.TxIn[0]
-		vinEntry := &vinList[0]
-		vinEntry.TreasurySpend = hex.EncodeToString(txIn.SignatureScript)
 		vinEntry.Sequence = txIn.Sequence
 		vinEntry.AmountIn = dcrutil.Amount(txIn.ValueIn).ToCoin()
 		vinEntry.BlockHeight = txIn.BlockHeight
@@ -2031,6 +2016,7 @@ func handleGetBlock(_ context.Context, s *Server, cmd interface{}) (interface{},
 		ChainWork:     fmt.Sprintf("%064x", chainWork),
 		ExtraData:     hex.EncodeToString(blockHeader.ExtraData[:]),
 		NextHash:      nextHashString,
+		EquihashSolution: blockHeader.EquihashSolution[:],
 	}
 
 	// Determine if the treasury rules are active for the block.
@@ -2301,6 +2287,7 @@ func handleGetBlockHeader(_ context.Context, s *Server, cmd interface{}) (interf
 		ChainWork:     fmt.Sprintf("%064x", chainWork),
 		PreviousHash:  blockHeader.PrevBlock.String(),
 		NextHash:      nextHashString,
+		EquihashSolution: blockHeader.EquihashSolution[:],
 	}
 
 	return blockHeaderReply, nil
@@ -2328,24 +2315,18 @@ func handleGetBlockSubsidy(_ context.Context, s *Server, cmd interface{}) (inter
 		}
 		prevBlkHash = header.PrevBlock
 	}
-	isTreasuryEnabled, err := s.isTreasuryAgendaActive(&prevBlkHash)
-	if err != nil {
-		return nil, err
-	}
 	isSubsidyEnabled, err := s.isSubsidySplitAgendaActive(&prevBlkHash)
 	if err != nil {
 		return nil, err
 	}
 
 	subsidyCache := s.cfg.SubsidyCache
-	dev := subsidyCache.CalcTreasurySubsidy(height, voters, isTreasuryEnabled)
 	pos := subsidyCache.CalcStakeVoteSubsidyV2(height-1, isSubsidyEnabled) *
 		int64(voters)
 	pow := subsidyCache.CalcWorkSubsidyV2(height, voters, isSubsidyEnabled)
-	total := dev + pos + pow
+	total := pos + pow
 
 	rep := types.GetBlockSubsidyResult{
-		Developer: dev,
 		PoS:       pos,
 		PoW:       pow,
 		Total:     total,
@@ -2546,7 +2527,7 @@ func handleGetMiningInfo(ctx context.Context, s *Server, _ interface{}) (interfa
 		StakeDifficulty:  best.NextStakeDiff,
 		Generate:         s.cfg.CPUMiner.IsMining(),
 		GenProcLimit:     s.cfg.CPUMiner.NumWorkers(),
-		HashesPerSec:     int64(s.cfg.CPUMiner.HashesPerSecond()),
+		HashesPerSec:     s.cfg.CPUMiner.HashesPerSecond(),
 		NetworkHashPS:    networkHashesPerSec,
 		PooledTx:         uint64(s.cfg.TxMempooler.Count()),
 		TestNet:          s.cfg.TestNet,
@@ -3156,271 +3137,6 @@ func handleGetTicketPoolValue(_ context.Context, s *Server, cmd interface{}) (in
 	return amt.ToCoin(), nil
 }
 
-// handleGetTreasuryBalance implements the gettreasurybalance command.
-func handleGetTreasuryBalance(_ context.Context, s *Server, cmd interface{}) (interface{}, error) {
-	c := cmd.(*types.GetTreasuryBalanceCmd)
-
-	// Either parse the provided hash or use the current best tip hash when none
-	// is provided.
-	var hash chainhash.Hash
-	if c.Hash == nil || *c.Hash == "" {
-		hash = s.cfg.Chain.BestSnapshot().Hash
-	} else {
-		parsedHash, err := chainhash.NewHashFromStr(*c.Hash)
-		if err != nil {
-			return nil, rpcDecodeHexError(*c.Hash)
-		}
-		hash = *parsedHash
-	}
-
-	balanceInfo, err := s.cfg.Chain.TreasuryBalance(&hash)
-	if err != nil {
-		switch {
-		case errors.Is(err, blockchain.ErrUnknownBlock):
-			return nil, &dcrjson.RPCError{
-				Code:    dcrjson.ErrRPCBlockNotFound,
-				Message: fmt.Sprintf("Block not found: %s", hash),
-			}
-
-		case errors.Is(err, blockchain.ErrNoTreasuryBalance):
-			return nil, &dcrjson.RPCError{
-				Code:    dcrjson.ErrRPCNoTreasury,
-				Message: fmt.Sprintf("Treasury inactive for block %s", hash),
-			}
-		}
-
-		context := "Failed to obtain treasury balance"
-		return nil, rpcInternalError(err.Error(), context)
-	}
-
-	tbr := types.GetTreasuryBalanceResult{
-		Hash:    hash.String(),
-		Height:  balanceInfo.BlockHeight,
-		Balance: balanceInfo.Balance,
-	}
-	if c.Verbose != nil && *c.Verbose {
-		tbr.Updates = balanceInfo.Updates
-	}
-	return tbr, nil
-}
-
-// handleGetTreasurySpendVotes implements the gettreasuryspendvotes command.
-func handleGetTreasurySpendVotes(_ context.Context, s *Server, cmd interface{}) (interface{}, error) {
-	c := cmd.(*types.GetTreasurySpendVotesCmd)
-
-	// Shorter version of relevant parameters.
-	chain := s.cfg.Chain
-	tvi := s.cfg.ChainParams.TreasuryVoteInterval
-	mul := s.cfg.ChainParams.TreasuryVoteIntervalMultiplier
-	mempool := s.cfg.TxMempooler
-
-	// Either parse the provided hash or use the current best tip hash when
-	// none is provided.
-	var block chainhash.Hash
-	var blockHeight int64
-	var checkingMainChain bool
-	if c.Block == nil || *c.Block == "" {
-		best := s.cfg.Chain.BestSnapshot()
-		block = best.Hash
-		blockHeight = best.Height
-		checkingMainChain = true
-	} else {
-		if err := chainhash.Decode(&block, *c.Block); err != nil {
-			return nil, rpcDecodeHexError(*c.Block)
-		}
-
-		// Using HeaderByHash allows querying both the mainchain and
-		// any sidechains.
-		hdr, err := chain.HeaderByHash(&block)
-		if err != nil {
-			return nil, rpcBlockNotFoundError(block)
-		}
-
-		blockHeight = int64(hdr.Height)
-		checkingMainChain = chain.MainChainHasBlock(&block)
-	}
-
-	// When tallying votes on mainchain and for mined tspends, we'll only
-	// count votes up to when the tspend was mined. Thus we need to
-	// maintain some local information to be able to correctly identify the
-	// ending block for those types of tspends.
-	endBlocks := make(map[chainhash.Hash]chainhash.Hash)
-
-	// Determine whether to use the specified tspends or all the ones in
-	// the mempool.
-	var tspends []*dcrutil.Tx
-	if c.TSpends != nil && len(*c.TSpends) > 0 {
-		// Using client-specified tspends, they may be in the mempool,
-		// mined, or completely unknown, so handle each case.
-		tspends = make([]*dcrutil.Tx, len(*c.TSpends))
-		for i, s := range *c.TSpends {
-			var hash chainhash.Hash
-			if err := chainhash.Decode(&hash, s); err != nil {
-				return nil, rpcDecodeHexError(s)
-			}
-
-			// Check if this tspend is in the mempool.
-			var err error
-			tspends[i], err = mempool.FetchTransaction(&hash)
-			if err == nil {
-				// Sanity check this is actually a tspend.
-				if !stake.IsTSpend(tspends[i].MsgTx()) {
-					return nil, rpcInvalidError("mempool tx %s "+
-						"is not a tspend", hash)
-				}
-				continue
-			}
-
-			// Not in the mempool. Check if it is mined.
-			blocks, err := chain.FetchTSpend(hash)
-			if err != nil || len(blocks) == 0 {
-				// TSpend does not exist mined or in mempool.
-				return nil, rpcNoTxInfoError(&hash)
-			}
-
-			// TSpend exists mined in at least one block. Fetch the
-			// first one and extract the tspend.
-			fullBlock, err := chain.BlockByHash(&blocks[0])
-			if err != nil {
-				// Shouldn't happen unless tspend db is hosed.
-				context := "block containing mined tspend not found"
-				return nil, rpcInternalError(err.Error(), context)
-			}
-
-			// TSpends live in the stake tree.
-			var found bool
-			for _, tx := range fullBlock.STransactions() {
-				if tx.Hash().IsEqual(&hash) {
-					tspends[i] = tx
-					found = true
-					break
-				}
-			}
-			if !found {
-				// Shouldn't happen unless tspend db is hosed
-				// or the assumption about tspends living in
-				// the stake tree is wrong.
-				context := "block did not contain tspend tx in stake tree"
-				return nil, rpcInternalError(err.Error(), context)
-			}
-
-			// If we're meant to tally main chain votes, figure out
-			// which (if any) of the blocks the tspend is found are
-			// in the main chain so we can count only up to that
-			// block (since it doesn't make sense to count
-			// additional votes _after_ the tspend was mined). This
-			// doesn't apply if we're not tallying main chain votes
-			// because we don't know the relationship between the
-			// requested branch and the branches that include the
-			// tspend so we just use the requested end block.
-			if !checkingMainChain {
-				continue
-			}
-			for _, block := range blocks {
-				if !chain.MainChainHasBlock(&block) {
-					continue
-				}
-
-				// Fetch the header to discover this block's
-				// height.
-				hdr, err := chain.HeaderByHash(&block)
-				if err != nil {
-					// Shouldn't happen.
-					context := "block without associated header"
-					return nil, rpcInternalError(err.Error(), context)
-				}
-
-				// Given this tspend was mined in the main
-				// chain, it doesn't make sense to count votes
-				// after it was mined. So stop early if the
-				// target block height is greater than or equal
-				// to the tspend's mined height. We need to
-				// count votes only up to the block _before_
-				// the tspend was mined.
-				if blockHeight >= int64(hdr.Height) {
-					endBlocks[hash] = hdr.PrevBlock
-				}
-
-				break
-			}
-		}
-	} else {
-		// Fetch vote counts for all mempool tspends.
-		hashes := mempool.TSpendHashes()
-		tspends = make([]*dcrutil.Tx, len(hashes))
-		for i, h := range hashes {
-			var err error
-			tspends[i], err = mempool.FetchTransaction(&h)
-			if err != nil {
-				return nil, rpcInternalError(err.Error(),
-					"could not fetch tspend from mempool")
-			}
-		}
-	}
-
-	// Fetch the vote counts from the blockchain.
-	votes := make([]types.TreasurySpendVotes, len(tspends))
-	for i, tx := range tspends {
-		txHash := tx.Hash()
-
-		// Early check to ensure this tx has a valid expiry and other
-		// functions will behave properly.
-		expiry := tx.MsgTx().Expiry
-		if !standalone.IsTreasuryVoteInterval(uint64(expiry-2), tvi) {
-			errStr := fmt.Sprintf("tspend %s has incorrect expiry %d", tx.Hash(),
-				expiry)
-			context := "tspend without correct expiry"
-			return nil, rpcInternalError(errStr, context)
-		}
-
-		// We only count votes for tspends that are inside their voting
-		// window. Otherwise we just return the appropriate vote start
-		// and end heights for it.
-		var yes, no int64
-		insideWindow := standalone.InsideTSpendWindow(blockHeight, expiry, tvi, mul)
-		minedBlock, isMined := endBlocks[*txHash]
-		if insideWindow || isMined {
-			// Determine whether to use the originally requested
-			// stop block or a custom one in case of mainchain
-			// mined tspends.
-			checkBlock := block
-			if isMined {
-				checkBlock = minedBlock
-			}
-
-			var err error
-			yes, no, err = chain.TSpendCountVotes(&checkBlock, tx)
-			if err != nil {
-				if errors.Is(err, blockchain.ErrUnknownBlock) {
-					return nil, rpcBlockNotFoundError(block)
-				}
-
-				context := "failed to obtain tspend votes"
-				return nil, rpcInternalError(err.Error(), context)
-			}
-		}
-
-		// The following error can be ignored because the expiry was verified to
-		// be in a TVI earlier.
-		start, end, _ := standalone.CalcTSpendWindow(expiry, tvi, mul)
-
-		votes[i] = types.TreasurySpendVotes{
-			Hash:      txHash.String(),
-			Expiry:    int64(expiry),
-			VoteStart: int64(start),
-			VoteEnd:   int64(end),
-			YesVotes:  yes,
-			NoVotes:   no,
-		}
-	}
-
-	return types.GetTreasurySpendVotesResult{
-		Hash:   block.String(),
-		Height: blockHeight,
-		Votes:  votes,
-	}, nil
-}
-
 // handleGetVoteInfo implements the getvoteinfo command.
 func handleGetVoteInfo(_ context.Context, s *Server, cmd interface{}) (interface{}, error) {
 	c := cmd.(*types.GetVoteInfoCmd)
@@ -3870,9 +3586,8 @@ func handleGetWorkSubmission(_ context.Context, s *Server, hexData string) (inte
 	}
 
 	// Ensure the submitted block hash is less than the target difficulty.
-	blockHash := submittedHeader.BlockHash()
-	err = standalone.CheckProofOfWork(&blockHash, submittedHeader.Bits,
-		s.cfg.ChainParams.PowLimit)
+	err = standalone.CheckProofOfWork(&submittedHeader, submittedHeader.Bits,
+		s.cfg.ChainParams)
 	if err != nil {
 		// Anything other than a rule violation is an unexpected error, so
 		// return that error as an internal error.
@@ -3955,7 +3670,7 @@ func handleGetWork(ctx context.Context, s *Server, cmd interface{}) (interface{}
 	if !s.cfg.AllowUnsyncedMining && s.cfg.ConnMgr.ConnectedCount() == 0 {
 		return nil, &dcrjson.RPCError{
 			Code:    dcrjson.ErrRPCClientNotConnected,
-			Message: "Decred is not connected",
+			Message: "ExchangeCoin is not connected",
 		}
 	}
 
@@ -3965,7 +3680,7 @@ func handleGetWork(ctx context.Context, s *Server, cmd interface{}) (interface{}
 	if !s.cfg.AllowUnsyncedMining && bestHeight != 0 && !s.cfg.Chain.IsCurrent() {
 		return nil, &dcrjson.RPCError{
 			Code:    dcrjson.ErrRPCClientInInitialDownload,
-			Message: "Decred is downloading blocks...",
+			Message: "ExchangeCoin is downloading blocks...",
 		}
 	}
 
@@ -4313,24 +4028,6 @@ func createVinListPrevOut(s *Server, mtx *wire.MsgTx,
 		vinList := make([]types.VinPrevOut, 1)
 		vinEntry := &vinList[0]
 		vinEntry.Coinbase = hex.EncodeToString(txIn.SignatureScript)
-		vinEntry.Sequence = txIn.Sequence
-		vinEntry.AmountIn = dcrjson.Float64(dcrutil.Amount(txIn.ValueIn).ToCoin())
-		return vinList, nil
-	}
-
-	// Treasury spend transactions only have a single txin by definition.
-	if isTreasuryEnabled && stake.IsTSpend(mtx) {
-		// Only include the transaction if the filter map is empty because a
-		// treasury spend input has no addresses and so would never match a
-		// non-empty filter.
-		if len(filterAddrMap) != 0 {
-			return nil, nil
-		}
-
-		txIn := mtx.TxIn[0]
-		vinList := make([]types.VinPrevOut, 1)
-		vinEntry := &vinList[0]
-		vinEntry.TreasurySpend = hex.EncodeToString(txIn.SignatureScript)
 		vinEntry.Sequence = txIn.Sequence
 		vinEntry.AmountIn = dcrjson.Float64(dcrutil.Amount(txIn.ValueIn).ToCoin())
 		return vinList, nil
@@ -4934,7 +4631,7 @@ func handleStop(_ context.Context, s *Server, cmd interface{}) (interface{}, err
 	case s.requestProcessShutdown <- struct{}{}:
 	default:
 	}
-	return "dcrd stopping.", nil
+	return "exccd stopping.", nil
 }
 
 // handleSubmitBlock implements the submitblock command.
@@ -5572,7 +5269,7 @@ func handleVerifyMessage(_ context.Context, s *Server, cmd interface{}) (interfa
 	// Validate the signature - this just shows that it was valid at all.
 	// we will compare it with the key next.
 	var buf bytes.Buffer
-	wire.WriteVarString(&buf, 0, "Decred Signed Message:\n")
+	wire.WriteVarString(&buf, 0, "ExchangeCoin Signed Message:\n")
 	wire.WriteVarString(&buf, 0, c.Message)
 	expectedMessageHash := chainhash.HashB(buf.Bytes())
 	pk, wasCompressed, err := ecdsa.RecoverCompact(sig, expectedMessageHash)
@@ -5607,13 +5304,13 @@ func handleVersion(_ context.Context, s *Server, cmd interface{}) (interface{}, 
 		buildMeta = fmt.Sprintf("%s.%s", build, buildMeta)
 	}
 	result := map[string]types.VersionResult{
-		"dcrdjsonrpcapi": {
+		"exccdjsonrpcapi": {
 			VersionString: jsonrpcSemverString,
 			Major:         jsonrpcSemverMajor,
 			Minor:         jsonrpcSemverMinor,
 			Patch:         jsonrpcSemverPatch,
 		},
-		"dcrd": {
+		"exccd": {
 			VersionString: version.String(),
 			Major:         version.Major,
 			Minor:         version.Minor,
@@ -5647,14 +5344,7 @@ type Server struct {
 // isTreasuryAgendaActive returns if the treasury agenda is active or not for
 // the block AFTER the provided block hash.
 func (s *Server) isTreasuryAgendaActive(prevBlkHash *chainhash.Hash) (bool, error) {
-	chain := s.cfg.Chain
-	isTreasuryEnabled, err := chain.IsTreasuryAgendaActive(prevBlkHash)
-	if err != nil {
-		context := fmt.Sprintf("Could not obtain treasury agenda status for "+
-			"block %s", prevBlkHash)
-		return false, rpcInternalError(err.Error(), context)
-	}
-	return isTreasuryEnabled, nil
+	return false, nil
 }
 
 // isAutoRevocationsAgendaActive returns if the automatic ticket revocations
@@ -6258,7 +5948,7 @@ func (s *Server) jsonRPCRead(sCtx context.Context, w http.ResponseWriter, r *htt
 
 // jsonAuthFail sends a message back to the client if the http auth is rejected.
 func jsonAuthFail(w http.ResponseWriter) {
-	w.Header().Add("WWW-Authenticate", `Basic realm="dcrd RPC"`)
+	w.Header().Add("WWW-Authenticate", `Basic realm="dcrd RPC", realm="jsonrpc"`)
 	http.Error(w, "401 Unauthorized.", http.StatusUnauthorized)
 }
 

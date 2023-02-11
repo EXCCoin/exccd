@@ -10,10 +10,8 @@ import (
 	"fmt"
 
 	"github.com/decred/dcrd/blockchain/stake/v4"
-	"github.com/decred/dcrd/blockchain/standalone/v2"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
-	"github.com/decred/dcrd/txscript/v4"
 	"github.com/decred/dcrd/wire"
 )
 
@@ -74,100 +72,6 @@ func blockOneCoinbasePaysTokens(tx *dcrutil.Tx, params *chaincfg.Params) error {
 				dcrutil.Amount(ledgerEntry.Amount))
 			return ruleError(ErrBlockOneOutputs, str)
 		}
-	}
-
-	return nil
-}
-
-// coinbasePaysTreasuryAddress checks to see if a given block's coinbase
-// correctly pays the treasury prior to the agenda that modifies the treasury
-// payout to happen via a treasurybase transaction in the stake tree instead.
-func coinbasePaysTreasuryAddress(subsidyCache *standalone.SubsidyCache, tx *dcrutil.Tx, height int64, voters uint16, params *chaincfg.Params, isTreasuryEnabled bool) error {
-	// Treasury subsidy only applies from block 2 onwards.
-	if height <= 1 {
-		return nil
-	}
-
-	// Treasury subsidy is disabled.
-	if params.BlockTaxProportion == 0 {
-		return nil
-	}
-
-	if len(tx.MsgTx().TxOut) == 0 {
-		str := "invalid coinbase (no outputs)"
-		return ruleError(ErrNoTxOutputs, str)
-	}
-
-	treasuryOutput := tx.MsgTx().TxOut[0]
-	if treasuryOutput.Version != params.OrganizationPkScriptVersion {
-		str := fmt.Sprintf("treasury output version %d is instead of %d",
-			treasuryOutput.Version, params.OrganizationPkScriptVersion)
-		return ruleError(ErrNoTax, str)
-	}
-	if !bytes.Equal(treasuryOutput.PkScript, params.OrganizationPkScript) {
-		str := fmt.Sprintf("treasury output script is %x instead of %x",
-			treasuryOutput.PkScript, params.OrganizationPkScript)
-		return ruleError(ErrNoTax, str)
-	}
-
-	// Calculate the amount of subsidy that should have been paid out to the
-	// Treasury and ensure the subsidy generated is correct.
-	orgSubsidy := subsidyCache.CalcTreasurySubsidy(height, voters,
-		isTreasuryEnabled)
-	if orgSubsidy != treasuryOutput.Value {
-		str := fmt.Sprintf("treasury output amount is %s instead of %s",
-			dcrutil.Amount(treasuryOutput.Value), dcrutil.Amount(orgSubsidy))
-		return ruleError(ErrNoTax, str)
-	}
-
-	return nil
-}
-
-// checkTreasuryBase checks to see if a given block's treasurybase correctly
-// pays the treasury. This is the new function that uses the treasury base for
-// the payout.
-func checkTreasuryBase(subsidyCache *standalone.SubsidyCache, tx *dcrutil.Tx, height int64, voters uint16, params *chaincfg.Params) error {
-	// Treasury subsidy only applies from block 2 onwards.
-	if height <= 1 {
-		return nil
-	}
-
-	// Treasury subsidy is disabled.
-	if params.BlockTaxProportion == 0 {
-		return nil
-	}
-
-	if len(tx.MsgTx().TxOut) != 2 {
-		// Can't get hit
-		return ruleError(ErrInvalidTreasurybaseTxOutputs,
-			fmt.Sprintf("invalid treasurybase number of outputs: %v",
-				len(tx.MsgTx().TxOut)))
-	}
-
-	treasuryOutput := tx.MsgTx().TxOut[0]
-	if treasuryOutput.Version != 0 {
-		// Can't get hit
-		str := fmt.Sprintf("treasury output version %d is instead of %d",
-			treasuryOutput.Version, 0)
-		return ruleError(ErrInvalidTreasurybaseVersion, str)
-	}
-	if len(treasuryOutput.PkScript) != 1 ||
-		treasuryOutput.PkScript[0] != txscript.OP_TADD {
-		// Can't get hit
-		str := fmt.Sprintf("treasury output script is %x instead of %x",
-			treasuryOutput.PkScript, params.OrganizationPkScript)
-		return ruleError(ErrInvalidTreasurybaseScript, str)
-	}
-
-	// Calculate the amount of subsidy that should have been paid out to the
-	// Treasury and ensure the subsidy generated is correct.
-	const withTreasury = true
-	orgSubsidy := subsidyCache.CalcTreasurySubsidy(height, voters,
-		withTreasury)
-	if orgSubsidy != treasuryOutput.Value {
-		str := fmt.Sprintf("treasury output amount is %s instead of %s",
-			dcrutil.Amount(treasuryOutput.Value), dcrutil.Amount(orgSubsidy))
-		return ruleError(ErrTreasurybaseOutValue, str)
 	}
 
 	return nil

@@ -15,3 +15,14 @@ require (
 	github.com/decred/dcrd/wire v1.5.0
 	github.com/decred/slog v1.2.0
 )
+
+replace (
+	github.com/decred/dcrd/chaincfg/chainhash => ../chaincfg/chainhash
+	github.com/decred/dcrd/chaincfg/v2 => ../chaincfg
+	github.com/decred/dcrd/crypto/ripemd160 => ../crypto/ripemd160
+	github.com/decred/dcrd/dcrec => ../dcrec
+	github.com/decred/dcrd/dcrec/edwards/v2 => ../dcrec/edwards
+	github.com/decred/dcrd/dcrec/secp256k1/v2 => ../dcrec/secp256k1
+	github.com/decred/dcrd/dcrutil/v2 => ../dcrutil
+	github.com/decred/dcrd/wire => ../wire
+)

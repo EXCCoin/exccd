@@ -80,7 +80,7 @@ func RegNetParams() *Params {
 	return &Params{
 		Name:        "regnet",
 		Net:         wire.RegNet,
-		DefaultPort: "18655",
+		DefaultPort: "11997",
 		DNSSeeds:    nil, // NOTE: There must NOT be any seeds.
 
 		// Chain parameters
@@ -106,10 +106,7 @@ func RegNetParams() *Params {
 		DivSubsidy:               101,
 		SubsidyReductionInterval: 128,
 		WorkRewardProportion:     6,
-		WorkRewardProportionV2:   1,
 		StakeRewardProportion:    3,
-		StakeRewardProportionV2:  8,
-		BlockTaxProportion:       1,
 
 		// Checkpoints ordered from oldest to newest.
 		Checkpoints: nil,
@@ -163,255 +160,6 @@ func RegNetParams() *Params {
 				StartTime:  0,             // Always available for vote
 				ExpireTime: math.MaxInt64, // Never expires
 			}},
-			5: {{
-				Vote: Vote{
-					Id:          VoteIDSDiffAlgorithm,
-					Description: "Change stake difficulty algorithm as defined in DCP0001",
-					Mask:        0x0006, // Bits 1 and 2
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain voting for change",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing algorithm",
-						Bits:        0x0002, // Bit 1
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new algorithm",
-						Bits:        0x0004, // Bit 2
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  0,             // Always available for vote
-				ExpireTime: math.MaxInt64, // Never expires
-			}},
-			6: {{
-				Vote: Vote{
-					Id:          VoteIDLNFeatures,
-					Description: "Enable features defined in DCP0002 and DCP0003 necessary to support Lightning Network (LN)",
-					Mask:        0x0006, // Bits 1 and 2
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain voting for change",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing consensus rules",
-						Bits:        0x0002, // Bit 1
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new consensus rules",
-						Bits:        0x0004, // Bit 2
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  0,             // Always available for vote
-				ExpireTime: math.MaxInt64, // Never expires
-			}},
-			7: {{
-				Vote: Vote{
-					Id:          VoteIDFixLNSeqLocks,
-					Description: "Modify sequence lock handling as defined in DCP0004",
-					Mask:        0x0006, // Bits 1 and 2
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain voting for change",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing consensus rules",
-						Bits:        0x0002, // Bit 1
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new consensus rules",
-						Bits:        0x0004, // Bit 2
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  0,             // Always available for vote
-				ExpireTime: math.MaxInt64, // Never expires
-			}},
-			8: {{
-				Vote: Vote{
-					Id:          VoteIDHeaderCommitments,
-					Description: "Enable header commitments as defined in DCP0005",
-					Mask:        0x0006, // Bits 1 and 2
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain voting for change",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing consensus rules",
-						Bits:        0x0002, // Bit 1
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new consensus rules",
-						Bits:        0x0004, // Bit 2
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  0,             // Always available for vote
-				ExpireTime: math.MaxInt64, // Never expires
-			}},
-			9: {{
-				Vote: Vote{
-					Id:          VoteIDTreasury,
-					Description: "Enable decentralized Treasury opcodes as defined in DCP0006",
-					Mask:        0x0006, // Bits 1 and 2
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain voting for change",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing consensus rules",
-						Bits:        0x0002, // Bit 1
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new consensus rules",
-						Bits:        0x0004, // Bit 2
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  0,             // Always available for vote
-				ExpireTime: math.MaxInt64, // Never expires
-			}},
-			10: {{
-				Vote: Vote{
-					Id:          VoteIDRevertTreasuryPolicy,
-					Description: "Change maximum treasury expenditure policy as defined in DCP0007",
-					Mask:        0x0006, // Bits 1 and 2
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain voting for change",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing consensus rules",
-						Bits:        0x0002, // Bit 1
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new consensus rules",
-						Bits:        0x0004, // Bit 2
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  0,             // Always available for vote
-				ExpireTime: math.MaxInt64, // Never expires
-			}, {
-				Vote: Vote{
-					Id:          VoteIDExplicitVersionUpgrades,
-					Description: "Enable explicit version upgrades as defined in DCP0008",
-					Mask:        0x0018, // Bits 3 and 4
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain from voting",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing consensus rules",
-						Bits:        0x0008, // Bit 3
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new consensus rules",
-						Bits:        0x0010, // Bit 4
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  0,             // Always available for vote
-				ExpireTime: math.MaxInt64, // Never expires
-			}, {
-				Vote: Vote{
-					Id:          VoteIDAutoRevocations,
-					Description: "Enable automatic ticket revocations as defined in DCP0009",
-					Mask:        0x0060, // Bits 5 and 6
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain voting for change",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing consensus rules",
-						Bits:        0x0020, // Bit 5
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new consensus rules",
-						Bits:        0x0040, // Bit 6
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  0,             // Always available for vote
-				ExpireTime: math.MaxInt64, // Never expires
-			}, {
-				Vote: Vote{
-					Id:          VoteIDChangeSubsidySplit,
-					Description: "Change block reward subsidy split to 10/80/10 as defined in DCP0010",
-					Mask:        0x0180, // Bits 7 and 8
-					Choices: []Choice{{
-						Id:          "abstain",
-						Description: "abstain from voting",
-						Bits:        0x0000,
-						IsAbstain:   true,
-						IsNo:        false,
-					}, {
-						Id:          "no",
-						Description: "keep the existing consensus rules",
-						Bits:        0x0080, // Bit 7
-						IsAbstain:   false,
-						IsNo:        true,
-					}, {
-						Id:          "yes",
-						Description: "change to the new consensus rules",
-						Bits:        0x0100, // Bit 8
-						IsAbstain:   false,
-						IsNo:        false,
-					}},
-				},
-				StartTime:  0,             // Always available for vote
-				ExpireTime: math.MaxInt64, // Never expires
-			}},
 		},
 
 		// Enforce current block version once majority of the network has
@@ -435,7 +183,7 @@ func RegNetParams() *Params {
 		PKHEdwardsAddrID:     [2]byte{0x0d, 0xe0}, // starts with Re
 		PKHSchnorrAddrID:     [2]byte{0x0d, 0xc2}, // starts with RS
 		ScriptHashAddrID:     [2]byte{0x0d, 0xdb}, // starts with Rc
-		PrivateKeyID:         [2]byte{0x22, 0xfe}, // starts with Pr
+		PrivateKeyID:         0xef,                // starts with 9 (uncompressed) or c (compressed)
 
 		// BIP32 hierarchical deterministic extended key magics
 		HDPrivateKeyID: [4]byte{0xea, 0xb4, 0x04, 0x48}, // starts with rprv
@@ -443,8 +191,7 @@ func RegNetParams() *Params {
 
 		// BIP44 coin type used in the hierarchical deterministic path for
 		// address generation.
-		SLIP0044CoinType: 1, // SLIP0044, Testnet (all coins)
-		LegacyCoinType:   1,
+		HDCoinType: 1,
 
 		// Decred PoS parameters
 		MinimumStakeDiff:        20000,
@@ -466,37 +213,6 @@ func RegNetParams() *Params {
 		StakeMajorityMultiplier: 3,
 		StakeMajorityDivisor:    4,
 
-		// Decred organization related parameters
-		//
-		// Treasury address is a 3-of-3 P2SH going to a wallet with seed:
-		// aardvark adroitness aardvark adroitness
-		// aardvark adroitness aardvark adroitness
-		// aardvark adroitness aardvark adroitness
-		// aardvark adroitness aardvark adroitness
-		// aardvark adroitness aardvark adroitness
-		// aardvark adroitness aardvark adroitness
-		// aardvark adroitness aardvark adroitness
-		// aardvark adroitness aardvark adroitness
-		// briefcase
-		// (seed 0x0000000000000000000000000000000000000000000000000000000000000000)
-		//
-		// This same wallet owns the three ledger outputs for regnet.
-		//
-		// P2SH details for regnet treasury:
-		//
-		// redeemScript: 53210323c1b9aa4facca85df363fb4abd5c52fe2af4746fbb5f99a6d
-		// cc2edb633fe2a62103c2d8a61a2800092ddaf04ba30dfc7cf1ab4130ac1d2398ba15fc
-		// 795b11bc690621035fe97a7b2d6b98242f4bfc33d86a564158b44634b93cdefa155909
-		// 5d4bf6167853ae
-		//   (3-of-3 multisig)
-		// Pubkeys used:
-		//   Rk8J2ZY5CkDLaBbAYqU7fb1Tr6nSwEACJ1j2oWAwuFZ26PyPeMXiB
-		//   Rk8KEdGMGJiF27CZ8rw2gDPD7MkVGSPjHinXjtTZhoH8ZQ6UhJvhV
-		//   Rk8JV484ePPX6vWZCfBX2Scme5XriXhzwmyaKSYQT64HTbkkfyzL3
-		//
-		// Organization address is RcQR65gasxuzf7mUeBXeAux6Z37joPuUwUN
-		OrganizationPkScript:        hexDecode("a9146913bcc838bd0087fb3f6b3c868423d5e300078d87"),
-		OrganizationPkScriptVersion: 0,
 		BlockOneLedger:              tokenPayouts_RegNetParams(),
 
 		// Commands to generate regnet Pi keys:
@@ -513,18 +229,15 @@ func RegNetParams() *Params {
 			hexDecode("03b459ccf3ce4935a676414fd9ec93ecf7c9dad081a52ed6993bf073c627499388"),
 			hexDecode("02e3af1209f4d39dd8b448ef0a5375befa85bbc50be0aa0936379d67444184a2c3"),
 		},
-		TreasuryVoteInterval:           4, // every 4 blocks for regnet
-		TreasuryVoteIntervalMultiplier: 3, // 3 * 4 block Expiry.
-
-		TreasuryExpenditureWindow:    4,         // 4 * 2 * 4 blocks for policy check
-		TreasuryExpenditurePolicy:    3,         // Avg of 3*4*2*4 blocks for policy check
-		TreasuryExpenditureBootstrap: 100 * 1e8, // 100 dcr/tew as expense bootstrap
-
-		TreasuryVoteQuorumMultiplier:   1, // 20% quorum required
-		TreasuryVoteQuorumDivisor:      5,
-		TreasuryVoteRequiredMultiplier: 3, // 60% yes votes required
-		TreasuryVoteRequiredDivisor:    5,
-
 		seeders: nil, // NOTE: There must NOT be any seeds.
+
+		Algorithms: []wire.AlgorithmSpec{
+			{
+				Height:     0,
+				HeaderSize: wire.MaxBlockHeaderPayload - wire.EquihashSolutionLen,
+				Version:    0,
+				Bits:       bigToCompact(new(big.Int).Sub(new(big.Int).Lsh(bigOne, 241), bigOne)),
+			},
+		},
 	}
 }

@@ -104,8 +104,7 @@ func isStakeOutput(scriptVersion uint16, pkScript []byte) bool {
 	return stake.IsTicketPurchaseScript(scriptVersion, pkScript) ||
 		stake.IsVoteScript(scriptVersion, pkScript) ||
 		stake.IsRevocationScript(scriptVersion, pkScript) ||
-		stake.IsStakeChangeScript(scriptVersion, pkScript) ||
-		stake.IsTreasuryGenScript(scriptVersion, pkScript)
+		stake.IsStakeChangeScript(scriptVersion, pkScript)
 }
 
 // extractTicketCommitHash extracts the commitment hash from a ticket output

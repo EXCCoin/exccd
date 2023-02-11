@@ -126,21 +126,6 @@ var (
 	// earlyFinalState is the only value of the final state allowed in a
 	// block header before stake validation height.
 	earlyFinalState = [6]byte{0x00}
-
-	// The following blocks violate DCP0005 as they were submitted with an old
-	// version after the majority of the network had upgraded.  See
-	// isDCP0005Violation for more details.  They are defined as package level
-	// variables to avoid the need to create new instances every time a check is
-	// needed.
-	block413762Hash = mustParseHash("00000000000000002086ed61f62a546f3bfa8f3e567b003f097efa982008c47b")
-	block414036Hash = mustParseHash("0000000000000000194fa59310b9e988ecb23de0c716d6e8f1b2aa31d9592387")
-	block424011Hash = mustParseHash("0000000000000000317fc6c7a8a6578be7dfa9c96eb81d620050a3732b02d572")
-	block428809Hash = mustParseHash("00000000000000003147798ccffcecaa420fb1c7934d8f4e33809a871ee34aaa")
-	block430191Hash = mustParseHash("00000000000000002127ad6d4cb30cc16f6344589b417e42650388bb0690a88e")
-
-	// block962928Hash is the hash of the checkpoint used to activate maximum
-	// difficulty semantics on the version 3 test network.
-	block962928Hash = mustParseHash("0000004fd1b267fd39111d456ff557137824538e6f6776168600e56002e23b93")
 )
 
 // voteBitsApproveParent returns whether or not the passed vote bits indicate
@@ -541,58 +526,6 @@ func checkTransactionContext(tx *wire.MsgTx, params *chaincfg.Params, flags Agen
 			return ruleError(ErrBadCoinbaseScriptLen, str)
 		}
 
-	case isTreasuryBase:
-		// The referenced outpoint must be null.
-		if !isNullOutpoint(&tx.TxIn[0].PreviousOutPoint) {
-			str := "treasurybase transaction does not have a null outpoint"
-			return ruleError(ErrBadTreasurybaseOutpoint, str)
-		}
-
-		// The fraud proof must also be null.
-		if !isNullFraudProof(tx.TxIn[0]) {
-			str := "treasurybase transaction fraud proof is non-null"
-			return ruleError(ErrBadTreasurybaseFraudProof, str)
-		}
-
-		// SignatureScript length must be zero.
-		slen := len(tx.TxIn[0].SignatureScript)
-		if slen != 0 {
-			str := fmt.Sprintf("treasurybase transaction script length is not "+
-				"zero: %v", slen)
-			return ruleError(ErrBadTreasurybaseScriptLen, str)
-		}
-
-	case isTreasurySpend:
-		// The referenced outpoint must be null.
-		if !isNullOutpoint(&tx.TxIn[0].PreviousOutPoint) {
-			str := "treasury spend transaction does not have a null outpoint"
-			return ruleError(ErrBadTSpendOutpoint, str)
-		}
-
-		// The fraud proof must also be null.
-		if !isNullFraudProof(tx.TxIn[0]) {
-			str := "treasury spend transaction fraud proof is non-null"
-			return ruleError(ErrBadTSpendFraudProof, str)
-		}
-
-		// Check script length of stake base signature.
-		slen := len(tx.TxIn[0].SignatureScript)
-		if slen != stake.TSpendScriptLen {
-			str := fmt.Sprintf("treasury spend transaction script length of "+
-				"%d is invalid (required: %d)", slen, stake.TSpendScriptLen)
-			return ruleError(ErrBadTSpendScriptLen, str)
-		}
-
-	case isTreasuryAdd:
-		if len(tx.TxOut) == 2 && tx.TxOut[1].Value == 0 {
-			str := "treasury add transaction change cannot be 0"
-			return ruleError(ErrInvalidTAddChange, str)
-		}
-
-		// Note the fallthrough.  Treasury add transactions require the default
-		// test.  Do not move this case!
-		fallthrough
-
 	default:
 		// Previous transaction outputs referenced by the inputs to this
 		// transaction must not be null.
@@ -738,13 +671,13 @@ func standaloneToChainRuleError(err error) error {
 // target difficulty as claimed.
 //
 // The flags modify the behavior of this function as follows:
-//   - BFNoPoWCheck: The check to ensure the block hash is less than the target
-//     difficulty is not performed.
-func checkProofOfWork(header *wire.BlockHeader, powLimit *big.Int, flags BehaviorFlags) error {
+//  - BFNoPoWCheck: The check to ensure the block hash is less than the target
+//    difficulty is not performed.
+func checkProofOfWork(header *wire.BlockHeader, chainParams *chaincfg.Params, flags BehaviorFlags) error {
 	// Only ensure the target difficulty bits are in the valid range when the
 	// the flag to avoid proof of work checks is set.
 	if flags&BFNoPoWCheck == BFNoPoWCheck {
-		err := standalone.CheckProofOfWorkRange(header.Bits, powLimit)
+		err := standalone.CheckProofOfWorkRange(header.Bits, chainParams.PowLimit)
 		return standaloneToChainRuleError(err)
 	}
 
@@ -753,9 +686,11 @@ func checkProofOfWork(header *wire.BlockHeader, powLimit *big.Int, flags Behavio
 	// - The target difficulty must be larger than zero.
 	// - The target difficulty must be less than the maximum allowed.
 	// - The block hash must be less than the claimed target.
-	blockHash := header.BlockHash()
-	err := standalone.CheckProofOfWork(&blockHash, header.Bits, powLimit)
-	return standaloneToChainRuleError(err)
+	err := standalone.CheckProofOfWork(header, header.Bits, chainParams)
+	if err != nil {
+		return standaloneToChainRuleError(err)
+	}
+	return standalone.ValidateEquihashSolution(header, chainParams)
 }
 
 // checkBlockHeaderSanity performs some preliminary checks on a block header to
@@ -778,7 +713,7 @@ func checkBlockHeaderSanity(header *wire.BlockHeader, timeSource MedianTimeSourc
 	// Ensure the proof of work bits in the block header is in min/max
 	// range and the block hash is less than the target value described by
 	// the bits.
-	err := checkProofOfWork(header, chainParams.PowLimit, flags)
+	err := checkProofOfWork(header, chainParams, flags)
 	if err != nil {
 		return err
 	}
@@ -983,44 +918,6 @@ func CheckBlockSanity(block *dcrutil.Block, timeSource MedianTimeSource, chainPa
 	return checkBlockSanity(block, timeSource, BFNone, chainParams)
 }
 
-// isDCP0005Violation returns whether or not the block is known to violate
-// DCP0005.  Due to a bug that has since been fixed, some blocks were accepted
-// that violated DCP0005 by still being submitted on an old block version
-// (version 6 on mainnet) when the majority of the network had already upgraded
-// to the new version specified by DCP0005 (version 7 on mainnet).
-//
-// The blocks that violated DCP0005 due to specifying the old version were
-// otherwise valid and are whitelisted by this function so that they will be
-// accepted when fully syncing the chain with assume valid disabled.
-func isDCP0005Violation(network wire.CurrencyNet, header *wire.BlockHeader, blockHash *chainhash.Hash) bool {
-	switch network {
-	case wire.MainNet:
-		// 430191 is the height of the last block on mainnet that violated
-		// DCP0005, so return false immediately if the height is greater than
-		// that.
-		if header.Height > 430191 {
-			return false
-		}
-
-		// Return whether or not the block is any of the following 5 mainnet
-		// blocks that are known to violate DCP0005.
-		return header.Height == 413762 && *blockHash == *block413762Hash ||
-			header.Height == 414036 && *blockHash == *block414036Hash ||
-			header.Height == 424011 && *blockHash == *block424011Hash ||
-			header.Height == 428809 && *blockHash == *block428809Hash ||
-			header.Height == 430191 && *blockHash == *block430191Hash
-
-	case wire.TestNet3:
-		// 323282 is the height of the last block on testnet that violated
-		// DCP0005.  Return true if the height is less than or equal to 323282
-		// so that the DCP0005 version check is not enforced until after that
-		// point.
-		return header.Height <= 323282
-	}
-
-	return false
-}
-
 // checkBlockHeaderPositional performs several validation checks on the block
 // header which depend on its position within the block chain and having the
 // headers of all ancestors available.  These checks do not, and must not, rely
@@ -1117,16 +1014,6 @@ func (b *BlockChain) checkBlockHeaderPositional(header *wire.BlockHeader, prevNo
 		return ruleError(ErrBadCheckpoint, str)
 	}
 
-	// Reject version 3 test network chains that are not specifically the chain
-	// used to activate maximum difficulty semantics.
-	if b.isTestNet3() && blockHeight == testNet3MaxDiffActivationHeight &&
-		blockHash != *block962928Hash {
-
-		str := fmt.Sprintf("block at height %d does not match checkpoint hash",
-			blockHeight)
-		return ruleError(ErrBadMaxDiffCheckpoint, str)
-	}
-
 	if !fastAdd {
 		// Reject old version blocks once a majority of the network has
 		// upgraded.
@@ -1134,20 +1021,10 @@ func (b *BlockChain) checkBlockHeaderPositional(header *wire.BlockHeader, prevNo
 		// Note that the latest block version for all networks other than the
 		// main network is one higher.
 		latestBlockVersion := int32(9)
-		dcp0005Version := int32(7)
 		if b.chainParams.Net != wire.MainNet {
 			latestBlockVersion++
-			dcp0005Version++
 		}
 		for version := latestBlockVersion; version > 1; version-- {
-			// Skip the version check for blocks that are known to violate
-			// DCP0005.  See isDCP0005Violation for more details.
-			if version == dcp0005Version &&
-				isDCP0005Violation(b.chainParams.Net, header, &blockHash) {
-
-				continue
-			}
-
 			if header.Version < version && b.isMajorityVersion(version,
 				prevNode, b.chainParams.BlockRejectNumRequired) {
 
@@ -1264,10 +1141,7 @@ func (b *BlockChain) checkBlockHeaderContext(header *wire.BlockHeader, prevNode 
 		// Ensure the stake difficulty specified in the block header
 		// matches the calculated difficulty based on the previous block
 		// and difficulty retarget rules.
-		expSDiff, err := b.calcNextRequiredStakeDifficulty(prevNode)
-		if err != nil {
-			return err
-		}
+		expSDiff := b.calcNextRequiredStakeDifficulty(prevNode)
 		if header.SBits != expSDiff {
 			errStr := fmt.Sprintf("block stake difficulty of %d "+
 				"is not the expected value of %d", header.SBits,
@@ -1327,17 +1201,8 @@ func checkCoinbaseUniqueHeight(blockHeight int64, block *dcrutil.Block, treasury
 		return nil
 	}
 
-	// Choose the correct output that encodes the height depending on whether
-	// or not the treasury agenda is active.
-	//
-	// Prior to activation of the agenda, output 0 is the project subsidy and
-	// output 1 encodes the height.  Once the agenda is active, the project
-	// subsidy is moved to the treasurybase in the stake tree and thus output 0
-	// then encodes the height.
-	nullDataOutIdx := 1
-	if treasuryEnabled {
-		nullDataOutIdx = 0
-	}
+	// Choose the correct output that encodes the height
+	nullDataOutIdx := 0
 
 	// There must be at least enough outputs to contain the one that encodes the
 	// height.
@@ -2057,42 +1922,6 @@ func (b *BlockChain) checkBlockContext(block *dcrutil.Block, prevNode *blockNode
 				isAutoRevocationsEnabled)
 			if err != nil {
 				return err
-			}
-		}
-
-		// Treasury spend transactions must only be present in blocks that fall
-		// on a treasury voting interval (TVI) after a full voting window is
-		// possible.  Treasury spend transactions are not allowed before a full
-		// voting window is possible since it is not possible for them to have
-		// the required number of votes at that point.
-		//
-		// Also, blocks 0 and 1 are special, so they must be exempted.
-		if isTreasuryEnabled && blockHeight > 1 {
-			tvi := b.chainParams.TreasuryVoteInterval
-			isTVI := standalone.IsTreasuryVoteInterval(uint64(blockHeight), tvi)
-			if !isTVI && len(treasurySpendTxns) != 0 {
-				tx := treasurySpendTxns[0]
-				curHeight := uint64(blockHeight)
-				nextTVI := curHeight + (tvi - (curHeight % tvi))
-				str := fmt.Sprintf("block contains treasury spend %s while "+
-					"not on a treasury vote interval (block height: %d, next "+
-					"TVI: %d)", tx.TxHash(), blockHeight, nextTVI)
-				return ruleError(ErrNotTVI, str)
-			}
-
-			if isTVI {
-				minRequiredExpiry := 2 + uint64(stakeValidationHeight) +
-					tvi*b.chainParams.TreasuryVoteIntervalMultiplier
-				for _, tx := range treasurySpendTxns {
-					if uint64(tx.Expiry) < minRequiredExpiry {
-						str := fmt.Sprintf("block contains treasury spend "+
-							"transaction %s before a full voting window is "+
-							"possible (height: %d, expiry: %d, min required "+
-							"expiry: %d)", tx.TxHash(), blockHeight, tx.Expiry,
-							minRequiredExpiry)
-						return ruleError(ErrInvalidTVoteWindow, str)
-					}
-				}
 			}
 		}
 	}
@@ -2938,37 +2767,6 @@ func CheckTransactionInputs(subsidyCache *standalone.SubsidyCache,
 		}
 	}
 
-	// Perform additional checks on TSpend transactions.
-	var (
-		isTSpend          bool
-		signature, pubKey []byte
-		err               error
-	)
-	reqStakeOutMaturity := int64(chainParams.SStxChangeMaturity)
-	if isTreasuryEnabled {
-		signature, pubKey, err = stake.CheckTSpend(msgTx)
-		isTSpend = err == nil
-		reqStakeOutMaturity = int64(chainParams.CoinbaseMaturity)
-	}
-
-	// If we have a TSpend verify the signature.
-	if isTSpend {
-		// Check if this is a sanctioned PI key.
-		if !chainParams.PiKeyExists(pubKey) {
-			str := fmt.Sprintf("Unknown Pi Key: %x", pubKey)
-			return 0, ruleError(ErrUnknownPiKey, str)
-		}
-
-		// Verify that the signature is valid and corresponds to the
-		// provided public key.
-		err = verifyTSpendSignature(msgTx, signature, pubKey)
-		if err != nil {
-			str := fmt.Sprintf("Could not verify TSpend "+
-				"signature: %v", err)
-			return 0, ruleError(ErrInvalidPiSignature, str)
-		}
-	}
-
 	// -------------------------------------------------------------------
 	// Decred general transaction testing (and a few stake exceptions).
 	// -------------------------------------------------------------------
@@ -2986,8 +2784,7 @@ func CheckTransactionInputs(subsidyCache *standalone.SubsidyCache,
 			continue
 		}
 
-		// idx can only be 0 in this case but check it anyway.
-		if isTSpend && idx == 0 {
+		if idx == 0 {
 			totalAtomIn += txIn.ValueIn
 			continue
 		}
@@ -3075,22 +2872,6 @@ func CheckTransactionInputs(subsidyCache *standalone.SubsidyCache,
 			}
 		}
 
-		// OP_TGEN tagged outputs can only be spent after coinbase maturity
-		// many blocks.
-		if isTreasuryEnabled && stake.IsTreasuryGenScript(
-			utxoEntry.ScriptVersion(), utxoEntry.PkScript()) {
-
-			originHeight := utxoEntry.BlockHeight()
-			blocksSincePrev := txHeight - originHeight
-			if blocksSincePrev < coinbaseMaturity {
-				str := fmt.Sprintf("tried to spend OP_TGEN output from tx %v "+
-					"from height %v at height %v before required maturity of "+
-					"%v blocks", txInHash, originHeight, txHeight,
-					coinbaseMaturity)
-				return 0, ruleError(ErrImmatureSpend, str)
-			}
-		}
-
 		// The only transaction types that are allowed to spend from OP_SSTX
 		// tagged outputs are votes and revocations.  So, check all the inputs
 		// from non votes and revocations and make sure that they spend no
@@ -3119,7 +2900,7 @@ func CheckTransactionInputs(subsidyCache *standalone.SubsidyCache,
 				utxoEntry.PkScript()) {
 			originHeight := utxoEntry.BlockHeight()
 			blocksSincePrev := txHeight - originHeight
-			if blocksSincePrev < reqStakeOutMaturity {
+			if blocksSincePrev < int64(chainParams.CoinbaseMaturity) {
 				str := fmt.Sprintf("tried to spend OP_SSGEN or"+
 					" OP_SSRTX output from tx %v from "+
 					"height %v at height %v before "+
@@ -3210,10 +2991,6 @@ func CountSigOps(tx *dcrutil.Tx, isCoinBaseTx bool, isSSGen bool, isTreasuryEnab
 
 	totalSigOps := 0
 
-	if isTreasuryEnabled && stake.IsTreasuryBase(msgTx) {
-		return totalSigOps
-	}
-
 	if !isCoinBaseTx {
 		// Accumulate the number of signature operations in all
 		// transaction inputs.
@@ -3256,16 +3033,7 @@ func CountP2SHSigOps(tx *dcrutil.Tx, isCoinBaseTx bool, isStakeBaseTx bool, view
 		return 0, nil
 	}
 
-	// Treasury spend and treasurybase transactions have no P2SH inputs, but
-	// they are only recognized as the associated transactions once the
-	// treasury agenda is active.
 	msgTx := tx.MsgTx()
-	if isTreasuryEnabled {
-		if stake.IsTSpend(msgTx) || stake.IsTreasuryBase(msgTx) {
-			return 0, nil
-		}
-	}
-
 	// Accumulate the number of signature operations in all transaction
 	// inputs.
 	totalSigOps := 0
@@ -3438,18 +3206,10 @@ func getStakeTreeFees(subsidyCache *standalone.SubsidyCache, height int64,
 	for _, tx := range txs {
 		msgTx := tx.MsgTx()
 		isSSGen := stake.IsSSGen(msgTx, isTreasuryEnabled)
-		isTreasuryBase := isTreasuryEnabled && stake.IsTreasuryBase(msgTx)
-		isTreasurySpend := isTreasuryEnabled && stake.IsTSpend(msgTx)
 
 		for i, in := range msgTx.TxIn {
 			// Ignore stakebases.
 			if isSSGen && i == 0 {
-				continue
-			}
-
-			// Ignore treasury spends and treasurybases since they have no
-			// inputs.
-			if isTreasuryBase || isTreasurySpend {
 				continue
 			}
 
@@ -3478,14 +3238,6 @@ func getStakeTreeFees(subsidyCache *standalone.SubsidyCache, height int64,
 			// height of the current block.
 			totalOutputs -= subsidyCache.CalcStakeVoteSubsidyV2(height-1,
 				isSubsidySplitEnabled)
-		}
-
-		if isTreasurySpend {
-			totalOutputs -= msgTx.TxIn[0].ValueIn
-		}
-
-		if isTreasuryBase {
-			totalOutputs -= msgTx.TxIn[0].ValueIn
 		}
 	}
 
@@ -3623,15 +3375,7 @@ func (b *BlockChain) checkTransactionsAndConnect(inputFees dcrutil.Amount, node 
 		} else {
 			subsidyWork := b.subsidyCache.CalcWorkSubsidyV2(node.height,
 				node.voters, isSubsidySplitEnabled)
-			subsidyTreasury := b.subsidyCache.CalcTreasurySubsidy(node.height,
-				node.voters, isTreasuryEnabled)
-			if isTreasuryEnabled {
-				// The treasury payout is done via a treasurybase in the stake
-				// tree when the treasury agenda is active.
-				expAtomOut = subsidyWork + totalFees
-			} else {
-				expAtomOut = subsidyWork + subsidyTreasury + totalFees
-			}
+			expAtomOut = subsidyWork + totalFees
 		}
 
 		// AmountIn for the input should be equal to the subsidy.
@@ -3726,6 +3470,7 @@ func (b *BlockChain) checkTransactionsAndConnect(inputFees dcrutil.Amount, node 
 // any flags required as the result of any agendas that have passed and become
 // active.
 func (b *BlockChain) consensusScriptVerifyFlags(node *blockNode) (txscript.ScriptFlags, error) {
+	var err error
 	scriptFlags := txscript.ScriptVerifyCleanStack |
 		txscript.ScriptVerifyCheckLockTimeVerify
 
@@ -3739,107 +3484,7 @@ func (b *BlockChain) consensusScriptVerifyFlags(node *blockNode) (txscript.Scrip
 		scriptFlags |= txscript.ScriptVerifyCheckSequenceVerify
 		scriptFlags |= txscript.ScriptVerifySHA256
 	}
-
-	// Enable OP_TADD/OP_TSPEND/OP_TGEN if treasury opcodes are active.
-	isTreasuryEnabled, err := b.isTreasuryAgendaActive(node.parent)
-	if err != nil {
-		return 0, err
-	}
-	if isTreasuryEnabled {
-		scriptFlags |= txscript.ScriptVerifyTreasury
-	}
-
 	return scriptFlags, err
-}
-
-// tspendChecks verifies that a TSpend is allowed to be mined in the provided
-// block. It verifies that it is on a TVI, is within the correct window, has
-// not been mined before and that it doesn't overspend the treasury. This
-// function assumes that the treasury agenda is enabled.
-func (b *BlockChain) tspendChecks(prevNode *blockNode, block *dcrutil.Block) error {
-	blockHeight := prevNode.height + 1
-	isTVI := standalone.IsTreasuryVoteInterval(uint64(blockHeight),
-		b.chainParams.TreasuryVoteInterval)
-
-	// NOTE: Treasury spend transactions are rejected from blocks that are not
-	// on a treasury vote interval during the contextual block checks.  Thus,
-	// there are no additional checks in that case.
-	if !isTVI {
-		return nil
-	}
-
-	var totalTSpendAmount int64
-	for _, stx := range block.STransactions() {
-		if !stake.IsTSpend(stx.MsgTx()) {
-			continue
-		}
-
-		// Assert that the treasury spend is inside the correct window.
-		exp := stx.MsgTx().Expiry
-		if !standalone.InsideTSpendWindow(blockHeight,
-			exp, b.chainParams.TreasuryVoteInterval,
-			b.chainParams.TreasuryVoteIntervalMultiplier) {
-
-			str := fmt.Sprintf("block at height %d contains treasury spend "+
-				"transaction %v with expiry %v that is outside of the valid "+
-				"window", blockHeight, stx.Hash(), exp)
-			return ruleError(ErrInvalidTSpendWindow, str)
-		}
-
-		// A valid TSPEND always stores the entire amount that the
-		// treasury is spending in the first TxIn.
-		valueIn := stx.MsgTx().TxIn[0].ValueIn
-		totalTSpendAmount += valueIn
-
-		// Verify that the ValueIn amount is identical to the LE
-		// encoded ValueIn in the OP_RETURN. Since the TSpend has been
-		// validated to be correct we simply index the bytes directly
-		// without additional checks.
-		leValueIn := stx.MsgTx().TxOut[0].PkScript[2 : 2+8]
-		valueInOpRet := int64(binary.LittleEndian.Uint64(leValueIn))
-		if valueIn != valueInOpRet {
-			str := fmt.Sprintf("block contains TSpend transaction "+
-				"(%v) that did not encode ValueIn correctly "+
-				"got %v wanted %v", stx.Hash(), valueInOpRet,
-				valueIn)
-			return ruleError(ErrInvalidTSpendValueIn, str)
-		}
-
-		// Verify this TSpend hash has not been included in a
-		// prior block.
-		err := b.checkTSpendExists(prevNode, *stx.Hash())
-		if err != nil {
-			str := fmt.Sprintf("block contains a TSpend "+
-				"transaction (%v) that has been mined "+
-				"in another block: %v", stx.Hash(), err)
-			return ruleError(ErrTSpendExists, str)
-		}
-
-		// Verify that this TSpend has enough votes to be
-		// included on the blockchain.
-		err = b.checkTSpendHasVotes(prevNode, stx)
-		if err != nil {
-			str := fmt.Sprintf("block contains a TSpend "+
-				"transaction (%v) that does not have "+
-				"enough votes: %v", stx.Hash(), err)
-			return ruleError(ErrNotEnoughTSpendVotes, str)
-		}
-	}
-
-	// Check the aggregate of all TSpend transactions is within bounds of
-	// the treasury account. This function is only called when we are on a
-	// TVI and if we have accumulated expenditures.
-	if isTVI && totalTSpendAmount > 0 {
-		// Verify TSpend expenditure is within range.
-		err := b.checkTSpendsExpenditure(prevNode, totalTSpendAmount)
-		if err != nil {
-			str := fmt.Sprintf("block contains a TSpend that "+
-				"has an invalid expenditure: %v", err)
-			return ruleError(ErrInvalidExpenditure, str)
-		}
-	}
-
-	return nil
 }
 
 // checkConnectBlock performs several checks to confirm connecting the passed
@@ -3866,6 +3511,14 @@ func (b *BlockChain) tspendChecks(prevNode *blockNode, block *dcrutil.Block) err
 //
 // This function MUST be called with the chain state lock held (for writes).
 func (b *BlockChain) checkConnectBlock(node *blockNode, block, parent *dcrutil.Block, view *UtxoViewpoint, stxos *[]spentTxOut, hdrCommitments *headerCommitmentData) error {
+	var err error
+
+	// If the side chain blocks end up in the database, a call to
+	// CheckBlockSanity should be done here in case a previous version
+	// allowed a block that is no longer valid.  However, since the
+	// implementation only currently uses memory for the side chain blocks,
+	// it isn't currently necessary.
+
 	// Ensure the view is for the node being checked.
 	parentHash := &block.MsgBlock().Header.PrevBlock
 	if !view.BestHash().IsEqual(parentHash) {
@@ -3874,39 +3527,9 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block, parent *dcrutil.B
 			"of expected %v", view.BestHash(), parentHash))
 	}
 
-	// Check that either the coinbase or the treasurybase pays the treasury the
-	// correct amount depending on the result of the treasury agenda vote that
-	// modifies the semantics of the payout.
 	isTreasuryEnabled, err := b.isTreasuryAgendaActive(node.parent)
 	if err != nil {
 		return err
-	}
-	if isTreasuryEnabled {
-		if len(block.STransactions()) == 0 {
-			return AssertError("invalid STransactions length")
-		}
-		err = checkTreasuryBase(b.subsidyCache,
-			block.STransactions()[0], node.height, node.voters,
-			b.chainParams)
-		if err != nil {
-			return err
-		}
-	} else {
-		err = coinbasePaysTreasuryAddress(b.subsidyCache,
-			block.Transactions()[0], node.height, node.voters,
-			b.chainParams, isTreasuryEnabled)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Verify treasury spends.  This is done relatively late because the
-	// database needs to be coherent.
-	if isTreasuryEnabled {
-		err = b.tspendChecks(node.parent, block)
-		if err != nil {
-			return err
-		}
 	}
 
 	// Don't run scripts if this node is both an ancestor of the assumed valid
@@ -3921,7 +3544,6 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block, parent *dcrutil.B
 	}
 	var scriptFlags txscript.ScriptFlags
 	if runScripts {
-		var err error
 		scriptFlags, err = b.consensusScriptVerifyFlags(node)
 		if err != nil {
 			return err
@@ -4046,7 +3668,8 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block, parent *dcrutil.B
 		// Skip the coinbase since it does not have any inputs and thus
 		// lock times do not apply.
 		for _, tx := range block.Transactions()[1:] {
-			sequenceLock, err := b.calcSequenceLock(node, tx, view, true)
+			sequenceLock, err := b.calcSequenceLock(node, tx,
+				view, true)
 			if err != nil {
 				return err
 			}
@@ -4073,7 +3696,7 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block, parent *dcrutil.B
 	// performs to be able to create the filter.  Since the filter is is needed
 	// at this point to verify the header commitments, a good option is to
 	// simply create it here and allow the caller to request the filter be
-	// returned to it.
+	// retuned to it.
 	filter, err := blockcf2.Regular(block.MsgBlock(), view)
 	if err != nil {
 		return ruleError(ErrMissingTxOut, err.Error())
@@ -4166,7 +3789,11 @@ func (b *BlockChain) CheckConnectBlockTemplate(block *dcrutil.Block) error {
 	}
 
 	// Perform context-free sanity checks on the block and its transactions.
-	err := checkBlockSanity(block, b.timeSource, flags, b.chainParams)
+	isTreasuryEnabled, err := b.isTreasuryAgendaActive(prevNode)
+	if err != nil {
+		return err
+	}
+	err = checkBlockSanity(block, b.timeSource, flags, b.chainParams)
 	if err != nil {
 		return err
 	}
@@ -4220,13 +3847,10 @@ func (b *BlockChain) CheckConnectBlockTemplate(block *dcrutil.Block) error {
 	}
 
 	// Load all of the spent txos for the tip block from the spend journal.
-	isTreasuryEnabled, err := b.isTreasuryAgendaActive(prevNode)
-	if err != nil {
-		return err
-	}
 	var stxos []spentTxOut
 	err = b.db.View(func(dbTx database.Tx) error {
-		stxos, err = dbFetchSpendJournalEntry(dbTx, tipBlock, isTreasuryEnabled)
+		stxos, err = dbFetchSpendJournalEntry(dbTx, tipBlock,
+			isTreasuryEnabled)
 		return err
 	})
 	if err != nil {
@@ -4239,12 +3863,10 @@ func (b *BlockChain) CheckConnectBlockTemplate(block *dcrutil.Block) error {
 	if err != nil {
 		return err
 	}
-
 	// Update the view to unspend all of the spent txos and remove the utxos
 	// created by the tip block.  Also, if the block votes against its parent,
 	// reconnect all of the regular transactions.
-	err = view.disconnectBlock(tipBlock, parent, stxos, isTreasuryEnabled,
-		isAutoRevocationsEnabled)
+	err = view.disconnectBlock(tipBlock, parent, stxos, isTreasuryEnabled, isAutoRevocationsEnabled)
 	if err != nil {
 		return err
 	}
@@ -4262,8 +3884,6 @@ func (b *BlockChain) CheckConnectBlockTemplate(block *dcrutil.Block) error {
 // tickets that is needed to reach the next block at which any outstanding
 // immature ticket purchases that would provide the necessary live tickets
 // mature.
-//
-// This function is safe for concurrent access.
 func (b *BlockChain) checkTicketExhaustion(prevNode *blockNode, ticketPurchases uint8) error {
 	// Nothing to do if the chain is not far enough along where ticket
 	// exhaustion could be an issue.
@@ -4329,11 +3949,9 @@ func (b *BlockChain) checkTicketExhaustion(prevNode *blockNode, ticketPurchases 
 // drops below the number of tickets that is needed to reach the next block at
 // which any outstanding immature ticket purchases that would provide the
 // necessary live tickets mature.
-//
-// This function is safe for concurrent access.
 func (b *BlockChain) CheckTicketExhaustion(hash *chainhash.Hash, ticketPurchases uint8) error {
 	node := b.index.LookupNode(hash)
-	if node == nil {
+	if node == nil || !b.index.NodeStatus(node).HaveData() {
 		return unknownBlockError(hash)
 	}
 

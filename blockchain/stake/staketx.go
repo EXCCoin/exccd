@@ -1270,17 +1270,6 @@ func DetermineTxType(tx *wire.MsgTx, isTreasuryEnabled,
 	if IsSSRtx(tx, isAutoRevocationsEnabled) {
 		return TxTypeSSRtx
 	}
-	if isTreasuryEnabled {
-		if IsTAdd(tx) {
-			return TxTypeTAdd
-		}
-		if IsTSpend(tx) {
-			return TxTypeTSpend
-		}
-		if IsTreasuryBase(tx) {
-			return TxTypeTreasuryBase
-		}
-	}
 	return TxTypeRegular
 }
 
