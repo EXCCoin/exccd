@@ -490,7 +490,7 @@ func BenchmarkDecodeHeaders(b *testing.B) {
 			b.Fatalf("NewHashFromStr: unexpected error: %v", err)
 		}
 		m.AddBlockHeader(NewBlockHeader(1, hash, hash, hash, 0, [6]byte{}, 0, 0,
-			0, 0, 0, 0, 0, 0, uint32(i), [32]byte{}, 0xdeadbeef))
+			0, 0, 0, 0, 0, 0, uint32(i), [32]byte{}, 0xdeadbeef, [EquihashSolutionLen]byte{}))
 	}
 
 	// Serialize it so the bytes are available to test the decode below.

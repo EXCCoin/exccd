@@ -62,7 +62,6 @@ func TestBlockchainFunctions(t *testing.T) {
 	params.GenesisBlock.Transactions[0].TxIn[0].ValueIn = 0
 	params.PubKeyHashAddrID = [2]byte{0x0e, 0x91}
 	params.StakeBaseSigScript = []byte{0xde, 0xad, 0xbe, 0xef}
-	params.OrganizationPkScript = hexToBytes("a914cbb08d6ca783b533b2c7d24a51fbca92d937bf9987")
 	params.BlockOneLedger = []chaincfg.TokenPayout{{
 		ScriptVersion: 0,
 		Script:        hexToBytes("76a91494ff37a0ee4d48abc45f70474f9b86f9da69a70988ac"),

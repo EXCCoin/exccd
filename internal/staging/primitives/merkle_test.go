@@ -55,7 +55,7 @@ func TestCalcMerkleRoot(t *testing.T) {
 			"bec32f1016fd40f2adac39dfbcedb3e45b6d7f9b37cb340d22bce14015759632",
 			"06024a8ddaafa5c4b448168bebd8f37d7fb15eef079933579cf29b45dd40edfb",
 		},
-		want: "4aa7bcd77d51f6f4db4983e731b5e08b3ea724c5cb99d3debd3d75fd67e7c72b",
+		want: "c975944c2639f51dd72811165a4f501021aa8264ca123418b7f68fc772a23f28",
 	}, {
 		name: "odd number of leaves > 1 (mainnet block 260)",
 		leaves: []string{
@@ -63,7 +63,7 @@ func TestCalcMerkleRoot(t *testing.T) {
 			"b3b70fe08c2da744c9559d533e8db35b3bfefba1b0f1c7b31e7d9d523c00a426",
 			"dd3058a7fc691ff4dee0a8cd6030f404ffda7e7aee88aff3985f7b2bbe4792f7",
 		},
-		want: "a144c719391569aa20bf612bf5588bce71cd397574cb6c060e0bac100f6e5805",
+		want: "49e7cb6033c1cf8ae2b46c9362ce8fb24d2468b79194557d640af5ce3e659d10",
 	}}
 
 	testFuncs := []string{"CalcMerkleRoot", "CalcMerkleRootInPlace"}

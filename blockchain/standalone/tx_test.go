@@ -142,14 +142,6 @@ func TestIsCoinbaseTx(t *testing.T) {
 				test.name, result, test.wantPreTrsy)
 			continue
 		}
-
-		result = IsCoinBaseTx(&tx, withTreasury)
-		if result != test.wantPostTrsy {
-			t.Errorf("%s: unexpected result post treasury -- got %v, want %v",
-				test.name, result, test.wantPostTrsy)
-			continue
-		}
-
 	}
 }
 

@@ -25,13 +25,13 @@ func TestNewBlockTemplateBasicErrorScenarios(t *testing.T) {
 	t.Parallel()
 
 	// Create a new mining harness instance.
-	harness, _, err := newMiningHarness(chaincfg.MainNetParams())
+	harness, _, err := newMiningHarness(chaincfg.TestNet3Params())
 	if err != nil {
 		t.Fatalf("error creating mining harness: %v", err)
 	}
 
 	// Create a test address for use in template generation.
-	address, err := stdaddr.DecodeAddress("Dsi8CRt85xYyempXs7ZPL1rBxvDdAGZmgsg",
+	address, err := stdaddr.DecodeAddress("TsebVL4jcgJ2uVqZS2HutWTb4KnJLc9FdLR",
 		harness.chainParams)
 	if err != nil {
 		t.Fatalf("error decoding address: %v", err)
@@ -67,13 +67,13 @@ func TestNewBlockTemplate(t *testing.T) {
 	t.Parallel()
 
 	// Create a new mining harness instance.
-	harness, spendableOuts, err := newMiningHarness(chaincfg.MainNetParams())
+	harness, spendableOuts, err := newMiningHarness(chaincfg.TestNet3Params())
 	if err != nil {
 		t.Fatalf("error creating mining harness: %v", err)
 	}
 
 	// Create a test address for use in template generation.
-	address, err := stdaddr.DecodeAddress("Dsi8CRt85xYyempXs7ZPL1rBxvDdAGZmgsg",
+	address, err := stdaddr.DecodeAddress("TsebVL4jcgJ2uVqZS2HutWTb4KnJLc9FdLR",
 		harness.chainParams)
 	if err != nil {
 		t.Fatalf("error decoding address: %v", err)
@@ -174,7 +174,7 @@ func TestNewBlockTemplate(t *testing.T) {
 
 	// Validate the number of stake transactions in the generated block template.
 	gotStx := len(blockTemplate.Block.STransactions)
-	wantStx := numVotes + 1 // + 1 for stakebase.
+	wantStx := numVotes
 	if gotStx != wantStx {
 		t.Fatalf("unexpected number of stake transactions in template --  got %v, "+
 			"want %v", gotStx, wantStx)
@@ -195,7 +195,7 @@ func TestNewBlockTemplateAutoRevocations(t *testing.T) {
 	t.Parallel()
 
 	// Create a new mining harness instance.
-	harness, spendableOuts, err := newMiningHarness(chaincfg.MainNetParams())
+	harness, spendableOuts, err := newMiningHarness(chaincfg.TestNet3Params())
 	if err != nil {
 		t.Fatalf("error creating mining harness: %v", err)
 	}
@@ -204,7 +204,7 @@ func TestNewBlockTemplateAutoRevocations(t *testing.T) {
 	harness.chain.isAutoRevocationsAgendaActive = true
 
 	// Create a test address for use in template generation.
-	address, err := stdaddr.DecodeAddress("Dsi8CRt85xYyempXs7ZPL1rBxvDdAGZmgsg",
+	address, err := stdaddr.DecodeAddress("TsebVL4jcgJ2uVqZS2HutWTb4KnJLc9FdLR",
 		harness.chainParams)
 	if err != nil {
 		t.Fatalf("error decoding address: %v", err)
@@ -381,7 +381,7 @@ func TestNewBlockTemplateAutoRevocations(t *testing.T) {
 
 	// Validate the number of stake transactions in the generated block template.
 	gotStx := len(blockTemplate.Block.STransactions)
-	wantStx := numVotes + numRevocations + 1 // + 1 for stakebase.
+	wantStx := numVotes + numRevocations
 	if gotStx != wantStx {
 		t.Fatalf("unexpected number of stake transactions in template --  got %v, "+
 			"want %v", gotStx, wantStx)
@@ -402,7 +402,7 @@ func TestNewBlockTemplateAutoRevocationsVotesOnly(t *testing.T) {
 	t.Parallel()
 
 	// Create a new mining harness instance.
-	harness, spendableOuts, err := newMiningHarness(chaincfg.MainNetParams())
+	harness, spendableOuts, err := newMiningHarness(chaincfg.TestNet3Params())
 	if err != nil {
 		t.Fatalf("error creating mining harness: %v", err)
 	}
@@ -411,7 +411,7 @@ func TestNewBlockTemplateAutoRevocationsVotesOnly(t *testing.T) {
 	harness.chain.isAutoRevocationsAgendaActive = true
 
 	// Create a test address for use in template generation.
-	address, err := stdaddr.DecodeAddress("Dsi8CRt85xYyempXs7ZPL1rBxvDdAGZmgsg",
+	address, err := stdaddr.DecodeAddress("TsebVL4jcgJ2uVqZS2HutWTb4KnJLc9FdLR",
 		harness.chainParams)
 	if err != nil {
 		t.Fatalf("error decoding address: %v", err)
@@ -506,7 +506,7 @@ func TestNewBlockTemplateAutoRevocationsVotesOnly(t *testing.T) {
 
 	// Validate the number of stake transactions in the generated block template.
 	gotStx := len(blockTemplate.Block.STransactions)
-	wantStx := numVotes + numAutoRevocations + 1 // + 1 for stakebase.
+	wantStx := numVotes + numAutoRevocations
 	if gotStx != wantStx {
 		t.Fatalf("unexpected number of stake transactions in template --  got %v, "+
 			"want %v", gotStx, wantStx)
@@ -525,7 +525,7 @@ func TestNewBlockTemplateAutoRevocationsVotesOnly(t *testing.T) {
 // the number of votes available for them and the current tip block works as
 // intended, including reorg prevention for an equal number of votes.
 func TestSortParentsByVotes(t *testing.T) {
-	params := chaincfg.MainNetParams()
+	params := chaincfg.TestNet3Params()
 
 	tests := []struct {
 		name      string  // test description

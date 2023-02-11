@@ -14,7 +14,7 @@ type mockAddrParams struct {
 	pkhEd25519ID [2]byte
 	pkhSchnorrID [2]byte
 	scriptHashID [2]byte
-	privKeyID    [2]byte
+	privKeyID    byte
 }
 
 // AddrIDPubKeyV0 returns the magic prefix bytes associated with the mock params
@@ -65,12 +65,12 @@ func (p *mockAddrParams) AddrIDScriptHashV0() [2]byte {
 // was written.
 func mockMainNetParams() *mockAddrParams {
 	return &mockAddrParams{
-		pubKeyID:     [2]byte{0x13, 0x86}, // starts with Dk
-		pkhEcdsaID:   [2]byte{0x07, 0x3f}, // starts with Ds
-		pkhEd25519ID: [2]byte{0x07, 0x1f}, // starts with De
-		pkhSchnorrID: [2]byte{0x07, 0x01}, // starts with DS
-		scriptHashID: [2]byte{0x07, 0x1a}, // starts with Dc
-		privKeyID:    [2]byte{0x22, 0xde}, // starts with Pm
+		pubKeyID:    [2]byte{0x02, 0xdc}, // starts with 2s    -- no such addresses should exist in RL
+		pkhEcdsaID:  [2]byte{0x21, 0xB9}, // starts with 22
+		pkhEd25519ID:[2]byte{0x35, 0xcf}, // starts with 2e
+		pkhSchnorrID:[2]byte{0x2f, 0x0d}, // starts with 2S
+		scriptHashID:[2]byte{0x34, 0xAF}, // starts with 2c
+		privKeyID:   0x80,                // starts with 5 (uncompressed) or K (compressed)
 	}
 }
 
@@ -79,12 +79,12 @@ func mockMainNetParams() *mockAddrParams {
 // was written.
 func mockTestNetParams() *mockAddrParams {
 	return &mockAddrParams{
-		pubKeyID:     [2]byte{0x28, 0xf7}, // starts with Tk
-		pkhEcdsaID:   [2]byte{0x0f, 0x21}, // starts with Ts
-		pkhEd25519ID: [2]byte{0x0f, 0x01}, // starts with Te
-		pkhSchnorrID: [2]byte{0x0e, 0xe3}, // starts with TS
-		scriptHashID: [2]byte{0x0e, 0xfc}, // starts with Tc
-		privKeyID:    [2]byte{0x23, 0x0e}, // starts with Pt
+		pubKeyID:    [2]byte{0x28, 0xf7}, // starts with Tk
+		pkhEcdsaID:  [2]byte{0x0f, 0x21}, // starts with Ts
+		pkhEd25519ID:[2]byte{0x0f, 0x01}, // starts with Te
+		pkhSchnorrID:[2]byte{0x0e, 0xe3}, // starts with TS
+		scriptHashID:[2]byte{0x0e, 0xfc}, // starts with Tc
+		privKeyID:   0xef,                // starts with 9 (uncompressed) or c (compressed)
 	}
 }
 
@@ -180,37 +180,37 @@ var addressV0Tests = func() []addressTest {
 		script:    p("DATA_65 0x%s CHECKSIG", pkUE),
 		params:    mainNetParams,
 		wantType:  STPubKeyEcdsaSecp256k1,
-		wantAddrs: []string{"DkM3QDPFSVxAsDpbP9e3fMCDFThsBbAtRsjkwcAeAfsfNKMJYwhz9"},
+		wantAddrs: []string{"2sHTV8v3sg9pLGJ6RvQDyAidVn8pNKz9HR8JvYLeJ2Yb39Ecn9We2"},
 	}, {
 		name:      "mainnet v0 p2pk-ecdsa-secp256k1 compressed even",
 		script:    p("DATA_33 0x%s CHECKSIG", pkCE),
 		params:    mainNetParams,
 		wantType:  STPubKeyEcdsaSecp256k1,
-		wantAddrs: []string{"DkM3QDPFSVxAsDpbP9e3fMCDFThsBbAtRsjkwcAeAfsfNKMJYwhz9"},
+		wantAddrs: []string{"2sHTV8v3sg9pLGJ6RvQDyAidVn8pNKz9HR8JvYLeJ2Yb39Ecn9We2"},
 	}, {
 		name:      "mainnet v0 p2pk-ecdsa-secp256k1 compressed odd",
 		script:    p("DATA_33 0x%s CHECKSIG", pkCO),
 		params:    mainNetParams,
 		wantType:  STPubKeyEcdsaSecp256k1,
-		wantAddrs: []string{"DkRMEciAhaj4W5XHTPoEEUCiXFw3SQjKayHGdJBtAEjNArqzGujEz"},
+		wantAddrs: []string{"2sMmKYEy8kvhy7znWAZQYHj8maMzd9YaSWfpcEMtHbQHqgjKxPiX9"},
 	}, {
 		name:      "testnet v0 p2pk-ecdsa-secp256k1 uncompressed",
 		script:    p("DATA_65 0x%s CHECKSIG", pkUE),
 		params:    testNetParams,
 		wantType:  STPubKeyEcdsaSecp256k1,
-		wantAddrs: []string{"TkKmUYE9BRkzYvDHnjYbYAXVfWfcnp9FdRe4N1YMppRTArJ7wWMNf"},
+		wantAddrs: []string{"TkKmUYE9BRkzYvDHnjYbYAXVfWfcnp9FdRe4N1YMppRTArJ6nzapC"},
 	}, {
 		name:      "testnet v0 p2pk-ecdsa-secp256k1 compressed even",
 		script:    p("DATA_33 0x%s CHECKSIG", pkCE),
 		params:    testNetParams,
 		wantType:  STPubKeyEcdsaSecp256k1,
-		wantAddrs: []string{"TkKmUYE9BRkzYvDHnjYbYAXVfWfcnp9FdRe4N1YMppRTArJ7wWMNf"},
+		wantAddrs: []string{"TkKmUYE9BRkzYvDHnjYbYAXVfWfcnp9FdRe4N1YMppRTArJ6nzapC"},
 	}, {
 		name:      "testnet v0 p2pk-ecdsa-secp256k1 compressed odd",
 		script:    p("DATA_33 0x%s CHECKSIG", pkCO),
 		params:    testNetParams,
 		wantType:  STPubKeyEcdsaSecp256k1,
-		wantAddrs: []string{"TkQ5JwZ4SWXtBmuyryhn7HXzwJto3dhgnXBa3hZbpPH9yPnnjHyAg"},
+		wantAddrs: []string{"TkQ5JwZ4SWXtBmuyryhn7HXzwJto3dhgnXBa3hZbpPH9yPnrbvJTg"},
 	}, {
 		// ---------------------------------------------------------------------
 		// Negative P2PK Alt tests.
@@ -263,13 +263,13 @@ var addressV0Tests = func() []addressTest {
 		script:    p("DATA_32 0x%s 1 CHECKSIGALT", pkEd),
 		params:    mainNetParams,
 		wantType:  STPubKeyEd25519,
-		wantAddrs: []string{"DkM5zR8tqWNAHngZQDTyAeqzabZxMKrkSbCFULDhmvySn3uHmm221"},
+		wantAddrs: []string{"2sHW5LfhGgZokqA4SzE9UUNQpuzuY4g1J8aoTGPhuHeNSsnesn9Dw"},
 	}, {
 		name:      "testnet v0 p2pk-ed25519",
 		script:    p("DATA_32 0x%s 1 CHECKSIGALT", pkEd),
 		params:    testNetParams,
 		wantType:  STPubKeyEd25519,
-		wantAddrs: []string{"TkKp4jynaSAyyV5FooNX3UBGzeXhxYq7e96YtjbRS5XEaar5zFom4"},
+		wantAddrs: []string{"TkKp4jynaSAyyV5FooNX3UBGzeXhxYq7e96YtjbRS5XEaar95isMx"},
 	}, {
 		// ---------------------------------------------------------------------
 		// Negative P2PK Schnorr secp256k1 tests.
@@ -313,25 +313,25 @@ var addressV0Tests = func() []addressTest {
 		script:    p("DATA_33 0x%s 2 CHECKSIGALT", pkCE),
 		params:    mainNetParams,
 		wantType:  STPubKeySchnorrSecp256k1,
-		wantAddrs: []string{"DkM7HhjiLZf2Dg6EYZTCuM6rT1Y6R2UJ7dK35pewYTryP6LYfaAB7"},
+		wantAddrs: []string{"2sHXNdGWmjrfgiZjbLDPDAdGhKy3bmHYyAhb4kpwfpXu3vDsXfuKW"},
 	}, {
 		name:      "mainnet v0 p2pk-schnorr-secp256k1 compressed odd",
 		script:    p("DATA_33 0x%s 2 CHECKSIGALT", pkCO),
 		params:    mainNetParams,
 		wantType:  STPubKeySchnorrSecp256k1,
-		wantAddrs: []string{"DkRR874dbeRurXnvcocPUU7MiomGfr2jGirYmWgBY2igBdqAjz4Rs"},
+		wantAddrs: []string{"2sMqD2bS2pdZKaGRfaNZnHdmy8CDraqz8GF6kSrBfPPbrTiarq3Nu"},
 	}, {
 		name:      "testnet v0 p2pk-schnorr-secp256k1 compressed even",
 		script:    p("DATA_33 0x%s 2 CHECKSIGALT", pkCE),
 		params:    testNetParams,
 		wantType:  STPubKeySchnorrSecp256k1,
-		wantAddrs: []string{"TkKqN2ac5VTquNUvx9MknAS8s4Vr2FSfKBDLWE2fCcQmBdHNyknAz"},
+		wantAddrs: []string{"TkKqN2ac5VTquNUvx9MknAS8s4Vr2FSfKBDLWE2fCcQmBdHKwyMBG"},
 	}, {
 		name:      "testnet v0 p2pk-schnorr-secp256k1 compressed odd",
 		script:    p("DATA_33 0x%s 2 CHECKSIGALT", pkCO),
 		params:    testNetParams,
 		wantType:  STPubKeySchnorrSecp256k1,
-		wantAddrs: []string{"TkQ9CRuXLaEjYEBd2PWwMHSe8rj2H516UGkrBv3uCBGTzAn4mwtzc"},
+		wantAddrs: []string{"TkQ9CRuXLaEjYEBd2PWwMHSe8rj2H516UGkrBv3uCBGTzAn6gnRmD"},
 	}, {
 		// ---------------------------------------------------------------------
 		// Negative P2PKH ECDSA secp256k1 tests.
@@ -350,13 +350,13 @@ var addressV0Tests = func() []addressTest {
 		script:    p("DUP HASH160 DATA_20 0x%s EQUALVERIFY CHECKSIG", h160CE),
 		params:    mainNetParams,
 		wantType:  STPubKeyHashEcdsaSecp256k1,
-		wantAddrs: []string{"DsmcYVbP1Nmag2H4AS17UTvmWXmGeA7nLDx"},
+		wantAddrs: []string{"22u6UvKbhmoYPMC85LKcjfFmdrWsaGrE2qnB"},
 	}, {
 		name:      "testnet v0 p2pkh-ecdsa-secp256k1",
 		script:    p("DUP HASH160 DATA_20 0x%s EQUALVERIFY CHECKSIG", h160CE),
 		params:    testNetParams,
 		wantType:  STPubKeyHashEcdsaSecp256k1,
-		wantAddrs: []string{"TsmfmUitQApgnNxQypdGd2x36djCCpDpERU"},
+		wantAddrs: []string{"TsmfmUitQApgnNxQypdGd2x36djCCo1VQAn"},
 	}, {
 		// ---------------------------------------------------------------------
 		// Negative P2PKH Alt tests.
@@ -405,14 +405,14 @@ var addressV0Tests = func() []addressTest {
 			h160Ed),
 		params:    mainNetParams,
 		wantType:  STPubKeyHashEd25519,
-		wantAddrs: []string{"DeeUhrRoTp4DftsqddVW96yMGMW4sgQFYUE"},
+		wantAddrs: []string{"2eZt5xAGLspEZeTLF29nVJsYW4nbR6jP9SCJ"},
 	}, {
 		name: "testnet v0 p2pkh-ed25519",
 		script: p("DUP HASH160 DATA_20 0x%s EQUALVERIFY 1 CHECKSIGALT",
 			h160Ed),
 		params:    testNetParams,
 		wantType:  STPubKeyHashEd25519,
-		wantAddrs: []string{"TeeXvqZJrc7KnFZCT27fHfzcrTTzSF1aSRG"},
+		wantAddrs: []string{"TeeXvqZJrc7KnFZCT27fHfzcrTTzSHCgpHu"},
 	}, {
 		// ---------------------------------------------------------------------
 		// Negative P2PKH Schnorr secp256k1 tests.
@@ -433,28 +433,28 @@ var addressV0Tests = func() []addressTest {
 			h160CE),
 		params:    mainNetParams,
 		wantType:  STPubKeyHashSchnorrSecp256k1,
-		wantAddrs: []string{"DSpf9Sru9MarMKQQnuzTiQ9tjWVJA3KSm2d"},
+		wantAddrs: []string{"2Sa1gyt6inM5Sqb1nuq5D5oaL7z2enVbMub8"},
 	}, {
 		name: "mainnetv0 p2pkh-schnorr-secp256k1 2",
 		script: p("DUP HASH160 DATA_20 0x%s EQUALVERIFY 2 CHECKSIGALT",
 			h160CE2),
 		params:    mainNetParams,
 		wantType:  STPubKeyHashSchnorrSecp256k1,
-		wantAddrs: []string{"DSU8ZWCPmHeSBPmaMQvErRMJ6g3YiuHUKqa"},
+		wantAddrs: []string{"2SZfAPwSDQH92ffNxUKzzDpmjV9auMR2zURn"},
 	}, {
 		name: "testnet v0 p2pkh-schnorr-secp256k1",
 		script: p("DUP HASH160 DATA_20 0x%s EQUALVERIFY 2 CHECKSIGALT",
 			h160CE),
 		params:    testNetParams,
 		wantType:  STPubKeyHashSchnorrSecp256k1,
-		wantAddrs: []string{"TSpiNRzQY9dxTg5mcJccryBAKcTDik1VL2R"},
+		wantAddrs: []string{"TSpiNRzQY9dxTg5mcJccryBAKcTDifW1vHw"},
 	}, {
 		name: "testnetv0 p2pkh-schnorr-secp256k1 2",
 		script: p("DUP HASH160 DATA_20 0x%s EQUALVERIFY 2 CHECKSIGALT",
 			h160CE2),
 		params:    testNetParams,
 		wantType:  STPubKeyHashSchnorrSecp256k1,
-		wantAddrs: []string{"TSUBnVKuA5hYHkSwAoYPzzNZgn1UHcvbMqK"},
+		wantAddrs: []string{"TSUBnVKuA5hYHkSwAoYPzzNZgn1UHaohyC6"},
 	}, {
 		// ---------------------------------------------------------------------
 		// Negative P2SH tests.
@@ -478,13 +478,13 @@ var addressV0Tests = func() []addressTest {
 		script:    p("HASH160 DATA_20 0x%s EQUAL", p2sh),
 		params:    mainNetParams,
 		wantType:  STScriptHash,
-		wantAddrs: []string{"Dcv77F33B5PvGxAT8FynsydN7V2eXy6Sw7u"},
+		wantAddrs: []string{"2caH4eu9E49X8J4xPzrYWrWiVGoN5opNizFk"},
 	}, {
 		name:      "testnet v0 p2sh",
 		script:    p("HASH160 DATA_20 0x%s EQUAL", p2sh),
 		params:    testNetParams,
 		wantType:  STScriptHash,
-		wantAddrs: []string{"TcvALEAYZsT2PJqowebx2Yedhaza6cV8W5A"},
+		wantAddrs: []string{"TcvALEAYZsT2PJqowebx2Yedhaza6c8vzfg"},
 	}, {
 		// ---------------------------------------------------------------------
 		// Negative ECDSA multisig secp256k1 tests.
@@ -573,15 +573,15 @@ var addressV0Tests = func() []addressTest {
 		script:    p("1 DATA_33 0x%s 1 CHECKMULTISIG", pkCE),
 		params:    mainNetParams,
 		wantType:  STMultiSig,
-		wantAddrs: []string{"DkM3QDPFSVxAsDpbP9e3fMCDFThsBbAtRsjkwcAeAfsfNKMJYwhz9"},
+		wantAddrs: []string{"2sHTV8v3sg9pLGJ6RvQDyAidVn8pNKz9HR8JvYLeJ2Yb39Ecn9We2"},
 	}, {
 		name:     "mainnet v0 multisig 1-of-2 compressed pubkeys",
 		script:   p("1 DATA_33 0x%s DATA_33 0x%s 2 CHECKMULTISIG", pkCE, pkCE2),
 		params:   mainNetParams,
 		wantType: STMultiSig,
 		wantAddrs: []string{
-			"DkM3QDPFSVxAsDpbP9e3fMCDFThsBbAtRsjkwcAeAfsfNKMJYwhz9",
-			"DkM4NLpP4HKMcYqWa6YbhD2G96kbFyZe5JnGxrcC9hLF9w9AC5QBJ",
+			"2sHTV8v3sg9pLGJ6RvQDyAidVn8pNKz9HR8JvYLeJ2Yb39Ecn9We2",
+			"2sHUTGMBVTX15bK1csJn12YgPRBYSiNtvrApwnnCH41Apm2XLdsNm",
 		},
 	}, {
 		name: "mainnet v0 multisig 2-of-3 compressed pubkeys",
@@ -590,24 +590,24 @@ var addressV0Tests = func() []addressTest {
 		params:   mainNetParams,
 		wantType: STMultiSig,
 		wantAddrs: []string{
-			"DkM3QDPFSVxAsDpbP9e3fMCDFThsBbAtRsjkwcAeAfsfNKMJYwhz9",
-			"DkM4NLpP4HKMcYqWa6YbhD2G96kbFyZe5JnGxrcC9hLF9w9AC5QBJ",
-			"DkRMEciAhaj4W5XHTPoEEUCiXFw3SQjKayHGdJBtAEjNArqzGujEz",
+			"2sHTV8v3sg9pLGJ6RvQDyAidVn8pNKz9HR8JvYLeJ2Yb39Ecn9We2",
+			"2sHUTGMBVTX15bK1csJn12YgPRBYSiNtvrApwnnCH41Apm2XLdsNm",
+			"2sMmKYEy8kvhy7znWAZQYHj8maMzd9YaSWfpcEMtHbQHqgjKxPiX9",
 		},
 	}, {
 		name:      "testnet v0 multisig 1-of-1 compressed pubkey",
 		script:    p("1 DATA_33 0x%s 1 CHECKMULTISIG", pkCE),
 		params:    testNetParams,
 		wantType:  STMultiSig,
-		wantAddrs: []string{"TkKmUYE9BRkzYvDHnjYbYAXVfWfcnp9FdRe4N1YMppRTArJ7wWMNf"},
+		wantAddrs: []string{"TkKmUYE9BRkzYvDHnjYbYAXVfWfcnp9FdRe4N1YMppRTArJ6nzapC"},
 	}, {
 		name:     "testnet v0 multisig 1-of-2 compressed pubkeys",
 		script:   p("1 DATA_33 0x%s DATA_33 0x%s 2 CHECKMULTISIG", pkCE, pkCE2),
 		params:   testNetParams,
 		wantType: STMultiSig,
 		wantAddrs: []string{
-			"TkKmUYE9BRkzYvDHnjYbYAXVfWfcnp9FdRe4N1YMppRTArJ7wWMNf",
-			"TkKnSffGoD8BJFECygT9a2MYZ9iLsCY1GrgaPFyuoqt2xU61HDtDf",
+			"TkKmUYE9BRkzYvDHnjYbYAXVfWfcnp9FdRe4N1YMppRTArJ6nzapC",
+			"TkKnSffGoD8BJFECygT9a2MYZ9iLsCY1GrgaPFyuoqt2xU5veVwLq",
 		},
 	}, {
 		name: "testnet v0 multisig 2-of-3 compressed pubkeys",
@@ -616,9 +616,9 @@ var addressV0Tests = func() []addressTest {
 		params:   testNetParams,
 		wantType: STMultiSig,
 		wantAddrs: []string{
-			"TkKmUYE9BRkzYvDHnjYbYAXVfWfcnp9FdRe4N1YMppRTArJ7wWMNf",
-			"TkKnSffGoD8BJFECygT9a2MYZ9iLsCY1GrgaPFyuoqt2xU61HDtDf",
-			"TkQ5JwZ4SWXtBmuyryhn7HXzwJto3dhgnXBa3hZbpPH9yPnnjHyAg",
+			"TkKmUYE9BRkzYvDHnjYbYAXVfWfcnp9FdRe4N1YMppRTArJ6nzapC",
+			"TkKnSffGoD8BJFECygT9a2MYZ9iLsCY1GrgaPFyuoqt2xU5veVwLq",
+			"TkQ5JwZ4SWXtBmuyryhn7HXzwJto3dhgnXBa3hZbpPH9yPnrbvJTg",
 		},
 	}, {
 		// ---------------------------------------------------------------------
@@ -726,13 +726,13 @@ var addressV0Tests = func() []addressTest {
 		script:    p("SSTX DUP HASH160 DATA_20 0x%s EQUALVERIFY CHECKSIG", h160CE),
 		params:    mainNetParams,
 		wantType:  STStakeSubmissionPubKeyHash,
-		wantAddrs: []string{"DsmcYVbP1Nmag2H4AS17UTvmWXmGeA7nLDx"},
+		wantAddrs: []string{"22u6UvKbhmoYPMC85LKcjfFmdrWsaGrE2qnB"},
 	}, {
 		name:      "testnet v0 stake submission p2pkh-ecdsa-secp256k1",
 		script:    p("SSTX DUP HASH160 DATA_20 0x%s EQUALVERIFY CHECKSIG", h160CE),
 		params:    testNetParams,
 		wantType:  STStakeSubmissionPubKeyHash,
-		wantAddrs: []string{"TsmfmUitQApgnNxQypdGd2x36djCCpDpERU"},
+		wantAddrs: []string{"TsmfmUitQApgnNxQypdGd2x36djCCo1VQAn"},
 	}, {
 		// ---------------------------------------------------------------------
 		// Negative stake submission P2SH tests.
@@ -751,13 +751,13 @@ var addressV0Tests = func() []addressTest {
 		script:    p("SSTX HASH160 DATA_20 0x%s EQUAL", p2sh),
 		params:    mainNetParams,
 		wantType:  STStakeSubmissionScriptHash,
-		wantAddrs: []string{"Dcv77F33B5PvGxAT8FynsydN7V2eXy6Sw7u"},
+		wantAddrs: []string{"2caH4eu9E49X8J4xPzrYWrWiVGoN5opNizFk"},
 	}, {
 		name:      "testnet v0 stake submission p2sh",
 		script:    p("SSTX HASH160 DATA_20 0x%s EQUAL", p2sh),
 		params:    testNetParams,
 		wantType:  STStakeSubmissionScriptHash,
-		wantAddrs: []string{"TcvALEAYZsT2PJqowebx2Yedhaza6cV8W5A"},
+		wantAddrs: []string{"TcvALEAYZsT2PJqowebx2Yedhaza6c8vzfg"},
 	}, {
 		// ---------------------------------------------------------------------
 		// Negative stake submission generation P2PKH tests.
@@ -778,14 +778,14 @@ var addressV0Tests = func() []addressTest {
 			h160CE),
 		params:    mainNetParams,
 		wantType:  STStakeGenPubKeyHash,
-		wantAddrs: []string{"DsmcYVbP1Nmag2H4AS17UTvmWXmGeA7nLDx"},
+		wantAddrs: []string{"22u6UvKbhmoYPMC85LKcjfFmdrWsaGrE2qnB"},
 	}, {
 		name: "testnet v0 stake gen p2pkh-ecdsa-secp256k1",
 		script: p("SSGEN DUP HASH160 DATA_20 0x%s EQUALVERIFY CHECKSIG",
 			h160CE),
 		params:    testNetParams,
 		wantType:  STStakeGenPubKeyHash,
-		wantAddrs: []string{"TsmfmUitQApgnNxQypdGd2x36djCCpDpERU"},
+		wantAddrs: []string{"TsmfmUitQApgnNxQypdGd2x36djCCo1VQAn"},
 	}, {
 		// ---------------------------------------------------------------------
 		// Negative stake submission generation P2SH tests.
@@ -804,13 +804,13 @@ var addressV0Tests = func() []addressTest {
 		script:    p("SSGEN HASH160 DATA_20 0x%s EQUAL", p2sh),
 		params:    mainNetParams,
 		wantType:  STStakeGenScriptHash,
-		wantAddrs: []string{"Dcv77F33B5PvGxAT8FynsydN7V2eXy6Sw7u"},
+		wantAddrs: []string{"2caH4eu9E49X8J4xPzrYWrWiVGoN5opNizFk"},
 	}, {
 		name:      "testnet v0 stake gen p2sh",
 		script:    p("SSGEN HASH160 DATA_20 0x%s EQUAL", p2sh),
 		params:    testNetParams,
 		wantType:  STStakeGenScriptHash,
-		wantAddrs: []string{"TcvALEAYZsT2PJqowebx2Yedhaza6cV8W5A"},
+		wantAddrs: []string{"TcvALEAYZsT2PJqowebx2Yedhaza6c8vzfg"},
 	}, {
 		// ---------------------------------------------------------------------
 		// Negative stake submission revocation P2PKH tests.
@@ -831,14 +831,14 @@ var addressV0Tests = func() []addressTest {
 			h160CE),
 		params:    mainNetParams,
 		wantType:  STStakeRevocationPubKeyHash,
-		wantAddrs: []string{"DsmcYVbP1Nmag2H4AS17UTvmWXmGeA7nLDx"},
+		wantAddrs: []string{"22u6UvKbhmoYPMC85LKcjfFmdrWsaGrE2qnB"},
 	}, {
 		name: "testnet v0 stake revoke p2pkh-ecdsa-secp256k1",
 		script: p("SSRTX DUP HASH160 DATA_20 0x%s EQUALVERIFY CHECKSIG",
 			h160CE),
 		params:    testNetParams,
 		wantType:  STStakeRevocationPubKeyHash,
-		wantAddrs: []string{"TsmfmUitQApgnNxQypdGd2x36djCCpDpERU"},
+		wantAddrs: []string{"TsmfmUitQApgnNxQypdGd2x36djCCo1VQAn"},
 	}, {
 		// ---------------------------------------------------------------------
 		// Negative stake submission revocation P2SH tests.
@@ -857,13 +857,13 @@ var addressV0Tests = func() []addressTest {
 		script:    p("SSRTX HASH160 DATA_20 0x%s EQUAL", p2sh),
 		params:    mainNetParams,
 		wantType:  STStakeRevocationScriptHash,
-		wantAddrs: []string{"Dcv77F33B5PvGxAT8FynsydN7V2eXy6Sw7u"},
+		wantAddrs: []string{"2caH4eu9E49X8J4xPzrYWrWiVGoN5opNizFk"},
 	}, {
 		name:      "testnet v0 stake revoke p2sh",
 		script:    p("SSRTX HASH160 DATA_20 0x%s EQUAL", p2sh),
 		params:    testNetParams,
 		wantType:  STStakeRevocationScriptHash,
-		wantAddrs: []string{"TcvALEAYZsT2PJqowebx2Yedhaza6cV8W5A"},
+		wantAddrs: []string{"TcvALEAYZsT2PJqowebx2Yedhaza6c8vzfg"},
 	}, {
 		// ---------------------------------------------------------------------
 		// Negative stake submission change P2PKH tests.
@@ -884,14 +884,14 @@ var addressV0Tests = func() []addressTest {
 			h160CE),
 		params:    mainNetParams,
 		wantType:  STStakeChangePubKeyHash,
-		wantAddrs: []string{"DsmcYVbP1Nmag2H4AS17UTvmWXmGeA7nLDx"},
+		wantAddrs: []string{"22u6UvKbhmoYPMC85LKcjfFmdrWsaGrE2qnB"},
 	}, {
 		name: "testnet v0 stake change p2pkh-ecdsa-secp256k1",
 		script: p("SSTXCHANGE DUP HASH160 DATA_20 0x%s EQUALVERIFY CHECKSIG",
 			h160CE),
 		params:    testNetParams,
 		wantType:  STStakeChangePubKeyHash,
-		wantAddrs: []string{"TsmfmUitQApgnNxQypdGd2x36djCCpDpERU"},
+		wantAddrs: []string{"TsmfmUitQApgnNxQypdGd2x36djCCo1VQAn"},
 	}, {
 		// ---------------------------------------------------------------------
 		// Negative stake submission change P2SH tests.
@@ -910,93 +910,12 @@ var addressV0Tests = func() []addressTest {
 		script:    p("SSTXCHANGE HASH160 DATA_20 0x%s EQUAL", p2sh),
 		params:    mainNetParams,
 		wantType:  STStakeChangeScriptHash,
-		wantAddrs: []string{"Dcv77F33B5PvGxAT8FynsydN7V2eXy6Sw7u"},
+		wantAddrs: []string{"2caH4eu9E49X8J4xPzrYWrWiVGoN5opNizFk"},
 	}, {
 		name:      "testnet v0 stake change p2sh",
 		script:    p("SSTXCHANGE HASH160 DATA_20 0x%s EQUAL", p2sh),
 		params:    testNetParams,
 		wantType:  STStakeChangeScriptHash,
-		wantAddrs: []string{"TcvALEAYZsT2PJqowebx2Yedhaza6cV8W5A"},
-	}, {
-		// ---------------------------------------------------------------------
-		// Negative treasury add tests.
-		// ---------------------------------------------------------------------
-
-		name:     "almost v0 treasury add -- trailing opcode",
-		script:   p("TADD TRUE"),
-		params:   mainNetParams,
-		wantType: STNonStandard,
-	}, {
-		name:     "almost v0 treasury add -- two TADD",
-		script:   p("TADD TADD"),
-		params:   mainNetParams,
-		wantType: STNonStandard,
-	}, {
-		// ---------------------------------------------------------------------
-		// Positive treasury add tests.
-		// ---------------------------------------------------------------------
-
-		name:     "mainnet v0 treasury add",
-		script:   p("TADD"),
-		params:   mainNetParams,
-		wantType: STTreasuryAdd,
-	}, {
-		name:     "testnet v0 treasury add",
-		script:   p("TADD"),
-		params:   testNetParams,
-		wantType: STTreasuryAdd,
-	}, {
-		// ---------------------------------------------------------------------
-		// Negative treasury generation P2PKH tests.
-		// ---------------------------------------------------------------------
-
-		name: "almost v0 trsy gen p2pkh-ecdsa-secp256k1 -- wrong hash length",
-		script: p("TGEN DUP HASH160 DATA_21 0x00%s EQUALVERIFY CHECKSIG",
-			h160CE),
-		params:   mainNetParams,
-		wantType: STNonStandard,
-	}, {
-		// ---------------------------------------------------------------------
-		// Positive treasury generation P2PKH tests.
-		// ---------------------------------------------------------------------
-
-		name: "mainnet v0 treasury generation p2pkh-ecdsa-secp256k1",
-		script: p("TGEN DUP HASH160 DATA_20 0x%s EQUALVERIFY CHECKSIG",
-			h160CE),
-		params:    mainNetParams,
-		wantType:  STTreasuryGenPubKeyHash,
-		wantAddrs: []string{"DsmcYVbP1Nmag2H4AS17UTvmWXmGeA7nLDx"},
-	}, {
-		name: "testnet v0 treasury generation p2pkh-ecdsa-secp256k1",
-		script: p("TGEN DUP HASH160 DATA_20 0x%s EQUALVERIFY CHECKSIG",
-			h160CE),
-		params:    testNetParams,
-		wantType:  STTreasuryGenPubKeyHash,
-		wantAddrs: []string{"TsmfmUitQApgnNxQypdGd2x36djCCpDpERU"},
-	}, {
-		// ---------------------------------------------------------------------
-		// Negative treasury generation P2SH tests.
-		// ---------------------------------------------------------------------
-
-		name:     "almost v0 treasury generation p2sh -- wrong hash length",
-		script:   p("TGEN HASH160 DATA_21 0x00%s EQUAL", p2sh),
-		params:   mainNetParams,
-		wantType: STNonStandard,
-	}, {
-		// ---------------------------------------------------------------------
-		// Positive treasury generation P2SH tests.
-		// ---------------------------------------------------------------------
-
-		name:      "mainnet v0 treasury generation p2sh",
-		script:    p("TGEN HASH160 DATA_20 0x%s EQUAL", p2sh),
-		params:    mainNetParams,
-		wantType:  STTreasuryGenScriptHash,
-		wantAddrs: []string{"Dcv77F33B5PvGxAT8FynsydN7V2eXy6Sw7u"},
-	}, {
-		name:      "testnet v0 treasury generation p2sh",
-		script:    p("TGEN HASH160 DATA_20 0x%s EQUAL", p2sh),
-		params:    testNetParams,
-		wantType:  STTreasuryGenScriptHash,
-		wantAddrs: []string{"TcvALEAYZsT2PJqowebx2Yedhaza6cV8W5A"},
+		wantAddrs: []string{"TcvALEAYZsT2PJqowebx2Yedhaza6c8vzfg"},
 	}}
 }()

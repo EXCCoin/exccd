@@ -8,167 +8,170 @@ package dcrutil
 import (
 	"testing"
 
+	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrec"
 )
 
+func TestEncodeDecodeUncompressedWIF(t *testing.T) {
+	priv1 := []byte{
+		0x0c, 0x28, 0xfc, 0xa3, 0x86, 0xc7, 0xa2, 0x27,
+		0x60, 0x0b, 0x2f, 0xe5, 0x0b, 0x7c, 0xae, 0x11,
+		0xec, 0x86, 0xd3, 0xbf, 0x1f, 0xbe, 0x47, 0x1b,
+		0xe8, 0x98, 0x27, 0xe1, 0x9d, 0x72, 0xaa, 0x1d}
+
+	priv2 := []byte{
+		0xdd, 0xa3, 0x5a, 0x14, 0x88, 0xfb, 0x97, 0xb6,
+		0xeb, 0x3f, 0xe6, 0xe9, 0xef, 0x2a, 0x25, 0x81,
+		0x4e, 0x39, 0x6f, 0xb5, 0xdc, 0x29, 0x5f, 0xe9,
+		0x94, 0xb9, 0x67, 0x89, 0xb2, 0x1a, 0x03, 0x98}
+
+	wif1, err := NewUncompressedWIF(priv1, chaincfg.MainNetParams())
+	if err != nil {
+		t.Fatal(err)
+	}
+	wif2, err := NewUncompressedWIF(priv2, chaincfg.TestNet3Params())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		wif     *WIF
+		encoded string
+	}{
+		{
+			wif1,
+			"5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ",
+		},
+		{
+			wif2,
+			"93GXcP5BqkAxXrV7N2EjmjAeGwfvrX7ALLXTnfZExxtn4QXMjjs",
+		},
+	}
+
+	for _, test := range tests {
+		// Test that encoding the WIF structure matches the expected string.
+		s := test.wif.String()
+		if s != test.encoded {
+			t.Errorf("TestEncodeDecodePrivateKey failed: want '%s', got '%s'",
+				test.encoded, s)
+			continue
+		}
+
+		// Test that decoding the expected string results in the original WIF
+		// structure.
+		w, err := DecodeWIF(test.encoded)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		if got := w.String(); got != test.encoded {
+			t.Errorf("NewWIF failed: want '%v', got '%v'", test.wif, got)
+		}
+	}
+}
+
 func TestEncodeDecodeWIF(t *testing.T) {
-	mainNetPrivKeyID := [2]byte{0x22, 0xde} // starts with Pm
-	testNetPrivKeyID := [2]byte{0x23, 0x0e} // starts with Pt
-	simNetPrivKeyID := [2]byte{0x23, 0x07}  // starts with Ps
-	regNetPrivKeyID := [2]byte{0x22, 0xfe}  // starts with Pr
 	suites := []dcrec.SignatureType{
 		dcrec.STEcdsaSecp256k1,
 		dcrec.STEd25519,
 		dcrec.STSchnorrSecp256k1,
 	}
-	for _, suite := range suites {
+	for _, ecType := range suites {
 		var priv1, priv2 []byte
-		switch suite {
+		switch ecType {
 		case dcrec.STEcdsaSecp256k1:
 			priv1 = []byte{
 				0x0c, 0x28, 0xfc, 0xa3, 0x86, 0xc7, 0xa2, 0x27,
 				0x60, 0x0b, 0x2f, 0xe5, 0x0b, 0x7c, 0xae, 0x11,
 				0xec, 0x86, 0xd3, 0xbf, 0x1f, 0xbe, 0x47, 0x1b,
-				0xe8, 0x98, 0x27, 0xe1, 0x9d, 0x72, 0xaa, 0x1d,
-			}
+				0xe8, 0x98, 0x27, 0xe1, 0x9d, 0x72, 0xaa, 0x1d}
+
 			priv2 = []byte{
 				0xdd, 0xa3, 0x5a, 0x14, 0x88, 0xfb, 0x97, 0xb6,
 				0xeb, 0x3f, 0xe6, 0xe9, 0xef, 0x2a, 0x25, 0x81,
 				0x4e, 0x39, 0x6f, 0xb5, 0xdc, 0x29, 0x5f, 0xe9,
-				0x94, 0xb9, 0x67, 0x89, 0xb2, 0x1a, 0x03, 0x98,
-			}
+				0x94, 0xb9, 0x67, 0x89, 0xb2, 0x1a, 0x03, 0x98}
 		case dcrec.STEd25519:
 			priv1 = []byte{
 				0x0c, 0x28, 0xfc, 0xa3, 0x86, 0xc7, 0xa2, 0x27,
 				0x60, 0x0b, 0x2f, 0xe5, 0x0b, 0x7c, 0xae, 0x11,
 				0xec, 0x86, 0xd3, 0xbf, 0x1f, 0xbe, 0x47, 0x1b,
-				0xe8, 0x98, 0x27, 0xe1, 0x9d, 0x72, 0xaa, 0x1d,
-			}
+				0xe8, 0x98, 0x27, 0xe1, 0x9d, 0x72, 0xaa, 0x1d}
+
 			priv2 = []byte{
 				0x0c, 0xa3, 0x5a, 0x14, 0x88, 0xfb, 0x97, 0xb6,
 				0xeb, 0x3f, 0xe6, 0xe9, 0xef, 0x2a, 0x25, 0x81,
 				0x4e, 0x39, 0x6f, 0xb5, 0xdc, 0x29, 0x5f, 0xe9,
-				0x94, 0xb9, 0x67, 0x89, 0xb2, 0x1a, 0x03, 0x98,
-			}
+				0x94, 0xb9, 0x67, 0x89, 0xb2, 0x1a, 0x03, 0x98}
 		case dcrec.STSchnorrSecp256k1:
 			priv1 = []byte{
 				0x0c, 0x28, 0xfc, 0xa3, 0x86, 0xc7, 0xa2, 0x27,
 				0x60, 0x0b, 0x2f, 0xe5, 0x0b, 0x7c, 0xae, 0x11,
 				0xec, 0x86, 0xd3, 0xbf, 0x1f, 0xbe, 0x47, 0x1b,
-				0xe8, 0x98, 0x27, 0xe1, 0x9d, 0x72, 0xaa, 0x1d,
-			}
+				0xe8, 0x98, 0x27, 0xe1, 0x9d, 0x72, 0xaa, 0x1d}
 
 			priv2 = []byte{
 				0xdd, 0xa3, 0x5a, 0x14, 0x88, 0xfb, 0x97, 0xb6,
 				0xeb, 0x3f, 0xe6, 0xe9, 0xef, 0x2a, 0x25, 0x81,
 				0x4e, 0x39, 0x6f, 0xb5, 0xdc, 0x29, 0x5f, 0xe9,
-				0x94, 0xb9, 0x67, 0x89, 0xb2, 0x1a, 0x03, 0x98,
-			}
+				0x94, 0xb9, 0x67, 0x89, 0xb2, 0x1a, 0x03, 0x98}
 		}
 
-		wif1, err := NewWIF(priv1, mainNetPrivKeyID, suite)
+		wif1, err := NewWIF(priv1, chaincfg.MainNetParams().PrivateKeyID, ecType)
 		if err != nil {
-			t.Fatalf("NewWIF mainnet priv1 failed: %v", err)
+			t.Fatal(err)
 		}
-		wif2, err := NewWIF(priv2, testNetPrivKeyID, suite)
+		wif2, err := NewWIF(priv2, chaincfg.TestNet3Params().PrivateKeyID, ecType)
 		if err != nil {
-			t.Fatalf("NewWIF testnet priv2 failed: %v", err)
-		}
-		wif3, err := NewWIF(priv2, simNetPrivKeyID, suite)
-		if err != nil {
-			t.Fatalf("NewWIF simnet priv2 failed: %v", err)
-		}
-		wif4, err := NewWIF(priv2, regNetPrivKeyID, suite)
-		if err != nil {
-			t.Fatalf("NewWIF regnet priv2 failed: %v", err)
+			t.Fatal(err)
 		}
 
 		var tests []struct {
 			wif     *WIF
 			encoded string
-			net     [2]byte
 		}
 
-		switch suite {
+		switch ecType {
 		case dcrec.STEcdsaSecp256k1:
 			tests = []struct {
 				wif     *WIF
 				encoded string
-				net     [2]byte
 			}{
 				{
 					wif1,
-					"PmQdMn8xafwaQouk8ngs1CccRCB1ZmsqQxBaxNR4vhQi5a5QB5716",
-					mainNetPrivKeyID,
+					"KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvP98617",
 				},
 				{
 					wif2,
-					"PtWVDUidYaiiNT5e2Sfb1Ah4evbaSopZJkkpFBuzkJYcYteugvdFg",
-					testNetPrivKeyID,
-				},
-				{
-					wif3,
-					"PsURoUb7FMeJQdTYea8pkbUQFBZAsxtfDcfTLGja5sCLZvLZWRtjK",
-					simNetPrivKeyID,
-				},
-				{
-					wif4,
-					"Pr9D8L8s9nG4AroRjbTGiRuYrweN1T8Dg9grAEeTEStZAPMnjxwCT",
-					regNetPrivKeyID,
+					"cV1Y7ARUr9Yx7BR55nTdnR7ZXNJphZtCCMBTEZBJe1hXt2kB684q",
 				},
 			}
 		case dcrec.STEd25519:
 			tests = []struct {
 				wif     *WIF
 				encoded string
-				net     [2]byte
 			}{
 				{
 					wif1,
-					"PmQfJXKC2ho1633ZiVbSdCZw1y68BVXYFpyE2UfDcbQN5xa3DByDn",
-					mainNetPrivKeyID,
+					"KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvWxyf5d",
 				},
 				{
 					wif2,
-					"PtWVaBGeCfbFQfgqFew8YvdrSH5TH439K7rvpo3aWnSfDvyK8ijbK",
-					testNetPrivKeyID,
-				},
-				{
-					wif3,
-					"PsUSAB97uSWqSr4jsnQNJMRC2Y33iD7FDymZuss9rM6PExexSPyTQ",
-					simNetPrivKeyID,
-				},
-				{
-					wif4,
-					"Pr9DV2gsos8bD5QcxoipGBrLeJ8EqhLogWnxjqn2zvnbqRg9fZMHs",
-					regNetPrivKeyID,
+					"cN1GXHxgB3dbmzxcgKJux56FfyU7chi5BtbejZsYHFk8ptuDeyhf",
 				},
 			}
 		case dcrec.STSchnorrSecp256k1:
 			tests = []struct {
 				wif     *WIF
 				encoded string
-				net     [2]byte
 			}{
 				{
 					wif1,
-					"PmQhFGVRUjeRmGBPJCW2FCXFck1EoDBF6hks6auNJVQ26M4h73W9W",
-					mainNetPrivKeyID,
+					"KwdMAjGmerYanjeui5SHS7JkmpZvVipYvB2LJGU1ZxJwYvbMrQyG",
 				},
 				{
 					wif2,
-					"PtWZ6y56SeRZiuMHBrUkFAbhrURogF7xzWL6PQQJ86XvZfeE3jf1a",
-					testNetPrivKeyID,
-				},
-				{
-					wif3,
-					"PsUVgxwa9RM9m5jBoywyzbP3SjPQ7QC4uNEjUVDsTfBeahKkmETvQ",
-					simNetPrivKeyID,
-				},
-				{
-					wif4,
-					"Pr9H1pVL3qxuXK54u1GRxRpC4VUbEtRdMuG8JT8kcEssBALyTRM7v",
-					regNetPrivKeyID,
+					"cV1Y7ARUr9Yx7BR55nTdnR7ZXNJphZtCCMBTEZBJe1hXt32Z7LP9",
 				},
 			}
 		}
@@ -184,7 +187,7 @@ func TestEncodeDecodeWIF(t *testing.T) {
 
 			// Test that decoding the expected string results in the original WIF
 			// structure.
-			w, err := DecodeWIF(test.encoded, test.net)
+			w, err := DecodeWIF(test.encoded)
 			if err != nil {
 				t.Error(err)
 				continue

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/decred/base58"
+	"github.com/EXCCoin/base58"
 	"github.com/decred/dcrd/blockchain/standalone/v2"
 	"github.com/decred/dcrd/chaincfg/v3"
 )
@@ -18,7 +18,8 @@ import (
 // with each other
 // PowLimit:         mainPowLimit,// big int
 // PowLimitBits:     0x1d00ffff,  // conceptually the same
-//                                // value, but in an obscure form
+//
+//	// value, but in an obscure form
 func checkPowLimitsAreConsistent(t *testing.T, params *chaincfg.Params) {
 	powLimitBigInt := params.PowLimit
 	powLimitCompact := params.PowLimitBits
@@ -104,23 +105,25 @@ func checkInterval(t *testing.T, desiredPrefix string, keySize int, networkName 
 // checkAddressPrefixesAreConsistent ensures address encoding magics and
 // NetworkAddressPrefix are consistent with each other.
 // This test will light red when a new network is started with incorrect values.
-func checkAddressPrefixesAreConsistent(t *testing.T, privateKeyPrefix string, params *chaincfg.Params) {
+func checkAddressPrefixesAreConsistent(t *testing.T, params *chaincfg.Params, prefixes map[string]string) {
 	P := params.NetworkAddressPrefix
 
 	// Desired prefixes
-	Pk := P + "k"
-	Ps := P + "s"
-	Pe := P + "e"
-	PS := P + "S"
-	Pc := P + "c"
-	pk := privateKeyPrefix
+	Pk := P + prefixes["Pk"]
+	Ps := P + prefixes["Ps"]
+	Pe := P + prefixes["Pe"]
+	PS := P + prefixes["PS"]
+	Pc := P + prefixes["Pc"]
+	pku := prefixes["pku"]
+	pkc := prefixes["pkc"]
 
 	checkInterval(t, Pk, 33, params.Name, params.PubKeyAddrID)
 	checkInterval(t, Ps, 20, params.Name, params.PubKeyHashAddrID)
 	checkInterval(t, Pe, 20, params.Name, params.PKHEdwardsAddrID)
 	checkInterval(t, PS, 20, params.Name, params.PKHSchnorrAddrID)
 	checkInterval(t, Pc, 20, params.Name, params.ScriptHashAddrID)
-	checkInterval(t, pk, 33, params.Name, params.PrivateKeyID)
+	checkInterval(t, pku, 32, params.Name, [2]byte{0x00, params.PrivateKeyID})
+	checkInterval(t, pkc, 32, params.Name, [2]byte{params.PrivateKeyID, 0x00})
 }
 
 // TestDecredNetworkSettings checks Network-specific settings
@@ -140,8 +143,40 @@ func TestDecredNetworkSettings(t *testing.T) {
 	checkGenesisBlockRespectsNetworkPowLimit(t, simNetParams)
 	checkGenesisBlockRespectsNetworkPowLimit(t, regNetParams)
 
-	checkAddressPrefixesAreConsistent(t, "Pm", mainNetParams)
-	checkAddressPrefixesAreConsistent(t, "Pt", testNet3Params)
-	checkAddressPrefixesAreConsistent(t, "Ps", simNetParams)
-	checkAddressPrefixesAreConsistent(t, "Pr", regNetParams)
+	checkAddressPrefixesAreConsistent(t, mainNetParams, map[string]string{
+		"Pk":  "s",
+		"Ps":  "2",
+		"Pe":  "e",
+		"PS":  "S",
+		"Pc":  "c",
+		"pku": "15",
+		"pkc": "K",
+	})
+	checkAddressPrefixesAreConsistent(t, testNet3Params, map[string]string{
+		"Pk":  "k",
+		"Ps":  "s",
+		"Pe":  "e",
+		"PS":  "S",
+		"Pc":  "c",
+		"pku": "19",
+		"pkc": "c",
+	})
+	checkAddressPrefixesAreConsistent(t, simNetParams, map[string]string{
+		"Pk":  "k",
+		"Ps":  "s",
+		"Pe":  "e",
+		"PS":  "S",
+		"Pc":  "c",
+		"pku": "19",
+		"pkc": "c",
+	})
+	checkAddressPrefixesAreConsistent(t, regNetParams, map[string]string{
+		"Pk":  "k",
+		"Ps":  "s",
+		"Pe":  "e",
+		"PS":  "S",
+		"Pc":  "c",
+		"pku": "19",
+		"pkc": "c",
+	})
 }

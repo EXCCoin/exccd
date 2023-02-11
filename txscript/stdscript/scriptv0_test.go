@@ -686,64 +686,6 @@ var scriptV0Tests = func() []scriptTest {
 		wantType: STStakeChangeScriptHash,
 		wantData: hexToBytes(p2sh),
 		wantSigs: 1,
-	}, {
-		// ---------------------------------------------------------------------
-		// Negative treasury add tests.
-		// ---------------------------------------------------------------------
-
-		name:     "almost v0 treasury add -- trailing opcode",
-		script:   p("TADD TRUE"),
-		wantType: STNonStandard,
-	}, {
-		name:     "almost v0 treasury add -- two TADD",
-		script:   p("TADD TADD"),
-		wantType: STNonStandard,
-	}, {
-		// ---------------------------------------------------------------------
-		// Positive treasury add tests.
-		// ---------------------------------------------------------------------
-
-		name:     "v0 treasury add",
-		script:   p("TADD"),
-		wantType: STTreasuryAdd,
-	}, {
-		// ---------------------------------------------------------------------
-		// Negative treasury generation P2PKH tests.
-		// ---------------------------------------------------------------------
-
-		name: "almost v0 trsy gen p2pkh-ecdsa-secp256k1 -- wrong hash length",
-		script: p("TGEN DUP HASH160 DATA_21 0x00%s EQUALVERIFY CHECKSIG",
-			h160CE),
-		wantType: STNonStandard,
-	}, {
-		// ---------------------------------------------------------------------
-		// Positive treasury generation P2PKH tests.
-		// ---------------------------------------------------------------------
-
-		name: "v0 treasury generation p2pkh-ecdsa-secp256k1",
-		script: p("TGEN DUP HASH160 DATA_20 0x%s EQUALVERIFY CHECKSIG",
-			h160CE),
-		wantType: STTreasuryGenPubKeyHash,
-		wantData: hexToBytes(h160CE),
-		wantSigs: 1,
-	}, {
-		// ---------------------------------------------------------------------
-		// Negative treasury generation P2SH tests.
-		// ---------------------------------------------------------------------
-
-		name:     "almost v0 treasury generation p2sh -- wrong hash length",
-		script:   p("TGEN HASH160 DATA_21 0x00%s EQUAL", p2sh),
-		wantType: STNonStandard,
-	}, {
-		// ---------------------------------------------------------------------
-		// Positive treasury generation P2SH tests.
-		// ---------------------------------------------------------------------
-
-		name:     "v0 treasury generation p2sh",
-		script:   p("TGEN HASH160 DATA_20 0x%s EQUAL", p2sh),
-		wantType: STTreasuryGenScriptHash,
-		wantData: hexToBytes(p2sh),
-		wantSigs: 1,
 	}}
 }()
 
@@ -1293,48 +1235,6 @@ func TestExtractStakeChangeScriptHashV0(t *testing.T) {
 		}
 
 		got := ExtractStakeChangeScriptHashV0(test.script)
-		if !bytes.Equal(got, want) {
-			t.Errorf("%q: unexpected script hash -- got %x, want %x", test.name,
-				got, want)
-			continue
-		}
-	}
-}
-
-// TestExtractTreasuryGenPubKeyHashV0 ensures that extracting a public key hash
-// from a version 0 treasury generation pay-to-pubkey-hash script works as
-// intended for all of the version 0 test scripts.
-func TestExtractTreasuryGenPubKeyHashV0(t *testing.T) {
-	for _, test := range scriptV0Tests {
-		// Determine the expected data based on the expected script type and
-		// data specified in the test.
-		var want []byte
-		if test.wantType == STTreasuryGenPubKeyHash {
-			want = asByteSlice(t, test)
-		}
-
-		got := ExtractTreasuryGenPubKeyHashV0(test.script)
-		if !bytes.Equal(got, want) {
-			t.Errorf("%q: unexpected pubkey hash -- got %x, want %x", test.name,
-				got, want)
-			continue
-		}
-	}
-}
-
-// TestExtractTreasuryGenScriptHashV0 ensures that extracting a script hash from
-// a version 0 treasury generation pay-to-script-hash script works as intended
-// for all of the version 0 test scripts.
-func TestExtractTreasuryGenScriptHashV0(t *testing.T) {
-	for _, test := range scriptV0Tests {
-		// Determine the expected data based on the expected script type and
-		// data specified in the test.
-		var want []byte
-		if test.wantType == STTreasuryGenScriptHash {
-			want = asByteSlice(t, test)
-		}
-
-		got := ExtractTreasuryGenScriptHashV0(test.script)
 		if !bytes.Equal(got, want) {
 			t.Errorf("%q: unexpected script hash -- got %x, want %x", test.name,
 				got, want)

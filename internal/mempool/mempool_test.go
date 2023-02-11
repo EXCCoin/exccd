@@ -789,11 +789,12 @@ func newPoolHarness(chainParams *chaincfg.Params) (*poolHarness, []spendableOutp
 	// Create a new fake chain and harness bound to it.
 	subsidyCache := standalone.NewSubsidyCache(chainParams)
 	chain := &fakeChain{
-		utxos:       blockchain.NewUtxoViewpoint(nil),
-		utxoTimes:   make(map[wire.OutPoint]int64),
-		blocks:      make(map[chainhash.Hash]*dcrutil.Block),
-		scriptFlags: BaseStandardVerifyFlags,
-		tspendMined: make(map[chainhash.Hash]struct{}),
+		utxos:         blockchain.NewUtxoViewpoint(nil),
+		utxoTimes:     make(map[wire.OutPoint]int64),
+		blocks:        make(map[chainhash.Hash]*dcrutil.Block),
+		scriptFlags:   BaseStandardVerifyFlags,
+		tspendMined:   make(map[chainhash.Hash]struct{}),
+		currentHeight: 3,
 	}
 	var harness *poolHarness
 	harness = &poolHarness{
@@ -1247,7 +1248,7 @@ func TestOrphanReject(t *testing.T) {
 
 		// Ensure no transactions were reported as accepted.
 		if len(acceptedTxns) != 0 {
-			t.Fatal("ProcessTransaction: reported %d accepted "+
+			t.Fatalf("ProcessTransaction: reported %d accepted "+
 				"transactions from failed orphan attempt",
 				len(acceptedTxns))
 		}
@@ -1893,7 +1894,7 @@ func TestSequenceLockAcceptance(t *testing.T) {
 func TestMaxVoteDoubleSpendRejection(t *testing.T) {
 	t.Parallel()
 
-	harness, spendableOuts, err := newPoolHarness(chaincfg.MainNetParams())
+	harness, spendableOuts, err := newPoolHarness(chaincfg.TestNet3Params())
 	if err != nil {
 		t.Fatalf("unable to create test pool: %v", err)
 	}
@@ -2020,7 +2021,7 @@ func TestMaxVoteDoubleSpendRejection(t *testing.T) {
 func TestDuplicateVoteRejection(t *testing.T) {
 	t.Parallel()
 
-	harness, spendableOuts, err := newPoolHarness(chaincfg.MainNetParams())
+	harness, spendableOuts, err := newPoolHarness(chaincfg.TestNet3Params())
 	if err != nil {
 		t.Fatalf("unable to create test pool: %v", err)
 	}
@@ -2402,12 +2403,12 @@ func TestStagedTransactionHeight(t *testing.T) {
 // TestExplicitVersionSemantics ensures the mempool has the following semantics
 // in regards to transaction and script versions:
 //
-// - Rejects new regular and stake txns with an unsupported tx version
-// - Rejects new regular and stake txns with an output that has an unsupported
-//   script version
-// - Accepts new txns that spend an existing regular tx output that has a newer
-//   script version that is no longer allowed for new outputs (until/unless
-//   explicitly enabled via a future consensus vote)
+//   - Rejects new regular and stake txns with an unsupported tx version
+//   - Rejects new regular and stake txns with an output that has an unsupported
+//     script version
+//   - Accepts new txns that spend an existing regular tx output that has a newer
+//     script version that is no longer allowed for new outputs (until/unless
+//     explicitly enabled via a future consensus vote)
 func TestExplicitVersionSemantics(t *testing.T) {
 	t.Parallel()
 
@@ -2772,7 +2773,7 @@ func TestFraudProofHandling(t *testing.T) {
 func TestSubsidySplitSemantics(t *testing.T) {
 	t.Parallel()
 
-	harness, outputs, err := newPoolHarness(chaincfg.MainNetParams())
+	harness, outputs, err := newPoolHarness(chaincfg.TestNet3Params())
 	if err != nil {
 		t.Fatalf("unable to create test pool: %v", err)
 	}

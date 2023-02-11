@@ -6,7 +6,6 @@ package chaingen
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/binary"
 	"fmt"
 	"math"
@@ -16,11 +15,12 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/decred/dcrd/blockchain/stake/v4"
+	"github.com/decred/dcrd/cequihash"
 	"github.com/decred/dcrd/chaincfg/chainhash"
 	"github.com/decred/dcrd/chaincfg/v3"
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/txscript/v4"
-	"github.com/decred/dcrd/txscript/v4/sign"
 	"github.com/decred/dcrd/txscript/v4/stdaddr"
 	"github.com/decred/dcrd/txscript/v4/stdscript"
 	"github.com/decred/dcrd/wire"
@@ -374,25 +374,6 @@ func (g *Generator) calcPoSSubsidy(heightVotedOn uint32) dcrutil.Amount {
 	posProportion := dcrutil.Amount(g.params.StakeRewardProportion)
 	totalProportions := dcrutil.Amount(g.params.TotalSubsidyProportions())
 	return (fullSubsidy * posProportion) / totalProportions
-}
-
-// calcDevSubsidy returns the dev org subsidy portion from a given full subsidy.
-//
-// NOTE: This and the other subsidy calculation funcs intentionally are not
-// using the blockchain code since the intent is to be able to generate known
-// good tests which exercise that code, so it wouldn't make sense to use the
-// same code to generate them.
-func (g *Generator) calcDevSubsidy(fullSubsidy dcrutil.Amount, blockHeight uint32, numVotes uint16) dcrutil.Amount {
-	devProportion := dcrutil.Amount(g.params.BlockTaxProportion)
-	totalProportions := dcrutil.Amount(g.params.TotalSubsidyProportions())
-	devSubsidy := (fullSubsidy * devProportion) / totalProportions
-	if int64(blockHeight) < g.params.StakeValidationHeight {
-		return devSubsidy
-	}
-
-	// Reduce the subsidy according to the number of votes.
-	ticketsPerBlock := dcrutil.Amount(g.params.TicketsPerBlock)
-	return (devSubsidy * dcrutil.Amount(numVotes)) / ticketsPerBlock
 }
 
 // standardCoinbaseOpReturnScript returns a standard script suitable for use as

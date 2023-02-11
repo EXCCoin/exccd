@@ -15,6 +15,7 @@ Tests are included to ensure proper functionality.
   - Total number of votes
   - Total number of tickets
   - Total number of revocations
+
 - Logs all cumulative data every 10 seconds
 - Immediately logs any outstanding data when requested by the caller
 */

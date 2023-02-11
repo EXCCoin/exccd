@@ -21,25 +21,12 @@ func ExampleDecodeAddress() {
 	// Ordinarily addresses would be read from the user or the result of a
 	// derivation, but they are hard coded here for the purposes of this
 	// example.
-	simNetParams := chaincfg.SimNetParams()
+	netParams := chaincfg.TestNet3Params()
 	addrsToDecode := []string{
-		// v0 pay-to-pubkey ecdsa
-		"SkLUJQxtYoVrewN6fwqsU6JQjxLs5a6xfcTsGfUYiLr2AUY6HuLMN",
-
-		// v0 pay-to-pubkey-hash ecdsa
-		"Sspzuh5xuvqxccYLWJDJjCtqp166NRxcaPB",
-
-		// v0 pay-to-pubkey schnorr
-		"SkLYBuKMSsCi1PdjqMf2i6D3wWB6K1QNMN39Qsxr68qLBFXMTwcpG",
-
-		// v0 pay-to-pubkey-hash schnorr
-		"SSt3WeMV3ufEHufh8nCey97y2yp7tNdPyES",
-
-		// v0 pay-to-script-hash
-		"ScrkZMau4jj7JUHUvU4YMMRRi4w1o3Wp1vY",
+		"TsbbBthkKvpMEd55BU3ndzGH9w8rX1HmQ3V",
 	}
 	for idx, encodedAddr := range addrsToDecode {
-		addr, err := stdaddr.DecodeAddress(encodedAddr, simNetParams)
+		addr, err := stdaddr.DecodeAddress(encodedAddr, netParams)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -100,32 +87,12 @@ func ExampleDecodeAddress() {
 	}
 
 	// Output:
-	// addr0: SkLUJQxtYoVrewN6fwqsU6JQjxLs5a6xfcTsGfUYiLr2AUY6HuLMN
+	// addr0: TsbbBthkKvpMEd55BU3ndzGH9w8rX1HmQ3V
 	//   payment script version: 0
-	//   payment script: 210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ac
-	//   p2pkh addr: Sspzuh5xuvqxccYLWJDJjCtqp166NRxcaPB
-	// addr1: Sspzuh5xuvqxccYLWJDJjCtqp166NRxcaPB
-	//   payment script version: 0
-	//   payment script: 76a914e280cb6e66b96679aec288b1fbdbd4db08077a1b88ac
-	//   hash160: e280cb6e66b96679aec288b1fbdbd4db08077a1b
+	//   payment script: 76a91473f1d619dc632d15db63adfaf726b4633c5a057088ac
+	//   hash160: 73f1d619dc632d15db63adfaf726b4633c5a0570
 	//   voting rights script version: 0
-	//   voting rights script: ba76a914e280cb6e66b96679aec288b1fbdbd4db08077a1b88ac
+	//   voting rights script: ba76a91473f1d619dc632d15db63adfaf726b4633c5a057088ac
 	//   reward script version: 0
-	//   reward script: 6a1ee280cb6e66b96679aec288b1fbdbd4db08077a1b00e1f505000000000058
-	// addr2: SkLYBuKMSsCi1PdjqMf2i6D3wWB6K1QNMN39Qsxr68qLBFXMTwcpG
-	//   payment script version: 0
-	//   payment script: 210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f8179852be
-	//   p2pkh addr: SSt3WeMV3ufEHufh8nCey97y2yp7tNdPyES
-	// addr3: SSt3WeMV3ufEHufh8nCey97y2yp7tNdPyES
-	//   payment script version: 0
-	//   payment script: 76a914e280cb6e66b96679aec288b1fbdbd4db08077a1b8852be
-	//   hash160: e280cb6e66b96679aec288b1fbdbd4db08077a1b
-	// addr4: ScrkZMau4jj7JUHUvU4YMMRRi4w1o3Wp1vY
-	//   payment script version: 0
-	//   payment script: a914ae7cd0a69b915796aa9318e1ad74f3579bfcb36587
-	//   hash160: ae7cd0a69b915796aa9318e1ad74f3579bfcb365
-	//   voting rights script version: 0
-	//   voting rights script: baa914ae7cd0a69b915796aa9318e1ad74f3579bfcb36587
-	//   reward script version: 0
-	//   reward script: 6a1eae7cd0a69b915796aa9318e1ad74f3579bfcb36500e1f505000000800058
+	//   reward script: 6a1e73f1d619dc632d15db63adfaf726b4633c5a057000e1f505000000000058
 }

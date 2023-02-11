@@ -7,8 +7,6 @@ package blockchain
 
 import (
 	"context"
-	"encoding/binary"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"math"
@@ -28,7 +26,6 @@ import (
 	"github.com/decred/dcrd/dcrutil/v4"
 	"github.com/decred/dcrd/lru"
 	"github.com/decred/dcrd/txscript/v4"
-	"github.com/decred/dcrd/txscript/v4/sign"
 	"github.com/decred/dcrd/wire"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/filter"
@@ -322,73 +319,6 @@ func newFakeCreateVoteTx(tspendVotes []treasuryVoteTuple) *wire.MsgTx {
 		tx.AddTxOut(wire.NewTxOut(0, tspendScript))
 	}
 	return tx
-}
-
-// newFakeCreateTSpend creates a fake tspend transaction.
-func newFakeCreateTSpend(privKey []byte, payouts []dcrutil.Amount, fee dcrutil.Amount, expiry uint32) *wire.MsgTx {
-	// Calculate total payout.
-	totalPayout := int64(0)
-	for _, amount := range payouts {
-		totalPayout += int64(amount)
-	}
-	valueIn := int64(fee) + totalPayout
-
-	// OP_RETURN <8 byte LE ValueIn><24 byte random>
-	// The TSpend TxIn ValueIn is encoded in the first 8 bytes to ensure
-	// that it becomes signed. This is consensus enforced.
-	var payload [32]byte
-	binary.LittleEndian.PutUint64(payload[0:8], uint64(valueIn))
-	_, err := mrand.Read(payload[8:])
-	if err != nil {
-		panic(err)
-	}
-	builder := txscript.NewScriptBuilder()
-	builder.AddOp(txscript.OP_RETURN)
-	builder.AddData(payload[:])
-	opretScript, err := builder.Script()
-	if err != nil {
-		panic(err)
-	}
-	msgTx := wire.NewMsgTx()
-	msgTx.Version = wire.TxVersionTreasury
-	msgTx.Expiry = expiry
-	msgTx.AddTxOut(wire.NewTxOut(0, opretScript))
-
-	// OP_TGEN
-	for _, amount := range payouts {
-		// Generate valid script. This is a hex encoded blob from
-		// generator.go.
-		p2shOpTrueScript, err := hex.DecodeString("a914f5a8302ee8695bf836258b8f2b57b38a0be14e4787")
-		if err != nil {
-			panic(err)
-		}
-		script := make([]byte, len(p2shOpTrueScript)+1)
-		script[0] = txscript.OP_TGEN
-		copy(script[1:], p2shOpTrueScript[:])
-		msgTx.AddTxOut(wire.NewTxOut(int64(amount), script))
-	}
-
-	// Treasury spend transactions have no inputs since the funds are
-	// sourced from a special account, so previous outpoint is zero hash
-	// and max index.
-	msgTx.AddTxIn(&wire.TxIn{
-		PreviousOutPoint: *wire.NewOutPoint(&chainhash.Hash{},
-			wire.MaxPrevOutIndex, wire.TxTreeRegular),
-		Sequence:        wire.MaxTxInSequenceNum,
-		ValueIn:         valueIn,
-		BlockHeight:     wire.NullBlockHeight,
-		BlockIndex:      wire.NullBlockIndex,
-		SignatureScript: nil,
-	})
-
-	// Calculate TSpend signature without SigHashType.
-	sigscript, err := sign.TSpendSignatureScript(msgTx, privKey)
-	if err != nil {
-		panic(err)
-	}
-	msgTx.TxIn[0].SignatureScript = sigscript
-
-	return msgTx
 }
 
 // chainedFakeNodes returns the specified number of nodes constructed such that

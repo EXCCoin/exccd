@@ -16,7 +16,7 @@ type mockAddrParams struct {
 	pkhEd25519ID [2]byte
 	pkhSchnorrID [2]byte
 	scriptHashID [2]byte
-	privKeyID    [2]byte
+	privKeyID    byte
 }
 
 // AddrIDPubKeyV0 returns the magic prefix bytes associated with the mock params
@@ -67,12 +67,12 @@ func (p *mockAddrParams) AddrIDScriptHashV0() [2]byte {
 // was written.
 func mockMainNetParams() *mockAddrParams {
 	return &mockAddrParams{
-		pubKeyID:     [2]byte{0x13, 0x86}, // starts with Dk
-		pkhEcdsaID:   [2]byte{0x07, 0x3f}, // starts with Ds
-		pkhEd25519ID: [2]byte{0x07, 0x1f}, // starts with De
-		pkhSchnorrID: [2]byte{0x07, 0x01}, // starts with DS
-		scriptHashID: [2]byte{0x07, 0x1a}, // starts with Dc
-		privKeyID:    [2]byte{0x22, 0xde}, // starts with Pm
+		pubKeyID:     [2]byte{0x02, 0xdc}, // starts with 2s    -- no such addresses should exist in RL
+		pkhEcdsaID:   [2]byte{0x21, 0xB9}, // starts with 22
+		pkhEd25519ID: [2]byte{0x35, 0xcf}, // starts with 2e
+		pkhSchnorrID: [2]byte{0x2f, 0x0d}, // starts with 2S
+		scriptHashID: [2]byte{0x34, 0xAF}, // starts with 2c
+		privKeyID:    0x80,                // starts with 5 (uncompressed) or K (compressed)
 	}
 }
 
@@ -86,7 +86,7 @@ func mockTestNetParams() *mockAddrParams {
 		pkhEd25519ID: [2]byte{0x0f, 0x01}, // starts with Te
 		pkhSchnorrID: [2]byte{0x0e, 0xe3}, // starts with TS
 		scriptHashID: [2]byte{0x0e, 0xfc}, // starts with Tc
-		privKeyID:    [2]byte{0x23, 0x0e}, // starts with Pt
+		privKeyID:    0xef,                // starts with 9 (uncompressed) or c (compressed)
 	}
 }
 
@@ -105,26 +105,26 @@ func TestVerifyMessage(t *testing.T) {
 		isValid bool
 	}{{
 		name:    "valid",
-		addr:    "TsdbYVDoh3JsyP6oEg2aHVoTjsFuHzUgGKv",
-		sig:     "IITPXfmkfLPULbX9Im3XIyHAKiXRw5N9j6P7qf0MdEP9YQinn51lWjS+8jbTceRxCWckKKssu3ZpQm1xCWKz9GA=",
+		addr:    "TsULH3kCRvDjwTh9CoMnhiNMUkk2JvaecRB",
+		sig:     "HxvjYfirrn3ccDhg26XSi/6y5+tIbuuOFLgF70pTeDSvWYE9/II6pZFaIvp95pfyaBhFhht7Dt5TvRe7g5BTwfQ=",
 		params:  testNetParams,
 		isValid: true,
 	}, {
 		name:    "wrong address",
-		addr:    "TsWeG3TJzucZgYyMfZFC2GhBvbeNfA48LTo",
-		sig:     "IITPXfmkfLPULbX9Im3XIyHAKiXRw5N9j6P7qf0MdEP9YQinn51lWjS+8jbTceRxCWckKKssu3ZpQm1xCWKz9GA=",
+		addr:    "TsakkhCjU7t4D46AkeNoCshtunX5rSfghJX",
+		sig:     "IHJ2BFnXaXgvKsBvdNTTlHYmbM8Dy/xihFNLq/F+9LbcPYicaSy7+wwNU7LliD4PJyy9rKSqeOQDl0xAV416CKI=",
 		params:  testNetParams,
 		isValid: false,
 	}, {
 		name:    "wrong signature",
-		addr:    "TsdbYVDoh3JsyP6oEg2aHVoTjsFuHzUgGKv",
-		sig:     "HxzZggzHMljSWpKHnw1Dow84KGWvTRBCG2JqBM5W4Q7iePW0dirZXCggSeXHVQ26D0MbDFffi3yw+x2Z5nQ94gg=",
+		addr:    "TsVGSmQMRDX8wQu82SuWQedmXCWW9hEPApz",
+		sig:     "IAmUid56BTjvPYSuwgv1n8tDl8f7dqNZOhpvie4H3OaYVjdhRWFeRSjsUN3D7mfRhiV/9OIsWKepJ9ghrvHUbh8=",
 		params:  testNetParams,
 		isValid: false,
 	}, {
 		name:    "wrong params",
-		addr:    "TsdbYVDoh3JsyP6oEg2aHVoTjsFuHzUgGKv",
-		sig:     "IITPXfmkfLPULbX9Im3XIyHAKiXRw5N9j6P7qf0MdEP9YQinn51lWjS+8jbTceRxCWckKKssu3ZpQm1xCWKz9GA=",
+		addr:    "TsVRVzw5Nbjp4eVVhq2y9ankcNp78imTGKd",
+		sig:     "IAmUid56BTjvPYSuwgv1n8tDl8f7dqNZOhpvie4H3OaYVjdhRWFeRSjsUN3D7mfRhiV/9OIsWKepJ9ghrvHUbh8=",
 		params:  mainNetParams,
 		isValid: false,
 	}}
@@ -132,7 +132,7 @@ func TestVerifyMessage(t *testing.T) {
 	for _, test := range tests {
 		err := VerifyMessage(test.addr, test.sig, msg, test.params)
 		if (test.isValid && err != nil) || (!test.isValid && err == nil) {
-			t.Fatalf("%s: failed", test.name)
+			t.Fatalf("%s: failed: %v", test.name, err)
 		}
 	}
 }

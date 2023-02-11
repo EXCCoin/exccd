@@ -18,17 +18,20 @@ import (
 // Like IEEE754 floating point, there are three basic components: the sign,
 // the exponent, and the mantissa.  They are broken out as follows:
 //
-//	* the most significant 8 bits represent the unsigned base 256 exponent
-//	* bit 23 (the 24th bit) represents the sign bit
-//	* the least significant 23 bits represent the mantissa
+//   - the most significant 8 bits represent the unsigned base 256 exponent
 //
-//	-------------------------------------------------
-//	|   Exponent     |    Sign    |    Mantissa     |
-//	-------------------------------------------------
-//	| 8 bits [31-24] | 1 bit [23] | 23 bits [22-00] |
-//	-------------------------------------------------
+//   - bit 23 (the 24th bit) represents the sign bit
+//
+//   - the least significant 23 bits represent the mantissa
+//
+//     -------------------------------------------------
+//     |   Exponent     |    Sign    |    Mantissa     |
+//     -------------------------------------------------
+//     | 8 bits [31-24] | 1 bit [23] | 23 bits [22-00] |
+//     -------------------------------------------------
 //
 // The formula to calculate N is:
+//
 //	N = (-1^sign) * mantissa * 256^(exponent-3)
 //
 // Note that this encoding is capable of representing negative numbers as well

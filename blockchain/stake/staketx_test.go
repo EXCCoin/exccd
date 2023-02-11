@@ -1371,14 +1371,14 @@ func TestCalculateRevocationRewards(t *testing.T) {
 		prevHeaderBytes:          prevHeaderBytes,
 		isAutoRevocationsEnabled: true,
 		want: []int64{
-			99999999,
 			100000000,
-			99999999,
-			99999999,
-			99999999,
-			99999999,
+			 99999999,
+			 99999999,
+			100000000,
 			100000001,
-			100000000,
+			 99999999,
+			 99999999,
+			 99999999,
 		},
 	}}
 
@@ -1517,14 +1517,12 @@ func TestCreateRevocationFromTicket(t *testing.T) {
 		ticketOut4,
 		ticketOut5,
 	}
-	revocationHash := mustParseHash("46ae5f78174c6c6e3675d0bbfec27e25c40f3a119e" +
-		"df9183b96261db5cda7a4f")
+	revocationHash := mustParseHash("11482002a2dbbc484d19657a8ac49817002b480f2e62c7d44a91f26b73cee7f4")
 	revocationTxFee := dcrutil.Amount(285000)
 	revocationTxVersion := uint16(1)
 
 	// With auto revocations enabled.
-	autoRevocationsTxHash := mustParseHash("c8999b6e2544f339419cc5416f15e9b942c" +
-		"fd6481246012d2da82f4594310e65")
+	autoRevocationsTxHash := mustParseHash("4592117675661bbe80e60e5a27997ff4a84c1ef173fff42e92f41f608c83bd10")
 	autoRevocationsTxFee := dcrutil.Amount(0)
 	autoRevocationsTxVersion := TxVersionAutoRevocations
 

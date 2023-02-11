@@ -20,9 +20,9 @@ import (
 //
 // For example:
 //
-//   allocLen := len(leaves) + len(leaves)&1
-//   leaves := make([]chainhash.Hash, len(leaves), allocLen)
-//   // populate the leaves
+//	allocLen := len(leaves) + len(leaves)&1
+//	leaves := make([]chainhash.Hash, len(leaves), allocLen)
+//	// populate the leaves
 //
 // See CalcMerkleRoot for more details on how the merkle root is calculated.
 func CalcMerkleRootInPlace(leaves []chainhash.Hash) chainhash.Hash {

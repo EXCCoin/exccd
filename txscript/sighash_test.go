@@ -95,8 +95,7 @@ func TestCalcSignatureHash(t *testing.T) {
 		tx.AddTxOut(txOut)
 	}
 
-	want := hexToBytes("4ce2cd042d64e35b36fdbd16aff0d38a5abebff0e5e8f6b6b" +
-		"31fcd4ac6957905")
+	want := hexToBytes("74969d361b70b4183750097831845378d1827806f353dbf65cc39444d2eec0c4")
 	script := hexToBytes("51")
 
 	// Test prefix caching.

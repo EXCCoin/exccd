@@ -377,9 +377,12 @@ nextTest:
 			// Ensure the test data isn't faking ticket purchases at
 			// an incorrect difficulty.
 			tip := bc.bestChain.Tip()
-			gotDiff := bc.calcNextRequiredStakeDifficultyV2(tip)
+			gotDiff, err := bc.calcNextRequiredStakeDifficultyV1(tip)
+			if err != nil {
+				t.Errorf("calcNextRequiredStakeDifficultyV1 error: %w", err)
+			}
 			if gotDiff != ticketInfo.stakeDiff {
-				t.Errorf("calcNextRequiredStakeDifficultyV2 (%s): "+
+				t.Errorf("calcNextRequiredStakeDifficultyV1 (%s): "+
 					"did not get expected stake difficulty -- got "+
 					"%d, want %d", test.name, gotDiff,
 					ticketInfo.stakeDiff)
@@ -420,7 +423,10 @@ nextTest:
 		}
 
 		// Ensure the calculated difficulty matches the expected value.
-		gotDiff := bc.calcNextRequiredStakeDifficultyV2(bc.bestChain.Tip())
+		gotDiff, err := bc.calcNextRequiredStakeDifficultyV1(bc.bestChain.Tip())
+		if err != nil {
+			t.Errorf("calcNextRequiredStakeDifficultyV1 error: %w", err)
+		}
 		if gotDiff != test.expectedDiff {
 			t.Errorf("calcNextRequiredStakeDifficultyV2 (%s): "+
 				"did not get expected stake difficulty -- got "+
@@ -918,9 +924,12 @@ nextTest:
 			// Ensure the test data isn't faking ticket purchases at
 			// an incorrect difficulty.
 			tip := bc.bestChain.Tip()
-			reqDiff := bc.calcNextRequiredStakeDifficultyV2(tip)
+			reqDiff, err := bc.calcNextRequiredStakeDifficultyV1(tip)
+			if err != nil {
+				t.Errorf("calcNextRequiredStakeDifficultyV1 error: %w", err)
+			}
 			if ticketInfo.stakeDiff != reqDiff {
-				t.Errorf("calcNextRequiredStakeDifficultyV2 (%s): "+
+				t.Errorf("calcNextRequiredStakeDifficultyV1 (%s): "+
 					"test data has incorrect stake difficulty: "+
 					"has %d, requires %d", test.name,
 					ticketInfo.stakeDiff, reqDiff)
@@ -961,15 +970,15 @@ nextTest:
 		}
 
 		// Ensure the calculated difficulty matches the expected value.
-		gotDiff, err := bc.estimateNextStakeDifficultyV2(bc.bestChain.Tip(),
+		gotDiff, err := bc.estimateNextStakeDifficulty(bc.bestChain.Tip(),
 			test.newTickets, test.useMaxTickets)
 		if err != nil {
-			t.Errorf("estimateNextStakeDifficultyV2 (%s): "+
+			t.Errorf("estimateNextStakeDifficulty (%s): "+
 				"unexpected error: %v", test.name, err)
 			continue
 		}
 		if gotDiff != test.expectedDiff {
-			t.Errorf("estimateNextStakeDifficultyV2 (%s): did not "+
+			t.Errorf("estimateNextStakeDifficulty (%s): did not "+
 				"get expected stake difficulty -- got %d, "+
 				"want %d", test.name, gotDiff, test.expectedDiff)
 			continue

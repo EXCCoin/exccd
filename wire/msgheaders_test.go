@@ -31,7 +31,7 @@ func TestHeaders(t *testing.T) {
 	// Ensure max payload is expected value for latest protocol version.
 	// Num headers (varInt) 3 bytes + max allowed headers (header length +
 	// 1 byte for the number of transactions which is always 0).
-	wantPayload := uint32(362003)
+	wantPayload := uint32(562003)
 	maxPayload := msg.MaxPayloadLength(pver)
 	if maxPayload != wantPayload {
 		t.Errorf("MaxPayloadLength: wrong max payload length for "+
@@ -88,6 +88,7 @@ func TestHeadersWire(t *testing.T) {
 		uint32(0x01010101),                          // Nonce
 		[32]byte{},                                  // ExtraData
 		uint32(0xba5eba11),                          // StakeVersion
+		[EquihashSolutionLen]byte{},                 // EquihashSolution
 	)
 	bh.Timestamp = time.Unix(0x4966bc61, 0)
 
@@ -132,6 +133,16 @@ func TestHeadersWire(t *testing.T) {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x11, 0xba, 0x5e, 0xba, // StakeVersion
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Equihash Solution
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, // TxnCount (0 for headers message)
 	}
 
@@ -205,17 +216,18 @@ func TestHeadersWireErrors(t *testing.T) {
 		&merkleHash,    // StakeRoot
 		uint16(0x0000), // VoteBits
 		[6]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // FinalState
-		uint16(0x0000),            // Voters
-		uint8(0x00),               // FreshStake
-		uint8(0x00),               // Revocations
-		uint32(0),                 // Poolsize
-		bits,                      // Bits
-		int64(0x0000000000000000), // Sbits
-		uint32(1),                 // Height
-		uint32(0),                 // Size
-		nonce,                     // Nonce
-		[32]byte{},                // ExtraData
-		uint32(0xca55e77e),        // StakeVersion
+		uint16(0x0000),              // Voters
+		uint8(0x00),                 // FreshStake
+		uint8(0x00),                 // Revocations
+		uint32(0),                   // Poolsize
+		bits,                        // Bits
+		int64(0x0000000000000000),   // Sbits
+		uint32(1),                   // Height
+		uint32(0),                   // Size
+		nonce,                       // Nonce
+		[32]byte{},                  // ExtraData
+		uint32(0xca55e77e),          // StakeVersion
+		[EquihashSolutionLen]byte{}, // EquihashSolution
 	)
 
 	bh.Version = testBlock.Header.Version
@@ -288,6 +300,7 @@ func TestHeadersWireErrors(t *testing.T) {
 		nonce,                     // Nonce
 		[32]byte{},                // ExtraData
 		uint32(0xf01dab1e),        // StakeVersion
+		[EquihashSolutionLen]byte{}, // EquihashSolution
 	)
 	bhTrans.Version = testBlock.Header.Version
 	bhTrans.Timestamp = testBlock.Header.Timestamp

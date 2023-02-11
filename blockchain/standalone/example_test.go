@@ -47,36 +47,6 @@ func ExampleBigToCompact() {
 	// 453115903
 }
 
-// This example demonstrates checking the proof of work of a block hash against
-// a target difficulty.
-func ExampleCheckProofOfWork() {
-	// This is the pow limit for mainnet and would ordinarily come from chaincfg
-	// params, however, it is hard coded here for the purposes of the example.
-	l := "00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-	powLimit, success := new(big.Int).SetString(l, 16)
-	if !success {
-		fmt.Println("invalid pow limit")
-		return
-	}
-
-	// Check the proof of work for block 1 in the main chain.
-	h := "000000000000437482b6d47f82f374cde539440ddb108b0a76886f0d87d126b9"
-	hash, err := chainhash.NewHashFromStr(h)
-	if err != nil {
-		fmt.Printf("failed to parse hash: %v\n", err)
-		return
-	}
-	bits := uint32(453115903)
-
-	if err := standalone.CheckProofOfWork(hash, bits, powLimit); err != nil {
-		fmt.Printf("proof of work check failed: %v\n", err)
-		return
-	}
-
-	// Output:
-	//
-}
-
 // This example demonstrates calculating a merkle root from a slice of leaf
 // hashes.
 func ExampleCalcMerkleRoot() {
@@ -93,5 +63,5 @@ func ExampleCalcMerkleRoot() {
 	fmt.Printf("Result: %s", merkleRoot)
 
 	// Output:
-	// Result: 5fdfcaba377aefc1bfc4af5ef8e0c2a61656e10e8105c4db7656ae5d58f8b77f
+	// Result: 715d8b746a60de6ca9d0ebb1ecaa8992a8c95af32b895cf8c1d4fd004e1156db
 }

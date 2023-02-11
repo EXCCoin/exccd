@@ -67,17 +67,6 @@ const (
 	// are allowed in the mempool. The number 7 is also the amount of
 	// physical space available for TSpend votes and thus is a hard limit.
 	MempoolMaxConcurrentTSpends = 7
-
-	// ancestorTrackingLimit is the maximum number of ancestors a transaction
-	// can have ancestor stats calculated for.
-	ancestorTrackingLimit = 25
-)
-
-var (
-	// zeroHash is the zero value for a chainhash.Hash and is defined as a
-	// package level variable to avoid the need to create a new instance
-	// every time a check is needed.
-	zeroHash = &chainhash.Hash{}
 )
 
 // Tag represents an identifier to use for tagging orphan transactions.  The

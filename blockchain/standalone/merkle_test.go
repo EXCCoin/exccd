@@ -55,7 +55,7 @@ func TestCalcMerkleRoot(t *testing.T) {
 			"bec32f1016fd40f2adac39dfbcedb3e45b6d7f9b37cb340d22bce14015759632",
 			"06024a8ddaafa5c4b448168bebd8f37d7fb15eef079933579cf29b45dd40edfb",
 		},
-		want: "4aa7bcd77d51f6f4db4983e731b5e08b3ea724c5cb99d3debd3d75fd67e7c72b",
+		want: "c975944c2639f51dd72811165a4f501021aa8264ca123418b7f68fc772a23f28",
 	}, {
 		name: "odd number of leaves > 1 (mainnet block 260)",
 		leaves: []string{
@@ -63,7 +63,7 @@ func TestCalcMerkleRoot(t *testing.T) {
 			"b3b70fe08c2da744c9559d533e8db35b3bfefba1b0f1c7b31e7d9d523c00a426",
 			"dd3058a7fc691ff4dee0a8cd6030f404ffda7e7aee88aff3985f7b2bbe4792f7",
 		},
-		want: "a144c719391569aa20bf612bf5588bce71cd397574cb6c060e0bac100f6e5805",
+		want: "49e7cb6033c1cf8ae2b46c9362ce8fb24d2468b79194557d640af5ce3e659d10",
 	}}
 
 	testFuncs := []string{"CalcMerkleRoot", "CalcMerkleRootInPlace"}
@@ -152,7 +152,7 @@ func TestCalcTxTreeMerkleRoot(t *testing.T) {
 			"2155302177398d2296988ac000000000000000001d8bc2882000000000000000" +
 			"0ffffffff0800002f646372642f",
 		},
-		want: "c867d085c96604812854399bf6df63d35d857484fedfd147759ed94c3cdeca35",
+		want: "f074ea6397724cbfdbe69c51acd93c19694539b369e0694b56029a9b7a35b299",
 	}, {
 		name: "two transactions (mainnet block 1347)",
 		txns: []string{
@@ -174,7 +174,7 @@ func TestCalcTxTreeMerkleRoot(t *testing.T) {
 				"a31f45a12c01210353284744f576413877e35c1cbe90c84c129fe1c60650" +
 				"1181927e2e1649b3f3c4",
 		},
-		want: "7d366112c093b22ebb138815eaeb5edd692913489f9a53f143fa90349df177e4",
+		want: "0054ad69468ce8e6d34df1169f882d12cc286b396fbca4f577c581b406edbae5",
 	}}
 
 	for _, test := range tests {
@@ -225,7 +225,7 @@ func TestCalcCombinedTxTreeMerkleRoot(t *testing.T) {
 		name:        "no transactions",
 		regularTxns: nil,
 		stakeTxns:   nil,
-		want:        "988c02a849815a2c70d97fd613a333d766bcb250cd263663c58d4f954240996d",
+		want:        "4bfb5927a93198eae8f0d920233d00439b9709d36eef982730206ad142fda5f5",
 	}, {
 		name: "single regular tx, single stake tx (from simnet testing)",
 		regularTxns: []string{"0100000001000000000000000000000000000000000000" +
@@ -246,7 +246,7 @@ func TestCalcCombinedTxTreeMerkleRoot(t *testing.T) {
 			"1fcab70573aace5be1926ed6650121034c9b704a36fab21e12cbb508691c3159" +
 			"3f3fce4f3dd11fb0e8fac44c25c8600b",
 		},
-		want: "f6b7bd7ac6f1d61c6e48ae1e53302ccc84da2f3b7802a09244c2657a203aa9af",
+		want: "ee4545ea061cbb846b904368faa9e43dc1441f8d42836c3068ccece069416009",
 	}, {
 		name: "two regular txns, two stake txns (from simnet testing)",
 		regularTxns: []string{
@@ -290,7 +290,7 @@ func TestCalcCombinedTxTreeMerkleRoot(t *testing.T) {
 				"46b669479da404b0f4d1323a746c123dcffb09012102d871b270e4764359" +
 				"7ff904da3d3b0c9a370fec94930d34002feaa3eb3ffc02dd",
 		},
-		want: "4d82a32275ef4f9e858fbb88a3b61e6f86fba567d87976e639551d3667b6bca2",
+		want: "62c202856c47bda77bf988bf2a3630d7a33db1731eaba30a09652c80f144eb8e",
 	}}
 
 	for _, test := range tests {
@@ -357,52 +357,52 @@ func TestReferenceCalcCombinedMerkleRoot(t *testing.T) {
 		name:        "both zero",
 		regularRoot: "0000000000000000000000000000000000000000000000000000000000000000",
 		stakeRoot:   "0000000000000000000000000000000000000000000000000000000000000000",
-		want:        "988c02a849815a2c70d97fd613a333d766bcb250cd263663c58d4f954240996d",
+		want:        "4bfb5927a93198eae8f0d920233d00439b9709d36eef982730206ad142fda5f5",
 	}, {
 		name:        "stake zero",
 		regularRoot: "c867d085c96604812854399bf6df63d35d857484fedfd147759ed94c3cdeca35",
 		stakeRoot:   "0000000000000000000000000000000000000000000000000000000000000000",
-		want:        "1ac7b08e89cf9a09aa37cbc6da5ef565387d5ab7e8a405a6bf75a31efb1a6987",
+		want:        "d410c299c6618f4836084bcef5c2b941b70ef8a74379966e5985113ef9900b29",
 	}, {
 		name:        "retroactive block 257",
 		regularRoot: "4aa7bcd77d51f6f4db4983e731b5e08b3ea724c5cb99d3debd3d75fd67e7c72b",
 		stakeRoot:   "53c5472957646d0b5a33ed482138df8b9212d7c00553fca6929351ec912d9a43",
-		want:        "9f5c6658689c627a81f29fd54389a4f4e225d59c72257762b62d19da06f76028",
+		want:        "ebe598d110fda45a42430112475d4c01aa8279026c1ef71101bb343cd182a5c2",
 	}, {
 		name:        "retroactive block 258",
 		regularRoot: "6a37f6c6e7925b011611375ea4bd68aa712770ff9e62fe2291f35d44bfc0da09",
 		stakeRoot:   "ec8ca6b6d79d6643b3eff69c669d590e0217ba783f921d8a747829db4122267c",
-		want:        "cbbf08173144d05299380009af546de876fadb5c5a7ca2b865e18c87b97c3e66",
+		want:        "1e20bffb727ece0bd489b12cb2dcf6f389a13ead09def2dc6a4326d7d9260341",
 	}, {
 		name:        "retroactive block 259",
 		regularRoot: "928bfdec06342966a27cfa784309cbede715928965c68940fa5b402e4870312d",
 		stakeRoot:   "d159449bfa08efc8f55cce3d0a0c3ce43392907193dd244d0c4a90b210c34e89",
-		want:        "223a8a09f339daaec50123ffc9ffcafcd9a0daec7d6574f86874b8dca354c85f",
+		want:        "625f25d0fa9e832c6c988f4dcf2a1dc6698408c77f8e3f2e59760975d97f4b24",
 	}, {
 		name:        "retroactive block 260",
 		regularRoot: "a144c719391569aa20bf612bf5588bce71cd397574cb6c060e0bac100f6e5805",
 		stakeRoot:   "dd45ab0b099fbed6dd4ba8e91488cb10c8928e5a82975b03952094b141a93747",
-		want:        "85b49d61a922ae883bb31c8f0064ed9c2550425ffc1bd026a9986102ef34b2ad",
+		want:        "9040f12223f30e6afc18a3c08c0ffaf5198d68f673c7462a58ef12cb4701ed93",
 	}, {
 		name:        "retroactive block 261",
 		regularRoot: "5429f4db1794c827a31cf2f25d7e56e6ac8df6adda7be4971c11413dbbd96d53",
 		stakeRoot:   "502b3d79caed7b10c4b982f3bfff6847c052f60af77c2bf3a7b41126c6a140a7",
-		want:        "025d2d91dff22afd92d3111541c1c61cde9045f6e7fa04296ec8b12fcf3d5b70",
+		want:        "8ad8f7bc72a4d28c826d8659f65ca0fbd0709c8ad42b31273d66432eb3da19de",
 	}, {
 		name:        "retroactive block 262",
 		regularRoot: "9f3a41320b2c591a47b27bb1379aa7b13462e851977a4a7006b95cfaa0e0bbec",
 		stakeRoot:   "00d0a7c9be36a059d47e5c62b1ac81c9263c4d3d3a9c4221b7f80eb257d60603",
-		want:        "8b6d589261aa0d7ede6b719255bf989ee22967faf51af5533337e711abd49ee6",
+		want:        "9b2fb3470eb2771ce393867bea9f9b4b079eac7e27b026170e018145fd8fb442",
 	}, {
 		name:        "single regular tx, single stake tx (from simnet testing)",
 		regularRoot: "a7bb523ac8ee4cfb39f8ccc9a02281825f7e5d88d6874d5e08724f6bb0ac5083",
 		stakeRoot:   "826c95263cc3c7de75b0503796c96a0072f8e4da5adef8b95eee27654008a77b",
-		want:        "f6b7bd7ac6f1d61c6e48ae1e53302ccc84da2f3b7802a09244c2657a203aa9af",
+		want:        "67dcb0e256b959f2e6a20c75a5569c622cbd7f1f7ae6ead697598361c48b86d7",
 	}, {
 		name:        "two regular txns, two stake txns (from simnet testing)",
 		regularRoot: "b0953c08e873651c5505ff9a1f9d337c258d0719d1951536c1aa379bf7a0d523",
 		stakeRoot:   "ab0c7a1e7fab629ef74f95c09c03172489791b29db064c6e5dffdad3da31c4e0",
-		want:        "4d82a32275ef4f9e858fbb88a3b61e6f86fba567d87976e639551d3667b6bca2",
+		want:        "ad46cf4983c80107025cced36db50bf036d433fc4cf843bf29067c3593641b6a",
 	}}
 
 	for _, test := range tests {

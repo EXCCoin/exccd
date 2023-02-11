@@ -1458,7 +1458,6 @@ func newMiningHarness(chainParams *chaincfg.Params) (*miningHarness, []spendable
 					view, checkFraudProof, chainParams, prevHeader, isTreasuryEnabled,
 					isAutoRevocationsEnabled, isSubsidySplitEnabled)
 			},
-			CheckTSpendHasVotes:             chain.CheckTSpendHasVotes,
 			CountSigOps:                     blockchain.CountSigOps,
 			FetchUtxoEntry:                  chain.FetchUtxoEntry,
 			FetchUtxoView:                   chain.FetchUtxoView,
@@ -1470,7 +1469,6 @@ func newMiningHarness(chainParams *chaincfg.Params) (*miningHarness, []spendable
 			IsTreasuryAgendaActive:          chain.IsTreasuryAgendaActive,
 			IsAutoRevocationsAgendaActive:   chain.IsAutoRevocationsAgendaActive,
 			IsSubsidySplitAgendaActive:      chain.IsSubsidySplitAgendaActive,
-			MaxTreasuryExpenditure:          chain.MaxTreasuryExpenditure,
 			NewUtxoViewpoint:                chain.NewUtxoViewpoint,
 			TipGeneration:                   chain.TipGeneration,
 			ValidateTransactionScripts: func(tx *dcrutil.Tx,

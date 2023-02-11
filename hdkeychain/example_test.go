@@ -60,8 +60,8 @@ func Example_defaultWalletLayout() {
 	// and be decrypted or generated as the NewMaster example shows, but
 	// for the purposes of this example, the private extended key for the
 	// master node is being hard coded here.
-	master := "dprv3hCznBesA6jBushjx7y9NrfheE4ZshnaKYtsoLXefmLPzrXgEiXkd" +
-		"RMD6UngnmBYZzgNhdEd4K3PidxcaCiR6HC9hmpj8FcrP4Cv7zBwELA"
+	master := "xprv9xrCN3r9gRJF4pX6no8T6oLEEigiEM1qqzioEp9eN8L9HdXKNLjtsgsPAh" +
+		"fVcjZJuAKWNJ2vE8tAZPt2MMnr32B4iht4pnzssqjQbVzsxLx"
 
 	// Start by getting an extended key instance for the master node.
 	// This gives the path:
@@ -148,8 +148,8 @@ func Example_defaultWalletLayout() {
 	fmt.Println("Account 0 Internal Address 0:", acct0IntAddr)
 
 	// Output:
-	// Account 0 External Address 10: DshMmJ3bfvMDdk1mkXRD3x5xDuPwSxoYGfi
-	// Account 0 Internal Address 0: DsoTyktAyEDkYpgKSex6zx5rrkFDi2gAsHr
+	// Account 0 External Address 10: 22u28fVBoFgJvsc5T6hdsaNoqcewKTF8D1Vh
+	// Account 0 Internal Address 0: 22ts2TztRkW2JLHL9HeZqySGcn2bFhgWWsqm
 }
 
 // This example demonstrates the audits use case in BIP0032.
@@ -169,8 +169,8 @@ func Example_audits() {
 	// and be decrypted or generated as the NewMaster example shows, but
 	// for the purposes of this example, the private extended key for the
 	// master node is being hard coded here.
-	master := "dprv3hCznBesA6jBushjx7y9NrfheE4ZshnaKYtsoLXefmLPzrXgEiXkd" +
-		"RMD6UngnmBYZzgNhdEd4K3PidxcaCiR6HC9hmpj8FcrP4Cv7zBwELA"
+	master := "xprv9xrCN3r9gRJF4pX6no8T6oLEEigiEM1qqzioEp9eN8L9HdXKNLjtsgsPAh" +
+		"fVcjZJuAKWNJ2vE8tAZPt2MMnr32B4iht4pnzssqjQbVzsxLx"
 
 	// Start by getting an extended key instance for the master node.
 	// This gives the path:
@@ -191,5 +191,5 @@ func Example_audits() {
 	fmt.Println("Audit key N(m/*):", masterPubKey)
 
 	// Output:
-	// Audit key N(m/*): dpubZ9169KDAEUnypHbWCe2Vu5TxGEcqJeNeX6XCYFU1fqw2iQZK7fsMhzsEFArbLmyUdprUw9aXHneUNd92bjc31TqC6sUduMY6PK2z4JXDS8j
+	// Audit key N(m/*): xpub6BqYmZP3WnrYHJbZtpfTTwGxnkXCdojhDDeQ3CZFvTs8ARrTut49RVBs1wMz6SE9D12o6Vh57BqyJmyRPfy7WaD8XQgUnGieUPR4N6yeAts
 }

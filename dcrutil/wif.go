@@ -80,6 +80,17 @@ type WIF struct {
 	netID byte
 }
 
+// NewUncompressedWIF creates a new WIF structure to export an address and its private key
+// as a string encoded in the Wallet Import Format.
+// The address intended to be imported or exported was created
+// by serializing the Secp256k1 public key UNCOMPRESSED (legacy compatibility).
+func NewUncompressedWIF(privKey []byte, net *chaincfg.Params) (*WIF, error) {
+	if net == nil {
+		return nil, errors.New("no network")
+	}
+	return &WIF{dcrec.STEcdsaSecp256k1, privKey, []byte{}, false, net.PrivateKeyID}, nil
+}
+
 // NewWIF creates a new WIF structure to export an address and its private key
 // as a string encoded in the Wallet Import Format. The net parameter specifies
 // the magic bytes of the network for which the WIF string is intended.

@@ -16,13 +16,13 @@ import (
 // Tests the behavior of the mining view when returned from a tx source
 // containing a transaction chain depicted as:
 //
-//                       /--> d --> f
-//                       |
-//                 |--> b --|
+//	      /--> d --> f
+//	      |
+//	|--> b --|
+//
 // <coinbase>  --> a        |-->e
-//                 |--> c --|
 //
-//
+//	|--> c --|
 func TestMiningView(t *testing.T) {
 	harness, spendableOuts, err := newMiningHarness(chaincfg.MainNetParams())
 	if err != nil {

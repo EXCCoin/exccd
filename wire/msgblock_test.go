@@ -40,6 +40,7 @@ func TestBlock(t *testing.T) {
 		testBlock.Header.Nonce,                      // Nonce
 		[32]byte{},                                  // ExtraData
 		uint32(0x5ca1ab1e),                          // StakeVersion
+		[EquihashSolutionLen]byte{},
 	)
 
 	// Ensure the command is expected value.
@@ -119,7 +120,7 @@ func TestBlock(t *testing.T) {
 // hashes from a block accurately.
 func TestBlockTxHashes(t *testing.T) {
 	// Block 1, transaction 1 hash.
-	hashStr := "55a25248c04dd8b6599ca2a708413c00d79ae90ce075c54e8a967a647d7e4bea"
+	hashStr := "ee7825879836e2d9ed082fe81ed272c3bc6ae40750eaabf34fcb78e7c51a2aea"
 	wantHash, err := chainhash.NewHashFromStr(hashStr)
 	if err != nil {
 		t.Errorf("NewHashFromStr: %v", err)
@@ -138,7 +139,7 @@ func TestBlockTxHashes(t *testing.T) {
 // transaction hashes from a block accurately.
 func TestBlockSTxHashes(t *testing.T) {
 	// Block 1, transaction 1 hash.
-	hashStr := "ae208a69f3ee088d0328126e3d9bef7652b108d1904f27b166c5999233a801d4"
+	hashStr := "e8352e77297f313d0fc87cfc0d5de7cc86d2bd47db1479656aae3432944b93c2"
 	wantHash, err := chainhash.NewHashFromStr(hashStr)
 	if err != nil {
 		t.Errorf("NewHashFromStr: %v", err)
@@ -156,7 +157,7 @@ func TestBlockSTxHashes(t *testing.T) {
 // TestBlockHash tests the ability to generate the hash of a block accurately.
 func TestBlockHash(t *testing.T) {
 	// Block 1 hash.
-	hashStr := "6b73b6f6faebbfd6a541f38820593e43c50ce1abf64602ab8ac7d5502991c37f"
+	hashStr := "0820f741d1511a630914c10ecaf0961c98aeb3a67a5b8df5dc2f924176c050ca"
 	wantHash, err := chainhash.NewHashFromStr(hashStr)
 	if err != nil {
 		t.Errorf("NewHashFromStr: %v", err)
@@ -270,10 +271,12 @@ func TestBlockWireErrors(t *testing.T) {
 		{&testBlock, testBlockBytes, pver, 136, io.ErrShortWrite, io.EOF}, // 14
 		// Force error in nonce.
 		{&testBlock, testBlockBytes, pver, 140, io.ErrShortWrite, io.EOF}, // 15
-		// Force error in tx count.
+		// Force error in equihash solution.
 		{&testBlock, testBlockBytes, pver, 180, io.ErrShortWrite, io.EOF}, // 16
+		// Force error in tx count.
+		{&testBlock, testBlockBytes, pver, 280, io.ErrShortWrite, io.EOF}, // 17
 		// Force error in tx.
-		{&testBlock, testBlockBytes, pver, 181, io.ErrShortWrite, io.EOF}, // 17
+		{&testBlock, testBlockBytes, pver, 281, io.ErrShortWrite, io.EOF}, // 18
 	}
 
 	t.Logf("Running %d tests", len(tests))
@@ -414,10 +417,12 @@ func TestBlockSerializeErrors(t *testing.T) {
 		{&testBlock, testBlockBytes, 136, io.ErrShortWrite, io.EOF}, // 16
 		// Force error in nonce.
 		{&testBlock, testBlockBytes, 140, io.ErrShortWrite, io.EOF}, // 17
-		// Force error in tx count.
+		// Force error in equihash solution
 		{&testBlock, testBlockBytes, 180, io.ErrShortWrite, io.EOF}, // 18
+		// Force error in tx count.
+		{&testBlock, testBlockBytes, 280, io.ErrShortWrite, io.EOF}, // 19
 		// Force error in tx.
-		{&testBlock, testBlockBytes, 181, io.ErrShortWrite, io.EOF}, // 19
+		{&testBlock, testBlockBytes, 281, io.ErrShortWrite, io.EOF}, // 20
 	}
 
 	t.Logf("Running %d tests", len(tests))
@@ -500,8 +505,17 @@ func TestBlockOverflowErrors(t *testing.T) {
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 				0x5c, 0xa1, 0xab, 0x1e, // StakeVersion
-				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-				0xff, // TxnCount
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Equihash Solution
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+				0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // TxnCount
 			}, pver, ErrTooManyTxs,
 		},
 	}
@@ -549,7 +563,7 @@ func TestBlockSerializeSize(t *testing.T) {
 		size int       // Expected serialized size
 	}{
 		// Block with no transactions (header + 2x numtx)
-		{noTxBlock, 182},
+		{noTxBlock, 282},
 
 		// First block in the mainnet block chain.
 		{&testBlock, len(testBlockBytes)},
@@ -724,6 +738,16 @@ var testBlockBytes = []byte{
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x1e, 0xab, 0xa1, 0x5c, // StakeVersion
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Equihash Solution
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	// Announce number of txs
 	0x01, // TxnCount [180]
 	// Begin bogus normal txs
@@ -798,10 +822,10 @@ var testBlockBytes = []byte{
 
 // Transaction location information for the test block transactions.
 var testBlockTxLocs = []TxLoc{
-	{TxStart: 181, TxLen: 158},
+	{TxStart: 281, TxLen: 158},
 }
 
 // Transaction location information for the test block stake transactions.
 var testBlockSTxLocs = []TxLoc{
-	{TxStart: 340, TxLen: 158},
+	{TxStart: 440, TxLen: 158},
 }

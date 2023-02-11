@@ -89,7 +89,7 @@ func EquihashSolutionSize(n, k int) int {
 }
 
 func AppendExpandedNonce(headerBytes []byte, nonce uint32) []byte {
-	nonceBytes := make([]byte, 32, 32)
+	nonceBytes := make([]byte, 32)
 	binary.LittleEndian.PutUint32(nonceBytes, nonce)
 
 	buf := bytes.NewBuffer(make([]byte, 0, len(headerBytes)+len(nonceBytes)))
