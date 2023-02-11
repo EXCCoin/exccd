@@ -2,6 +2,7 @@
 *~
 
 # Databases
+exccd.db
 dcrd.db
 *-shm
 *-wal
@@ -37,7 +38,7 @@ _testmain.go
 
 # Binaries
 *.exe
-dcrd
+exccd
 cmd/addblock/addblock
 cmd/checkdevpremine/checkdevpremine
 cmd/findcheckpoint/findcheckpoint
