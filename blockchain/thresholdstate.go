@@ -10,6 +10,7 @@ import (
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/chaincfg/v3"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 // ThresholdState define the various threshold states used when voting on
@@ -641,6 +642,9 @@ func (b *BlockChain) IsFixSeqLocksAgendaActive() (bool, error) {
 // desired.  In other words, the returned deployment state is for the block
 // AFTER the passed node.
 func (b *BlockChain) isHeaderCommitmentsAgendaActive(prevNode *blockNode) (bool, error) {
+	if b.chainParams.Net == wire.SimNet || b.chainParams.Net == wire.RegNet {
+		return true, nil
+	}
 	return false, nil
 }
 
@@ -650,6 +654,9 @@ func (b *BlockChain) isHeaderCommitmentsAgendaActive(prevNode *blockNode) (bool,
 //
 // This function is safe for concurrent access.
 func (b *BlockChain) IsHeaderCommitmentsAgendaActive(prevHash *chainhash.Hash) (bool, error) {
+	if b.chainParams.Net == wire.SimNet || b.chainParams.Net == wire.RegNet {
+		return true, nil
+	}
 	return false, nil
 }
 
