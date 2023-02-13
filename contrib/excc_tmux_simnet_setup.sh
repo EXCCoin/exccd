@@ -4,55 +4,53 @@
 # Use of this source code is governed by an ISC
 # license that can be found in the LICENSE file.
 #
-# Tmux script to create 2 dcrd nodes (named dcrd1 and dcrd2) connected in series
+# Tmux script to create 2 exccd nodes (named exccd1 and exccd2) connected in series
 # along with 2 wallets (named wallet1 and wallet2) configured such that wallet1
-# is connected via JSON-RPC to dcrd1 and, likewise, wallet2 to dcrd2.
+# is connected via JSON-RPC to exccd1 and, likewise, wallet2 to exccd2.
 #
 # Both wallet1 and wallet2 use the same seed, however, wallet1 is configured to
 # automatically buy tickets and vote, while wallet2 is only configured to vote.
 #
-# The primary dcrd node (dcrd1) is configured as the primary mining node.
+# The primary exccd node (exccd1) is configured as the primary mining node.
 #
 # Network layout:
-# dcrd1 (p2p: localhost:19555) <-- dcrd2 (p2p: localhost:19565)
+# exccd1 (p2p: localhost:19555) <-- exccd2 (p2p: localhost:19565)
 #
 # RPC layout:
-# dcrd1 (JSON-RPC: localhost:19556)
+# exccd1 (JSON-RPC: localhost:19556)
 #     ^--- wallet1 (JSON-RPC: locahost:19557, gRPC: localhost:19558)
-# dcrd2 (JSON-RPC: localhost:19566)
+# exccd2 (JSON-RPC: localhost:19566)
 #     ^--- wallet2 (JSON-RPC: locahost:19567, gRPC: None)
 
-set -e
+set -e # exit script on any error
+# set -x # show all commands run
 
-SESSION="dcrd-simnet-nodes"
-NODES_ROOT=${DCR_SIMNET_ROOT:-${HOME}/dcrdsimnetnodes}
+SESSION="exccd-simnet-nodes"
+NODES_ROOT=${EXCC_SIMNET_ROOT:-${HOME}/exccdsimnetnodes}
 RPCUSER="USER"
 RPCPASS="PASS"
 WALLET_SEED="b280922d2cffda44648346412c5ec97f429938105003730414f10b01e1402eac"
-WALLET_MINING_ADDR="SsXciQNTo3HuV5tX3yy4hXndRWgLMRVC7Ah" # NOTE: This must be changed if the seed is changed.
-WALLET_XFER_ADDR="SsWKp7wtdTZYabYFYSc9cnxhwFEjA5g4pFc" # same as above
+WALLET_MINING_ADDR="Ssde8UGkdTGwc8Ab6xcn1WBNcvec3dtGSKe" # NOTE: This must be changed if the seed is changed.
+WALLET_XFER_ADDR="Ssde8UGkdTGwc8Ab6xcn1WBNcvec3dtGSKe" # same as above
 WALLET_CREATE_CONFIG="y
 n
 y
 ${WALLET_SEED}
 "
-TSPEND_PRIMARY_WIF=PsUUktzTqNKDRudiz3F4Chh5CKqqmp5W3ckRDhwECbwrSuWZ9m5fk
-TSPEND_SECONDARY_WIF=PsUVZDkMHvsH8RmYtCxCWs78xsLU9qAyZyLvV9SJWAdoiJxSFhvFx
-
 if [ -d "${NODES_ROOT}" ] ; then
   rm -R "${NODES_ROOT}"
 fi
 
-PRIMARY_DCRD_NAME=dcrd1
-SECONDARY_DCRD_NAME=dcrd2
+PRIMARY_EXCCD_NAME=exccd1
+SECONDARY_EXCCD_NAME=exccd2
 PRIMARY_WALLET_NAME=wallet1
 SECONDARY_WALLET_NAME=wallet2
-mkdir -p "${NODES_ROOT}/${PRIMARY_DCRD_NAME}"
-mkdir -p "${NODES_ROOT}/${SECONDARY_DCRD_NAME}"
+mkdir -p "${NODES_ROOT}/${PRIMARY_EXCCD_NAME}"
+mkdir -p "${NODES_ROOT}/${SECONDARY_EXCCD_NAME}"
 mkdir -p "${NODES_ROOT}/${PRIMARY_WALLET_NAME}"
 mkdir -p "${NODES_ROOT}/${SECONDARY_WALLET_NAME}"
 
-cat > "${NODES_ROOT}/dcrd.conf" <<EOF
+cat > "${NODES_ROOT}/exccd.conf" <<EOF
 rpcuser=${RPCUSER}
 rpcpass=${RPCPASS}
 simnet=1
@@ -62,7 +60,7 @@ debuglevel=TXMP=debug,MINR=debug
 txindex=1
 EOF
 
-cat > "${NODES_ROOT}/dcrctl.conf" <<EOF
+cat > "${NODES_ROOT}/exccctl.conf" <<EOF
 rpcuser=${RPCUSER}
 rpcpass=${RPCPASS}
 simnet=1
@@ -81,29 +79,29 @@ EOF
 cd ${NODES_ROOT} && tmux -2 new-session -d -s $SESSION
 
 ################################################################################
-# Setup the primary dcrd node
+# Setup the primary exccd node
 ################################################################################
 
-PRIMARY_DCRD_P2P=127.0.0.1:19555
-PRIMARY_DCRD_RPC=127.0.0.1:19556
-tmux rename-window -t $SESSION:0 "${PRIMARY_DCRD_NAME}"
+PRIMARY_EXCCD_P2P=127.0.0.1:19555
+PRIMARY_EXCCD_RPC=127.0.0.1:19556
+tmux rename-window -t $SESSION:0 "${PRIMARY_EXCCD_NAME}"
 tmux split-window -v
 tmux select-pane -t 0
-tmux send-keys "cd ${NODES_ROOT}/${PRIMARY_DCRD_NAME}" C-m
-tmux send-keys "dcrd -C ../dcrd.conf --listen ${PRIMARY_DCRD_P2P} --miningaddr=${WALLET_MINING_ADDR}" C-m
+tmux send-keys "cd ${NODES_ROOT}/${PRIMARY_EXCCD_NAME}" C-m
+tmux send-keys "exccd -C ../exccd.conf --listen ${PRIMARY_EXCCD_P2P} --miningaddr=${WALLET_MINING_ADDR}" C-m
 tmux resize-pane -D 15
 tmux select-pane -t 1
-tmux send-keys "cd ${NODES_ROOT}/${PRIMARY_DCRD_NAME}" C-m
+tmux send-keys "cd ${NODES_ROOT}/${PRIMARY_EXCCD_NAME}" C-m
 
-cat > "${NODES_ROOT}/${PRIMARY_DCRD_NAME}/ctl" <<EOF
+cat > "${NODES_ROOT}/${PRIMARY_EXCCD_NAME}/ctl" <<EOF
 #!/usr/bin/env bash
-dcrctl -C ../dcrctl.conf "\$@"
+exccctl -C ../exccctl.conf "\$@"
 EOF
-chmod +x "${NODES_ROOT}/${PRIMARY_DCRD_NAME}/ctl"
+chmod +x "${NODES_ROOT}/${PRIMARY_EXCCD_NAME}/ctl"
 
 # Script to mine a specified number of blocks with a delay in between them
 # Defaults to 1 block
-cat > "${NODES_ROOT}/${PRIMARY_DCRD_NAME}/mine" <<EOF
+cat > "${NODES_ROOT}/${PRIMARY_EXCCD_NAME}/mine" <<EOF
 #!/usr/bin/env bash
 NUM=1
 case \$1 in
@@ -116,7 +114,7 @@ for i in \$(seq \$NUM) ; do
   sleep 1
 done
 EOF
-chmod +x "${NODES_ROOT}/${PRIMARY_DCRD_NAME}/mine"
+chmod +x "${NODES_ROOT}/${PRIMARY_EXCCD_NAME}/mine"
 sleep 3
 tmux send-keys "./ctl generate 32" C-m
 
@@ -131,15 +129,15 @@ tmux split-window -v
 tmux select-pane -t 0
 tmux resize-pane -D 15
 tmux send-keys "cd ${NODES_ROOT}/${PRIMARY_WALLET_NAME}" C-m
-tmux send-keys "echo \"${WALLET_CREATE_CONFIG}\" | dcrwallet -C ../wallet.conf --create; tmux wait-for -S ${PRIMARY_WALLET_NAME}" C-m
+tmux send-keys "echo \"${WALLET_CREATE_CONFIG}\" | exccwallet -C ../wallet.conf --create; tmux wait-for -S ${PRIMARY_WALLET_NAME}" C-m
 tmux wait-for ${PRIMARY_WALLET_NAME}
-tmux send-keys "dcrwallet -C ../wallet.conf --enableticketbuyer --ticketbuyer.limit=10" C-m
+tmux send-keys "exccwallet -C ../wallet.conf --enableticketbuyer --ticketbuyer.limit=10" C-m
 tmux select-pane -t 1
 tmux send-keys "cd ${NODES_ROOT}/${PRIMARY_WALLET_NAME}" C-m
 
 cat > "${NODES_ROOT}/${PRIMARY_WALLET_NAME}/ctl" <<EOF
 #!/usr/bin/env bash
-dcrctl -C ../dcrctl.conf --wallet -c ./data/rpc.cert "\$@"
+exccctl -C ../exccctl.conf --wallet -c ./data/rpc.cert "\$@"
 EOF
 chmod +x "${NODES_ROOT}/${PRIMARY_WALLET_NAME}/ctl"
 
@@ -177,43 +175,42 @@ EOF
 chmod +x "${NODES_ROOT}/${PRIMARY_WALLET_NAME}/xfer"
 
 sleep 1
-tmux send-keys "./ctl importprivkey ${TSPEND_PRIMARY_WIF} imported false; ./ctl importprivkey ${TSPEND_SECONDARY_WIF} imported false" C-m
 
 ################################################################################
-# Setup the serially connected secondary dcrd node
+# Setup the serially connected secondary exccd node
 ################################################################################
 
-SECONDARY_DCRD_P2P=127.0.0.1:19565
-SECONDARY_DCRD_RPC=127.0.0.1:19566
-cat > "${NODES_ROOT}/${SECONDARY_DCRD_NAME}/ctl" <<EOF
+SECONDARY_EXCCD_P2P=127.0.0.1:19565
+SECONDARY_EXCCD_RPC=127.0.0.1:19566
+cat > "${NODES_ROOT}/${SECONDARY_EXCCD_NAME}/ctl" <<EOF
 #!/usr/bin/env bash
-dcrctl -C ../dcrctl.conf -s ${SECONDARY_DCRD_RPC} "\$@"
+exccctl -C ../exccctl.conf -s ${SECONDARY_EXCCD_RPC} "\$@"
 EOF
-chmod +x "${NODES_ROOT}/${SECONDARY_DCRD_NAME}/ctl"
+chmod +x "${NODES_ROOT}/${SECONDARY_EXCCD_NAME}/ctl"
 
-cp "${NODES_ROOT}/${PRIMARY_DCRD_NAME}/mine" "${NODES_ROOT}/${SECONDARY_DCRD_NAME}/"
-chmod +x "${NODES_ROOT}/${SECONDARY_DCRD_NAME}/mine"
+cp "${NODES_ROOT}/${PRIMARY_EXCCD_NAME}/mine" "${NODES_ROOT}/${SECONDARY_EXCCD_NAME}/"
+chmod +x "${NODES_ROOT}/${SECONDARY_EXCCD_NAME}/mine"
 
 # Script to force reorg
-cat > "${NODES_ROOT}/${SECONDARY_DCRD_NAME}/reorg" <<EOF
+cat > "${NODES_ROOT}/${SECONDARY_EXCCD_NAME}/reorg" <<EOF
 #!/usr/bin/env bash
-./ctl node remove ${PRIMARY_DCRD_P2P}
+./ctl node remove ${PRIMARY_EXCCD_P2P}
 ./mine
-cd "${NODES_ROOT}/${PRIMARY_DCRD_NAME}"
+cd "${NODES_ROOT}/${PRIMARY_EXCCD_NAME}"
 ./mine 2
-cd "${NODES_ROOT}/${SECONDARY_DCRD_NAME}"
-./ctl node connect ${PRIMARY_DCRD_P2P} perm
+cd "${NODES_ROOT}/${SECONDARY_EXCCD_NAME}"
+./ctl node connect ${PRIMARY_EXCCD_P2P} perm
 EOF
-chmod +x "${NODES_ROOT}/${SECONDARY_DCRD_NAME}/reorg"
+chmod +x "${NODES_ROOT}/${SECONDARY_EXCCD_NAME}/reorg"
 
-tmux new-window -t $SESSION:2 -n "${SECONDARY_DCRD_NAME}"
+tmux new-window -t $SESSION:2 -n "${SECONDARY_EXCCD_NAME}"
 tmux split-window -v
 tmux select-pane -t 0
 tmux resize-pane -D 15
-tmux send-keys "cd ${NODES_ROOT}/${SECONDARY_DCRD_NAME}" C-m
-tmux send-keys "dcrd -C ../dcrd.conf --listen ${SECONDARY_DCRD_P2P} --rpclisten ${SECONDARY_DCRD_RPC} --connect ${PRIMARY_DCRD_P2P}  --miningaddr=${WALLET_MINING_ADDR}" C-m
+tmux send-keys "cd ${NODES_ROOT}/${SECONDARY_EXCCD_NAME}" C-m
+tmux send-keys "exccd -C ../exccd.conf --listen ${SECONDARY_EXCCD_P2P} --rpclisten ${SECONDARY_EXCCD_RPC} --connect ${PRIMARY_EXCCD_P2P}  --miningaddr=${WALLET_MINING_ADDR}" C-m
 tmux select-pane -t 1
-tmux send-keys "cd ${NODES_ROOT}/${SECONDARY_DCRD_NAME}" C-m
+tmux send-keys "cd ${NODES_ROOT}/${SECONDARY_EXCCD_NAME}" C-m
 
 ################################################################################
 # Setup the secondary wallet
@@ -225,15 +222,15 @@ tmux split-window -v
 tmux select-pane -t 0
 tmux resize-pane -D 15
 tmux send-keys "cd ${NODES_ROOT}/${SECONDARY_WALLET_NAME}" C-m
-tmux send-keys "echo \"${WALLET_CREATE_CONFIG}\" | dcrwallet -C ../wallet.conf --create; tmux wait-for -S ${SECONDARY_WALLET_NAME}" C-m
+tmux send-keys "echo \"${WALLET_CREATE_CONFIG}\" | exccwallet -C ../wallet.conf --create; tmux wait-for -S ${SECONDARY_WALLET_NAME}" C-m
 tmux wait-for ${SECONDARY_WALLET_NAME}
-tmux send-keys "dcrwallet -C ../wallet.conf --rpcconnect=${SECONDARY_DCRD_RPC} --rpclisten=${SECONDARY_WALLET_RPC} --nogrpc" C-m
+tmux send-keys "exccwallet -C ../wallet.conf --rpcconnect=${SECONDARY_EXCCD_RPC} --rpclisten=${SECONDARY_WALLET_RPC} --nogrpc" C-m
 tmux select-pane -t 1
 tmux send-keys "cd ${NODES_ROOT}/${SECONDARY_WALLET_NAME}" C-m
 
 cat > "${NODES_ROOT}/${SECONDARY_WALLET_NAME}/ctl" <<EOF
 #!/usr/bin/env bash
-dcrctl -C ../dcrctl.conf -c ./data/rpc.cert -s ${SECONDARY_WALLET_RPC} "\$@"
+exccctl -C ../exccctl.conf -c ./data/rpc.cert -s ${SECONDARY_WALLET_RPC} "\$@"
 EOF
 chmod +x "${NODES_ROOT}/${SECONDARY_WALLET_NAME}/ctl"
 
@@ -244,13 +241,12 @@ cp "${NODES_ROOT}/${PRIMARY_WALLET_NAME}/xfer" "${NODES_ROOT}/${SECONDARY_WALLET
 chmod +x "${NODES_ROOT}/${SECONDARY_WALLET_NAME}/xfer"
 
 sleep 1
-tmux send-keys "./ctl importprivkey ${TSPEND_PRIMARY_WIF} imported false; ./ctl importprivkey ${TSPEND_SECONDARY_WIF} imported false" C-m
 
 ################################################################################
 # Setup helper script to stop everything
 ################################################################################
 
-cat > "${NODES_ROOT}/${PRIMARY_DCRD_NAME}/stopall" <<EOF
+cat > "${NODES_ROOT}/${PRIMARY_EXCCD_NAME}/stopall" <<EOF
 #!/usr/bin/env bash
 function countdown {
   secs=\$1
@@ -262,11 +258,11 @@ function countdown {
   done
 }
 
-cd "${NODES_ROOT}/${PRIMARY_DCRD_NAME}"
+cd "${NODES_ROOT}/${PRIMARY_EXCCD_NAME}"
 ./ctl stop 2>/dev/null
 cd "${NODES_ROOT}/${PRIMARY_WALLET_NAME}"
 ./ctl stop 2>/dev/null
-cd "${NODES_ROOT}/${SECONDARY_DCRD_NAME}"
+cd "${NODES_ROOT}/${SECONDARY_EXCCD_NAME}"
 ./ctl stop 2>/dev/null
 cd "${NODES_ROOT}/${SECONDARY_WALLET_NAME}"
 ./ctl stop 2>/dev/null
@@ -275,11 +271,11 @@ DELAY=3
 countdown \$DELAY "until shutdown"
 tmux kill-session -t $SESSION
 EOF
-cp "${NODES_ROOT}/${PRIMARY_DCRD_NAME}/stopall" "${NODES_ROOT}/${SECONDARY_DCRD_NAME}/"
-cp "${NODES_ROOT}/${PRIMARY_DCRD_NAME}/stopall" "${NODES_ROOT}/${PRIMARY_WALLET_NAME}/"
-cp "${NODES_ROOT}/${PRIMARY_DCRD_NAME}/stopall" "${NODES_ROOT}/${SECONDARY_WALLET_NAME}/"
-chmod +x "${NODES_ROOT}/${PRIMARY_DCRD_NAME}/stopall"
-chmod +x "${NODES_ROOT}/${SECONDARY_DCRD_NAME}/stopall"
+cp "${NODES_ROOT}/${PRIMARY_EXCCD_NAME}/stopall" "${NODES_ROOT}/${SECONDARY_EXCCD_NAME}/"
+cp "${NODES_ROOT}/${PRIMARY_EXCCD_NAME}/stopall" "${NODES_ROOT}/${PRIMARY_WALLET_NAME}/"
+cp "${NODES_ROOT}/${PRIMARY_EXCCD_NAME}/stopall" "${NODES_ROOT}/${SECONDARY_WALLET_NAME}/"
+chmod +x "${NODES_ROOT}/${PRIMARY_EXCCD_NAME}/stopall"
+chmod +x "${NODES_ROOT}/${SECONDARY_EXCCD_NAME}/stopall"
 chmod +x "${NODES_ROOT}/${PRIMARY_WALLET_NAME}/stopall"
 chmod +x "${NODES_ROOT}/${SECONDARY_WALLET_NAME}/stopall"
 
