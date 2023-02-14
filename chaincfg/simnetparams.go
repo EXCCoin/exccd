@@ -39,22 +39,14 @@ func SimNetParams() *Params {
 	// as the public transaction ledger for the simulation test network.
 	genesisBlock := wire.MsgBlock{
 		Header: wire.BlockHeader{
-			Version:   1,
-			PrevBlock: chainhash.Hash{}, // All zero.
+			Version:   4,
+			PrevBlock: chainhash.Hash{},
 			// MerkleRoot: Calculated below.
-			StakeRoot:    chainhash.Hash{}, // All zero.
-			VoteBits:     0,
-			FinalState:   [6]byte{}, // All zero.
-			Voters:       0,
-			FreshStake:   0,
-			Revocations:  0,
-			Timestamp:    time.Unix(1401292357, 0), // 2009-01-08 20:54:25 -0600 CST
-			PoolSize:     0,
-			Bits:         0x207fffff, // 545259519 [7fffff0000000000000000000000000000000000000000000000000000000000]
-			SBits:        0,
-			Nonce:        0,
+			Timestamp:    time.Unix(1532420489, 0), // Tuesday, 24-Jul-18 08:21:29 UTC
+			Bits:         bigToCompact(new(big.Int).Div(simNetPowLimit, big.NewInt(10))),
+			SBits:        2 * 1e7, // 0.2 Coin
+			Nonce:        0x18aea41a,
 			StakeVersion: 0,
-			Height:       0,
 		},
 		Transactions: []*wire.MsgTx{{
 			SerType: wire.TxSerializeFull,
@@ -78,6 +70,9 @@ func SimNetParams() *Params {
 						0x62, 0x61, 0x6e, 0x6b, 0x73, /* |banks| */
 					},
 					Sequence: 0xffffffff,
+					BlockHeight:     wire.NullBlockHeight,
+					BlockIndex:      wire.NullBlockIndex,
+					ValueIn:         wire.NullValueIn,
 				},
 			},
 			TxOut: []*wire.TxOut{
@@ -192,7 +187,7 @@ func SimNetParams() *Params {
 		HDCoinType: 2,
 
 		// Decred PoS parameters
-		MinimumStakeDiff:        20000,
+		MinimumStakeDiff:        2 * 1e7, // 0.2 Coin
 		TicketPoolSize:          simTicketPoolSize,
 		TicketsPerBlock:         5,
 		TicketMaturity:          simTicketMaturity,
@@ -226,36 +221,9 @@ func SimNetParams() *Params {
 		// (seed 0x0000000000000000000000000000000000000000000000000000000000000000)
 		//
 		// This same wallet owns the three ledger outputs for simnet.
-		//
-		// P2SH details for simnet treasury:
-		//
-		// redeemScript: 532103e8c60c7336744c8dcc7b85c27789950fc52aa4e48f895ebbfb
-		// ac383ab893fc4c2103ff9afc246e0921e37d12e17d8296ca06a8f92a07fbe7857ed1d4
-		// f0f5d94e988f21033ed09c7fa8b83ed53e6f2c57c5fa99ed2230c0d38edf53c0340d0f
-		// c2e79c725a53ae
-		//   (3-of-3 multisig)
-		// Pubkeys used:
-		//   SkQmxbeuEFDByPoTj41TtXat8tWySVuYUQpd4fuNNyUx51tF1csSs
-		//   SkQn8ervNvAUEX5Ua3Lwjc6BAuTXRznDoDzsyxgjYqX58znY7w9e4
-		//   SkQkfkHZeBbMW8129tZ3KspEh1XBFC1btbkgzs6cjSyPbrgxzsKqk
-		//
-		// Organization address is ScuQxvveKGfpG1ypt6u27F99Anf7EW3cqhq
 		BlockOneLedger:              tokenPayouts_SimNetParams(),
 
-		// Commands to generate simnet Pi keys:
-		// $ treasurykey.go -simnet
-		// Private key: 62deae1ab2b1ebd96a28c80e870aee325bed359e83d8db2464ef999e616a9eef
-		// Public  key: 02a36b785d584555696b69d1b2bbeff4010332b301e3edd316d79438554cacb3e7
-		// WIF        : PsUUktzTqNKDRudiz3F4Chh5CKqqmp5W3ckRDhwECbwrSuWZ9m5fk
-		//
-		// $ treasurykey.go -simnet
-		// Private key: cc0d8258d68acf047732088e9b70e2c97c53f711518042d267fc6975f39b791b
-		// Public  key: 02b2c110e7b560aa9e1545dd18dd9f7e74a3ba036297a696050c0256f1f69479d7
-		// WIF        : PsUVZDkMHvsH8RmYtCxCWs78xsLU9qAyZyLvV9SJWAdoiJxSFhvFx
-		PiKeys: [][]byte{
-			hexDecode("02a36b785d584555696b69d1b2bbeff4010332b301e3edd316d79438554cacb3e7"),
-			hexDecode("02b2c110e7b560aa9e1545dd18dd9f7e74a3ba036297a696050c0256f1f69479d7"),
-		},
+		PiKeys: [][]byte{},
 
 		Algorithms: []wire.AlgorithmSpec{
 			{Height: 0, HeaderSize: 108, Version: 0, Bits: bigToCompact(simNetPowLimit)},

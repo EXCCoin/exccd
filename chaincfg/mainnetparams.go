@@ -81,9 +81,8 @@ func MainNetParams() *Params {
 		Net:         wire.MainNet,
 		DefaultPort: "9666",
 		DNSSeeds: []DNSSeed{
-			{"seed.excc.co", true},
-			{"seed.xchange.me", true},
-			{"excc-seed.pragmaticcoders.com", true},
+			{"explorer.excc.co", true},
+			{"vsp.excc.co", true},
 		},
 		N: wire.MainEquihashN,
 		K: wire.MainEquihashK,
@@ -203,16 +202,7 @@ func MainNetParams() *Params {
 		BlockOneLedger:              tokenPayouts_MainNetParams(),
 
 		// Sanctioned Politeia keys.
-		PiKeys: [][]byte{
-			hexDecode("03f6e7041f1cf51ee10e0a01cd2b0385ce3cd9debaabb2296f7e9dee9329da946c"),
-			hexDecode("0319a37405cb4d1691971847d7719cfce70857c0f6e97d7c9174a3998cf0ab86dd"),
-		},
-
-		seeders: []string{
-			"seed.excc.co",
-			"seed.xchange.me",
-			"excc-seed.pragmaticcoders.com",
-		},
+		PiKeys: [][]byte{},
 
 		Algorithms: []wire.AlgorithmSpec{
 			{Height: 0, HeaderSize: 108, Version: 0, Bits: bigToCompact(mainPowLimit)},
@@ -222,6 +212,11 @@ func MainNetParams() *Params {
 				Version:    1,
 				Bits:       bigToCompact(new(big.Int).Sub(new(big.Int).Lsh(bigOne, 241), bigOne)),
 			},
+		},
+
+		seeders: []string{
+			"explorer.excc.co",
+			"vsp.excc.co",
 		},
 	}
 }

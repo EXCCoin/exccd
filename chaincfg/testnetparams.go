@@ -92,7 +92,8 @@ func TestNet3Params() *Params {
 		Net:         wire.TestNet3,
 		DefaultPort: "11999",
 		DNSSeeds: []DNSSeed{
-			{"testnet-seed.excc.co", true},
+			{"testnet-explorer.excc.co", true},
+			{"testnet-vsp.excc.co", true},
 		},
 		N: 144,
 		K: 5,
@@ -211,7 +212,6 @@ func TestNet3Params() *Params {
 		StakeMajorityMultiplier: 3,
 		StakeMajorityDivisor:    4,
 
-		// Decred organization related parameters.
 		BlockOneLedger: tokenPayouts_TestNet3Params(),
 
 		Algorithms: []wire.AlgorithmSpec{
@@ -225,11 +225,11 @@ func TestNet3Params() *Params {
 		},
 
 		// Sanctioned Politeia keys.
-		PiKeys: [][]byte{
-			hexDecode("03beca9bbd227ca6bb5a58e03a36ba2b52fff09093bd7a50aee1193bccd257fb8a"),
-			hexDecode("03e647c014f55265da506781f0b2d67674c35cb59b873d9926d483c4ced9a7bbd3"),
-		},
+		PiKeys: [][]byte{},
 
-		seeders: nil,
+		seeders: []string{
+			"testnet-explorer.excc.co",
+			"testnet-vsp.excc.co",
+		},
 	}
 }
