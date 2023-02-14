@@ -1,0 +1,32 @@
+go 1.19
+
+use (
+	.
+	./addrmgr
+	./bech32
+	./blockchain
+	./blockchain/stake
+	./blockchain/standalone
+	./certgen
+	./chaincfg
+	./chaincfg/chainhash
+	./connmgr
+	./container/apbf
+	./crypto/blake256
+	./crypto/ripemd160
+	./database
+	./dcrec
+	./dcrec/edwards
+	./dcrec/secp256k1
+	./dcrjson
+	./dcrutil
+	./gcs
+	./hdkeychain
+	./lru
+	./math/uint256
+	./peer
+	./rpc/jsonrpc/types
+	./rpcclient
+	./txscript
+	./wire
+)
