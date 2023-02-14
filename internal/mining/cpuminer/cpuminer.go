@@ -194,7 +194,7 @@ out:
 			}
 			hashesPerSec = (hashesPerSec + curHashesPerSec) / 2
 			if hashesPerSec != 0 {
-				log.Debugf("Hash speed: %6.0f hashes/s", hashesPerSec)
+				log.Debugf("Hash speed: %.4f hashes/hour", hashesPerSec * 60. * 60.)
 			}
 
 		// Request for the number of hashes per second.
