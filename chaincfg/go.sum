@@ -1,6 +1,10 @@
 github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20230211225306-d2f2c1c04ab7 h1:bz7td1opgtD7omorAlP711UdrkjsaNn8u5E8u7AVf34=
 github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20230211225306-d2f2c1c04ab7/go.mod h1:TtjGhhFlbfS1fOTl7avuIUsHsGnBAytY+jCs9Ei45E8=
+github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20230214161233-275859970533 h1:MuV88h8RLA19gqdp0BCCX4zgZyn36ajku5eVnTbT/Ow=
+github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20230214161233-275859970533/go.mod h1:HugQl51HouJ13KKyxNQHARMq/mrpjfi7jUM2Iv3kgjI=
 github.com/EXCCoin/exccd/wire v0.0.0-20230211225306-d2f2c1c04ab7 h1:XAWS3kWKOocC1PT9Atpz7U6AzSrNOUkTEEJjS1XMPM8=
 github.com/EXCCoin/exccd/wire v0.0.0-20230211225306-d2f2c1c04ab7/go.mod h1:t749GfscEfBEITr5QKVVWH8Fgfg3VD4vYzMSDdBsg7Y=
+github.com/EXCCoin/exccd/wire v0.0.0-20230214161233-275859970533 h1:LIVcog17e3+nQnzcUT3yk3Me+dKYFoEckJc2Gxe9kS0=
+github.com/EXCCoin/exccd/wire v0.0.0-20230214161233-275859970533/go.mod h1:el5FLbXOcf7c23bJEl29h8Anj9jMTHp/yhJTBs9Nf8E=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

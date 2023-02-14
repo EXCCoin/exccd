@@ -10,8 +10,8 @@ require (
 	github.com/EXCCoin/exccd/blockchain/standalone/v2 v2.0.0-20230211225306-d2f2c1c04ab7
 	github.com/EXCCoin/exccd/blockchain/v4 v4.0.0-20230211225306-d2f2c1c04ab7
 	github.com/EXCCoin/exccd/certgen v0.0.0-20230211225306-d2f2c1c04ab7
-	github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20230211225306-d2f2c1c04ab7
-	github.com/EXCCoin/exccd/chaincfg/v3 v3.0.0-20230211225306-d2f2c1c04ab7
+	github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20230214161233-275859970533
+	github.com/EXCCoin/exccd/chaincfg/v3 v3.0.0-20230214161233-275859970533
 	github.com/EXCCoin/exccd/connmgr/v3 v3.0.0-20230211225306-d2f2c1c04ab7
 	github.com/EXCCoin/exccd/container/apbf v0.0.0-20230211225306-d2f2c1c04ab7
 	github.com/EXCCoin/exccd/crypto/blake256 v0.0.0-20230211225306-d2f2c1c04ab7 // indirect
@@ -30,7 +30,7 @@ require (
 	github.com/EXCCoin/exccd/rpc/jsonrpc/types/v3 v3.0.0-20230211225306-d2f2c1c04ab7
 	github.com/EXCCoin/exccd/rpcclient/v7 v7.0.0-20230211225306-d2f2c1c04ab7
 	github.com/EXCCoin/exccd/txscript/v4 v4.0.0-20230211225306-d2f2c1c04ab7
-	github.com/EXCCoin/exccd/wire v0.0.0-20230211225306-d2f2c1c04ab7
+	github.com/EXCCoin/exccd/wire v0.0.0-20230214161233-275859970533
 	github.com/davecgh/go-spew v1.1.1
 	github.com/decred/go-socks v1.1.0
 	github.com/decred/slog v1.2.0
