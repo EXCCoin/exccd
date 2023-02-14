@@ -3339,13 +3339,13 @@ var TestNet3SubsidyDefinition = []TokenPayout{
 }
 
 var SimNetSubsidyDefinition = []TokenPayout{
-	mustPayout("76a91494ff37a0ee4d48abc45f70474f9b86f9da69a70988ac", 100000*1e8),
-	mustPayout("76a914a6753ebbc08e2553e7dd6d64bdead4bcbff4fcf188ac", 100000*1e8),
-	mustPayout("76a9147aa3211c2ead810bbf5911c275c69cc196202bd888ac", 100000*1e8),
+	mustPayout("76a914c964bf0ad701a0a8ccabcea191712b01fae78da588ac", 100000*1e8),
+	mustPayout("76a9148867929facee7378651e361420322889aac9ea7088ac", 100000*1e8),
+	mustPayout("76a914cc1e03f804b4dd1c1e792b0ed78fd69b449b6a4e88ac", 100000*1e8),
 }
 
 var RegNetSubsidyDefinition = []TokenPayout{
-	mustPayout("76a9147e4765ae88ba9ad5c9e4715c484e90b34d358d5188ac", 100000*1e8),
-	mustPayout("76a91402fb1ac0137666d79165e13cecd403883615270788ac", 100000*1e8),
-	mustPayout("76a91469de627d3231b14228653dd09cba75eeb872754288ac", 100000*1e8),
+	mustPayout("76a914c964bf0ad701a0a8ccabcea191712b01fae78da588ac", 100000*1e8),
+	mustPayout("76a9148867929facee7378651e361420322889aac9ea7088ac", 100000*1e8),
+	mustPayout("76a914cc1e03f804b4dd1c1e792b0ed78fd69b449b6a4e88ac", 100000*1e8),
 }

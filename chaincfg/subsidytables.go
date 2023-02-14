@@ -3332,7 +3332,7 @@ func tokenPayouts_TestNet3Params() []TokenPayout {
 	return tokenPayouts(blockOnePayoutScripts_TestNet3Params, blockOnePayouts_TestNet3Params)
 }
 
-const blockOnePayoutScripts_SimNetParams = "76a91494ff37a0ee4d48abc45f70474f9b86f9da69a70988ac76a914a6753ebbc08e2553e7dd6d64bdead4bcbff4fcf188ac76a9147aa3211c2ead810bbf5911c275c69cc196202bd888ac"
+const blockOnePayoutScripts_SimNetParams = "76a914c964bf0ad701a0a8ccabcea191712b01fae78da588ac76a9148867929facee7378651e361420322889aac9ea7088ac76a914cc1e03f804b4dd1c1e792b0ed78fd69b449b6a4e88ac"
 
 var blockOnePayouts_SimNetParams = []blockOnePayout{
 	{offset: 25, amount: 10000000000000},
@@ -3344,7 +3344,7 @@ func tokenPayouts_SimNetParams() []TokenPayout {
 	return tokenPayouts(blockOnePayoutScripts_SimNetParams, blockOnePayouts_SimNetParams)
 }
 
-const blockOnePayoutScripts_RegNetParams = "76a9147e4765ae88ba9ad5c9e4715c484e90b34d358d5188ac76a91402fb1ac0137666d79165e13cecd403883615270788ac76a91469de627d3231b14228653dd09cba75eeb872754288ac"
+const blockOnePayoutScripts_RegNetParams = "76a914c964bf0ad701a0a8ccabcea191712b01fae78da588ac76a9148867929facee7378651e361420322889aac9ea7088ac76a914cc1e03f804b4dd1c1e792b0ed78fd69b449b6a4e88ac"
 
 var blockOnePayouts_RegNetParams = []blockOnePayout{
 	{offset: 25, amount: 10000000000000},
