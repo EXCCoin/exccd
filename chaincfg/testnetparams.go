@@ -228,8 +228,7 @@ func TestNet3Params() *Params {
 		PiKeys: [][]byte{},
 
 		seeders: []string{
-			"testnet-explorer.excc.co",
-			"testnet-vsp.excc.co",
+			"testnet-seed.excc.co",
 		},
 	}
 }

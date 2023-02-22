@@ -215,8 +215,7 @@ func MainNetParams() *Params {
 		},
 
 		seeders: []string{
-			"explorer.excc.co",
-			"vsp.excc.co",
+			"seed.excc.co",
 		},
 	}
 }
