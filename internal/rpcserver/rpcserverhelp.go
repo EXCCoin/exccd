@@ -135,7 +135,7 @@ var helpDescsEnUS = map[string]string{
 	"scriptpubkeyresult-version":   "The script version",
 
 	// Vout help.
-	"vout-value":        "The amount in DCR",
+	"vout-value":        "The amount in EXCC",
 	"vout-n":            "The index of this transaction output",
 	"vout-version":      "The version of the public key script",
 	"vout-scriptPubKey": "The public key script used to pay coins as a JSON object",
@@ -238,7 +238,7 @@ var helpDescsEnUS = map[string]string{
 	"getblock--synopsis":   "Returns information about a block given its hash.",
 	"getblock-hash":        "The hash of the block",
 	"getblock-verbose":     "Specifies the block is returned as a JSON object instead of hex-encoded string",
-	"getblock-verbosetx":   "Specifies that each transaction is returned as a JSON object and only applies if the verbose flag is true (dcrd extension)",
+	"getblock-verbosetx":   "Specifies that each transaction is returned as a JSON object and only applies if the verbose flag is true (exccd extension)",
 	"getblock--condition0": "verbose=false",
 	"getblock--condition1": "verbose=true",
 	"getblock--result0":    "Hex-encoded bytes of the serialized block",
@@ -497,7 +497,7 @@ var helpDescsEnUS = map[string]string{
 	"infochainresult-proxy":           "The proxy used by the server",
 	"infochainresult-difficulty":      "The current target difficulty",
 	"infochainresult-testnet":         "Whether or not server is using testnet",
-	"infochainresult-relayfee":        "The minimum relay fee for non-free transactions in DCR/KB",
+	"infochainresult-relayfee":        "The minimum relay fee for non-free transactions in EXCC/KB",
 	"infochainresult-errors":          "Any current errors",
 	"infochainresult-addrindex":       "Whether or not server has address index enabled",
 	"infochainresult-txindex":         "Whether or not server has transaction index enabled",
@@ -516,8 +516,8 @@ var helpDescsEnUS = map[string]string{
 	"infowalletresult-keypoololdest":   "Seconds since 1 Jan 1970 GMT of the oldest pre-generated key in the key pool",
 	"infowalletresult-keypoolsize":     "The number of new keys that are pre-generated",
 	"infowalletresult-unlocked_until":  "The timestamp in seconds since 1 Jan 1970 GMT that the wallet is unlocked for transfers, or 0 if the wallet is locked",
-	"infowalletresult-paytxfee":        "The transaction fee set in DCR/KB",
-	"infowalletresult-relayfee":        "The minimum relay fee for non-free transactions in DCR/KB",
+	"infowalletresult-paytxfee":        "The transaction fee set in EXCC/KB",
+	"infowalletresult-relayfee":        "The minimum relay fee for non-free transactions in EXCC/KB",
 	"infowalletresult-errors":          "Any current errors",
 
 	// GetHeadersCmd help.
@@ -683,7 +683,7 @@ var helpDescsEnUS = map[string]string{
 	// GetTxOutResult help.
 	"gettxoutresult-bestblock":     "The block hash that contains the transaction output",
 	"gettxoutresult-confirmations": "The number of confirmations",
-	"gettxoutresult-value":         "The transaction amount in DCR",
+	"gettxoutresult-value":         "The transaction amount in EXCC",
 	"gettxoutresult-scriptPubKey":  "The public key script used to pay coins as a JSON object",
 	"gettxoutresult-coinbase":      "Whether or not the transaction is a coinbase",
 
@@ -767,7 +767,7 @@ var helpDescsEnUS = map[string]string{
 	// SendRawTransactionCmd help.
 	"sendrawtransaction--synopsis":     "Submits the serialized, hex-encoded transaction to the local peer and relays it to the network.",
 	"sendrawtransaction-hextx":         "Serialized, hex-encoded signed transaction",
-	"sendrawtransaction-allowhighfees": "Whether or not to allow insanely high fees (dcrd does not yet implement this parameter, so it has no effect)",
+	"sendrawtransaction-allowhighfees": "Whether or not to allow insanely high fees (exccd does not yet implement this parameter, so it has no effect)",
 	"sendrawtransaction--result0":      "The hash of the transaction",
 
 	// SetGenerateCmd help.
@@ -777,8 +777,8 @@ var helpDescsEnUS = map[string]string{
 	"setgenerate-miningaddr":   "The mining address",
 
 	// StopCmd help.
-	"stop--synopsis": "Shutdown dcrd.",
-	"stop--result0":  "The string 'dcrd stopping.'",
+	"stop--synopsis": "Shutdown exccd.",
+	"stop--result0":  "The string 'exccd stopping.'",
 
 	// SubmitBlockOptions help.
 	"submitblockoptions-workid": "This parameter is currently ignored",
@@ -802,7 +802,7 @@ var helpDescsEnUS = map[string]string{
 	// VerifyChainCmd help.
 	"verifychain--synopsis": "Verifies the block chain database.\n" +
 		"The actual checks performed by the checklevel parameter are implementation specific.\n" +
-		"For dcrd this is:\n" +
+		"For exccd this is:\n" +
 		"checklevel=0 - Look up each block and ensure it can be loaded from the database.\n" +
 		"checklevel=1 - Perform basic context-free sanity checks on each block.",
 	"verifychain-checklevel": "How thorough the block verification is",
@@ -882,7 +882,7 @@ var helpDescsEnUS = map[string]string{
 	"estimatesmartfee--synopsis":     "Returns the estimated fee using the historical fee data in dcr/kb.",
 	"estimatesmartfee-confirmations": "Estimate the fee rate a transaction requires so that it is mined in up to this number of blocks.",
 	"estimatesmartfee-mode":          "The only supported mode for the moment is 'conservative'.",
-	"estimatesmartfeeresult-feerate": "The Estimated fee rate (in DCR/KB).",
+	"estimatesmartfeeresult-feerate": "The Estimated fee rate (in EXCC/KB).",
 	"estimatesmartfeeresult-errors":  "Unused.",
 	"estimatesmartfeeresult-blocks":  "The block number where the estimate was found.",
 
@@ -912,12 +912,12 @@ var helpDescsEnUS = map[string]string{
 	"ticketbucket-number":     "Bucket number.",
 
 	// TicketFeeInfo help.
-	"ticketfeeinfo--synopsis":            "Get various information about ticket fees from the mempool, blocks, and difficulty windows (units: DCR/kB)",
+	"ticketfeeinfo--synopsis":            "Get various information about ticket fees from the mempool, blocks, and difficulty windows (units: EXCC/kB)",
 	"ticketfeeinfo-blocks":               "The number of blocks, starting from the chain tip and descending, to return fee information about",
 	"ticketfeeinfo-windows":              "The number of difficulty windows to return ticket fee information about",
-	"ticketfeeinforesult-feeinfomempool": "Ticket fee information for all tickets in the mempool (units: DCR/kB)",
-	"ticketfeeinforesult-feeinfoblocks":  "Ticket fee information for a given list of blocks descending from the chain tip (units: DCR/kB)",
-	"ticketfeeinforesult-feeinfowindows": "Ticket fee information for a window period where the stake difficulty was the same (units: DCR/kB)",
+	"ticketfeeinforesult-feeinfomempool": "Ticket fee information for all tickets in the mempool (units: EXCC/kB)",
+	"ticketfeeinforesult-feeinfoblocks":  "Ticket fee information for a given list of blocks descending from the chain tip (units: EXCC/kB)",
+	"ticketfeeinforesult-feeinfowindows": "Ticket fee information for a window period where the stake difficulty was the same (units: EXCC/kB)",
 
 	"feeinfomempool-number": "Number of transactions in the mempool",
 	"feeinfomempool-min":    "Minimum transaction fee in the mempool",

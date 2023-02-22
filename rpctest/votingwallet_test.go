@@ -64,7 +64,7 @@ func TestMinimalVotingWallet(t *testing.T) {
 	var handlers *rpcclient.NotificationHandlers
 	net := chaincfg.SimNetParams()
 
-	logDir := "./dcrdlogs"
+	logDir := "./exccdlogs"
 	extraArgs := []string{
 		"--debuglevel=debug",
 	}

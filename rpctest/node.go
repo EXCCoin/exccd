@@ -194,11 +194,11 @@ func (n *node) tracef(format string, args ...interface{}) {
 // to a package level variable where it is used for all tests. pathToDCRDMtx
 // must be held for writes.
 func buildNode(t *testing.T) error {
-	testNodeDir, err := os.MkdirTemp("", "rpctestdcrdnode")
+	testNodeDir, err := os.MkdirTemp("", "rpctestexccdnode")
 	if err != nil {
 		return err
 	}
-	pathToDCRD = filepath.Join(testNodeDir, "dcrd")
+	pathToDCRD = filepath.Join(testNodeDir, "exccd")
 	if runtime.GOOS == "windows" {
 		pathToDCRD += ".exe"
 	}
@@ -206,14 +206,14 @@ func buildNode(t *testing.T) error {
 	// Determine import path of this package.
 	_, rpctestDir, _, ok := runtime.Caller(1)
 	if !ok {
-		return fmt.Errorf("cannot get path to dcrd source code")
+		return fmt.Errorf("cannot get path to exccd source code")
 	}
 	dcrdPkgPath := filepath.Join(rpctestDir, "..", "..")
 	// Build dcrd and output an executable in a static temp path.
 	cmd := exec.Command("go", "build", "-o", pathToDCRD, dcrdPkgPath)
 	err = cmd.Run()
 	if err != nil {
-		return fmt.Errorf("failed to build dcrd: %v", err)
+		return fmt.Errorf("failed to build exccd: %v", err)
 	}
 	return nil
 }
@@ -301,7 +301,7 @@ func (n *node) start() error {
 	// Unblock pipes now pid is available
 	pid.Done()
 
-	f, err := os.Create(filepath.Join(n.config.String(), "dcrd.pid"))
+	f, err := os.Create(filepath.Join(n.config.String(), "exccd.pid"))
 	if err != nil {
 		return err
 	}

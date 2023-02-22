@@ -153,7 +153,7 @@ type config struct {
 	RPCCert              string   `long:"rpccert" description:"File containing the certificate file"`
 	RPCKey               string   `long:"rpckey" description:"File containing the certificate key"`
 	TLSCurve             string   `long:"tlscurve" description:"Curve to use when generating TLS keypairs"`
-	AltDNSNames          []string `long:"altdnsnames" description:"Specify additional DNS names to use when generating the RPC server certificate" env:"DCRD_ALT_DNSNAMES" env-delim:","`
+	AltDNSNames          []string `long:"altdnsnames" description:"Specify additional DNS names to use when generating the RPC server certificate" env:"EXCCD_ALT_DNSNAMES" env-delim:","`
 	DisableTLS           bool     `long:"notls" description:"Disable TLS for the RPC server -- NOTE: This is only allowed if the RPC server is bound to localhost"`
 	RPCMaxClients        int      `long:"rpcmaxclients" description:"Max number of RPC clients for standard connections"`
 	RPCMaxWebsockets     int      `long:"rpcmaxwebsockets" description:"Max number of RPC websocket connections"`
@@ -198,7 +198,7 @@ type config struct {
 	AssumeValid        string `long:"assumevalid" description:"Hash of an assumed valid block.  Defaults to the hard-coded assumed valid block that is updated periodically with new releases.  Don't use a different hash unless you understand the implications.  Set to 0 to disable"`
 
 	// Relay and mempool policy.
-	MinRelayTxFee    float64 `long:"minrelaytxfee" description:"The minimum transaction fee in DCR/kB to be considered a non-zero fee"`
+	MinRelayTxFee    float64 `long:"minrelaytxfee" description:"The minimum transaction fee in EXCC/kB to be considered a non-zero fee"`
 	FreeTxRelayLimit float64 `long:"limitfreerelay" description:"Limit relay of transactions with no transaction fee to the given amount in thousands of bytes per minute"`
 	NoRelayPriority  bool    `long:"norelaypriority" description:"Do not require free or low-fee transactions to have high priority for relaying"`
 	MaxOrphanTxs     int     `long:"maxorphantx" description:"Max number of orphan transactions to keep in memory"`
@@ -862,8 +862,6 @@ func loadConfig(appName string) (*config, []string, error) {
 	// network specific DataDir will be used after this.
 	cfg.DataDir = cleanAndExpandPath(cfg.DataDir)
 	var oldTestNets []string
-	oldTestNets = append(oldTestNets, filepath.Join(cfg.DataDir, "testnet"))
-	oldTestNets = append(oldTestNets, filepath.Join(cfg.DataDir, "testnet2"))
 	cfg.DataDir = filepath.Join(cfg.DataDir, cfg.params.Name)
 	logRotator = nil
 	if !cfg.NoFileLogging {

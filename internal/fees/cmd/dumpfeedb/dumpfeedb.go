@@ -23,7 +23,7 @@ type config struct {
 
 func main() {
 	cfg := config{
-		DB: path.Join(dcrutil.AppDataDir("dcrd", false), "data", "mainnet", "feesdb"),
+		DB: path.Join(dcrutil.AppDataDir("exccd", false), "data", "mainnet", "feesdb"),
 	}
 
 	parser := flags.NewParser(&cfg, flags.Default)

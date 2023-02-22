@@ -30,23 +30,23 @@ const (
 
 // String returns the unit as a string.  For recognized units, the SI
 // prefix is used, or "Atom" for the base unit.  For all unrecognized
-// units, "1eN DCR" is returned, where N is the AmountUnit.
+// units, "1eN EXCC" is returned, where N is the AmountUnit.
 func (u AmountUnit) String() string {
 	switch u {
 	case AmountMegaCoin:
-		return "MDCR"
+		return "MEXCC"
 	case AmountKiloCoin:
-		return "kDCR"
+		return "kEXCC"
 	case AmountCoin:
-		return "DCR"
+		return "EXCC"
 	case AmountMilliCoin:
-		return "mDCR"
+		return "mEXCC"
 	case AmountMicroCoin:
-		return "μDCR"
+		return "μEXCC"
 	case AmountAtom:
 		return "Atom"
 	default:
-		return "1e" + strconv.FormatInt(int64(u), 10) + " DCR"
+		return "1e" + strconv.FormatInt(int64(u), 10) + " EXCC"
 	}
 }
 

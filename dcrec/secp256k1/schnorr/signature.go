@@ -26,7 +26,7 @@ var (
 	// the same nonce is not generated for the same message and key as for other
 	// signing algorithms such as ECDSA.
 	//
-	// It is equal to BLAKE-256([]byte("EC-Schnorr-DCRv0")).
+	// It is equal to BLAKE-256([]byte("EC-Schnorr-EXCCv0")).
 	rfc6979ExtraDataV0 = [32]byte{
 		0x0b, 0x75, 0xf9, 0x7b, 0x60, 0xe8, 0xa5, 0x76,
 		0x28, 0x76, 0xc0, 0x04, 0x82, 0x9e, 0xe9, 0xb9,

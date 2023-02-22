@@ -14,7 +14,7 @@ import (
 const (
 	// defaultApp is the default application assumed when either no arguments
 	// are specified or the first argument starts with a -.
-	defaultApp = "dcrd"
+	defaultApp = "exccd"
 )
 
 // argN either returns the arguments at the provided position within the given
@@ -65,38 +65,38 @@ func main() {
 	arg0 := argN(args, 0)
 	args = args[1:]
 	switch arg0 {
-	case "dcrd":
+	case "exccd":
 		// Determine the app data directory based on environment variable.
-		decredData := os.Getenv("DECRED_DATA")
-		dcrdAppData := filepath.Join(decredData, ".dcrd")
+		exccData := os.Getenv("EXCC_DATA")
+		exccdAppData := filepath.Join(exccData, ".exccd")
 
 		// TODO: Recognize t/true/1, f/false/0
-		if os.Getenv("DCRD_NO_FILE_LOGGING") != "false" {
+		if os.Getenv("EXCCD_NO_FILE_LOGGING") != "false" {
 			args = append(args, "--nofilelogging")
 		}
-		args = append(args, fmt.Sprintf("--appdata=%s", dcrdAppData))
+		args = append(args, fmt.Sprintf("--appdata=%s", exccdAppData))
 		args = append(args, "--rpclisten=")
 
-	case "dcrctl":
+	case "exccctl":
 		// Determine the app data directories based on environment variable.
-		decredData := os.Getenv("DECRED_DATA")
-		dcrdAppData := filepath.Join(decredData, ".dcrd")
-		rpcCert := filepath.Join(dcrdAppData, "rpc.cert")
-		dcrctlAppData := filepath.Join(decredData, ".dcrctl")
-		dcrctlConfig := filepath.Join(dcrctlAppData, "dcrctl.conf")
+		exccData := os.Getenv("EXCC_DATA")
+		exccdAppData := filepath.Join(exccData, ".exccd")
+		rpcCert := filepath.Join(exccdAppData, "rpc.cert")
+		exccctlAppData := filepath.Join(exccData, ".exccctl")
+		exccctlConfig := filepath.Join(exccctlAppData, "exccctl.conf")
 
 		// TODO: These all unconditionally override config file settings.
 		// Detect if already there and don't do it?
 		//
 		// Prepend the arguments in case the caller wants to override them.
 		args = prepend(args, fmt.Sprintf("--rpccert=%s", rpcCert))
-		args = prepend(args, fmt.Sprintf("--configfile=%s", dcrctlConfig))
+		args = prepend(args, fmt.Sprintf("--configfile=%s", exccctlConfig))
 
 		// Change the home directory to match the data path since dcrctl
 		// relies in it to discover the dcrd config file in order to extract
 		// the rpc credentials.
-		if !fileExists(filepath.Join(dcrctlAppData, "dcrctl.conf")) {
-			os.Setenv("HOME", decredData)
+		if !fileExists(filepath.Join(exccctlAppData, "exccctl.conf")) {
+			os.Setenv("HOME", exccData)
 		}
 	}
 

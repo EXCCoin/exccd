@@ -17,7 +17,7 @@ import (
 //
 // For environment variables, use the following to set the variable before the
 // func that loads the configuration is called:
-//   os.Setenv("DCRD_ALT_DNSNAMES", "hostname1,hostname2")
+//   os.Setenv("EXCCD_ALT_DNSNAMES", "hostname1,hostname2")
 //
 // These args and env variables will then get parsed during configuration load.
 
@@ -27,7 +27,7 @@ func TestLoadConfig(t *testing.T) {
 	appName = strings.TrimSuffix(appName, filepath.Ext(appName))
 	_, _, err := loadConfig(appName)
 	if err != nil {
-		t.Fatalf("Failed to load dcrd config: %s", err)
+		t.Fatalf("Failed to load exccd config: %s", err)
 	}
 }
 
@@ -38,7 +38,7 @@ func TestDefaultAltDNSNames(t *testing.T) {
 	appName = strings.TrimSuffix(appName, filepath.Ext(appName))
 	cfg, _, err := loadConfig(appName)
 	if err != nil {
-		t.Fatalf("Failed to load dcrd config: %s", err)
+		t.Fatalf("Failed to load exccd config: %s", err)
 	}
 	if len(cfg.AltDNSNames) != 0 {
 		t.Fatalf("Invalid default value for altdnsnames: %s", cfg.AltDNSNames)
@@ -50,10 +50,10 @@ func TestDefaultAltDNSNames(t *testing.T) {
 func TestAltDNSNamesWithEnv(t *testing.T) {
 	appName := filepath.Base(os.Args[0])
 	appName = strings.TrimSuffix(appName, filepath.Ext(appName))
-	os.Setenv("DCRD_ALT_DNSNAMES", "hostname1,hostname2")
+	os.Setenv("EXCCD_ALT_DNSNAMES", "hostname1,hostname2")
 	cfg, _, err := loadConfig(appName)
 	if err != nil {
-		t.Fatalf("Failed to load dcrd config: %s", err)
+		t.Fatalf("Failed to load exccd config: %s", err)
 	}
 	hostnames := strings.Join(cfg.AltDNSNames, ",")
 	if hostnames != "hostname1,hostname2" {
@@ -71,7 +71,7 @@ func TestAltDNSNamesWithArg(t *testing.T) {
 	os.Args = append(os.Args, "--altdnsnames=\"hostname1,hostname2\"")
 	cfg, _, err := loadConfig(appName)
 	if err != nil {
-		t.Fatalf("Failed to load dcrd config: %s", err)
+		t.Fatalf("Failed to load exccd config: %s", err)
 	}
 	hostnames := strings.Join(cfg.AltDNSNames, ",")
 	if hostnames != "hostname1,hostname2" {

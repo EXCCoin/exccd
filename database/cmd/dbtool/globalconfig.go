@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	dcrdHomeDir     = dcrutil.AppDataDir("dcrd", false)
+	exccdHomeDir     = dcrutil.AppDataDir("exccd", false)
 	knownDbTypes    = database.SupportedDrivers()
 	activeNetParams = chaincfg.MainNetParams()
 
@@ -31,7 +31,7 @@ var (
 
 // config defines the global configuration options.
 type config struct {
-	DataDir string `short:"b" long:"datadir" description:"Location of the dcrd data directory"`
+	DataDir string `short:"b" long:"datadir" description:"Location of the exccd data directory"`
 	DbType  string `long:"dbtype" description:"Database backend to use for the Block Chain"`
 	TestNet bool   `long:"testnet" description:"Use the test network"`
 	SimNet  bool   `long:"simnet" description:"Use the simulation test network"`
