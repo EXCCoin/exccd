@@ -131,7 +131,7 @@ tmux resize-pane -D 15
 tmux send-keys "cd ${NODES_ROOT}/${PRIMARY_WALLET_NAME}" C-m
 tmux send-keys "echo \"${WALLET_CREATE_CONFIG}\" | exccwallet -C ../wallet.conf --create; tmux wait-for -S ${PRIMARY_WALLET_NAME}" C-m
 tmux wait-for ${PRIMARY_WALLET_NAME}
-tmux send-keys "exccwallet -C ../wallet.conf --enableticketbuyer --ticketbuyer.limit=10" C-m
+tmux send-keys "exccwallet -C ../wallet.conf --rpclisten ${PRIMARY_WALLET_RPC} --grpclisten ${PRIMARY_WALLET_GRPC} --enableticketbuyer --ticketbuyer.limit=10" C-m
 tmux select-pane -t 1
 tmux send-keys "cd ${NODES_ROOT}/${PRIMARY_WALLET_NAME}" C-m
 
