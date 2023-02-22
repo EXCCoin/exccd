@@ -128,7 +128,7 @@ const (
 var (
 	// userAgentName is the user agent name and is used to help identify
 	// ourselves to other Decred peers.
-	userAgentName = "dcrd"
+	userAgentName = "exccd"
 
 	// userAgentVersion is the user agent version and is used to help
 	// identify ourselves to other peers.
