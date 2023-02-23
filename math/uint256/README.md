@@ -1,9 +1,9 @@
 uint256
 =======
 
-[![Build Status](https://github.com/decred/dcrd/workflows/Build%20and%20Test/badge.svg)](https://github.com/decred/dcrd/actions)
+[![Build Status](https://github.com/EXCCoin/exccd/workflows/Build%20and%20Test/badge.svg)](https://github.com/EXCCoin/exccd/actions)
 [![ISC License](https://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![Doc](https://img.shields.io/badge/doc-reference-blue.svg)](https://pkg.go.dev/github.com/decred/dcrd/math/uint256)
+[![Doc](https://img.shields.io/badge/doc-reference-blue.svg)](https://pkg.go.dev/github.com/EXCCoin/exccd/math/uint256)
 
 ## Fixed Precision Unsigned 256-bit Integer Arithmetic
 
@@ -256,12 +256,12 @@ Format/base_16 |     565ns ± 1%    |     449ns ± 1%    | -20.41%
 
 ## Installation and Updating
 
-This package is part of the `github.com/decred/dcrd/math/uint256` module.  Use
+This package is part of the `github.com/EXCCoin/exccd/math/uint256` module.  Use
 the standard go tooling for working with modules to incorporate it.
 
 ## Examples
 
-* [Basic Usage](https://pkg.go.dev/github.com/decred/dcrd/math/uint256#example-package-BasicUsage)  
+* [Basic Usage](https://pkg.go.dev/github.com/EXCCoin/exccd/math/uint256#example-package-BasicUsage)  
   Demonstrates calculating the result of a dividing a max unsigned 256-bit
   integer by a max unsigned 128-bit integer and outputting that result in hex
   with leading zeros.

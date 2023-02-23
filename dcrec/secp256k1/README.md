@@ -1,9 +1,9 @@
 secp256k1
 =========
 
-[![Build Status](https://github.com/decred/dcrd/workflows/Build%20and%20Test/badge.svg)](https://github.com/decred/dcrd/actions)
+[![Build Status](https://github.com/EXCCoin/exccd/workflows/Build%20and%20Test/badge.svg)](https://github.com/EXCCoin/exccd/actions)
 [![ISC License](https://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![Doc](https://img.shields.io/badge/doc-reference-blue.svg)](https://pkg.go.dev/github.com/decred/dcrd/dcrec/secp256k1/v4)
+[![Doc](https://img.shields.io/badge/doc-reference-blue.svg)](https://pkg.go.dev/github.com/EXCCoin/exccd/dcrec/secp256k1/v4)
 
 Package secp256k1 implements optimized secp256k1 elliptic curve operations.
 
@@ -14,7 +14,7 @@ https://www.secg.org/sec2-v2.pdf for details on the standard.
 
 In addition, sub packages are provided to produce, verify, parse, and serialize
 ECDSA signatures and EC-Schnorr-DCRv0 (a custom Schnorr-based signature scheme
-specific to Decred) signatures.  See the README.md files in the relevant sub
+specific to Exchangecoin) signatures.  See the README.md files in the relevant sub
 packages for more details about those aspects.
 
 An overview of the features provided by this package are as follows:
@@ -49,20 +49,20 @@ use optimized secp256k1 elliptic curve cryptography.
 Finally, a comprehensive suite of tests is provided to provide a high level of
 quality assurance.
 
-## secp256k1 use in Decred
+## secp256k1 use in Exchangecoin
 
 At the time of this writing, the primary public key cryptography in widespread
-use on the Decred network used to secure coins is based on elliptic curves
+use on the Exchangecoin network used to secure coins is based on elliptic curves
 defined by the secp256k1 domain parameters.
 
 ## Installation and Updating
 
-This package is part of the `github.com/decred/dcrd/dcrec/secp256k1/v4` module.
+This package is part of the `github.com/EXCCoin/exccd/dcrec/secp256k1/v4` module.
 Use the standard go tooling for working with modules to incorporate it.
 
 ## Examples
 
-* [Encryption](https://pkg.go.dev/github.com/decred/dcrd/dcrec/secp256k1/v4#example-package-EncryptDecryptMessage)
+* [Encryption](https://pkg.go.dev/github.com/EXCCoin/exccd/dcrec/secp256k1/v4#example-package-EncryptDecryptMessage)
   Demonstrates encrypting and decrypting a message using a shared key derived
   through ECDHE.
 

@@ -1,11 +1,11 @@
 stdaddr
 =======
 
-[![Build Status](https://github.com/decred/dcrd/workflows/Build%20and%20Test/badge.svg)](https://github.com/decred/dcrd/actions)
+[![Build Status](https://github.com/EXCCoin/exccd/workflows/Build%20and%20Test/badge.svg)](https://github.com/EXCCoin/exccd/actions)
 [![ISC License](https://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![Doc](https://img.shields.io/badge/doc-reference-blue.svg)](https://pkg.go.dev/github.com/decred/dcrd/txscript/v4/stdaddr)
+[![Doc](https://img.shields.io/badge/doc-reference-blue.svg)](https://pkg.go.dev/github.com/EXCCoin/exccd/txscript/v4/stdaddr)
 
-## Decred Address Overview
+## Exchangecoin Address Overview
 
 An address is a human-readable representation of a possible destination for a
 payment.  More specifically, it encodes information needed to create a smart
@@ -147,7 +147,7 @@ of the address.
 
 ### Address Use in the Staking System
 
-A distinguishing aspect of the staking system in Decred is that it imposes
+A distinguishing aspect of the staking system in Exchangecoin is that it imposes
 additional constraints on the types of addresses that can be used versus those
 for regular transactions.  This is because scripts in the staking system are
 tightly controlled by consensus to only permit very specific scripts, unlike
@@ -220,12 +220,12 @@ by the interface.
 
 ## Installation and Updating
 
-This package is part of the `github.com/decred/dcrd/txscript/v4` module.  Use
+This package is part of the `github.com/EXCCoin/exccd/txscript/v4` module.  Use
 the standard go tooling for working with modules to incorporate it.
 
 ## Examples
 
-* [DecodeAddress](https://pkg.go.dev/github.com/decred/dcrd/txscript/v4/stdaddr#example-DecodeAddress)
+* [DecodeAddress](https://pkg.go.dev/github.com/EXCCoin/exccd/txscript/v4/stdaddr#example-DecodeAddress)
 
   Demonstrates decoding addresses, generating their payment scripts and
   associated scripting language versions, determining supported capabilities by

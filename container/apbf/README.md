@@ -1,9 +1,9 @@
 apbf
 ====
 
-[![Build Status](https://github.com/decred/dcrd/workflows/Build%20and%20Test/badge.svg)](https://github.com/decred/dcrd/actions)
+[![Build Status](https://github.com/EXCCoin/exccd/workflows/Build%20and%20Test/badge.svg)](https://github.com/EXCCoin/exccd/actions)
 [![ISC License](https://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![Doc](https://img.shields.io/badge/doc-reference-blue.svg)](https://pkg.go.dev/github.com/decred/dcrd/container/apbf)
+[![Doc](https://img.shields.io/badge/doc-reference-blue.svg)](https://pkg.go.dev/github.com/EXCCoin/exccd/container/apbf)
 
 ## Age-Partitioned Bloom Filter (APBF)
 
@@ -156,12 +156,12 @@ Capacity | Target FP |  Time / Op  | Allocs / Op
 
 ## Installation and Updating
 
-This package is part of the `github.com/decred/dcrd/container/apbf` module.  Use
+This package is part of the `github.com/EXCCoin/exccd/container/apbf` module.  Use
 the standard go tooling for working with modules to incorporate it.
 
 ## Examples
 
-* [Basic Usage](https://pkg.go.dev/github.com/decred/dcrd/container/apbf#example-package-BasicUsage)  
+* [Basic Usage](https://pkg.go.dev/github.com/EXCCoin/exccd/container/apbf#example-package-BasicUsage)  
   Demonstrates creating a new APBF, adding items to it up to the maximum
   capacity, querying the oldest item, then adding more items to it in order to
   cause the older items to be evicted.

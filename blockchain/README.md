@@ -1,14 +1,14 @@
 blockchain
 ==========
 
-[![Build Status](https://github.com/decred/dcrd/workflows/Build%20and%20Test/badge.svg)](https://github.com/decred/dcrd/actions)
+[![Build Status](https://github.com/EXCCoin/exccd/workflows/Build%20and%20Test/badge.svg)](https://github.com/EXCCoin/dcrd/actions)
 [![ISC License](https://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![Doc](https://img.shields.io/badge/doc-reference-blue.svg)](https://pkg.go.dev/github.com/decred/dcrd/blockchain/v3)
+[![Doc](https://img.shields.io/badge/doc-reference-blue.svg)](https://pkg.go.dev/github.com/EXCCoin/dcrd/blockchain/v3)
 
-Package blockchain implements Decred block handling and chain selection rules.
+Package blockchain implements Exchangecoin block handling and chain selection rules.
 
-The Decred block handling and chain selection rules are an integral, and quite
-likely the most important, part of Decred.  At its core, Decred is a distributed
+The Exchangecoin block handling and chain selection rules are an integral, and quite
+likely the most important, part of Exchangecoin.  At its core, Exchangecoin is a distributed
 consensus of which blocks are valid and which ones will comprise the main block
 chain (public ledger) that ultimately determines accepted transactions, so it is
 extremely important that fully validating nodes agree on all rules.
@@ -18,14 +18,14 @@ block chain according to the aforementioned rules.  It includes functionality
 such as rejecting duplicate blocks, ensuring blocks and transactions follow all
 rules, and best chain selection along with reorganization.
 
-Since this package does not deal with other Decred specifics such as network
+Since this package does not deal with other Exchangecoin specifics such as network
 communication or wallets, it provides a notification system which gives the
 caller a high level of flexibility in how they want to react to certain events
 such as newly connected main chain blocks which might result in wallet updates.
 
 A comprehensive suite of tests is provided to ensure proper functionality.
 
-## Decred Chain Processing Overview
+## Exchangecoin Chain Processing Overview
 
 Before a block is allowed into the block chain, it must go through an intensive
 series of validation rules.  The following list serves as a general outline of
@@ -81,12 +81,12 @@ mean the block being processed is the one that failed validation.
 
 ## Installation and Updating
 
-This package is part of the `github.com/decred/dcrd/blockchain/v3` module.  Use
+This package is part of the `github.com/EXCCoin/exccd/blockchain/v3` module.  Use
 the standard go tooling for working with modules to incorporate it.
 
 ## Examples
 
-* [ProcessBlock Example](https://pkg.go.dev/github.com/decred/dcrd/blockchain/v3#example-BlockChain.ProcessBlock)
+* [ProcessBlock Example](https://pkg.go.dev/github.com/EXCCoin/exccd/blockchain/v3#example-BlockChain.ProcessBlock)
   Demonstrates how to create a new chain instance and use ProcessBlock to
   attempt to add a block to the chain.  This example intentionally
   attempts to insert a duplicate genesis block to illustrate how an invalid
