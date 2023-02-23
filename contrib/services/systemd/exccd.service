@@ -1,27 +1,27 @@
 [Unit]
-Description=Decred Full Node
+Description=Exchangecoin Full Node
 Requires=local-fs.target network-online.target network.target
 After=local-fs.target network-online.target network.target
 
 [Service]
 Type=simple
 
-User=dcrd
-Group=dcrd
+User=exccd
+Group=exccd
 
-# dcrd appdir
-ReadWritePaths=/home/dcrd/.dcrd/
+# exccd appdir
+ReadWritePaths=/home/exccd/.exccd/
 
-# dcrd datadir
-ReadWritePaths=/home/dcrd/.dcrd/data
+# exccd datadir
+ReadWritePaths=/home/exccd/.exccd/data
 
-# dcrd logdir
-ReadWritePaths=/home/dcrd/.dcrd/logs
+# exccd logdir
+ReadWritePaths=/home/exccd/.exccd/logs
 
-# launch dcrd
-ExecStart=/home/dcrd/decred/dcrd
+# launch exccd
+ExecStart=/home/exccd/EXCCoin/exccd
 
-# restart dcrd
+# restart exccd
 TimeoutStopSec=10s
 Restart=on-abnormal
 RestartSec=10s
