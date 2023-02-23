@@ -1,18 +1,18 @@
 ==1. Overview==
 
-When developing Decred applications or testing potential changes, it is often
+When developing Exchangecoin applications or testing potential changes, it is often
 extremely useful to have a private test network where transactions are actually
 mined into blocks, difficulty levels are low enough to generate blocks on
 demand, it is possible to easily cause chain reorganizations for testing
 purposes, and otherwise have full control over the network.
 
-In order to facilitate these scenarios, <code>dcrd</code> provides a simulation
+In order to facilitate these scenarios, <code>exccd</code> provides a simulation
 network (<code>--simnet</code>), where the difficulty starts extremely low to
 enable fast CPU mining of blocks.  Simnet also has some modified functionality
 that helps developers avoid common issues early in development.
 
-Other components in the Decred ecosystem, such as <code>dcrwallet</code> and
-<code>dcrctl</code>, also support the simulation network to facilitate testing.
+Other components in the Exchangecoin ecosystem, such as <code>exccwallet</code> and
+<code>exccctl</code>, also support the simulation network to facilitate testing.
 
 As simnet is a temporary network for private use, there are no public block
 explorers or faucets available.
@@ -41,16 +41,16 @@ it from the main network:
 
 The easiest way to get started using the simulation network is to make use of
 the preconfigured simnet environment setup shell script that is
-[[../contrib/dcr_tmux_simnet_setup.sh|provided in the repository at contrib/dcr_tmux_simnet_setup.sh]].
+[[../contrib/excc_tmux_simnet_setup.sh|provided in the repository at contrib/excc_tmux_simnet_setup.sh]].
 
 This script makes use of [https://github.com/tmux/tmux tmux], which is
 typically readily available on Unix and Linux platforms, to setup a
 self-contained environment with several terminal-based windows and panes with
-<code>dcrd</code> and <code>dcrwallet</code> already configured.
+<code>exccd</code> and <code>exccwallet</code> already configured.
 
-The environment will be housed in the <code>$HOME/dcrdsimnetnodes</code>
+The environment will be housed in the <code>$HOME/exccdsimnetnodes</code>
 directory by default.  This can be overridden with the
-<code>DCR_SIMNET_ROOT</code> environment variable if desired.
+<code>EXCC_SIMNET_ROOT</code> environment variable if desired.
 
 ===2.1 Preconfigured Environment Overview===
 
@@ -58,26 +58,26 @@ The following provides an overview of how the environment that is automatically
 setup by the aforementioned script is configured:
 
 * Multiple windows, each with two panes
-** The upper pane is either a <code>dcrd</code> instance or a <code>dcrwallet</code> instance
+** The upper pane is either a <code>exccd</code> instance or a <code>exccwallet</code> instance
 ** The lower pane provides a shell already in the directory associated with the process running in the upper pane
-* Two <code>dcrd</code> instances running simnet (named <code>dcrd1</code> and <code>dcrd2</code>)
+* Two <code>exccd</code> instances running simnet (named <code>exccd1</code> and <code>exccd2</code>)
 ** The second connects to the first via a persistent/permanent connection
-* Two <code>dcrwallet</code> instances also running simnet (named <code>wallet1</code> and <code>wallet2</code>)
+* Two <code>exccwallet</code> instances also running simnet (named <code>wallet1</code> and <code>wallet2</code>)
 ** Both wallets are configured with the same seed
 ** The <code>wallet1</code> instance:
-*** Connects to the <code>dcrd1</code> instance via JSON-RPC
+*** Connects to the <code>exccd1</code> instance via JSON-RPC
 *** Automatically purchases tickets via the integrated ticket buyer
 *** Automatically votes
 ** The <code> wallet2</code> instance:
-*** Connects to the <code>dcrd2</code> instance via JSON-RPC
+*** Connects to the <code>exccd2</code> instance via JSON-RPC
 *** Automatically votes
 * Helper scripts accessible from the lower pane in each window that communicate with the associated process in the upper pane
 * Scripts available in the directories of all instances:
-** <code>ctl</code> - Invokes <code>dcrctl</code> communicating to the associated instance process
+** <code>ctl</code> - Invokes <code>exccctl</code> communicating to the associated instance process
 ** <code>stopall</code> - Stops all of the processes and closes the <code>tmux</code> session
-* Additional scripts for the <code>dcrd1</code> and <code>dcrd2</code> instances:
+* Additional scripts for the <code>exccd1</code> and <code>exccd2</code> instances:
 ** <code>mine</code> - Mines a specified number of blocks with a delay between
-* Additional scripts for the <code>dcrd2</code> instance:
+* Additional scripts for the <code>exccd2</code> instance:
 ** <code>reorg</code> - Forces a chain reorganization in the instance
 * Additional scripts for the <code>wallet1</code> and <code>wallet2</code> instances:
 ** <code>tickets</code> - Manually purchases the specified number of tickets with a default of 1
@@ -85,31 +85,31 @@ setup by the aforementioned script is configured:
 
 ===2.2. Using the Preconfigured Environment===
 
-In order to get started, first ensure that the <code>dcrd</code>,
-<code>dcrwallet</code>, and <code>dcrctl</code> binaries you want to test with
+In order to get started, first ensure that the <code>exccd</code>,
+<code>exccwallet</code>, and <code>exccctl</code> binaries you want to test with
 are available in your system path and that <code>tmux</code> is installed:
 
-  $ dcrd -V
-  dcrd version x.y.z (Go version <version> <os>)
-  $ dcrwallet -V
-  dcrwallet version x.y.z (Go version <version> <os>)
-  $ dcrctl -V
-  dcrctl version x.y.z (Go version <version> <os>)
+  $ exccd -V
+  exccd version x.y.z (Go version <version> <os>)
+  $ exccwallet -V
+  exccwallet version x.y.z (Go version <version> <os>)
+  $ exccctl -V
+  exccctl version x.y.z (Go version <version> <os>)
   $ tmux -V
   tmux x.y.z
 
 Once that above has been verified, make the script executable and run it:
 
-  $ chmod +x dcr_tmux_simnet_setup.sh
-  $ ./dcr_tmux_simnet_setup.sh
+  $ chmod +x excc_tmux_simnet_setup.sh
+  $ ./excc_tmux_simnet_setup.sh
 
 It will take a few seconds before the environment appears since it mines a bunch
 of initial blocks so that the environment has spendable coins immediately
 available.
 
 Once the environment launches, you will be in the bottom pane of the
-<code>dcrd1</code> window.  As the overview section describes, this lower pane
-provides convenience scripts for interacting with the <code>dcrd</code> instance
+<code>exccd1</code> window.  As the overview section describes, this lower pane
+provides convenience scripts for interacting with the <code>exccd</code> instance
 running in the upper pane.
 
 At this point, everything is setup and ready to go.  Since it is running in a
@@ -117,14 +117,14 @@ At this point, everything is setup and ready to go.  Since it is running in a
 be accessed with normal <code>tmux</code> command sequences.  By default,
 <code>Ctrl+B</code> followed by a window number will switch to that number.  For
 example <code>Ctrl+B 1</code> will switch the window with the
-<code>dcrwallet1</code> instance and <code>Ctrl+B 0</code> will switch back to
-the window with the <code>dcrd1</code> instance.
+<code>exccwallet1</code> instance and <code>Ctrl+B 0</code> will switch back to
+the window with the <code>exccd1</code> instance.
 
 See the next sections for a quick tour of performing some basic tasks.
 
-====2.2.1 Basic Tasks - Interfacing with the <code>dcrd1</code> instance====
+====2.2.1 Basic Tasks - Interfacing with the <code>exccd1</code> instance====
 
-Ensure the window that houses the <code>dcrd1</code> instance is active and the
+Ensure the window that houses the <code>exccd1</code> instance is active and the
 lower pane has focus.  This '''might''' require switching to the window with the
 tmux command sequence <code>Ctrl+B 0</code> and <code>Ctrl+B <down arrow></code>
 to switch to the pane.
@@ -147,7 +147,7 @@ to switch to the pane.
 
 ====2.2.2 Basic Tasks - Interfacing with the <code>wallet1</code> instance====
 
-Ensure the window that houses the <code>dcrwallet1</code> instance is active and
+Ensure the window that houses the <code>exccwallet1</code> instance is active and
 the lower pane has focus.  This '''might''' require switching to the window with
 the tmux command sequence <code>Ctrl+B 1</code> and
 <code>Ctrl+B <down arrow></code> to switch to the pane.
@@ -172,9 +172,9 @@ the tmux command sequence <code>Ctrl+B 1</code> and
     "third ticket hash here"
   ]
 
-====2.2.3 Basic Tasks - Forcing a reorg via the <code>dcrd2</code> instance====
+====2.2.3 Basic Tasks - Forcing a reorg via the <code>exccd2</code> instance====
 
-Ensure the window that houses the <code>dcrd2</code> instance is active and the
+Ensure the window that houses the <code>exccd2</code> instance is active and the
 lower pane has focus.  This '''might''' require switching to the window with the
 tmux command sequence <code>Ctrl+B 2</code> and <code>Ctrl+B <down arrow></code>
 to switch to the pane.
@@ -183,16 +183,16 @@ Force the reorg using the <code>reorg</code> convenience script:
 
   $ ./reorg
   [
-    "block hash mined in dcrd1 instance"
+    "block hash mined in exccd1 instance"
   ]
   [
-   "second block hash mined in dcrd1 instance"
+   "second block hash mined in exccd1 instance"
   ]
   [
-    "block hash mined in dcrd2 instance"
+    "block hash mined in exccd2 instance"
   ]
 
-The log file of <code>dcrd</code> in the upper pane will show something similar
+The log file of <code>exccd</code> in the upper pane will show something similar
 to:
 
   [INF] CHAN: REORGANIZE: Chain forks at 012419307b328916facfce7120fdb526537b5f3faccd5039e1650deda87832fe (height 34)
@@ -204,10 +204,10 @@ to:
 From any instance command pane:
 
   $ ./stopall
-  dcrd stopping.
-  dcrwallet stopping
-  dcrd stopping.
-  dcrwallet stopping
+  exccd stopping.
+  exccwallet stopping
+  exccd stopping.
+  exccwallet stopping
   Seconds until shutdown: 3
   ...
 
@@ -249,8 +249,8 @@ simplify things, it also provides a much more sophisticated setup than the
 basic one described here.
 </p>'''
 
-Running a single <code>dcrd</code> node on simnet is simply starting
-<code>dcrd</code> with the <code>--simnet</code> flag.  However, in order to be
+Running a single <code>exccd</code> node on simnet is simply starting
+<code>exccd</code> with the <code>--simnet</code> flag.  However, in order to be
 really useful, you'll typically want to be able to send coins amongst addresses
 which implies that blocks will need to be mined and interfacing with a wallet
 will be needed.
@@ -261,7 +261,7 @@ address you own so there are usable coins to spend.
 
 As previously mentioned, simnet uses unique addresses to prevent confusion with
 the main network.  Thus, it means that a wallet which supports the address
-format must be used.  For this, <code>dcrwallet</code> with the
+format must be used.  For this, <code>exccwallet</code> with the
 <code>--simnet</code> flag can be used.
 
 The following is a command reference to get going:
@@ -273,7 +273,7 @@ command line to show exactly what is needed for each.
 </p>'''
 
 * Create a new simnet wallet (this will be called the first window):
-  $ dcrwallet --simnet --create
+  $ exccwallet --simnet --create
   Enter the private passphrase for your new wallet:
   Confirm passphrase:
   Do you want to add an additional layer of encryption for public data? (n/no/y/yes) [no]:
@@ -287,20 +287,20 @@ command line to show exactly what is needed for each.
   Mining address: S<rest of address here>     <---- Note this address
   The wallet has been created successfully.
 
-* In a second window, start dcrd on simnet paying to the mining address from above:
-  $ dcrd --simnet --rpcuser=someuser --rpcpass=somepass --miningaddr=S<rest of address from above here>
+* In a second window, start exccd on simnet paying to the mining address from above:
+  $ exccd --simnet --rpcuser=someuser --rpcpass=somepass --miningaddr=S<rest of address from above here>
 
-* In a third window, instruct dcrd to generate enough initial blocks for the first coinbase to mature and to have enough funds for purchasing tickets:
-  $ dcrctl --simnet --rpcuser=someuser --rpcpass=somepass generate 32
+* In a third window, instruct exccd to generate enough initial blocks for the first coinbase to mature and to have enough funds for purchasing tickets:
+  $ exccctl --simnet --rpcuser=someuser --rpcpass=somepass generate 32
 
-* Back in the first window, start dcrwallet on simnet:
+* Back in the first window, start exccwallet on simnet:
 '''<p>
 NOTE: It is important to perform this step AFTER the blocks have been mined
 above or the wallet will believe it's on an old coin type and will not see the
 balance properly.
 </p>'''
 
-  $ dcrwallet --simnet --username=someuser --password=somepass
+  $ exccwallet --simnet --username=someuser --password=somepass
   ...
   *** ATTENTION ***
   Since this is your first time running we need to sync accounts. Please enter
@@ -313,7 +313,7 @@ balance properly.
   [INF] SYNC: Blockchain sync completed, wallet ready for general usage.
 
 * Back in the third window, check the wallet balance to ensure spendable coins are available:
-  $ dcrctl --simnet --wallet --rpcuser=someuser --rpcpass=somepass getbalance
+  $ exccctl --simnet --wallet --rpcuser=someuser --rpcpass=somepass getbalance
 
 At this point, there is a fully functional private simnet with coins available
 to send to other simnet addresses.  Any time one or more transactions are sent,

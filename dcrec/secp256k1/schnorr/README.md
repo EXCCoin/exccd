@@ -1,9 +1,9 @@
 schnorr
 =======
 
-[![Build Status](https://github.com/decred/dcrd/workflows/Build%20and%20Test/badge.svg)](https://github.com/decred/dcrd/actions)
+[![Build Status](https://github.com/EXCCoin/exccd/workflows/Build%20and%20Test/badge.svg)](https://github.com/EXCCoin/exccd/actions)
 [![ISC License](https://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/decred/dcrd/dcrec/secp256k1/v4/schnorr)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/EXCCoin/exccd/dcrec/secp256k1/v4/schnorr)
 
 Package schnorr provides custom Schnorr signing and verification via secp256k1.
 
@@ -53,12 +53,12 @@ which means there are a number of variations that are not compatible with each
 other.
 
 In addition, many of the standardization attempts have various disadvantages
-that make them unsuitable for use in Decred.  Some of these details will be
+that make them unsuitable for use in Exchangecoin.  Some of these details will be
 discussed further in the Design section along with providing some insight into
 the design decisions made.
 
 Consequently, this package implements a custom Schnorr-based signature scheme
-named `EC-Schnorr-DCRv0` suitable for use in Decred.
+named `EC-Schnorr-DCRv0` suitable for use in Exchangecoin.
 
 The following provides a high-level overview of the key design features of the
 scheme:
@@ -84,8 +84,8 @@ Signature Generation by Smart Cards in the Journal of Cryptology, Vol.4,
 pp.161-174, 1991 (`Sc91`).  There are other variants not covered here as well.
 
 Further, each of these schemes have various disadvantages that are discussed
-more in the following sections which make them unsuitable for use with Decred.
-Consequently, Decred makes use of a custom scheme named `EC-Schnorr-DCRv0`.
+more in the following sections which make them unsuitable for use with Exchangecoin.
+Consequently, Exchangecoin makes use of a custom scheme named `EC-Schnorr-DCRv0`.
 
 That said, the various schemes are all fairly simple variations which involve
 using an agreed upon elliptic curve with generator `G`, and hash function `hash`
@@ -151,7 +151,7 @@ important disadvantages that the second approach does not:
   prevents the ability to take advantage of their homomorphic properties
 
 Further, when the size of the field elements for the elliptic curve is the same
-size as the hash function, as is the case in Decred, techniques which are
+size as the hash function, as is the case in Exchangecoin, techniques which are
 discussed in the next section can be used to make `(R, s)` signatures the same
 size as `(e, s)` signatures.
 
@@ -196,7 +196,7 @@ coordinates since this choice also ties into that. Also, one of the variants
 reverses the order of the concatenation of the message `m` and the point `R`.
 
 Combining these details with the following additional information specific to
-Decred results in the choice of `e = BLAKE-256(R.x || m)` for the challenge with
+Exchangecoin results in the choice of `e = BLAKE-256(R.x || m)` for the challenge with
 additional restrictions on `R` to ensure verifiers can reconstruct the full
 point:
 
@@ -289,10 +289,10 @@ concatenated together to form a 64-byte signature.
 
 See the file `signature_test.go` for test vectors.
 
-## Schnorr use in Decred
+## Schnorr use in Exchangecoin
 
 At the time of this writing, Schnorr signatures are not yet in widespread use on
-the Decred network, largely due to the current lack of support in wallets and
+the Exchangecoin network, largely due to the current lack of support in wallets and
 infrastructure for secure multi-party and threshold signatures.
 
 However, the consensus rules and scripting engine supports the necessary
@@ -314,17 +314,17 @@ standardization attempts:
 
 ## Installation and Updating
 
-This package is part of the `github.com/decred/dcrd/dcrec/secp256k1/v4` module.
+This package is part of the `github.com/EXCCoin/exccd/dcrec/secp256k1/v4` module.
 Use the standard go tooling for working with modules to incorporate it.
 
 ## Examples
 
-* [Sign Message](https://pkg.go.dev/github.com/decred/dcrd/dcrec/secp256k1/v4/schnorr#example-package-SignMessage)  
+* [Sign Message](https://pkg.go.dev/github.com/EXCCoin/exccd/dcrec/secp256k1/v4/schnorr#example-package-SignMessage)  
   Demonstrates signing a message with the EC-Schnorr-DCRv0 scheme using a
   secp256k1 private key that is first parsed from raw bytes and serializing the
   generated signature.
 
-* [Verify Signature](https://pkg.go.dev/github.com/decred/dcrd/dcrec/secp256k1/v4/schnorr#example-Signature.Verify)  
+* [Verify Signature](https://pkg.go.dev/github.com/EXCCoin/exccd/dcrec/secp256k1/v4/schnorr#example-Signature.Verify)  
   Demonstrates verifying an EC-Schnorr-DCRv0 signature against a public key that
   is first parsed from raw bytes.  The signature is also parsed from raw bytes.
 

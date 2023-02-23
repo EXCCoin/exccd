@@ -13,14 +13,14 @@ const fileContents = `[Application Options]
 
 ; The directory to store data such as the block chain and peer addresses.  The
 ; block chain takes several GB, so this location must have a lot of free space.
-; The default is ~/.dcrd/data on POSIX OSes, $LOCALAPPDATA/Dcrd/data on Windows,
-; ~/Library/Application Support/Dcrd/data on macOS, and $homed/dcrd/data on
+; The default is ~/.exccd/data on POSIX OSes, $LOCALAPPDATA/Exccd/data on Windows,
+; ~/Library/Application Support/Exccd/data on macOS, and $homed/exccd/data on
 ; Plan9.  Environment variables are expanded so they may be used.  NOTE: Windows
 ; environment variables are typically %VARIABLE%, but they must be accessed with
 ; $VARIABLE here.
-; datadir=~/.dcrd/data                            ; Unix
-; datadir=$LOCALAPPDATA/Dcrd/data                 ; Windows
-; datadir=~/Library/Application Support/Dcrd/data ; macOS
+; datadir=~/.exccd/data                            ; Unix
+; datadir=$LOCALAPPDATA/Exccd/data                 ; Windows
+; datadir=~/Library/Application Support/Exccd/data ; macOS
 
 
 ; ------------------------------------------------------------------------------
@@ -68,7 +68,7 @@ const fileContents = `[Application Options]
 ; upnp=1
 
 ; Specify the external IP addresses your node is listening on.  One address per
-; line.  dcrd will not contact 3rd-party sites to obtain external ip addresses.
+; line.  exccd will not contact 3rd-party sites to obtain external ip addresses.
 ; This means if you are behind NAT, your node will not be able to advertise a
 ; reachable address unless you specify it here or enable the 'upnp' option (and
 ; have a supported device).
@@ -80,7 +80,7 @@ const fileContents = `[Application Options]
 ;
 ; Only one of the following two options, 'addpeer' and 'connect', may be
 ; specified.  Both allow you to specify peers that you want to stay connected
-; with, but the behavior is slightly different.  By default, dcrd will query DNS
+; with, but the behavior is slightly different.  By default, exccd will query DNS
 ; to find peers to connect to, so unless you have a specific reason such as
 ; those described below, you probably won't need to modify anything here.
 ;
@@ -137,7 +137,7 @@ const fileContents = `[Application Options]
 ; whitelist=192.168.0.0/24
 ; whitelist=fd00::/16
 
-; Disable seeding for peer discovery.  By default, when dcrd starts, it will use
+; Disable seeding for peer discovery.  By default, when exccd starts, it will use
 ; HTTPS to query for available peers to connect with.
 ; noseeders=1
 
@@ -176,7 +176,7 @@ const fileContents = `[Application Options]
 
 ; ------------------------------------------------------------------------------
 ; RPC server options - The following options control the built-in RPC server
-; which is used to control and query information from a running dcrd process.
+; which is used to control and query information from a running exccd process.
 ;
 ; NOTE: The RPC server is disabled by default if no rpcuser or rpcpass is
 ; specified.
@@ -353,7 +353,7 @@ const fileContents = `[Application Options]
 ; ------------------------------------------------------------------------------
 
 ; Log directory.
-; logdir=~/.dcrd/logs
+; logdir=~/.exccd/logs
 
 ; Size of log file before it is rotated and compressed.
 ; logsize=10M
@@ -365,7 +365,7 @@ const fileContents = `[Application Options]
 ; Log verbosity.
 ; Valid levels are {trace, debug, info, warn, error, critical}
 ; You may also specify <subsystem>=<level>,<subsystem2>=<level>,... to set
-; log level for individual subsystems.  Use dcrd --debuglevel=show to list
+; log level for individual subsystems.  Use exccd --debuglevel=show to list
 ; available subsystems.
 ; debuglevel=info
 
@@ -414,8 +414,8 @@ const DcrctlSampleConfig = `[Application Options]
 ; proxyuser=
 ; proxypass=
 
-; Username and password to authenticate connections to a Decred RPC server
-; (usually dcrd or dcrwallet)
+; Username and password to authenticate connections to a Exchangecoin RPC server
+; (usually exccd or exccwallet)
 ; rpcuser=
 ; rpcpass=
 
@@ -426,7 +426,7 @@ const DcrctlSampleConfig = `[Application Options]
 ; walletrpcserver=localhost
 
 ; RPC server certificate chain file for validation
-; rpccert=~/.dcrd/rpc.cert
+; rpccert=~/.exccd/rpc.cert
 `
 
 // FileContents returns a string containing the commented example config for

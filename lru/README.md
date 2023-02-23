@@ -1,9 +1,9 @@
 lru
 ===
 
-[![Build Status](https://github.com/decred/dcrd/workflows/Build%20and%20Test/badge.svg)](https://github.com/decred/dcrd/actions)
+[![Build Status](https://github.com/EXCCoin/exccd/workflows/Build%20and%20Test/badge.svg)](https://github.com/EXCCoin/exccd/actions)
 [![ISC License](https://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![Doc](https://img.shields.io/badge/doc-reference-blue.svg)](https://pkg.go.dev/github.com/decred/dcrd/lru)
+[![Doc](https://img.shields.io/badge/doc-reference-blue.svg)](https://pkg.go.dev/github.com/EXCCoin/exccd/lru)
 
 Package lru implements generic least-recently-used caches with near O(1) perf.
 
@@ -25,16 +25,16 @@ lookups, inserts, and deletions.
 
 ## Installation and Updating
 
-This package is part of the `github.com/decred/dcrd/lru` module.  Use the
+This package is part of the `github.com/EXCCoin/exccd/lru` module.  Use the
 standard go tooling for working with modules to incorporate it.
 
 ## Examples
 
-* [Basic Cache Usage](https://pkg.go.dev/github.com/decred/dcrd/lru#example-package-BasicUsage)
+* [Basic Cache Usage](https://pkg.go.dev/github.com/EXCCoin/exccd/lru#example-package-BasicUsage)
   Demonstrates creating a new cache instance, inserting items into the cache,
   causing an eviction of the least-recently-used item, and removing an item.
 
-* [Basic KV Cache Usage](https://pkg.go.dev/github.com/decred/dcrd/lru#example-package-BasicKVUsage)
+* [Basic KV Cache Usage](https://pkg.go.dev/github.com/EXCCoin/exccd/lru#example-package-BasicKVUsage)
   Demonstrates creating a new k/v cache instance, inserting items into the cache,
   causing an eviction of the least-recently-used item, and removing an item.
 

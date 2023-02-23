@@ -3,11 +3,11 @@ exccd
 
 exccd is a ExchangeCoin full node implementation written in Go (golang).
 
-This acts as a chain daemon for the [ExchangeCoin](https://cryptoxchanger.io/) cryptocurrency.
+This acts as a chain daemon for the [ExchangeCoin](https://excc.co/) cryptocurrency.
 The exccd maintains the entire past transactional ledger of ExchangeCoin and allows
 relaying of transactions to other ExchangeCoin nodes across the world. To read more
 about ExchangeCoin please see the
-[project documentation](https://cryptoxchanger.io/faq).
+[project documentation](https://excc.co.
 
 Note: To send or receive funds and join Proof-of-Stake mining, you will also need
 [exccwallet](https://github.com/EXCCoin/exccwallet).
@@ -63,7 +63,7 @@ go install . ./cmd/...
 All tests and linters may be run in a docker container using the script
 `run_tests.sh`.  This script defaults to using the current supported version of
 go.  You can run it with the major version of Go you would like to use as the
-only arguement to test a previous on a previous version of Go (generally ExchangeCoin
+only argument to test a previous on a previous version of Go (generally ExchangeCoin
 supports the current version of Go and the previous one). The script requires `GOPATH` to be set.
 
 ```

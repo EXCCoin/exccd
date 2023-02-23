@@ -1,9 +1,9 @@
 stdscript
 =========
 
-[![Build Status](https://github.com/decred/dcrd/workflows/Build%20and%20Test/badge.svg)](https://github.com/decred/dcrd/actions)
+[![Build Status](https://github.com/EXCCoin/exccd/workflows/Build%20and%20Test/badge.svg)](https://github.com/EXCCoin/exccd/actions)
 [![ISC License](https://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![Doc](https://img.shields.io/badge/doc-reference-blue.svg)](https://pkg.go.dev/github.com/decred/dcrd/txscript/v4/stdscript)
+[![Doc](https://img.shields.io/badge/doc-reference-blue.svg)](https://pkg.go.dev/github.com/EXCCoin/exccd/txscript/v4/stdscript)
 
 ## Overview
 
@@ -65,7 +65,7 @@ stake-related scripts, additionally have special consensus enforcement which
 means the consensus rules must also recognize them.  In other words, they are
 both consensus scripts as well as recognized standard scripts.
 
-This is particularly relevant to the Decred staking system since a
+This is particularly relevant to the Exchangecoin staking system since a
 distinguishing aspect of it is that its scripts are tightly controlled by
 consensus to only permit very specific scripts, unlike regular transactions
 which allow scripts composed of any sequence of opcodes that evaluate to true.
@@ -208,22 +208,22 @@ script) as follows:
 
 ## Installation and Updating
 
-This package is part of the `github.com/decred/dcrd/txscript/v4` module.  Use
+This package is part of the `github.com/EXCCoin/exccd/txscript/v4` module.  Use
 the standard go tooling for working with modules to incorporate it.
 
 ## Examples
 
-* [DetermineScriptType](https://pkg.go.dev/github.com/decred/dcrd/txscript/v4/stdscript#example-DeterminScriptType)
+* [DetermineScriptType](https://pkg.go.dev/github.com/EXCCoin/exccd/txscript/v4/stdscript#example-DeterminScriptType)
 
   Demonstrates determining the type of a script for a given scripting language
   version.
 
-* [ExtractPubKeyHashV0](https://pkg.go.dev/github.com/decred/dcrd/txscript/v4/stdscript#example-ExtractPubKeyHashV0)
+* [ExtractPubKeyHashV0](https://pkg.go.dev/github.com/EXCCoin/exccd/txscript/v4/stdscript#example-ExtractPubKeyHashV0)
 
   Demonstrates extracting a public key hash from a standard pay-to-pubkey-hash
   script for scripting language version 0.
 
-* [ExtractScriptHashV0](https://pkg.go.dev/github.com/decred/dcrd/txscript/v4/stdscript#example-ExtractScriptHashV0)
+* [ExtractScriptHashV0](https://pkg.go.dev/github.com/EXCCoin/exccd/txscript/v4/stdscript#example-ExtractScriptHashV0)
 
   Demonstrates extracting a script hash from a standard pay-to-script-hash
   script for scripting language version 0.

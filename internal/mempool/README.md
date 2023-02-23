@@ -1,13 +1,13 @@
 mempool
 =======
 
-[![Build Status](https://github.com/decred/dcrd/workflows/Build%20and%20Test/badge.svg)](https://github.com/decred/dcrd/actions)
+[![Build Status](https://github.com/EXCCoin/exccd/workflows/Build%20and%20Test/badge.svg)](https://github.com/EXCCoin/exccd/actions)
 [![ISC License](https://img.shields.io/badge/license-ISC-blue.svg)](http://copyfree.org)
-[![Doc](https://img.shields.io/badge/doc-reference-blue.svg)](https://pkg.go.dev/github.com/decred/dcrd/internal/mempool)
+[![Doc](https://img.shields.io/badge/doc-reference-blue.svg)](https://pkg.go.dev/github.com/EXCCoin/exccd/internal/mempool)
 
-Package mempool provides a policy-enforced pool of unmined Decred transactions.
+Package mempool provides a policy-enforced pool of unmined Exchangecoin transactions.
 
-A key responsibility of the Decred network is mining transactions – regular
+A key responsibility of the Exchangecoin network is mining transactions – regular
 transactions and stake transactions – into blocks.  In order to facilitate
 this, the mining process relies on having a readily-available source of
 transactions to include in a block that is being solved.
@@ -28,7 +28,7 @@ for a transaction to be considered standard are that it is of the
 most-recently supported version, finalized, does not exceed a specific size,
 and only consists of specific script forms.
 
-Since this package does not deal with other Decred specifics such as network
+Since this package does not deal with other Exchangecoin specifics such as network
 communication and transaction relay, it returns a list of transactions that were
 accepted which gives the caller a high level of flexibility in how they want to
 proceed.  Typically, this will involve things such as relaying the transactions
