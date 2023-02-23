@@ -1,16 +1,16 @@
 #!/bin/ksh
 
-# OpenBSD rc.d service file for dcrd.
-# Assumes a _dcrd user is created with home directory /home/_dcrd for block
-# data, and application configuration in /etc/dcrd.conf.
+# OpenBSD rc.d service file for exccd.
+# Assumes a _exccd user is created with home directory /home/_exccd for block
+# data, and application configuration in /etc/exccd.conf.
 # All logs and crash traces are written to the daemon.info syslog facility,
-# with dcrd's built-in file logging and log rotation disabled by default.
-# Save to /etc/rc.d/dcrd and enable with 'pkg_scripts=dcrd' in
+# with exccd's built-in file logging and log rotation disabled by default.
+# Save to /etc/rc.d/exccd and enable with 'pkg_scripts=exccd' in
 # /etc/rc.conf.local.
 
-daemon="/usr/local/bin/dcrd"
-daemon_flags="-C/etc/dcrd.conf -A/home/_dcrd --nofilelogging"
-daemon_user=_dcrd
+daemon="/usr/local/bin/exccd"
+daemon_flags="-C/etc/exccd.conf -A/home/_exccd --nofilelogging"
+daemon_user=_exccd
 daemon_logger=daemon.info
 
 . /etc/rc.d/rc.subr

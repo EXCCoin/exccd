@@ -1,7 +1,7 @@
 <?xml version='1.0'?>
 <!DOCTYPE service_bundle SYSTEM '/usr/share/lib/xml/dtd/service_bundle.dtd.1'>
 <service_bundle type='manifest' name='export'>
-  <service name='application/dcrd' type='service' version='0'>
+  <service name='application/exccd' type='service' version='0'>
     <create_default_instance enabled='true'/>
     <single_instance/>
 
@@ -13,10 +13,10 @@
     </dependency>
 
     <method_context>
-      <method_credential group='dcrd' user='dcrd'/>
+      <method_credential group='exccd' user='exccd'/>
     </method_context>
 
-    <exec_method name='start' type='method' exec='/opt/decred/bin/dcrd --appdata /var/dcrd' timeout_seconds='60'/>
+    <exec_method name='start' type='method' exec='/opt/excc/bin/exccd --appdata /var/exccd' timeout_seconds='60'/>
     <exec_method name='stop' type='method' exec=':kill' timeout_seconds='60'/>
 
     <property_group name='startd' type='framework'>
@@ -28,7 +28,7 @@
 
     <template>
       <common_name>
-        <loctext xml:lang='C'>dcrd</loctext>
+        <loctext xml:lang='C'>exccd</loctext>
       </common_name>
     </template>
   </service>
