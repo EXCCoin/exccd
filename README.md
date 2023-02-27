@@ -20,7 +20,7 @@ development.
 
 ## Requirements
 
-[Go](http://golang.org) >= 1.118
+[Go](http://golang.org) >= 1.18
 
 ## Getting Started
 
