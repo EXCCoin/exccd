@@ -16,13 +16,11 @@ This project is currently under active development and is in a Beta state.
 
 It is forked from [dcrd](https://github.com/decred/dcrd) which is a Decred
 full node implementation written in Go.  dcrd is a ongoing project under active
-development.  Because exccd is constantly synced with dcrd codebase, it will
-get the benefit of dcrd's ongoing upgrades to peer and connection handling,
-database optimization and other blockchain related technology improvements.
+development.  
 
 ## Requirements
 
-[Go](http://golang.org) >= 1.11 
+[Go](http://golang.org) >= 1.118
 
 ## Getting Started
 
