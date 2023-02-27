@@ -70,7 +70,7 @@ COPY --from=builder /go/bin/* /bin/
 COPY --from=builder --chown=excc /emptydatadir /tmp
 
 # Use an unprivileged user.
-USER decred
+USER excc
 
 # Ports for the p2p of mainnet, testnet, and simnet, respectively.
 EXPOSE 9666  11999  11998  11997
