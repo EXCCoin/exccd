@@ -72,8 +72,11 @@ COPY --from=builder --chown=excc /emptydatadir /tmp
 # Use an unprivileged user.
 USER decred
 
-# Ports for the p2p and json-rpc of mainnet, testnet, and simnet, respectively.
+# Ports for the p2p of mainnet, testnet, and simnet, respectively.
 EXPOSE 9666  11999  11998  11997
+
+# Ports for the json-rpc of mainnet, testnet, and simnet, respectively.
+EXPOSE 9109 19109 19556 18656
 
 ENTRYPOINT [ "/bin/entrypoint" ]
 
