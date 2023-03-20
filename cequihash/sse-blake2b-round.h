@@ -139,9 +139,9 @@
 #endif
 
 #if defined(HAVE_SSE41)
-#include "blake2b-load-sse41.h"
+#include "sse-blake2b-load-sse41.h"
 #else
-#include "blake2b-load-sse2.h"
+#include "sse-blake2b-load-sse2.h"
 #endif
 
 #define ROUND(r) \

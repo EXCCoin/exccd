@@ -1,3 +1,4 @@
+//go:build sse || ppc64le.power8 || ppc64le.power9
 /*
    BLAKE2 reference source code package - optimized C implementations
 
@@ -15,10 +16,10 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "blake2.h"
-#include "blake2-impl.h"
+#include "sse-blake2.h"
+#include "sse-blake2-impl.h"
 
-#include "blake2-config.h"
+#include "sse-blake2-config.h"
 
 #include <emmintrin.h>
 #if defined(HAVE_SSSE3)
@@ -34,7 +35,7 @@
 #include <x86intrin.h>
 #endif
 
-#include "blake2b-round.h"
+#include "sse-blake2b-round.h"
 
 ALIGN( 64 ) static const uint64_t blake2b_IV[8] =
 {
@@ -272,7 +273,7 @@ int crypto_hash( unsigned char *out, unsigned char *in, unsigned long long inlen
 
 #if defined(BLAKE2B_SELFTEST)
 #include <string.h>
-#include "blake2-kat.h"
+#include "sse-blake2-kat.h"
 int main( int argc, char **argv )
 {
   uint8_t key[BLAKE2B_KEYBYTES];

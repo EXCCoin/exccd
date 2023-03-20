@@ -64,7 +64,7 @@
 #define HAVE_SSE2
 #endif
 
-#if !defined(HAVE_SSE2)
+#if !defined(HAVE_SSE2) && !(defined(__POWER8_VECTOR__) && defined(NO_WARN_X86_INTRINSICS))
 #error "This code requires at least SSE2."
 #endif
 

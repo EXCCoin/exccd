@@ -5,7 +5,9 @@
 package cequihash
 
 /*
-#cgo CXXFLAGS: -O3 -march=x86-64 -mtune=generic -std=c++17 -Wall -Wno-strict-aliasing -Wno-shift-count-overflow -Werror
+#cgo amd64 CXXFLAGS: -march=x86-64 -mtune=generic
+#cgo ppc64le CXXFLAGS: -mtune=powerpc64le -DNO_WARN_X86_INTRINSICS
+#cgo CXXFLAGS: -O3 -std=c++17 -Wall -Wno-strict-aliasing -Wno-shift-count-overflow -Werror
 #include "cequihash.h"
 */
 import "C"

@@ -45,7 +45,11 @@
 #include <cstring>
 #include <type_traits>
 #include <vector>
-#include "blake2.h"
+#if defined(__x86_64__) || defined(_M_X64) || (defined(__POWER8_VECTOR__) && defined(NO_WARN_X86_INTRINSICS))
+#include "sse-blake2.h"
+#else
+#include "blake2-ref.h"
+#endif
 #include "portable_endian.h"
 
 #if __cplusplus >= 201703L
