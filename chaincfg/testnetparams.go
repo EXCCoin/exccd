@@ -190,7 +190,8 @@ func TestNet3Params() *Params {
 
 		// BIP44 coin type used in the hierarchical deterministic path for
 		// address generation.
-		HDCoinType: 0,
+		SLIP0044CoinType: 1, // SLIP0044, Testnet (all coins)
+		LegacyCoinType:   0,
 
 		// Decred PoS parameters
 		MinimumStakeDiff:        2 * 1e7, // 0.2 Coin

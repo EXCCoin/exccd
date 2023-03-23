@@ -176,7 +176,8 @@ func MainNetParams() *Params {
 
 		// BIP44 coin type used in the hierarchical deterministic path for
 		// address generation.
-		HDCoinType: 0,
+		SLIP0044CoinType:  21370, // SLIP0044, ExchangeCoin
+		LegacyCoinType:    0, // for backwards compatibility
 
 		// Decred PoS parameters
 		MinimumStakeDiff:        2 * 1e8, // 2 Coin

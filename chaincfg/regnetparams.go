@@ -161,7 +161,8 @@ func RegNetParams() *Params {
 
 		// BIP44 coin type used in the hierarchical deterministic path for
 		// address generation.
-		HDCoinType: 1,
+		SLIP0044CoinType: 1, // SLIP0044, Testnet (all coins)
+		LegacyCoinType:   1,
 
 		// Decred PoS parameters
 		MinimumStakeDiff:        20000,

@@ -184,7 +184,8 @@ func SimNetParams() *Params {
 
 		// BIP44 coin type used in the hierarchical deterministic path for
 		// address generation.
-		HDCoinType: 2,
+		SLIP0044CoinType: 1, // SLIP0044, Testnet (all coins)
+		LegacyCoinType:   2,
 
 		// Decred PoS parameters
 		MinimumStakeDiff:        2 * 1e7, // 0.2 Coin
