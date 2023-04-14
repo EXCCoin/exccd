@@ -1,13 +1,13 @@
-FROM golang:alpine3.17 as builder
+FROM golang:1.19-alpine as builder
 RUN apk add git ca-certificates upx gcc build-base --update --no-cache
 
 WORKDIR /go/src/github.com/EXCCoin/exccd
 COPY . .
 
 ENV GO111MODULE=on
-RUN go build -ldflags='-s -w -X main.appBuild=alpine:latest -extldflags "-static"' .
+RUN go build -ldflags='-s -w -X main.appBuild=alpine:3.17 -extldflags "-static"' .
 
-FROM alpine:latest
+FROM alpine:3.17
 
 WORKDIR /app
 COPY --from=builder /go/src/github.com/EXCCoin/exccd/exccd .
@@ -21,4 +21,3 @@ EXPOSE 9109 19109 19556 18656
 ENV DATA_DIR=/data
 ENV CONFIG_FILE=/app/exccd.conf
 CMD ["sh", "-c", "/app/exccd --appdata=${DATA_DIR} --configfile=${CONFIG_FILE}"]
- 
