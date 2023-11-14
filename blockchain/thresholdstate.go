@@ -803,6 +803,18 @@ func (b *BlockChain) IsExplicitVerUpgradesAgendaActive(prevHash *chainhash.Hash)
 // This function MUST be called with the chain state lock held (for writes).
 func (b *BlockChain) isAutoRevocationsAgendaActive(prevNode *blockNode) (bool, error) {
 	_ = chaincfg.VoteIDAutoRevocations // avoid unused const in chaincfg/params.go
+	if b.chainParams.Net == wire.SimNet || b.chainParams.Net == wire.RegNet {
+		// always enabled on SimNet and RegNet
+		return true, nil
+	}
+	if b.chainParams.Net == wire.TestNet3 && prevNode.height >= 90229 {
+		// enabled on TestNet3 in block 90230 and in all blocks after it
+		return true, nil
+	}
+	if b.chainParams.Net == wire.MainNet && prevNode.height >= 1103999 {
+		// enabled on Mainnet in block 1104000 and in all blocks after it
+		return true, nil
+	}
 	return false, nil
 }
 
@@ -812,7 +824,20 @@ func (b *BlockChain) isAutoRevocationsAgendaActive(prevNode *blockNode) (bool, e
 //
 // This function is safe for concurrent access.
 func (b *BlockChain) IsAutoRevocationsAgendaActive(prevHash *chainhash.Hash) (bool, error) {
-	return false, nil
+	// The auto revocations agenda is never active for the genesis block.
+	if *prevHash == *zeroHash {
+		return false, nil
+	}
+
+	prevNode := b.index.LookupNode(prevHash)
+	if prevNode == nil || !b.index.CanValidate(prevNode) {
+		return false, unknownBlockError(prevHash)
+	}
+
+	b.chainLock.Lock()
+	isActive, err := b.isAutoRevocationsAgendaActive(prevNode)
+	b.chainLock.Unlock()
+	return isActive, err
 }
 
 // isSubsidySplitAgendaActive returns whether or not the agenda to change the
