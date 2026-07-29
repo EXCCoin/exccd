@@ -53,6 +53,11 @@ func TestChance(t *testing.T) {
 		newKnownAddress(now.Add(-35*time.Second),
 			2, now.Add(-30*time.Minute), now, false, 0),
 		1 / 1.5 / 1.5,
+	}, {
+		// Excessive attempts must not drive selection chance near zero.
+		newKnownAddress(now.Add(-35*time.Second),
+			100, now.Add(-30*time.Minute), now, false, 0),
+		0.01,
 	}}
 
 	err := .0001
