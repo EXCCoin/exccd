@@ -203,6 +203,15 @@ func (idx *ExistsAddrIndex) Subscribers() map[chan bool]struct{} {
 	return fetchIndexerSubscribers(idx.subscribers)
 }
 
+// NotifySyncSubscribers signals subscribers of an index sync update.
+//
+// This is part of the Indexer interface.
+func (idx *ExistsAddrIndex) NotifySyncSubscribers() {
+	idx.mtx.Lock()
+	notifySyncSubscribers(idx.subscribers)
+	idx.mtx.Unlock()
+}
+
 // WaitForSync subscribes clients for the next index sync update.
 //
 // This is part of the Indexer interface.

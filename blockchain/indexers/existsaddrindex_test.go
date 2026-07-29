@@ -105,7 +105,7 @@ func TestExistsAddrIndexAsync(t *testing.T) {
 	}
 
 	// Fetch the first address paid to by bk5's coinbase.
-	out := bk5.MsgBlock().Transactions[0].TxOut[0]
+	out := bk5.MsgBlock().Transactions[0].TxOut[1]
 	_, addrs := stdscript.ExtractAddrs(out.Version, out.PkScript,
 		idx.chain.ChainParams())
 

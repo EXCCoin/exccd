@@ -149,6 +149,9 @@ type Indexer interface {
 
 	// Subscribers returns all client channels waiting for the next index update.
 	Subscribers() map[chan bool]struct{}
+
+	// NotifySyncSubscribers signals subscribers of an index sync update.
+	NotifySyncSubscribers()
 }
 
 // IndexDropper provides a method to remove an index from the database. Indexers
@@ -477,6 +480,16 @@ func fetchIndexerSubscribers(subscribers map[chan bool]struct{}) map[chan bool]s
 	return subs
 }
 
+// notifySyncSubscribers signals and removes all index sync subscribers.
+//
+// This should be called with the associated indexer mutex held.
+func notifySyncSubscribers(subscribers map[chan bool]struct{}) {
+	for sub := range subscribers {
+		delete(subscribers, sub)
+		close(sub)
+	}
+}
+
 // purgeIndexerSubscription purges the provided indexer subscription using the
 // provided purge function on either a signal from the subscription itself or
 // after waiting over the indexer sync wait time.
@@ -703,13 +716,6 @@ func upgradeIndex(ctx context.Context, indexer Indexer, genesisHash *chainhash.H
 // maybeNotifySubscribers updates subscribers the index is synced when
 // the tip is identical to the chain tip.
 func maybeNotifySubscribers(ctx context.Context, indexer Indexer) error {
-	subs := indexer.Subscribers()
-
-	// Exit immediately if the index has no subscribers.
-	if len(subs) == 0 {
-		return nil
-	}
-
 	if interruptRequested(ctx) {
 		return indexerError(ErrInterruptRequested, interruptMsg)
 	}
@@ -722,11 +728,7 @@ func maybeNotifySubscribers(ctx context.Context, indexer Indexer) error {
 	}
 
 	if tipHeight == bestHeight && *bestHash == *tipHash {
-		for sub := range subs {
-			// Close the subscription channel to signal receivers the
-			// indexer is synced.
-			close(sub)
-		}
+		indexer.NotifySyncSubscribers()
 	}
 
 	return nil
