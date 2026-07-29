@@ -31,6 +31,10 @@ const (
 
 	// strictAsciiRangeUpper is the upper limit of the strict ASCII range.
 	strictAsciiRangeUpper = 0x7e
+
+	// unixToInternal is the number of seconds between year 1 of the Go time
+	// value and the unix epoch.
+	unixToInternal = 62135596800
 )
 
 var (
@@ -192,7 +196,9 @@ type uint32Time time.Time
 
 // int64Time represents a unix timestamp encoded with an int64.  It is used as
 // a way to signal the readElement function how to decode a timestamp into a Go
-// time.Time since it is otherwise ambiguous.
+// time.Time since it is otherwise ambiguous.  The value is rejected if it is
+// larger than the maximum usable seconds for a Go time value for worry-free
+// comparisons.
 type int64Time time.Time
 
 // readElement reads the next sequence of bytes from r using little endian
@@ -275,6 +281,10 @@ func readElement(r io.Reader, element interface{}) error {
 		rv, err := binarySerializer.Uint64(r, binary.LittleEndian)
 		if err != nil {
 			return err
+		}
+		if rv > math.MaxInt64-unixToInternal {
+			const str = "timestamp exceeds maximum allowed value"
+			return messageError("readElement", ErrInvalidTimestamp, str)
 		}
 		*e = int64Time(time.Unix(int64(rv), 0))
 		return nil
@@ -403,6 +413,18 @@ func writeElement(w io.Writer, element interface{}) error {
 
 	case int64:
 		err := binarySerializer.PutUint64(w, littleEndian, uint64(e))
+		if err != nil {
+			return err
+		}
+		return nil
+
+	case *int64Time:
+		secs := uint64(time.Time(*e).Unix())
+		if secs > math.MaxInt64-unixToInternal {
+			const str = "timestamp exceeds maximum allowed value"
+			return messageError("writeElement", ErrInvalidTimestamp, str)
+		}
+		err := binarySerializer.PutUint64(w, littleEndian, secs)
 		if err != nil {
 			return err
 		}

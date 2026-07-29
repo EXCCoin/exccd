@@ -7,14 +7,15 @@ package wire
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 	"reflect"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/davecgh/go-spew/spew"
 )
 
 // TestTx tests the MsgTx API.
@@ -341,6 +342,24 @@ func TestTxWireErrors(t *testing.T) {
 				i, err, test.readErr)
 			continue
 		}
+	}
+}
+
+// TestTxDecodeClearsCallerScripts ensures failed decoding cannot return
+// caller-owned scripts to the shared free list.
+func TestTxDecodeClearsCallerScripts(t *testing.T) {
+	msg := MsgTx{
+		TxIn:  []*TxIn{{SignatureScript: []byte{0x01}}},
+		TxOut: []*TxOut{{PkScript: []byte{0x02}}},
+	}
+	var encodedVersion [4]byte
+	binary.LittleEndian.PutUint32(encodedVersion[:], uint32(TxSerializeFull)<<16)
+	if err := msg.BtcDecode(bytes.NewReader(encodedVersion[:]), ProtocolVersion); err == nil {
+		t.Fatal("BtcDecode unexpectedly succeeded")
+	}
+	if msg.TxIn != nil || msg.TxOut != nil {
+		t.Fatalf("BtcDecode retained caller scripts: TxIn=%v TxOut=%v",
+			msg.TxIn, msg.TxOut)
 	}
 }
 

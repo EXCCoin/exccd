@@ -821,6 +821,11 @@ func (msg *MsgTx) BtcDecode(r io.Reader, pver uint32) error {
 	msg.Version = uint16(version & 0xffff)
 	msg.SerType = TxSerializeType(version >> 16)
 
+	// Prevent caller-provided script slices from being returned to the free
+	// list when decoding into a reused transaction.
+	msg.TxIn = nil
+	msg.TxOut = nil
+
 	// returnScriptBuffers is a closure that returns any script buffers that
 	// were borrowed from the pool when there are any deserialization
 	// errors.  This is only valid to call before the final step which

@@ -28,6 +28,7 @@ func TestMessageErrorCodeStringer(t *testing.T) {
 		{ErrMalformedCmd, "ErrMalformedCmd"},
 		{ErrUnknownCmd, "ErrUnknownCmd"},
 		{ErrPayloadChecksum, "ErrPayloadChecksum"},
+		{ErrTrailingBytes, "ErrTrailingBytes"},
 		{ErrTooManyAddrs, "ErrTooManyAddrs"},
 		{ErrTooManyTxs, "ErrTooManyTxs"},
 		{ErrMsgInvalidForPVer, "ErrMsgInvalidForPVer"},
@@ -50,6 +51,7 @@ func TestMessageErrorCodeStringer(t *testing.T) {
 		{ErrTooManyInitStateTypes, "ErrTooManyInitStateTypes"},
 		{ErrInitStateTypeTooLong, "ErrInitStateTypeTooLong"},
 		{ErrTooManyTSpends, "ErrTooManyTSpends"},
+		{ErrInvalidTimestamp, "ErrInvalidTimestamp"},
 
 		{0xffff, "Unknown ErrorCode (65535)"},
 	}

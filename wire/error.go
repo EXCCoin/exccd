@@ -48,6 +48,10 @@ const (
 	// is received.
 	ErrPayloadChecksum
 
+	// ErrTrailingBytes is returned when a message is received that is valid
+	// enough to fully decode, but also contains additional trailing bytes.
+	ErrTrailingBytes
+
 	// ErrTooManyAddrs is returned when an address list exceeds the maximum
 	// allowed.
 	ErrTooManyAddrs
@@ -133,6 +137,10 @@ const (
 	// ErrTooManyTSpends is returned when the number of tspend hashes
 	// exceeds the maximum allowed.
 	ErrTooManyTSpends
+
+	// ErrInvalidTimestamp is returned when a message that involves a timestamp
+	// is not in the allowable range.
+	ErrInvalidTimestamp
 )
 
 // Map of ErrorCode values back to their constant names for pretty printing.
@@ -146,6 +154,7 @@ var errorCodeStrings = map[ErrorCode]string{
 	ErrMalformedCmd:                  "ErrMalformedCmd",
 	ErrUnknownCmd:                    "ErrUnknownCmd",
 	ErrPayloadChecksum:               "ErrPayloadChecksum",
+	ErrTrailingBytes:                 "ErrTrailingBytes",
 	ErrTooManyAddrs:                  "ErrTooManyAddrs",
 	ErrTooManyTxs:                    "ErrTooManyTxs",
 	ErrMsgInvalidForPVer:             "ErrMsgInvalidForPVer",
@@ -168,6 +177,7 @@ var errorCodeStrings = map[ErrorCode]string{
 	ErrTooManyInitStateTypes:         "ErrTooManyInitStateTypes",
 	ErrInitStateTypeTooLong:          "ErrInitStateTypeTooLong",
 	ErrTooManyTSpends:                "ErrTooManyTSpends",
+	ErrInvalidTimestamp:              "ErrInvalidTimestamp",
 }
 
 // String returns the ErrorCode as a human-readable name.

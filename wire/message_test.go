@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/davecgh/go-spew/spew"
 )
 
 // makeHeader is a convenience function to make a message header in the form of
@@ -88,7 +88,7 @@ func TestMessage(t *testing.T) {
 		dcrnet CurrencyNet // Network to use for wire encoding
 		bytes  int         // Expected num bytes read/written
 	}{
-		{msgVersion, msgVersion, pver, MainNet, 125},
+		{msgVersion, msgVersion, pver, MainNet, 126},
 		{msgVerack, msgVerack, pver, MainNet, 24},
 		{msgGetAddr, msgGetAddr, pver, MainNet, 24},
 		{msgAddr, msgAddr, pver, MainNet, 25},
@@ -220,6 +220,13 @@ func TestReadMessageWireErrors(t *testing.T) {
 	badMessageBytes := makeHeader(dcrnet, "addr", 1, 0xeaadc31c)
 	badMessageBytes = append(badMessageBytes, 0x2)
 
+	// Wire encoded bytes for a valid message with an extra trailing byte.
+	trailingPayload := append(append([]byte(nil), testBlockBytes...), 0x01)
+	trailingChecksum := chainhash.HashB(trailingPayload)
+	trailingBytes := makeHeader(dcrnet, "block", uint32(len(trailingPayload)),
+		binary.LittleEndian.Uint32(trailingChecksum[:4]))
+	trailingBytes = append(trailingBytes, trailingPayload...)
+
 	// Wire encoded bytes for a message which the header claims has 15k
 	// bytes of data to discard.
 	discardBytes := makeHeader(dcrnet, "bogus", 15*1024, 0)
@@ -333,6 +340,16 @@ func TestReadMessageWireErrors(t *testing.T) {
 			&MessageError{},
 			24,
 		},
+
+		// Valid message with an extra trailing byte. [10]
+		{
+			trailingBytes,
+			pver,
+			dcrnet,
+			len(trailingBytes),
+			&MessageError{},
+			len(trailingBytes),
+		},
 	}
 
 	t.Logf("Running %d tests", len(tests))
@@ -344,6 +361,10 @@ func TestReadMessageWireErrors(t *testing.T) {
 			t.Errorf("ReadMessage #%d wrong error got: %v <%T>, "+
 				"want: %T", i, err, err, test.readErr)
 			continue
+		}
+		if i == 10 && !errors.Is(err, ErrTrailingBytes) {
+			t.Errorf("ReadMessage #%d wrong error got: %v, want: %v",
+				i, err, ErrTrailingBytes)
 		}
 
 		// Ensure the number of bytes written match the expected value.

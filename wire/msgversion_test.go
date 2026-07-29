@@ -7,8 +7,10 @@ package wire
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"io"
+	"math"
 	"net"
 	"reflect"
 	"strings"
@@ -280,7 +282,7 @@ func TestVersionWireErrors(t *testing.T) {
 	copy(exceedUAVerEncoded, baseVersionEncoded[0:80])
 	copy(exceedUAVerEncoded[80:], newUAVarIntBuf.Bytes())
 	copy(exceedUAVerEncoded[83:], []byte(newUA))
-	copy(exceedUAVerEncoded[83+len(newUA):], baseVersionEncoded[97:100])
+	copy(exceedUAVerEncoded[83+len(newUA):], baseVersionEncoded[98:])
 
 	tests := []struct {
 		in       *MsgVersion // Value to encode
@@ -307,7 +309,7 @@ func TestVersionWireErrors(t *testing.T) {
 		// Force error in user agent.
 		{baseVersion, baseVersionEncoded, pver, 82, io.ErrShortWrite, io.ErrUnexpectedEOF},
 		// Force error in last block.
-		{baseVersion, baseVersionEncoded, pver, 98, io.ErrShortWrite, io.ErrUnexpectedEOF},
+		{baseVersion, baseVersionEncoded, pver, 99, io.ErrShortWrite, io.ErrUnexpectedEOF},
 		// Force error due to user agent too big
 		{exceedUAVer, exceedUAVerEncoded, pver, newLen, ErrUserAgentTooLong, ErrUserAgentTooLong},
 	}
@@ -335,6 +337,25 @@ func TestVersionWireErrors(t *testing.T) {
 	}
 }
 
+// TestVersionTimestampRange ensures version timestamps that cannot be safely
+// compared as time.Time values are rejected on both encode and decode.
+func TestVersionTimestampRange(t *testing.T) {
+	invalidTimestamp := int64(math.MaxInt64 - unixToInternal + 1)
+	msg := *baseVersionBIP0037
+	msg.Timestamp = time.Unix(invalidTimestamp, 0)
+	if err := msg.BtcEncode(io.Discard, ProtocolVersion); !errors.Is(err, ErrInvalidTimestamp) {
+
+		t.Fatalf("BtcEncode error = %v, want %v", err, ErrInvalidTimestamp)
+	}
+
+	encoded := append([]byte(nil), baseVersionBIP0037Encoded...)
+	binary.LittleEndian.PutUint64(encoded[12:20], uint64(invalidTimestamp))
+	if err := msg.BtcDecode(bytes.NewBuffer(encoded), ProtocolVersion); !errors.Is(err, ErrInvalidTimestamp) {
+
+		t.Fatalf("BtcDecode error = %v, want %v", err, ErrInvalidTimestamp)
+	}
+}
+
 // TestVersionOptionalFields performs tests to ensure that an encoded version
 // messages that omit optional fields are handled correctly.
 func TestVersionOptionalFields(t *testing.T) {
@@ -351,7 +372,7 @@ func TestVersionOptionalFields(t *testing.T) {
 			Port:      8333,
 		},
 	}
-	onlyRequiredVersionEncoded := make([]byte, len(baseVersionEncoded)-55)
+	onlyRequiredVersionEncoded := make([]byte, len(baseVersionEncoded)-56)
 	copy(onlyRequiredVersionEncoded, baseVersionEncoded)
 
 	// addrMeVersion is a version message that contains all fields through
@@ -363,14 +384,14 @@ func TestVersionOptionalFields(t *testing.T) {
 		IP:        net.ParseIP("127.0.0.1"),
 		Port:      8333,
 	}
-	addrMeVersionEncoded := make([]byte, len(baseVersionEncoded)-29)
+	addrMeVersionEncoded := make([]byte, len(baseVersionEncoded)-30)
 	copy(addrMeVersionEncoded, baseVersionEncoded)
 
 	// nonceVersion is a version message that contains all fields through
 	// the Nonce field.
 	nonceVersion := addrMeVersion
 	nonceVersion.Nonce = 123123 // 0x1e0f3
-	nonceVersionEncoded := make([]byte, len(baseVersionEncoded)-21)
+	nonceVersionEncoded := make([]byte, len(baseVersionEncoded)-22)
 	copy(nonceVersionEncoded, baseVersionEncoded)
 
 	// uaVersion is a version message that contains all fields through
@@ -475,9 +496,9 @@ var baseVersionEncoded = []byte{
 	0x00, 0x00, 0xff, 0xff, 0x7f, 0x00, 0x00, 0x01, // IP 127.0.0.1
 	0x20, 0x8d, // Port 8333 in big-endian
 	0xf3, 0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, // Nonce
-	0x10, // Varint for user agent length
-	0x2f, 0x64, 0x63, 0x72, 0x64, 0x74, 0x65, 0x73,
-	0x74, 0x3a, 0x30, 0x2e, 0x30, 0x2e, 0x31, 0x2f, // User agent
+	0x11, // Varint for user agent length
+	0x2f, 0x65, 0x78, 0x63, 0x63, 0x64, 0x74, 0x65,
+	0x73, 0x74, 0x3a, 0x30, 0x2e, 0x30, 0x2e, 0x31, 0x2f, // User agent
 	0xfa, 0x92, 0x03, 0x00, // Last block
 }
 
@@ -521,9 +542,9 @@ var baseVersionBIP0037Encoded = []byte{
 	0x00, 0x00, 0xff, 0xff, 0x7f, 0x00, 0x00, 0x01, // IP 127.0.0.1
 	0x20, 0x8d, // Port 8333 in big-endian
 	0xf3, 0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, // Nonce
-	0x10, // Varint for user agent length
-	0x2f, 0x64, 0x63, 0x72, 0x64, 0x74, 0x65, 0x73,
-	0x74, 0x3a, 0x30, 0x2e, 0x30, 0x2e, 0x31, 0x2f, // User agent
+	0x11, // Varint for user agent length
+	0x2f, 0x65, 0x78, 0x63, 0x63, 0x64, 0x74, 0x65,
+	0x73, 0x74, 0x3a, 0x30, 0x2e, 0x30, 0x2e, 0x31, 0x2f, // User agent
 	0xfa, 0x92, 0x03, 0x00, // Last block
 	0x01, // Relay tx
 }

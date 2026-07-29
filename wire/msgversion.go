@@ -158,7 +158,7 @@ func (msg *MsgVersion) BtcEncode(w io.Writer, pver uint32) error {
 	}
 
 	err = writeElements(w, msg.ProtocolVersion, msg.Services,
-		msg.Timestamp.Unix())
+		(*int64Time)(&msg.Timestamp))
 	if err != nil {
 		return err
 	}
