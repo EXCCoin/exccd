@@ -714,7 +714,7 @@ func handleCreateRawTransaction(_ context.Context, s *Server, cmd interface{}) (
 		if input.Amount > 0 {
 			amt, err := dcrutil.NewAmount(input.Amount)
 			if err != nil {
-				return nil, rpcInvalidError(err.Error())
+				return nil, rpcInvalidError("%v", err)
 			}
 			prevOutV = int64(amt)
 		}
@@ -994,7 +994,7 @@ func handleCreateRawSSRtx(_ context.Context, s *Server, cmd interface{}) (interf
 	ticketSubmissionAmount := dcrutil.Amount(ticketSubmission.Value)
 	inputAmount, err := dcrutil.NewAmount(input.Amount)
 	if err != nil {
-		return nil, rpcInvalidError(err.Error())
+		return nil, rpcInvalidError("%v", err)
 	}
 	if inputAmount != ticketSubmissionAmount {
 		return nil, rpcInvalidError("Input amount %v is not equal to ticket "+
@@ -5592,10 +5592,9 @@ func (s *Server) checkAuthUserPass(user, pass, remoteAddr string) (bool, bool) {
 // of the server (true) or whether the user is limited (false). The second is
 // always false if the first is.
 func (s *Server) checkAuth(r *http.Request, require bool) (bool, bool, error) {
-	// If admin-level RPC user and pass options are not set, this always
-	// succeeds.  This will be the case when TLS client certificates are
-	// being used for authentication.
-	if s.authsha == ([32]byte{}) {
+	// If no RPC credentials are set this always succeeds.  This is the case
+	// when TLS client certificates are being used for authentication.
+	if s.authsha == ([32]byte{}) && s.limitauthsha == ([32]byte{}) {
 		return true, true, nil
 	}
 
@@ -6062,10 +6061,10 @@ func (s *Server) route(ctx context.Context) *http.Server {
 				// Strip the port from both the origin and request hosts.
 				originHost := originURL.Host
 				requestHost := r.Host
-				if host, _, err := net.SplitHostPort(originHost); err != nil {
+				if host, _, err := net.SplitHostPort(originHost); err == nil {
 					originHost = host
 				}
-				if host, _, err := net.SplitHostPort(requestHost); err != nil {
+				if host, _, err := net.SplitHostPort(requestHost); err == nil {
 					requestHost = host
 				}
 
