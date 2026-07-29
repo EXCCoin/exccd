@@ -537,6 +537,7 @@ type serverPeer struct {
 	addrsSent          bool
 	getMiningStateSent bool
 	initStateSent      bool
+	initStateReceived  bool
 
 	// The following fields are used to synchronize the net sync manager and
 	// server.
@@ -867,8 +868,15 @@ func (sp *serverPeer) pushMiningStateMsg(height uint32, blockHashes []chainhash.
 // It constructs a list of the current best blocks and votes that should be
 // mined on and pushes a miningstate wire message back to the requesting peer.
 func (sp *serverPeer) OnGetMiningState(p *peer.Peer, msg *wire.MsgGetMiningState) {
+	if sp.ProtocolVersion() >= wire.InitStateVersion {
+		sp.server.BanPeer(sp)
+		sp.Disconnect()
+		return
+	}
+
 	if sp.getMiningStateSent {
-		peerLog.Tracef("Ignoring getminingstate from %v - already sent", sp.Peer)
+		sp.server.BanPeer(sp)
+		sp.Disconnect()
 		return
 	}
 	sp.getMiningStateSent = true
@@ -934,6 +942,18 @@ func (sp *serverPeer) OnGetMiningState(p *peer.Peer, msg *wire.MsgGetMiningState
 // OnMiningState is invoked when a peer receives a miningstate wire message.  It
 // requests the data advertised in the message from the peer.
 func (sp *serverPeer) OnMiningState(p *peer.Peer, msg *wire.MsgMiningState) {
+	if sp.ProtocolVersion() >= wire.InitStateVersion {
+		sp.server.BanPeer(sp)
+		sp.Disconnect()
+		return
+	}
+	if sp.initStateReceived {
+		sp.server.BanPeer(sp)
+		sp.Disconnect()
+		return
+	}
+	sp.initStateReceived = true
+
 	var blockHashes, voteHashes []chainhash.Hash
 	if len(msg.BlockHashes) > 0 {
 		blockHashes = make([]chainhash.Hash, 0, len(msg.BlockHashes))
@@ -960,7 +980,8 @@ func (sp *serverPeer) OnMiningState(p *peer.Peer, msg *wire.MsgMiningState) {
 // It sends the available requested info to the remote peer.
 func (sp *serverPeer) OnGetInitState(p *peer.Peer, msg *wire.MsgGetInitState) {
 	if sp.initStateSent {
-		peerLog.Tracef("Ignoring getinitstate from %v - already sent", sp.Peer)
+		sp.server.BanPeer(sp)
+		sp.Disconnect()
 		return
 	}
 	sp.initStateSent = true
@@ -1040,6 +1061,13 @@ func (sp *serverPeer) OnGetInitState(p *peer.Peer, msg *wire.MsgGetInitState) {
 // OnInitState is invoked when a peer receives a initstate wire message.  It
 // requests the data advertised in the message from the peer.
 func (sp *serverPeer) OnInitState(p *peer.Peer, msg *wire.MsgInitState) {
+	if sp.initStateReceived {
+		sp.server.BanPeer(sp)
+		sp.Disconnect()
+		return
+	}
+	sp.initStateReceived = true
+
 	err := sp.server.syncManager.RequestFromPeer(sp.Peer, msg.BlockHashes,
 		msg.VoteHashes, msg.TSpendHashes)
 	if err != nil {
