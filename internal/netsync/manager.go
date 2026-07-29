@@ -641,18 +641,54 @@ func (m *SyncManager) handleDonePeerMsg(p *peerpkg.Peer) {
 	// Remove the peer from the list of candidate peers.
 	delete(m.peers, p)
 
-	// Remove requested transactions from the global map so that they will
-	// be fetched from elsewhere.
+	// Re-request in-flight blocks and transactions from another peer that
+	// announced them.  Remove requests when no remaining peer has the data.
+	requestQueues := make(map[*peerpkg.Peer][]*wire.InvVect)
+	var inv wire.InvVect
+	inv.Type = wire.InvTypeTx
+txHashes:
 	for txHash := range peer.requestedTxns {
+		inv.Hash = txHash
+		for candidate, candidateState := range m.peers {
+			if !candidate.IsKnownInventory(&inv) {
+				continue
+			}
+			inv := inv
+			requestQueues[candidate] = append(requestQueues[candidate], &inv)
+			candidateState.requestedTxns[txHash] = struct{}{}
+			continue txHashes
+		}
 		delete(m.requestedTxns, txHash)
 	}
 
-	// Remove requested blocks from the global map so that they will be
-	// fetched from elsewhere.
-	// TODO(oga) we could possibly here check which peers have these blocks
-	// and request them now to speed things up a little.
+	inv.Type = wire.InvTypeBlock
+blockHashes:
 	for blockHash := range peer.requestedBlocks {
+		inv.Hash = blockHash
+		for candidate, candidateState := range m.peers {
+			if !candidate.IsKnownInventory(&inv) {
+				continue
+			}
+			inv := inv
+			requestQueues[candidate] = append(requestQueues[candidate], &inv)
+			candidateState.requestedBlocks[blockHash] = struct{}{}
+			continue blockHashes
+		}
 		delete(m.requestedBlocks, blockHash)
+	}
+
+	for candidate, requests := range requestQueues {
+		msg := wire.NewMsgGetData()
+		for _, request := range requests {
+			_ = msg.AddInvVect(request)
+			if len(msg.InvList) == wire.MaxInvPerMsg {
+				candidate.QueueMessage(msg, nil)
+				msg = wire.NewMsgGetData()
+			}
+		}
+		if len(msg.InvList) > 0 {
+			candidate.QueueMessage(msg, nil)
+		}
 	}
 
 	// Attempt to find a new peer to sync from and reset the final requested
