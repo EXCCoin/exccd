@@ -379,7 +379,7 @@ nextTest:
 			tip := bc.bestChain.Tip()
 			gotDiff, err := bc.calcNextRequiredStakeDifficultyV1(tip)
 			if err != nil {
-				t.Errorf("calcNextRequiredStakeDifficultyV1 error: %w", err)
+				t.Errorf("calcNextRequiredStakeDifficultyV1 error: %v", err)
 			}
 			if gotDiff != ticketInfo.stakeDiff {
 				t.Errorf("calcNextRequiredStakeDifficultyV1 (%s): "+
@@ -425,7 +425,7 @@ nextTest:
 		// Ensure the calculated difficulty matches the expected value.
 		gotDiff, err := bc.calcNextRequiredStakeDifficultyV1(bc.bestChain.Tip())
 		if err != nil {
-			t.Errorf("calcNextRequiredStakeDifficultyV1 error: %w", err)
+			t.Errorf("calcNextRequiredStakeDifficultyV1 error: %v", err)
 		}
 		if gotDiff != test.expectedDiff {
 			t.Errorf("calcNextRequiredStakeDifficultyV2 (%s): "+
@@ -926,7 +926,7 @@ nextTest:
 			tip := bc.bestChain.Tip()
 			reqDiff, err := bc.calcNextRequiredStakeDifficultyV1(tip)
 			if err != nil {
-				t.Errorf("calcNextRequiredStakeDifficultyV1 error: %w", err)
+				t.Errorf("calcNextRequiredStakeDifficultyV1 error: %v", err)
 			}
 			if ticketInfo.stakeDiff != reqDiff {
 				t.Errorf("calcNextRequiredStakeDifficultyV1 (%s): "+

@@ -55,3 +55,12 @@ func TestRegNetGenesisBlock(t *testing.T) {
 			spew.Sdump(params.GenesisHash))
 	}
 }
+
+// TestRegNetEquihashParams ensures regression test blocks remain cheap enough
+// for the full-block tests to solve.
+func TestRegNetEquihashParams(t *testing.T) {
+	params := RegNetParams()
+	if params.N != 48 || params.K != 5 {
+		t.Fatalf("unexpected regnet Equihash parameters: N=%d K=%d", params.N, params.K)
+	}
+}

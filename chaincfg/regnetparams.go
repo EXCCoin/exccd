@@ -185,6 +185,8 @@ func RegNetParams() *Params {
 		StakeMajorityDivisor:    4,
 
 		BlockOneLedger:          tokenPayouts_RegNetParams(),
+		N:                       48,
+		K:                       5,
 
 		PiKeys: [][]byte{},
 

@@ -822,7 +822,7 @@ func Generate(includeLargeReorg bool) (tests [][]TestInstance, err error) {
 	g.SetTip("bf6")
 	g.NextBlock("bbadtaxscript", outs[4], ticketOuts[4],
 		func(b *wire.MsgBlock) {
-			h160 := g.Params().OrganizationPkScript[2:22]
+			h160 := g.Params().BlockOneLedger[0].Script[3:23]
 			p2pkhTaxAddr, err := stdaddr.NewAddressPubKeyHashEcdsaSecp256k1V0(
 				h160, g.Params())
 			if err != nil {

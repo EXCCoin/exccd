@@ -204,7 +204,7 @@ type Generator struct {
 
 // MakeGenerator returns a generator instance initialized with the genesis block
 // as the tip as well as a cached generic pay-to-script-hash script for OP_TRUE.
-func MakeGenerator(params *chaincfg.Params, chain ChainInterface) (Generator, error) {
+func MakeGenerator(params *chaincfg.Params, chains ...ChainInterface) (Generator, error) {
 	// Generate a generic pay-to-script-hash script that is a simple
 	// OP_TRUE.  This allows the tests to avoid needing to generate and
 	// track actual public keys and signatures.
@@ -216,6 +216,10 @@ func MakeGenerator(params *chaincfg.Params, chain ChainInterface) (Generator, er
 
 	genesis := params.GenesisBlock
 	genesisHash := genesis.BlockHash()
+	var chain ChainInterface
+	if len(chains) > 0 {
+		chain = chains[0]
+	}
 	return Generator{
 		params:              params,
 		tip:                 genesis,

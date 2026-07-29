@@ -201,7 +201,8 @@ var regNetParams = &chaincfg.Params{
 
 	// BIP44 coin type used in the hierarchical deterministic path for
 	// address generation.
-	HDCoinType: 1, // SLIP0044, Testnet (all coins)
+	SLIP0044CoinType: 1, // SLIP0044, Testnet (all coins)
+	LegacyCoinType:   1,
 
 	// Decred PoS parameters
 	MinimumStakeDiff:        20000,
@@ -224,9 +225,15 @@ var regNetParams = &chaincfg.Params{
 	StakeMajorityDivisor:    4,
 
 	// Decred organization related parameters
-	BlockOneLedger: []*chaincfg.TokenPayout{
-		{Address: "RsKrWb7Vny1jnzL1sDLgKTAteh9RZcRr5g6", Amount: 100000 * 1e8},
-		{Address: "Rs8ca5cDALtsMVD4PV3xvFTC7dmuU1juvLv", Amount: 100000 * 1e8},
-		{Address: "RsHzbGt6YajuHpurtpqXXHz57LmYZK8w9tX", Amount: 100000 * 1e8},
+	BlockOneLedger: []chaincfg.TokenPayout{
+		{Script: fromHex("76a91494ff37a0ee4d48abc45f70474f9b86f9da69a70988ac"), Amount: 100000 * 1e8},
+		{Script: fromHex("76a914a6753ebbc08e2553e7dd6d64bdead4bcbff4fcf188ac"), Amount: 100000 * 1e8},
+		{Script: fromHex("76a9147aa3211c2ead810bbf5911c275c69cc196202bd888ac"), Amount: 100000 * 1e8},
+	},
+	N: 48,
+	K: 5,
+	Algorithms: []wire.AlgorithmSpec{
+		{Height: 0, HeaderSize: 108, Version: 0, Bits: 0x207fffff},
+		{Height: 4, HeaderSize: wire.MaxBlockHeaderPayload - wire.EquihashSolutionLen, Version: 1, Bits: 0x207fffff},
 	},
 }
