@@ -989,7 +989,7 @@ func TestChainSvrCmds(t *testing.T) {
 				return dcrjson.NewCmd(Method("setgenerate"), true)
 			},
 			staticCmd: func() interface{} {
-				return NewSetGenerateCmd(true, nil)
+				return NewSetGenerateCmd(true, nil, nil)
 			},
 			marshalled: `{"jsonrpc":"1.0","method":"setgenerate","params":[true],"id":1}`,
 			unmarshalled: &SetGenerateCmd{
@@ -1003,7 +1003,7 @@ func TestChainSvrCmds(t *testing.T) {
 				return dcrjson.NewCmd(Method("setgenerate"), true, 6)
 			},
 			staticCmd: func() interface{} {
-				return NewSetGenerateCmd(true, dcrjson.Int(6))
+				return NewSetGenerateCmd(true, dcrjson.Int(6), nil)
 			},
 			marshalled: `{"jsonrpc":"1.0","method":"setgenerate","params":[true,6],"id":1}`,
 			unmarshalled: &SetGenerateCmd{

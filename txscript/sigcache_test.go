@@ -6,10 +6,7 @@
 package txscript
 
 import (
-	"compress/bzip2"
 	"crypto/rand"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
@@ -18,25 +15,16 @@ import (
 	"github.com/EXCCoin/exccd/wire"
 )
 
-// testDataPath is the path where txscript test fixtures reside.
-const testDataPath = "data"
-
-// block432100 mocks block 432,100 of the block chain.  It is loaded and
-// deserialized immediately here and then can be used throughout the tests.
+// block432100 provides distinct transactions for the cache eviction test.
 var block432100 = func() wire.MsgBlock {
-	// Load and deserialize the test block.
-	blockDataFile := filepath.Join(testDataPath, "block432100.bz2")
-	fi, err := os.Open(blockDataFile)
-	if err != nil {
-		panic(err)
+	regular := msgTx113875_1()
+	regular.TxIn[0].PreviousOutPoint.Index = 0
+	stake := msgTx113875_1()
+	stake.TxIn[0].PreviousOutPoint.Index = 1
+	return wire.MsgBlock{
+		Transactions:  []*wire.MsgTx{regular},
+		STransactions: []*wire.MsgTx{stake},
 	}
-	defer fi.Close()
-	var block wire.MsgBlock
-	err = block.Deserialize(bzip2.NewReader(fi))
-	if err != nil {
-		panic(err)
-	}
-	return block
 }()
 
 // msgTx113875_1 mocks the first transaction from block 113875.
@@ -55,11 +43,9 @@ func msgTx113875_1() *wire.MsgTx {
 		SignatureScript: hexToBytes("0431dc001b0162"),
 	}
 	txOut := wire.TxOut{
-		Value:   5000000000,
-		Version: 0xf0f0,
-		PkScript: mustParseShortFormV0("DATA_65 0x04d64bdfd09eb1c5fe295abdeb1dca4281b" +
-			"e988e2da0b6c1c6a59dc226c28624e18175e851c96b973d81b01cc31f047834bc06d6d6e" +
-			"df620d184241a6aed8b63a6 CHECKSIG"),
+		Value:    5000000000,
+		Version:  0xf0f0,
+		PkScript: []byte{OP_TRUE},
 	}
 	msgTx.AddTxIn(&txIn)
 	msgTx.AddTxOut(&txOut)

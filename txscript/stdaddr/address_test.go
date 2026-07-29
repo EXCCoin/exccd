@@ -170,7 +170,7 @@ func TestAddresses(t *testing.T) {
 		decodeErr: ErrUnsupportedAddress,
 	}, {
 		name:      "mainnet p2pk with no data for pubkey",
-		addr:      "Aiz5jz1s",
+		addr:      "2Rg5eseb",
 		net:       mainNetParams,
 		decodeErr: ErrUnsupportedAddress,
 	}, {
@@ -194,7 +194,7 @@ func TestAddresses(t *testing.T) {
 		makeErr: ErrInvalidPubKeyFormat,
 	}, {
 		name:      "mainnet p2pk-ecdsa-secp256k1 uncompressed (0x04) rejected via decode",
-		addr:      "HiQeNVx8PNYP8ysyunUoicyNdfRUrEu1kzPE6v5gECBHBYgDzXCg8BsDGjmaHCpV97ytaQGHz5XDMJgJVHjv9YeSXWkHfwmBJj",
+		addr:      "3SyjGu4opYSHbV7Fvi7CqST6wqjCyJf6mGrEUEKpFc56chCUAMBMdbmTZJjkyeS2nKvbLvV9TFMu16ujm7t7ZMo58kMPZgqXBZ",
 		net:       mainNetParams,
 		decodeErr: ErrUnsupportedAddress,
 	}, {
@@ -246,7 +246,7 @@ func TestAddresses(t *testing.T) {
 		makeErr: ErrInvalidPubKey,
 	}, {
 		name:      "p2pk-ecdsa-secp256k1 malformed pubkey via decode",
-		addr:      "3tWTcxjUnAKTzHh8pHPYpSsUKVbTvziNGHtbBFQkY12khQWuW83p",
+		addr:      "RXuvPYnYqLHu6244xXkDWqkgrzLVnfUoTGTvWQJHMaEGDdPcSRG",
 		net:       mainNetParams,
 		decodeErr: ErrUnsupportedAddress,
 	}, {
@@ -412,7 +412,7 @@ func TestAddresses(t *testing.T) {
 		makeErr: ErrInvalidPubKey,
 	}, {
 		name:      "p2pk-ed25519 malformed pubkey (only 31 bytes) via decode",
-		addr:      "3tWUQtEa3P4SDQwjER81wkTxe4kiYLgNAso3pt2X5k3NFHRVQeNv",
+		addr:      "RXviK3sp45G8DGeV6GDLpSF1S9b78dUi3Ava924q6aqp6bnXniS",
 		net:       mainNetParams,
 		decodeErr: ErrUnsupportedAddress,
 	}, {
@@ -516,7 +516,7 @@ func TestAddresses(t *testing.T) {
 		makeErr: ErrInvalidPubKeyFormat,
 	}, {
 		name:      "mainnet p2pk-schnorr-secp256k1 uncompressed (0x04) rejected via decode",
-		addr:      "HiQjU9uCJtiQD7osQuYHWJRFiBCTuqtaTw8QFMtMgAW2ny4nUENeXDiV5VxfVZrK6PZynKPDpL7bwc6XLFNpV8k7ePDJmkkVCh",
+		addr:      "3SypNZ1sk4cJfd39RqAgd7tz2MWC2uefUDbQcg8VhaPrE7b2e4ML2dcjN4vrC1TrjbWgYqc5HVxHbQKxc5X1twtkFcpQZkiUEg",
 		net:       mainNetParams,
 		decodeErr: ErrUnsupportedAddress,
 	}, {
@@ -568,7 +568,7 @@ func TestAddresses(t *testing.T) {
 		makeErr: ErrInvalidPubKey,
 	}, {
 		name:      "p2pk-schnorr-secp256k1 malformed pubkey via decode",
-		addr:      "3tWUW3oD87XtmFVGnLX4Z3Hdesm2qRvvN8H5kq3yXxJumCxbvCpo",
+		addr:      "RXvoUcWtnYig3pC31fFx7Fv2F9uQDt2uHexW63XHJrPL21jjB4V",
 		net:       mainNetParams,
 		decodeErr: ErrUnsupportedAddress,
 	}, {
@@ -577,15 +577,15 @@ func TestAddresses(t *testing.T) {
 		// ---------------------------------------------------------------------
 
 		name:      "mainnet p2pk-schnorr-secp256k1 compressed (0x02)",
-		addr:      "22tvQL1muRkfgEcg1tx8Lq9KRLNiGiJaRCNx",
+		addr:      "2sHXY8ZeJxqngNGZwvnjghZwwyAVggGLdJo4sQhtrz4d67QqyDiR6",
 		net:       mainNetParams,
 		decodeErr: nil,
 		version:   0,
-		payScript: "76a91473f13c131565ffc78d9acd9f8060b866a36941fc88ac",
-		pubKey:    "0244bc9272edeb558510b7c3dcbb3f710dd08dab985bb0b7945696ced779f8ed90",
+		payScript: "21028f53838b7639563f27c94845549a41e5146bcd52e7fef0ea6da143a02b0fe2ed52be",
+		pubKey:    "028f53838b7639563f27c94845549a41e5146bcd52e7fef0ea6da143a02b0fe2ed",
 	}, {
 		name:      "mainnet p2pk-schnorr-secp256k1 compressed (0x03)",
-		addr:      "DkRQx3y6YoJPnMKom23nuDFdfhmEnu8oDLTp4YVyWC6RjND19UxHk",
+		addr:      "2sMq2yVtyyW3FPoJonoyD2n3v2CBydx44srN3UfydYmMQC6RuFMF1",
 		net:       mainNetParams,
 		decodeErr: nil,
 		version:   0,
@@ -629,7 +629,7 @@ func TestAddresses(t *testing.T) {
 		pubKey:    "028f53838b7639563f27c94845549a41e5146bcd52e7fef0ea6da143a02b0fe2ed",
 	}, {
 		name:      "testnet p2pk-schnorr-secp256k1 compressed (0x02)",
-		addr:      "TkKqFCtYcHPupVbPcDdhvkNeNYXPqqs88Z4ygukH9MGaNV8e1WWhX",
+		addr:      "TkKqFCtYcHPupVbPcDdhvkNeNYXPqqs88Z4ygukH9MGaNV8Z4grRX",
 		net:       testNetParams,
 		decodeErr: nil,
 		version:   0,
@@ -637,7 +637,7 @@ func TestAddresses(t *testing.T) {
 		pubKey:    "026a40c403e74670c4de7656a09caa2353d4b383a9ce66eef51e1220eacf4be06e",
 	}, {
 		name:      "testnet p2pk-schnorr-secp256k1 compressed (0x03)",
-		addr:      "TkQ7KLcBYvTKq3xMyxkqtVa8LAXGuCC5XyA3RBhqcENVY8ZiDjuAB",
+		addr:      "TkQ7KLcBYvTKq3xMyxkqtVa8LAXGuCC5XyA3RBhqcENVY8Zinvn7c",
 		net:       testNetParams,
 		decodeErr: nil,
 		version:   0,
@@ -645,7 +645,7 @@ func TestAddresses(t *testing.T) {
 		pubKey:    "030844ee70d8384d5250e9bb3a6a73d4b5bec770e8b31d6a0ae9fb739009d91af5",
 	}, {
 		name:      "regnet p2pk-schnorr-secp256k1 compressed (0x02)",
-		addr:      "Rk45dp3KYgZokaryqY5U11aHYw1V7gwzkbqMF6hxjRACwAxDivM6N",
+		addr:      "Rk45dp3KYgZokaryqY5U11aHYw1V7gwzkbqMF6hxjRACwAxJEL8ug",
 		net:       regNetParams,
 		decodeErr: nil,
 		version:   0,
@@ -653,7 +653,7 @@ func TestAddresses(t *testing.T) {
 		pubKey:    "026a40c403e74670c4de7656a09caa2353d4b383a9ce66eef51e1220eacf4be06e",
 	}, {
 		name:      "regnet p2pk-schnorr-secp256k1 compressed (0x03)",
-		addr:      "Rk8MhwkxVKdDm9DxDHCbxkmmWZ1NB3GxA1vQyNfXCJG86pPPnnn9M",
+		addr:      "Rk8MhwkxVKdDm9DxDHCbxkmmWZ1NB3GxA1vQyNfXCJG86pPPCgHCF",
 		net:       regNetParams,
 		decodeErr: nil,
 		version:   0,
@@ -1270,7 +1270,7 @@ func TestDecodeAddressV0Corners(t *testing.T) {
 		// ---------------------------------------------------------------------
 
 		name:      "mainnet p2pk with no data for pubkey",
-		addr:      "Aiz5jz1s",
+		addr:      "2Rg5eseb",
 		net:       mainNetParams,
 		decodeErr: ErrMalformedAddressData,
 	}, {
@@ -1284,12 +1284,12 @@ func TestDecodeAddressV0Corners(t *testing.T) {
 		// ---------------------------------------------------------------------
 
 		name:      "mainnet p2pk-ecdsa-secp256k1 uncompressed (0x04) rejected via decode",
-		addr:      "HiQeNVx8PNYP8ysyunUoicyNdfRUrEu1kzPE6v5gECBHBYgDzXCg8BsDGjmaHCpV97ytaQGHz5XDMJgJVHjv9YeSXWkHfwmBJj",
+		addr:      "3SyjGu4opYSHbV7Fvi7CqST6wqjCyJf6mGrEUEKpFc56chCUAMBMdbmTZJjkyeS2nKvbLvV9TFMu16ujm7t7ZMo58kMPZgqXBZ",
 		net:       mainNetParams,
 		decodeErr: ErrMalformedAddressData,
 	}, {
 		name:      "p2pk-ecdsa-secp256k1 malformed pubkey via decode",
-		addr:      "3tWTcxjUnAKTzHh8pHPYpSsUKVbTvziNGHtbBFQkY12khQWuW83p",
+		addr:      "RXuvPYnYqLHu6244xXkDWqkgrzLVnfUoTGTvWQJHMaEGDdPcSRG",
 		net:       mainNetParams,
 		decodeErr: ErrMalformedAddressData,
 	}, {
@@ -1298,7 +1298,7 @@ func TestDecodeAddressV0Corners(t *testing.T) {
 		// ---------------------------------------------------------------------
 
 		name:      "p2pk-ed25519 malformed pubkey (only 31 bytes) via decode",
-		addr:      "3tWUQtEa3P4SDQwjER81wkTxe4kiYLgNAso3pt2X5k3NFHRVQeNv",
+		addr:      "RXviK3sp45G8DGeV6GDLpSF1S9b78dUi3Ava924q6aqp6bnXniS",
 		net:       mainNetParams,
 		decodeErr: ErrMalformedAddressData,
 	}, {
@@ -1307,12 +1307,12 @@ func TestDecodeAddressV0Corners(t *testing.T) {
 		// ---------------------------------------------------------------------
 
 		name:      "mainnet p2pk-schnorr-secp256k1 uncompressed (0x04) rejected via decode",
-		addr:      "HiQjU9uCJtiQD7osQuYHWJRFiBCTuqtaTw8QFMtMgAW2ny4nUENeXDiV5VxfVZrK6PZynKPDpL7bwc6XLFNpV8k7ePDJmkkVCh",
+		addr:      "3SypNZ1sk4cJfd39RqAgd7tz2MWC2uefUDbQcg8VhaPrE7b2e4ML2dcjN4vrC1TrjbWgYqc5HVxHbQKxc5X1twtkFcpQZkiUEg",
 		net:       mainNetParams,
 		decodeErr: ErrMalformedAddressData,
 	}, {
 		name:      "p2pk-schnorr-secp256k1 malformed pubkey via decode",
-		addr:      "3tWUW3oD87XtmFVGnLX4Z3Hdesm2qRvvN8H5kq3yXxJumCxbvCpo",
+		addr:      "RXvoUcWtnYig3pC31fFx7Fv2F9uQDt2uHexW63XHJrPL21jjB4V",
 		net:       mainNetParams,
 		decodeErr: ErrMalformedAddressData,
 	}}
