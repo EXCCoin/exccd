@@ -240,8 +240,8 @@ func TestPeerConnection(t *testing.T) {
 		wantLastPingNonce:   uint64(0),
 		wantLastPingMicros:  int64(0),
 		wantTimeOffset:      int64(0),
-		wantBytesSent:       158, // 134 version + 24 verack
-		wantBytesReceived:   158,
+		wantBytesSent:       159, // 135 version + 24 verack
+		wantBytesReceived:   159,
 	}
 	tests := []struct {
 		name  string
@@ -633,6 +633,10 @@ func TestOutboundPeer(t *testing.T) {
 	// Should be noops as the peer could not connect.
 	p.QueueInventory(fakeInv)
 	p.AddKnownInventory(fakeInv)
+	fakeInvCopy := *fakeInv
+	if !p.IsKnownInventory(&fakeInvCopy) {
+		t.Fatal("known inventory lookup depends on pointer identity")
+	}
 	p.QueueInventory(fakeInv)
 
 	fakeMsg := wire.NewMsgVerAck()
@@ -749,7 +753,7 @@ func TestDuplicateVersionMsg(t *testing.T) {
 	// Queue a duplicate version message from the outbound peer and wait until
 	// it is sent.
 	done := make(chan struct{})
-	outPeer.QueueMessage(&wire.MsgVersion{}, done)
+	outPeer.QueueMessage(&wire.MsgVersion{Timestamp: time.Unix(0, 0)}, done)
 	select {
 	case <-done:
 	case <-time.After(time.Second):

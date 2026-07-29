@@ -17,10 +17,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/lru"
 	"github.com/EXCCoin/exccd/wire"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/decred/go-socks/socks"
 	"github.com/decred/slog"
 )
@@ -66,6 +66,14 @@ const (
 	// pingInterval is the interval of time to wait in between sending ping
 	// messages.
 	pingInterval = defaultIdleTimeout - 13*time.Second
+
+	// writeStallTimeout is the base amount of time a single message write is
+	// allowed to take before the peer is considered stalled.
+	writeStallTimeout = 20 * time.Second
+
+	// writeStallBytesPerSec grants one additional second per 256 KiB of the
+	// message payload size.
+	writeStallBytesPerSec = 256 * 1024
 )
 
 var (
@@ -436,10 +444,10 @@ type Peer struct {
 	userAgent            string
 	services             wire.ServiceFlag
 	versionKnown         bool
+	handshakeDone        bool
 	advertisedProtoVer   uint32 // protocol version advertised by remote
 	protocolVersion      uint32 // negotiated protocol version
 	sendHeadersPreferred bool   // peer sent a sendheaders message
-	versionSent          bool
 	verAckReceived       bool
 
 	knownInventory     lru.Cache
@@ -500,7 +508,7 @@ func (p *Peer) UpdateLastBlockHeight(newHeight int64) {
 //
 // This function is safe for concurrent access.
 func (p *Peer) AddKnownInventory(invVect *wire.InvVect) {
-	p.knownInventory.Add(invVect)
+	p.knownInventory.Add(*invVect)
 }
 
 // IsKnownInventory returns whether the passed inventory already exists in
@@ -508,7 +516,7 @@ func (p *Peer) AddKnownInventory(invVect *wire.InvVect) {
 //
 // This function is safe for concurrent access.
 func (p *Peer) IsKnownInventory(invVect *wire.InvVect) bool {
-	return p.knownInventory.Contains(invVect)
+	return p.knownInventory.Contains(*invVect)
 }
 
 // StatsSnapshot returns a snapshot of the current peer flags and statistics.
@@ -657,6 +665,18 @@ func (p *Peer) VersionKnown() bool {
 	p.flagsMtx.Unlock()
 
 	return versionKnown
+}
+
+// HandshakeDone returns whether both peers' version messages were sent and
+// received.
+//
+// This function is safe for concurrent access.
+func (p *Peer) HandshakeDone() bool {
+	p.flagsMtx.Lock()
+	handshakeDone := p.handshakeDone
+	p.flagsMtx.Unlock()
+
+	return handshakeDone
 }
 
 // VerAckReceived returns whether or not a verack message was received by the
@@ -993,6 +1013,22 @@ func (p *Peer) writeMessage(msg wire.Message) error {
 		}
 	}
 
+	// Bound writes so a peer that stops reading cannot hold an output handler
+	// forever.  Use the encoded size when available and otherwise allow time
+	// for the message type's maximum payload.
+	msgSize := int(msg.MaxPayloadLength(p.ProtocolVersion()))
+	if sized, ok := msg.(interface{ SerializeSize() int }); ok {
+		if size := sized.SerializeSize(); size > 0 && size <= wire.MaxMessagePayload {
+			msgSize = size
+		}
+	}
+	msgSize += wire.MessageHeaderSize
+	allowance := time.Duration(msgSize/writeStallBytesPerSec) * time.Second
+	deadline := time.Now().Add(writeStallTimeout + allowance)
+	if err := p.conn.SetWriteDeadline(deadline); err != nil {
+		return err
+	}
+
 	// Write the message to the peer.
 	n, err := wire.WriteMessageN(p.conn, msg, p.ProtocolVersion(), p.cfg.Net)
 	atomic.AddUint64(&p.bytesSent, uint64(n))
@@ -1029,8 +1065,10 @@ func (p *Peer) shouldHandleReadError(err error) bool {
 }
 
 // maybeAddDeadline potentially adds a deadline for the appropriate expected
-// response for the passed wire protocol command to the pending responses map.
-func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time, msgCmd string) {
+// response for the passed wire protocol message.
+func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time,
+	pendingData map[wire.InvVect]time.Time, msg wire.Message) {
+
 	// Setup a deadline for each message being sent that expects a response.
 	//
 	// NOTE: Pings are intentionally ignored here since they are typically
@@ -1042,6 +1080,21 @@ func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time, msgCmd st
 	// response if the remote peer does not have any headers for the locator.
 	var addedDeadline bool
 	deadline := time.Now().Add(stallResponseTimeout)
+	if msg, ok := msg.(*wire.MsgGetData); ok {
+		const maxBurst = wire.MaxInvPerMsg + wire.MaxInvPerMsg/2
+		if len(pendingData)+len(msg.InvList) > maxBurst {
+			log.Debugf("Peer %s exceeded max pending inventory requests -- "+
+				"disconnecting", p)
+			p.Disconnect()
+			return
+		}
+		for _, iv := range msg.InvList {
+			pendingData[*iv] = deadline
+		}
+		addedDeadline = true
+	}
+
+	msgCmd := msg.Command()
 	switch msgCmd {
 	case wire.CmdVersion:
 		// Expects a verack message.
@@ -1058,13 +1111,6 @@ func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time, msgCmd st
 		// Since Equihash significantly slows down block rate, make timeout much longer
 		deadline = time.Now().Add(stallResponseTimeout * 30)
 		pendingResponses[wire.CmdInv] = deadline
-		addedDeadline = true
-
-	case wire.CmdGetData:
-		// Expects a block, tx, or notfound message.
-		pendingResponses[wire.CmdBlock] = deadline
-		pendingResponses[wire.CmdTx] = deadline
-		pendingResponses[wire.CmdNotFound] = deadline
 		addedDeadline = true
 
 	case wire.CmdGetHeaders:
@@ -1089,6 +1135,30 @@ func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time, msgCmd st
 	}
 }
 
+// maybeRemoveDeadline removes the deadline for a received response when one
+// exists.
+func (p *Peer) maybeRemoveDeadline(pendingResponses map[string]time.Time,
+	pendingData map[wire.InvVect]time.Time, msg wire.Message) {
+
+	switch msg := msg.(type) {
+	case *wire.MsgBlock:
+		iv := wire.InvVect{Type: wire.InvTypeBlock, Hash: msg.BlockHash()}
+		delete(pendingData, iv)
+
+	case *wire.MsgTx:
+		iv := wire.InvVect{Type: wire.InvTypeTx, Hash: msg.TxHash()}
+		delete(pendingData, iv)
+
+	case *wire.MsgNotFound:
+		for _, iv := range msg.InvList {
+			delete(pendingData, *iv)
+		}
+
+	default:
+		delete(pendingResponses, msg.Command())
+	}
+}
+
 // stallHandler handles stall detection for the peer.  This entails keeping
 // track of expected responses and assigning them deadlines while accounting for
 // the time spent in callbacks.  It must be run as a goroutine.
@@ -1104,6 +1174,7 @@ func (p *Peer) stallHandler() {
 
 	// pendingResponses tracks the expected response deadline times.
 	pendingResponses := make(map[string]time.Time)
+	pendingData := make(map[wire.InvVect]time.Time)
 
 	// stallTicker is used to periodically check pending responses that have
 	// exceeded the expected deadline and disconnect the peer due to
@@ -1122,27 +1193,12 @@ out:
 			case sccSendMessage:
 				// Add a deadline for the expected response
 				// message if needed.
-				p.maybeAddDeadline(pendingResponses,
-					msg.message.Command())
+				p.maybeAddDeadline(pendingResponses, pendingData,
+					msg.message)
 
 			case sccReceiveMessage:
-				// Remove received messages from the expected
-				// response map.  Since certain commands expect
-				// one of a group of responses, remove
-				// everything in the expected group accordingly.
-				switch msgCmd := msg.message.Command(); msgCmd {
-				case wire.CmdBlock:
-					fallthrough
-				case wire.CmdTx:
-					fallthrough
-				case wire.CmdNotFound:
-					delete(pendingResponses, wire.CmdBlock)
-					delete(pendingResponses, wire.CmdTx)
-					delete(pendingResponses, wire.CmdNotFound)
-
-				default:
-					delete(pendingResponses, msgCmd)
-				}
+				p.maybeRemoveDeadline(pendingResponses, pendingData,
+					msg.message)
 
 			case sccHandlerStart:
 				// Warn on unbalanced callback signaling.
@@ -1206,6 +1262,17 @@ out:
 				p.Disconnect()
 				break
 			}
+			for iv, deadline := range pendingData {
+				if now.Before(deadline.Add(offset)) {
+					continue
+				}
+
+				log.Infof("Peer %s appears to be stalled or misbehaving, "+
+					"inventory type %v hash %v timeout -- disconnecting",
+					p, iv.Type, &iv.Hash)
+				p.Disconnect()
+				break
+			}
 
 			// Reset the deadline offset for the next tick.
 			deadlineOffset = 0
@@ -1266,10 +1333,18 @@ out:
 			break out
 		}
 		atomic.StoreInt64(&p.lastRecv, time.Now().Unix())
-		p.stallControl <- stallControlMsg{sccReceiveMessage, rmsg}
+		select {
+		case p.stallControl <- stallControlMsg{sccReceiveMessage, rmsg}:
+		case <-p.quit:
+			break out
+		}
 
 		// Handle each supported message type.
-		p.stallControl <- stallControlMsg{sccHandlerStart, rmsg}
+		select {
+		case p.stallControl <- stallControlMsg{sccHandlerStart, rmsg}:
+		case <-p.quit:
+			break out
+		}
 		switch msg := rmsg.(type) {
 		case *wire.MsgVersion:
 			// Limit to one version message per peer.
@@ -1442,7 +1517,11 @@ out:
 			log.Debugf("Received unhandled message of type %v "+
 				"from %v", rmsg.Command(), p)
 		}
-		p.stallControl <- stallControlMsg{sccHandlerDone, rmsg}
+		select {
+		case p.stallControl <- stallControlMsg{sccHandlerDone, rmsg}:
+		case <-p.quit:
+			break out
+		}
 	}
 
 	// Ensure connection is closed.
@@ -1504,8 +1583,7 @@ out:
 			p.sendQueue <- next
 
 		case iv := <-p.outputInvChan:
-			// No handshake?  They'll find out soon enough.
-			if p.VersionKnown() {
+			if p.HandshakeDone() {
 				invSendQueue = append(invSendQueue, iv)
 			}
 
@@ -1525,7 +1603,7 @@ out:
 			for _, iv := range invSendQueue {
 				// Don't send inventory that became known after
 				// the initial check.
-				if p.knownInventory.Contains(iv) {
+				if p.knownInventory.Contains(*iv) {
 					continue
 				}
 
@@ -1619,7 +1697,11 @@ out:
 				p.statsMtx.Unlock()
 			}
 
-			p.stallControl <- stallControlMsg{sccSendMessage, msg.msg}
+			select {
+			case p.stallControl <- stallControlMsg{sccSendMessage, msg.msg}:
+			case <-p.quit:
+				break out
+			}
 			if err := p.writeMessage(msg.msg); err != nil {
 				p.Disconnect()
 				if p.shouldLogWriteError(err) {
@@ -1704,7 +1786,7 @@ func (p *Peer) QueueMessage(msg wire.Message, doneChan chan<- struct{}) {
 func (p *Peer) QueueInventory(invVect *wire.InvVect) {
 	// Don't add the inventory to the send queue if the peer is already
 	// known to have it.
-	if p.knownInventory.Contains(invVect) {
+	if p.knownInventory.Contains(*invVect) {
 		return
 	}
 
@@ -1727,7 +1809,7 @@ func (p *Peer) QueueInventory(invVect *wire.InvVect) {
 // This function is safe for concurrent access.
 func (p *Peer) QueueInventoryImmediate(invVect *wire.InvVect) {
 	// Don't announce the inventory if the peer is already known to have it.
-	if p.knownInventory.Contains(invVect) {
+	if p.knownInventory.Contains(*invVect) {
 		return
 	}
 
@@ -1906,9 +1988,6 @@ func (p *Peer) writeLocalVersionMsg() error {
 		return err
 	}
 
-	p.flagsMtx.Lock()
-	p.versionSent = true
-	p.flagsMtx.Unlock()
 	return nil
 }
 
@@ -1920,7 +1999,14 @@ func (p *Peer) negotiateInboundProtocol() error {
 		return err
 	}
 
-	return p.writeLocalVersionMsg()
+	if err := p.writeLocalVersionMsg(); err != nil {
+		return err
+	}
+
+	p.flagsMtx.Lock()
+	p.handshakeDone = true
+	p.flagsMtx.Unlock()
+	return nil
 }
 
 // negotiateOutboundProtocol sends our version message then waits to receive a
@@ -1931,7 +2017,14 @@ func (p *Peer) negotiateOutboundProtocol() error {
 		return err
 	}
 
-	return p.readRemoteVersionMsg()
+	if err := p.readRemoteVersionMsg(); err != nil {
+		return err
+	}
+
+	p.flagsMtx.Lock()
+	p.handshakeDone = true
+	p.flagsMtx.Unlock()
+	return nil
 }
 
 // start begins processing input and output messages.
