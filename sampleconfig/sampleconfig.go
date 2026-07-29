@@ -62,16 +62,11 @@ const fileContents = `[Application Options]
 ; to correlate connections.
 ; torisolation=1
 
-; Use Universal Plug and Play (UPnP) to automatically open the listen port
-; and obtain the external IP address from supported devices.  NOTE: This option
-; will have no effect if external IP addresses are specified.
-; upnp=1
-
 ; Specify the external IP addresses your node is listening on.  One address per
 ; line.  exccd will not contact 3rd-party sites to obtain external ip addresses.
 ; This means if you are behind NAT, your node will not be able to advertise a
-; reachable address unless you specify it here or enable the 'upnp' option (and
-; have a supported device).
+; reachable address unless you specify it here and manually forward the
+; listening port on your router.
 ; externalip=1.2.3.4
 ; externalip=2002::1234
 

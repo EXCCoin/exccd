@@ -185,7 +185,7 @@ type config struct {
 	DisableDNSSeed bool     `long:"nodnsseed" description:"DEPRECATED: use --noseeders"`
 	ExternalIPs    []string `long:"externalip" description:"Add an ip to the list of local addresses we claim to listen on to peers"`
 	NoDiscoverIP   bool     `long:"nodiscoverip" description:"Disable automatic network address discovery of local external IPs"`
-	Upnp           bool     `long:"upnp" description:"Use UPnP to map our listening port outside of NAT"`
+	Upnp           bool     `long:"upnp" description:"REMOVED: This feature is no longer available and this flag will be removed in a future version"`
 
 	// Banning options.
 	DisableBanning bool          `long:"nobanning" description:"Disable banning of misbehaving peers"`

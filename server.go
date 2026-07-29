@@ -492,7 +492,6 @@ type server struct {
 	relayInv             chan relayMsg
 	broadcast            chan broadcastMsg
 	wg                   sync.WaitGroup
-	nat                  *upnpNAT
 	db                   database.DB
 	timeSource           blockchain.MedianTimeSource
 	services             wire.ServiceFlag
@@ -1781,11 +1780,10 @@ func (s *server) handleAddPeerMsg(state *peerState, sp *serverPeer) bool {
 		//	- If there is an external ip explicitly set (--externalip).
 		//	- If listening has been disabled (--nolisten, listen
 		//	disabled because of --connect, etc).
-		//	- If Universal Plug and Play is enabled (--upnp).
 		//	- If the active network is simnet or regnet.
 		if (cfg.Proxy != "" || cfg.OnionProxy != "") ||
 			cfg.NoDiscoverIP || len(cfg.ExternalIPs) > 0 ||
-			(cfg.DisableListen || len(cfg.Listeners) == 0) || cfg.Upnp ||
+			(cfg.DisableListen || len(cfg.Listeners) == 0) ||
 			s.chainParams.Name == simNetParams.Name ||
 			s.chainParams.Name == regNetParams.Name {
 			return true
@@ -3133,11 +3131,6 @@ func (s *server) Run(ctx context.Context) {
 		s.wg.Done()
 	}(ctx, s)
 
-	if s.nat != nil {
-		s.wg.Add(1)
-		go s.upnpUpdateThread(ctx)
-	}
-
 	if !cfg.DisableRPC {
 		// Start the rebroadcastHandler, which ensures user tx received by
 		// the RPC server are rebroadcast until being included in a block.
@@ -3242,66 +3235,6 @@ func parseListeners(addrs []string) ([]net.Addr, error) {
 		}
 	}
 	return netAddrs, nil
-}
-
-func (s *server) upnpUpdateThread(ctx context.Context) {
-	// Go off immediately to prevent code duplication, thereafter we renew
-	// lease every 15 minutes.
-	timer := time.NewTimer(0 * time.Second)
-	lport, _ := strconv.ParseInt(s.chainParams.DefaultPort, 10, 16)
-
-	first := true
-out:
-	for {
-		select {
-		case <-timer.C:
-			// TODO: pick external port more cleverly
-			// TODO: know which ports we are listening to on an external net.
-			// TODO: if specific listen port doesn't work then ask for wildcard
-			// listen port?
-			// XXX this assumes timeout is in seconds.
-			listenPort, err := s.nat.AddPortMapping("tcp", int(lport), int(lport),
-				"exccd listen port", 20*60)
-			if err != nil {
-				srvrLog.Warnf("can't add UPnP port mapping: %v", err)
-			}
-			if first && err == nil {
-				// TODO: look this up periodically to see if upnp domain changed
-				// and so did ip.
-				externalip, err := s.nat.GetExternalAddress()
-				if err != nil {
-					srvrLog.Warnf("UPnP can't get external address: %v", err)
-					continue out
-				}
-				localAddr := addrmgr.NewNetAddressIPPort(externalip,
-					uint16(listenPort), s.services)
-				err = s.addrManager.AddLocalAddress(localAddr, addrmgr.UpnpPrio)
-				if err != nil {
-					srvrLog.Warnf("Failed to add UPnP local address %s: %v",
-						localAddr, err)
-				} else {
-					srvrLog.Warnf("Successfully bound via UPnP to %s",
-						localAddr)
-					first = false
-				}
-			}
-			timer.Reset(time.Minute * 15)
-
-		case <-ctx.Done():
-			break out
-		}
-	}
-
-	timer.Stop()
-
-	err := s.nat.DeletePortMapping("tcp", int(lport), int(lport))
-	if err != nil {
-		srvrLog.Warnf("unable to remove UPnP port mapping: %v", err)
-	} else {
-		srvrLog.Debugf("successfully disestablished UPnP port mapping")
-	}
-
-	s.wg.Done()
 }
 
 // standardScriptVerifyFlags returns the script flags that should be used when
@@ -3444,10 +3377,9 @@ func newServer(ctx context.Context, listenAddrs []string, db database.DB,
 	services := defaultServices
 
 	var listeners []net.Listener
-	var nat *upnpNAT
 	if !cfg.DisableListen {
 		var err error
-		listeners, nat, err = initListeners(ctx, chainParams, amgr, listenAddrs,
+		listeners, err = initListeners(ctx, chainParams, amgr, listenAddrs,
 			services)
 		if err != nil {
 			return nil, err
@@ -3473,7 +3405,6 @@ func newServer(ctx context.Context, listenAddrs []string, db database.DB,
 		relayInv:             make(chan relayMsg, cfg.MaxPeers),
 		broadcast:            make(chan broadcastMsg, cfg.MaxPeers),
 		modifyRebroadcastInv: make(chan interface{}),
-		nat:                  nat,
 		db:                   db,
 		timeSource:           blockchain.NewMedianTime(),
 		services:             services,
@@ -3938,13 +3869,12 @@ func newServer(ctx context.Context, listenAddrs []string, db database.DB,
 }
 
 // initListeners initializes the configured net listeners and adds any bound
-// addresses to the address manager. Returns the listeners and a NAT interface,
-// which is non-nil if UPnP is in use.
-func initListeners(ctx context.Context, params *chaincfg.Params, amgr *addrmgr.AddrManager, listenAddrs []string, services wire.ServiceFlag) ([]net.Listener, *upnpNAT, error) {
+// addresses to the address manager. Returns the listeners.
+func initListeners(ctx context.Context, params *chaincfg.Params, amgr *addrmgr.AddrManager, listenAddrs []string, services wire.ServiceFlag) ([]net.Listener, error) {
 	// Listen for TCP connections at the configured addresses
 	netAddrs, err := parseListeners(listenAddrs)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	listeners := make([]net.Listener, 0, len(netAddrs))
@@ -3958,13 +3888,12 @@ func initListeners(ctx context.Context, params *chaincfg.Params, amgr *addrmgr.A
 		listeners = append(listeners, listener)
 	}
 
-	var nat *upnpNAT
 	if len(cfg.ExternalIPs) != 0 {
 		defaultPort, err := strconv.ParseUint(params.DefaultPort, 10, 16)
 		if err != nil {
 			srvrLog.Errorf("Can not parse default port %s for active chain: %v",
 				params.DefaultPort, err)
-			return nil, nil, err
+			return nil, err
 		}
 
 		for _, sip := range cfg.ExternalIPs {
@@ -3995,15 +3924,6 @@ func initListeners(ctx context.Context, params *chaincfg.Params, amgr *addrmgr.A
 			}
 		}
 	} else {
-		if cfg.Upnp {
-			var err error
-			nat, err = discover(ctx)
-			if err != nil {
-				srvrLog.Warnf("Can't discover upnp: %v", err)
-			}
-			// nil nat here is fine, just means no upnp on network.
-		}
-
 		// Add bound addresses to address manager to be advertised to peers.
 		for _, listener := range listeners {
 			addr := listener.Addr().String()
@@ -4014,7 +3934,7 @@ func initListeners(ctx context.Context, params *chaincfg.Params, amgr *addrmgr.A
 		}
 	}
 
-	return listeners, nat, nil
+	return listeners, nil
 }
 
 // addrStringToNetAddr takes an address in the form of 'host:port' and returns

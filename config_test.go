@@ -147,3 +147,19 @@ func TestWhitelists(t *testing.T) {
 		}
 	}
 }
+
+func TestRemovedUpnpFlag(t *testing.T) {
+	oldArgs := os.Args
+	t.Cleanup(func() { os.Args = oldArgs })
+	os.Args = []string{oldArgs[0], "--upnp"}
+
+	appName := filepath.Base(os.Args[0])
+	appName = strings.TrimSuffix(appName, filepath.Ext(appName))
+	parsedCfg, _, err := loadConfig(appName)
+	if err != nil {
+		t.Fatalf("Failed to load deprecated upnp flag: %v", err)
+	}
+	if !parsedCfg.Upnp {
+		t.Fatal("deprecated upnp flag was not retained for startup warning")
+	}
+}

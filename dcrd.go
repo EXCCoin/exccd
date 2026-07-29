@@ -72,6 +72,11 @@ func dcrdMain() error {
 	if cfg.NoFileLogging {
 		dcrdLog.Info("File logging disabled")
 	}
+	if cfg.Upnp {
+		dcrdLog.Warnf("The --upnp option is no longer supported.  Make sure " +
+			"to manually map the listening port on your router if you are " +
+			"behind NAT and wish to receive inbound connections")
+	}
 
 	// Enable http profiling server if requested.
 	if cfg.Profile != "" {
