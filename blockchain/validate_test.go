@@ -356,6 +356,57 @@ func TestTxValidationErrors(t *testing.T) {
 	}
 }
 
+// TestTransactionInputValueRange exercises input amount boundary handling in
+// the context-free transaction checks.
+func TestTransactionInputValueRange(t *testing.T) {
+	params := chaincfg.RegNetParams()
+	prevOut := wire.NewOutPoint(&chainhash.Hash{0x01}, 0, wire.TxTreeRegular)
+	tx := wire.NewMsgTx()
+	tx.AddTxIn(wire.NewTxIn(prevOut, wire.NullValueIn, nil))
+	tx.AddTxOut(wire.NewTxOut(1, []byte{txscript.OP_TRUE}))
+	if err := CheckTransactionSanity(tx, params); err != nil {
+		t.Fatalf("NullValueIn: unexpected error: %v", err)
+	}
+
+	for _, value := range []int64{-2, dcrutil.MaxAmount + 1} {
+		tx.TxIn[0].ValueIn = value
+		err := CheckTransactionSanity(tx, params)
+		if !errors.Is(err, ErrFraudAmountIn) {
+			t.Fatalf("ValueIn %d: error = %v, want %v", value, err,
+				ErrFraudAmountIn)
+		}
+	}
+}
+
+// TestRegularTxFirstInputValidation ensures regular transaction inputs are
+// handled consistently across positions.
+func TestRegularTxFirstInputValidation(t *testing.T) {
+	params := chaincfg.RegNetParams()
+	prevOut := wire.OutPoint{
+		Hash:  chainhash.Hash{0x01},
+		Index: 0,
+		Tree:  wire.TxTreeRegular,
+	}
+	view := NewUtxoViewpoint(nil)
+	view.entries[prevOut] = &UtxoEntry{
+		amount:      1,
+		blockHeight: 1,
+	}
+
+	msgTx := wire.NewMsgTx()
+	txIn := wire.NewTxIn(&prevOut, 2, nil)
+	txIn.BlockHeight = 1
+	msgTx.AddTxIn(txIn)
+	msgTx.AddTxOut(wire.NewTxOut(1, []byte{txscript.OP_TRUE}))
+
+	_, err := CheckTransactionInputs(nil, dcrutil.NewTx(msgTx), 2, view,
+		true, params, nil, false, false, false)
+	if !errors.Is(err, ErrFraudAmountIn) {
+		t.Fatalf("CheckTransactionInputs error = %v, want %v", err,
+			ErrFraudAmountIn)
+	}
+}
+
 // badBlock is an intentionally bad block that should fail the context-less
 // sanity checks.
 var badBlock = wire.MsgBlock{
