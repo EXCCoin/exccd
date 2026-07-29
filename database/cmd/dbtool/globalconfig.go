@@ -24,7 +24,7 @@ var (
 
 	// Default global config.
 	cfg = &config{
-		DataDir: filepath.Join(dcrdHomeDir, "data"),
+		DataDir: filepath.Join(exccdHomeDir, "data"),
 		DbType:  "ffldb",
 	}
 )

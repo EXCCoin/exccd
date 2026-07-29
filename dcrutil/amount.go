@@ -70,7 +70,7 @@ func round(f float64) Amount {
 // but does not check that the amount is within the total amount of coins
 // producible as f may not refer to an amount at a single moment in time.
 //
-// NewAmount is for specifically for converting DCR to Atoms (atomic units).
+// NewAmount is specifically for converting EXCC to atoms (atomic units).
 // For creating a new Amount with an int64 value which denotes a quantity of
 // Atoms, do a simple type conversion from type int64 to Amount.
 func NewAmount(f float64) (Amount, error) {

@@ -32,7 +32,7 @@ func main() {
 
 	// Connect to local dcrd RPC server using websockets.
 	exccdHomeDir := dcrutil.AppDataDir("exccd", false)
-	certs, err := os.ReadFile(filepath.Join(dcrdHomeDir, "rpc.cert"))
+	certs, err := os.ReadFile(filepath.Join(exccdHomeDir, "rpc.cert"))
 	if err != nil {
 		log.Fatal(err)
 	}
