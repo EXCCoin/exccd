@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"net/netip"
 	"os"
 	"path"
 	"runtime"
@@ -4106,14 +4107,14 @@ func isWhitelisted(addr net.Addr) bool {
 		srvrLog.Warnf("Unable to SplitHostPort on '%s': %v", addr, err)
 		return false
 	}
-	ip := net.ParseIP(host)
-	if ip == nil {
+	ip, err := netip.ParseAddr(host)
+	if err != nil {
 		srvrLog.Warnf("Unable to parse IP '%s'", addr)
 		return false
 	}
 
-	for _, ipnet := range cfg.whitelists {
-		if ipnet.Contains(ip) {
+	for _, prefix := range cfg.whitelists {
+		if prefix.Contains(ip) {
 			return true
 		}
 	}

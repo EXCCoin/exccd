@@ -6,6 +6,8 @@ package main
 
 import (
 	"flag"
+	"net"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"strings"
@@ -90,4 +92,58 @@ func TestAltDNSNamesWithArg(t *testing.T) {
 			hostnames)
 	}
 	os.Args = old
+}
+
+func TestWhitelists(t *testing.T) {
+	oldArgs := os.Args
+	t.Cleanup(func() { os.Args = oldArgs })
+	os.Args = []string{
+		oldArgs[0],
+		"--whitelist=192.0.2.42/24",
+		"--whitelist=2001:db8::1",
+	}
+
+	appName := filepath.Base(os.Args[0])
+	appName = strings.TrimSuffix(appName, filepath.Ext(appName))
+	parsedCfg, _, err := loadConfig(appName)
+	if err != nil {
+		t.Fatalf("Failed to load whitelists: %v", err)
+	}
+	want := []netip.Prefix{
+		netip.MustParsePrefix("192.0.2.0/24"),
+		netip.MustParsePrefix("2001:db8::1/128"),
+	}
+	if len(parsedCfg.whitelists) != len(want) {
+		t.Fatalf("got %d whitelists, want %d", len(parsedCfg.whitelists),
+			len(want))
+	}
+	for i := range want {
+		if parsedCfg.whitelists[i] != want[i] {
+			t.Fatalf("whitelist %d: got %v, want %v", i,
+				parsedCfg.whitelists[i], want[i])
+		}
+	}
+
+	oldCfg := cfg
+	cfg = parsedCfg
+	t.Cleanup(func() { cfg = oldCfg })
+	tests := []struct {
+		addr string
+		want bool
+	}{
+		{"192.0.2.99:1234", true},
+		{"192.0.3.1:1234", false},
+		{"[2001:db8::1]:1234", true},
+		{"[2001:db8::2]:1234", false},
+	}
+	for _, test := range tests {
+		addr, err := net.ResolveTCPAddr("tcp", test.addr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := isWhitelisted(addr); got != test.want {
+			t.Errorf("isWhitelisted(%q) = %v, want %v", test.addr, got,
+				test.want)
+		}
+	}
 }
