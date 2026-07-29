@@ -1053,7 +1053,8 @@ func (m *SyncManager) handleHeadersMsg(hmsg *headersMsg) {
 	_, prevBestHeaderHeight := chain.BestHeader()
 
 	// Process all of the received headers.
-	for _, header := range headers {
+	for i, header := range headers {
+		headerHash := &headerHashes[i]
 		err := chain.ProcessBlockHeader(header)
 		if err != nil {
 			// Update the sync height when the sync peer fails to process any
@@ -1070,12 +1071,23 @@ func (m *SyncManager) handleHeadersMsg(hmsg *headersMsg) {
 
 			// Note that there is no need to check for an orphan header here
 			// because they were already verified to connect above.
-
-			log.Debugf("Failed to process block header %s from peer %s: %v -- "+
-				"disconnecting", header.BlockHash(), peer, err)
+			var ruleErr blockchain.RuleError
+			if errors.As(err, &ruleErr) {
+				log.Debugf("Rejected block header %s from peer %s: %v -- "+
+					"disconnecting", headerHash, peer, err)
+			} else {
+				log.Errorf("Failed to process block header %s from peer %s: %v -- "+
+					"disconnecting", headerHash, peer, err)
+			}
+			if errors.Is(err, database.ErrCorruption) {
+				log.Errorf("Critical failure: %v", err)
+			}
 			peer.Disconnect()
 			return
 		}
+
+		// Avoid announcing a block back to the peer that provided its header.
+		peer.AddKnownInventory(wire.NewInvVect(wire.InvTypeBlock, headerHash))
 	}
 
 	// All of the headers were either accepted or already known valid at this
@@ -1600,6 +1612,11 @@ func (m *SyncManager) requestFromPeer(p *peerpkg.Peer, blocks, voteHashes,
 			continue
 		}
 
+		// Keep the global request map within its configured limit.
+		if len(m.requestedBlocks) >= maxRequestedBlocks {
+			break
+		}
+
 		// Skip the block when it is already known.
 		if m.cfg.Chain.HaveBlock(bh) {
 			continue
@@ -1630,6 +1647,11 @@ func (m *SyncManager) requestFromPeer(p *peerpkg.Peer, blocks, voteHashes,
 
 			if alreadyReqP || alreadyReqB {
 				continue
+			}
+
+			// Keep the global request map within its configured limit.
+			if len(m.requestedTxns) >= maxRequestedTxns {
+				break
 			}
 
 			// Ask the transaction memory pool if the transaction is known
