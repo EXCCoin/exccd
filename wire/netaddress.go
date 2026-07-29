@@ -6,7 +6,6 @@
 package wire
 
 import (
-	"encoding/binary"
 	"errors"
 	"io"
 	"net"
@@ -118,7 +117,8 @@ func readNetAddress(r io.Reader, pver uint32, na *NetAddress, ts bool) error {
 		return err
 	}
 	// Sigh.  Decred protocol mixes little and big endian.
-	port, err := binarySerializer.Uint16(r, bigEndian)
+	var port uint16
+	err = readUint16BE(r, &port)
 	if err != nil {
 		return err
 	}
@@ -157,5 +157,5 @@ func writeNetAddress(w io.Writer, pver uint32, na *NetAddress, ts bool) error {
 	}
 
 	// Sigh.  Decred protocol mixes little and big endian.
-	return binary.Write(w, bigEndian, na.Port)
+	return writeUint16BE(w, na.Port)
 }

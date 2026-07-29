@@ -665,3 +665,34 @@ func BenchmarkHashH(b *testing.B) {
 		_ = chainhash.HashH(txBytes)
 	}
 }
+
+func BenchmarkWriteMessageN(b *testing.B) {
+	var buf bytes.Buffer
+	for i := 0; i < b.N; i++ {
+		buf.Reset()
+		_, err := WriteMessageN(&buf, &genesisCoinbaseTx, ProtocolVersion,
+			MainNet)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkReadMessageN(b *testing.B) {
+	var buf bytes.Buffer
+	_, err := WriteMessageN(&buf, &genesisCoinbaseTx, ProtocolVersion, MainNet)
+	if err != nil {
+		b.Fatal(err)
+	}
+	msgBytes := buf.Bytes()
+	r := new(bytes.Reader)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		r.Reset(msgBytes)
+		_, _, _, err := ReadMessageN(r, ProtocolVersion, MainNet)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}

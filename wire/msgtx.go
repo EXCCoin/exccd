@@ -708,12 +708,12 @@ func (msg *MsgTx) decodePrefix(r io.Reader, pver uint32) (uint64, error) {
 	}
 
 	// Locktime and expiry.
-	msg.LockTime, err = binarySerializer.Uint32(r, littleEndian)
+	err = readUint32LE(r, &msg.LockTime)
 	if err != nil {
 		return 0, err
 	}
 
-	msg.Expiry, err = binarySerializer.Uint32(r, littleEndian)
+	err = readUint32LE(r, &msg.Expiry)
 	if err != nil {
 		return 0, err
 	}
@@ -814,7 +814,8 @@ func (msg *MsgTx) BtcDecode(r io.Reader, pver uint32) error {
 	// The serialized encoding of the version includes the real transaction
 	// version in the lower 16 bits and the transaction serialization type
 	// in the upper 16 bits.
-	version, err := binarySerializer.Uint32(r, littleEndian)
+	var version uint32
+	err := readUint32LE(r, &version)
 	if err != nil {
 		return err
 	}
@@ -941,12 +942,12 @@ func (msg *MsgTx) encodePrefix(w io.Writer, pver uint32) error {
 		}
 	}
 
-	err = binarySerializer.PutUint32(w, littleEndian, msg.LockTime)
+	err = writeUint32LE(w, msg.LockTime)
 	if err != nil {
 		return err
 	}
 
-	return binarySerializer.PutUint32(w, littleEndian, msg.Expiry)
+	return writeUint32LE(w, msg.Expiry)
 }
 
 // encodeWitness encodes a transaction witness into a writer.
@@ -976,7 +977,7 @@ func (msg *MsgTx) BtcEncode(w io.Writer, pver uint32) error {
 	// version in the lower 16 bits and the transaction serialization type
 	// in the upper 16 bits.
 	serializedVersion := uint32(msg.Version) | uint32(msg.SerType)<<16
-	err := binarySerializer.PutUint32(w, littleEndian, serializedVersion)
+	err := writeUint32LE(w, serializedVersion)
 	if err != nil {
 		return err
 	}
@@ -1179,12 +1180,13 @@ func ReadOutPoint(r io.Reader, pver uint32, version uint16, op *OutPoint) error 
 		return err
 	}
 
-	op.Index, err = binarySerializer.Uint32(r, littleEndian)
+	err = readUint32LE(r, &op.Index)
 	if err != nil {
 		return err
 	}
 
-	tree, err := binarySerializer.Uint8(r)
+	var tree uint8
+	err = readUint8(r, &tree)
 	if err != nil {
 		return err
 	}
@@ -1201,12 +1203,12 @@ func WriteOutPoint(w io.Writer, pver uint32, version uint16, op *OutPoint) error
 		return err
 	}
 
-	err = binarySerializer.PutUint32(w, littleEndian, op.Index)
+	err = writeUint32LE(w, op.Index)
 	if err != nil {
 		return err
 	}
 
-	return binarySerializer.PutUint8(w, uint8(op.Tree))
+	return writeUint8(w, uint8(op.Tree))
 }
 
 // readTxInPrefix reads the next sequence of bytes from r as a transaction input
@@ -1224,28 +1226,28 @@ func readTxInPrefix(r io.Reader, pver uint32, serType TxSerializeType, version u
 	}
 
 	// Sequence.
-	ti.Sequence, err = binarySerializer.Uint32(r, littleEndian)
-	return err
+	return readUint32LE(r, &ti.Sequence)
 }
 
 // readTxInWitness reads the next sequence of bytes from r as a transaction input
 // (TxIn) in the transaction witness.
 func readTxInWitness(r io.Reader, pver uint32, version uint16, ti *TxIn) error {
 	// ValueIn.
-	valueIn, err := binarySerializer.Uint64(r, littleEndian)
+	var valueIn uint64
+	err := readUint64LE(r, &valueIn)
 	if err != nil {
 		return err
 	}
 	ti.ValueIn = int64(valueIn)
 
 	// BlockHeight.
-	ti.BlockHeight, err = binarySerializer.Uint32(r, littleEndian)
+	err = readUint32LE(r, &ti.BlockHeight)
 	if err != nil {
 		return err
 	}
 
 	// BlockIndex.
-	ti.BlockIndex, err = binarySerializer.Uint32(r, littleEndian)
+	err = readUint32LE(r, &ti.BlockIndex)
 	if err != nil {
 		return err
 	}
@@ -1264,26 +1266,26 @@ func writeTxInPrefix(w io.Writer, pver uint32, version uint16, ti *TxIn) error {
 		return err
 	}
 
-	return binarySerializer.PutUint32(w, littleEndian, ti.Sequence)
+	return writeUint32LE(w, ti.Sequence)
 }
 
 // writeTxWitness encodes ti to the Decred protocol encoding for a transaction
 // input (TxIn) witness to w.
 func writeTxInWitness(w io.Writer, pver uint32, version uint16, ti *TxIn) error {
 	// ValueIn.
-	err := binarySerializer.PutUint64(w, littleEndian, uint64(ti.ValueIn))
+	err := writeUint64LE(w, uint64(ti.ValueIn))
 	if err != nil {
 		return err
 	}
 
 	// BlockHeight.
-	err = binarySerializer.PutUint32(w, littleEndian, ti.BlockHeight)
+	err = writeUint32LE(w, ti.BlockHeight)
 	if err != nil {
 		return err
 	}
 
 	// BlockIndex.
-	err = binarySerializer.PutUint32(w, littleEndian, ti.BlockIndex)
+	err = writeUint32LE(w, ti.BlockIndex)
 	if err != nil {
 		return err
 	}
@@ -1295,13 +1297,14 @@ func writeTxInWitness(w io.Writer, pver uint32, version uint16, ti *TxIn) error 
 // readTxOut reads the next sequence of bytes from r as a transaction output
 // (TxOut).
 func readTxOut(r io.Reader, pver uint32, version uint16, to *TxOut) error {
-	value, err := binarySerializer.Uint64(r, littleEndian)
+	var value uint64
+	err := readUint64LE(r, &value)
 	if err != nil {
 		return err
 	}
 	to.Value = int64(value)
 
-	to.Version, err = binarySerializer.Uint16(r, littleEndian)
+	err = readUint16LE(r, &to.Version)
 	if err != nil {
 		return err
 	}
@@ -1314,12 +1317,12 @@ func readTxOut(r io.Reader, pver uint32, version uint16, to *TxOut) error {
 // writeTxOut encodes to into the Decred protocol encoding for a transaction
 // output (TxOut) to w.
 func writeTxOut(w io.Writer, pver uint32, version uint16, to *TxOut) error {
-	err := binarySerializer.PutUint64(w, littleEndian, uint64(to.Value))
+	err := writeUint64LE(w, uint64(to.Value))
 	if err != nil {
 		return err
 	}
 
-	err = binarySerializer.PutUint16(w, littleEndian, to.Version)
+	err = writeUint16LE(w, to.Version)
 	if err != nil {
 		return err
 	}
