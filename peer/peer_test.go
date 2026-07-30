@@ -774,6 +774,30 @@ func TestDuplicateVersionMsg(t *testing.T) {
 	}
 }
 
+func TestOutHandlerSignalsInFlightMessageOnQuit(t *testing.T) {
+	p := NewInboundPeer(&Config{})
+	p.stallControl = make(chan stallControlMsg)
+	p.sendQueue = make(chan outMsg)
+	close(p.queueQuit)
+	go p.outHandler()
+
+	done := make(chan struct{}, 1)
+	dequeued := make(chan struct{})
+	go func() {
+		p.sendQueue <- outMsg{msg: wire.NewMsgPing(1), doneChan: done}
+		close(dequeued)
+	}()
+	<-dequeued
+	close(p.quit)
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("in-flight message was not signaled during shutdown")
+	}
+	<-p.outQuit
+}
+
 // TestNetFallback ensures the network is set to the expected value in
 // accordance with the parameters.
 func TestNetFallback(t *testing.T) {

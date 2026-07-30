@@ -24,9 +24,17 @@ func TestInventoryDeadlines(t *testing.T) {
 	if err := msg.AddInvVect(wire.NewInvVect(wire.InvTypeBlock, &blockHash)); err != nil {
 		t.Fatal(err)
 	}
+	before := time.Now()
 	p.maybeAddDeadline(pendingResponses, pendingData, msg)
+	after := time.Now()
 	if len(pendingData) != 2 {
 		t.Fatalf("got %d inventory deadlines, want 2", len(pendingData))
+	}
+	for _, deadline := range pendingData {
+		if deadline.Before(before.Add(stallResponseTimeout*30)) ||
+			deadline.After(after.Add(stallResponseTimeout*30)) {
+			t.Fatalf("inventory deadline %v does not use the Equihash timeout", deadline)
+		}
 	}
 
 	p.maybeRemoveDeadline(pendingResponses, pendingData, tx)

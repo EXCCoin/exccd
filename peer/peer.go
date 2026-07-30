@@ -1081,6 +1081,7 @@ func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time,
 	var addedDeadline bool
 	deadline := time.Now().Add(stallResponseTimeout)
 	if msg, ok := msg.(*wire.MsgGetData); ok {
+		dataDeadline := time.Now().Add(stallResponseTimeout * 30)
 		const maxBurst = wire.MaxInvPerMsg + wire.MaxInvPerMsg/2
 		if len(pendingData)+len(msg.InvList) > maxBurst {
 			log.Debugf("Peer %s exceeded max pending inventory requests -- "+
@@ -1089,7 +1090,7 @@ func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time,
 			return
 		}
 		for _, iv := range msg.InvList {
-			pendingData[*iv] = deadline
+			pendingData[*iv] = dataDeadline
 		}
 		addedDeadline = true
 	}
@@ -1700,6 +1701,9 @@ out:
 			select {
 			case p.stallControl <- stallControlMsg{sccSendMessage, msg.msg}:
 			case <-p.quit:
+				if msg.doneChan != nil {
+					msg.doneChan <- struct{}{}
+				}
 				break out
 			}
 			if err := p.writeMessage(msg.msg); err != nil {
