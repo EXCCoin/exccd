@@ -101,6 +101,7 @@ func TestWhitelists(t *testing.T) {
 		oldArgs[0],
 		"--whitelist=192.0.2.42/24",
 		"--whitelist=2001:db8::1",
+		"--whitelist=::ffff:198.51.100.42",
 	}
 
 	appName := filepath.Base(os.Args[0])
@@ -112,6 +113,7 @@ func TestWhitelists(t *testing.T) {
 	want := []netip.Prefix{
 		netip.MustParsePrefix("192.0.2.0/24"),
 		netip.MustParsePrefix("2001:db8::1/128"),
+		netip.MustParsePrefix("198.51.100.42/32"),
 	}
 	if len(parsedCfg.whitelists) != len(want) {
 		t.Fatalf("got %d whitelists, want %d", len(parsedCfg.whitelists),
@@ -135,6 +137,7 @@ func TestWhitelists(t *testing.T) {
 		{"192.0.3.1:1234", false},
 		{"[2001:db8::1]:1234", true},
 		{"[2001:db8::2]:1234", false},
+		{"198.51.100.42:1234", true},
 	}
 	for _, test := range tests {
 		addr, err := net.ResolveTCPAddr("tcp", test.addr)

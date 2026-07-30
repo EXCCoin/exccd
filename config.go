@@ -991,6 +991,7 @@ func loadConfig(appName string) (*config, []string, error) {
 					err = fmt.Errorf(str, funcName, addr)
 					return nil, nil, err
 				}
+				ip = ip.Unmap()
 				bits := 32
 				if ip.Is6() {
 					bits = 128
