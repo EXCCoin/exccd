@@ -304,8 +304,6 @@ func (data solutionValidatorData) Validate(solution unsafe.Pointer) int {
 	hash := data.msgBlock.Header.BlockHash()
 
 	if standalone.HashToBig(&hash).Cmp(standalone.CompactToBig(data.msgBlock.Header.Bits)) <= 0 {
-		data.miner.submitBlock(dcrutil.NewBlock(data.msgBlock))
-		data.miner.minedOnParents[data.msgBlock.Header.PrevBlock]++
 		*data.solved = true
 		return 1
 	}
@@ -475,7 +473,7 @@ func (m *CPUMiner) solver(ctx context.Context, template *mining.BlockTemplate, t
 		// that trigger a stale block, so a new block template can be generated.
 
 		shallowBlockCopy := *template.Block
-		if m.solveAndSubmitBlock(ctx, template.Block, &m.speedStats, ticker) {
+		if m.solveAndSubmitBlock(ctx, &shallowBlockCopy, &m.speedStats, ticker) {
 			block := dcrutil.NewBlock(&shallowBlockCopy)
 			if !m.submitBlock(block) {
 				m.Lock()
