@@ -1,19 +1,19 @@
 name: Release
 
-# Build release artifacts from the tagged commit for reproducible source
-# provenance.
+# Build every asset from the tagged commit.  Each binary is built and started
+# on its target architecture before the release is created.
 
 on:
   push:
     tags: ['v*']
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  release:
-    name: Build and publish linux/amd64
-    runs-on: ubuntu-latest
+  validate:
+    name: Validate release source
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out the tagged commit
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -37,37 +37,149 @@ jobs:
             exit 1
           fi
 
+  build:
+    name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
+    needs: validate
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            goos: linux
+            goarch: amd64
+            goamd64: v1
+            extension: tar.gz
+            exe: ''
+          - runner: ubuntu-24.04-arm
+            goos: linux
+            goarch: arm64
+            goarm64: v8.0
+            extension: tar.gz
+            exe: ''
+          - runner: windows-2025
+            goos: windows
+            goarch: amd64
+            goamd64: v1
+            extension: zip
+            exe: .exe
+          - runner: windows-11-arm
+            goos: windows
+            goarch: arm64
+            goarm64: v8.0
+            extension: zip
+            exe: .exe
+          - runner: macos-26-intel
+            goos: darwin
+            goarch: amd64
+            goamd64: v1
+            extension: tar.gz
+            exe: ''
+          - runner: macos-26
+            goos: darwin
+            goarch: arm64
+            goarm64: v8.0
+            extension: tar.gz
+            exe: ''
+
+    steps:
+      - name: Check out the tagged commit
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: 'go.mod'
+
       - name: Build
+        shell: bash
         env:
-          CGO_ENABLED: '1'   # cequihash is C++
-          GOOS: linux
-          GOARCH: amd64
-          GOAMD64: v1
+          CGO_ENABLED: '1' # cequihash is C++
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          GOAMD64: ${{ matrix.goamd64 }}
+          GOARM64: ${{ matrix.goarm64 }}
           GOWORK: 'off'
         run: |
           set -eux
           VERSION="${GITHUB_REF_NAME#v}"
+          ASSET_NAME="exccd-${GITHUB_REF_NAME}-${GOOS}-${GOARCH}"
+          BINARY="dist/${ASSET_NAME}/exccd${{ matrix.exe }}"
           echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
-          mkdir -p dist
+          echo "ASSET_NAME=${ASSET_NAME}" >> "$GITHUB_ENV"
+          echo "BINARY=${BINARY}" >> "$GITHUB_ENV"
+          mkdir -p "dist/${ASSET_NAME}"
           go build -buildvcs=false -trimpath \
             -ldflags "-s -w -X github.com/EXCCoin/exccd/internal/version.Version=${VERSION}" \
-            -o dist/exccd .
+            -o "${BINARY}" .
 
       - name: Verify the binary reports the tagged version
+        shell: bash
         run: |
           set -eu
-          reported=$(./dist/exccd --version | head -1)
+          reported=$("${BINARY}" --version | head -1)
           echo "reported: ${reported}"
           case "${reported}" in
             *"${VERSION}"*) ;;
             *) echo "::error::binary reports '${reported}', tag is '${VERSION}'"; exit 1 ;;
           esac
 
+      - name: Add build information
+        shell: bash
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          set -eu
+          cp LICENSE "dist/${ASSET_NAME}/"
+          {
+            echo "Tag: ${GITHUB_REF_NAME}"
+            echo "Commit: ${GITHUB_SHA}"
+            echo "Target: ${GOOS}/${GOARCH}"
+            echo "Go: $(go version)"
+            echo "CC: $(go env CC)"
+            echo "CXX: $(go env CXX)"
+            echo
+            go version -m "${BINARY}"
+          } > "dist/${ASSET_NAME}/BUILDINFO.txt"
+
+      - name: Package Unix archive
+        if: runner.os != 'Windows'
+        shell: bash
+        run: tar -C dist -czf "dist/${ASSET_NAME}.tar.gz" "${ASSET_NAME}"
+
+      - name: Package Windows archive
+        if: runner.os == 'Windows'
+        shell: bash
+        working-directory: dist
+        run: 7z a "${ASSET_NAME}.zip" "${ASSET_NAME}"
+
+      - name: Upload archive
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: exccd-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/${{ env.ASSET_NAME }}.${{ matrix.extension }}
+          if-no-files-found: error
+          compression-level: 0
+
+  publish:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download archives
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          path: dist
+          merge-multiple: true
+
       - name: Generate checksums and manifest
         working-directory: dist
         run: |
           set -eu
-          sha256sum exccd > SHA256SUMS
+          sha256sum exccd-* > SHA256SUMS
           cat > MANIFEST.md <<EOF
           # exccd ${GITHUB_REF_NAME}
 
@@ -76,37 +188,24 @@ jobs:
           | Tag | \`${GITHUB_REF_NAME}\` |
           | Commit | \`${GITHUB_SHA}\` |
           | Built by | \`${GITHUB_REPOSITORY}\` run [${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) |
-          | Go | \`$(go version | cut -d' ' -f3)\` |
-          | Target | linux/amd64, CGO enabled, GOAMD64=v1, GOWORK=off |
+          | Targets | Linux, Windows, and macOS on amd64 and arm64 |
+
+          Every binary was built with CGO enabled and executed with
+          \`--version\` on its target operating system and architecture.
+          Each archive includes its license and embedded Go module build info.
 
           \`\`\`
           $(cat SHA256SUMS)
-          \`\`\`
-
-          exccd module versions linked into this build:
-
-          \`\`\`
-          $(go version -m exccd | grep 'EXCCoin/exccd' || echo 'none')
-          \`\`\`
-
-          Reproduce:
-
-          \`\`\`sh
-          git clone https://github.com/${GITHUB_REPOSITORY} && cd exccd
-          git checkout ${GITHUB_REF_NAME}
-          GOWORK=off CGO_ENABLED=1 GOOS=linux GOARCH=amd64 GOAMD64=v1 go build \\
-            -buildvcs=false -trimpath \\
-            -ldflags "-s -w -X github.com/EXCCoin/exccd/internal/version.Version=${VERSION}" \\
-            -o exccd .
           \`\`\`
           EOF
 
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           gh release create "${GITHUB_REF_NAME}" \
             --title "${GITHUB_REF_NAME}" \
             --notes-file dist/MANIFEST.md \
             --verify-tag \
-            dist/exccd dist/SHA256SUMS dist/MANIFEST.md
+            dist/exccd-* dist/SHA256SUMS dist/MANIFEST.md
