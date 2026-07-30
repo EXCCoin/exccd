@@ -5,11 +5,14 @@
 package standalone
 
 import (
+	"encoding/hex"
 	"errors"
 	"math/big"
 	"testing"
 
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/chaincfg/v3"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 // TestHashToBig ensures HashToBig properly converts a hash treated as a little
@@ -215,6 +218,56 @@ func TestCalcWork(t *testing.T) {
 // independent of any potential changes to chain parameters.
 func mockMainNetPowLimit() string {
 	return "00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+}
+
+// TestValidateEquihashSolution checks known mainnet headers on both sides of
+// the algorithm transition and the first historical invalid solution.
+func TestValidateEquihashSolution(t *testing.T) {
+	params := chaincfg.MainNetParams()
+	tests := []struct {
+		name    string
+		header  string
+		invalid bool
+	}{{
+		name:   "last algorithm v0 block",
+		header: "05000000a06af4a3c604b72842ac9e05edc264d9f3ed399fb65973ec38755b6be8010000885740afd78a2dac6cf9510342870956ef041bd0e3d526c488d9bad1436f7c24c8649f590cce2216f34f3a29708b3d8d44b5bc051594f021437d1deff913184001007a765f3b2c1c0500000131ac00004d74021e9b91f39826000000fd550100ec0c00008aa9175cd70cd8006e2c7bb537aa50e291432728475ec70fe28a3e4cfe4258544c661f8042c4603705000000000df91619997bd7247f3f85821656dba5da45b846db853c36353b3d3282fb94056af6b24f2401422a2da9293b6e4fade452045c8cb4787b2712499a1614990de5b4e343ae704df19169a605d63abb1db8e931163ab122fc0ed3f62e790f1c02e9cee765",
+	}, {
+		name:   "first algorithm v1 block",
+		header: "050000001efdc5d33aa6ee6bb7146507b0750180e44773479f0b35f47d70ea7f31000000c3b7853f8d4b1870b3a597450c24befb8b301e1e61741a3929cb9bb096d3461dc7f17e6f257b3a0df6fb609817cfe340dd4980cb14c5a4e61648017d25277dce0100f274708796e1050001002cac0000ffff011f9b91f39826000000fe550100160b00005bab175c14bf00000000000000000000bf79b7e400000000000000000000000000000000000000000500000006185840935dd40f87f281e90404c872674a45fd38afc2d857082ac6c52ba69d3144feb7aa2356753eafa14e95244be250312325f323926e5ed4c43ab921a30cd514ade979a11fd760dce25a7907e9de871716ceaba885c6753484c0308f8cba13e6e473",
+	}, {
+		name:   "block before invalid solution",
+		header: "090000002c7fd369b5b9b8635cab6d82845b34f10aa501b3b649ad6b2b011b34c26510031fb3a996194aff7b5da29f275ac8a9f23950927722ee55e2a3a5f3a7b5ad1f97f31745f7b817c5e55be9bb39354cac4099c78ec69e591f4c7fe62b80199a6255010028adb8ec546c0500000072c10000fa1b0c20c11afbfd00000000eb820f0063080000534993640000000003968f15912fb144000000000000000000000000000000000000000000000000090000001e14effcd02cc8a02614ab99f3ce580e76c8f215318f727bc64748d0329e2b7dab7f9ef02887e8fd1de9c9a3db22b9fa403d26707adef8130d4481cd4252f302278b36740e45e35d7374e946821eee3a57a03baf953f5d45b3f11ae7f7d57a23331825ff",
+	}, {
+		name:    "historical invalid solution",
+		header:  "09000000aabad8ffdae7c37f33616e4dae133354718f73f7c55315fbc3f3d3a9533a0306fc3ea8340d7b6cb357585e83ef7367000eddc87aa6cb54fd470b04c083f37b2ac789abc97707099649fba6aa862c25d09c6109f60894b1282af8f4cdbb859a520100d76534d306810400000077c10000fa1b0c20c11afbfd00000000ec820f008c7900001f4a9364000000007f13d9a3ffb139cd00000000000000000000000000000000000000000000000009000000070165bccad80639c78af161f0e608738125c5f7b0295a53bf1d9436a68a1b5fa8997ece10c2c0f802a4a5a1450355cc6fe2195d3f279f4ae23e7dbd98616484db9accbd9e6ba75f7a8c6b7114fee3f6df69224a957252eb4c8dd5d7cf031169ddb96ed3",
+		invalid: true,
+	}}
+
+	for _, test := range tests {
+		headerBytes, err := hex.DecodeString(test.header)
+		if err != nil {
+			t.Fatalf("%s: decode header: %v", test.name, err)
+		}
+		var header wire.BlockHeader
+		if err := header.FromBytes(headerBytes); err != nil {
+			t.Fatalf("%s: deserialize header: %v", test.name, err)
+		}
+
+		if err := CheckProofOfWorkHash(&header, header.Bits, params); err != nil {
+			t.Errorf("%s: hash proof of work: %v", test.name, err)
+			continue
+		}
+
+		err = CheckProofOfWork(&header, header.Bits, params)
+		if (err != nil) != test.invalid {
+			t.Errorf("%s: error = %v, want invalid %v", test.name, err,
+				test.invalid)
+		}
+		if test.invalid && !errors.Is(err, ErrInvalidEquihashSolution) {
+			t.Errorf("%s: error = %v, want %v", test.name, err,
+				ErrInvalidEquihashSolution)
+		}
+	}
 }
 
 // TestCheckProofOfWorkRange ensures target difficulties that are outside of

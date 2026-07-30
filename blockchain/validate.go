@@ -292,8 +292,21 @@ func checkTransactionSanity(tx *wire.MsgTx, params *chaincfg.Params) error {
 		}
 	}
 
-	// Input values in the fraud proof must either be in the valid range or the
-	// special sentinel value that signals it needs to be filled in later.
+	// Check for duplicate transaction inputs.
+	existingTxOut := make(map[wire.OutPoint]struct{})
+	for _, txIn := range tx.TxIn {
+		if _, exists := existingTxOut[txIn.PreviousOutPoint]; exists {
+			str := "transaction contains duplicate inputs"
+			return ruleError(ErrDuplicateTxInputs, str)
+		}
+		existingTxOut[txIn.PreviousOutPoint] = struct{}{}
+	}
+
+	return nil
+}
+
+// checkTransactionInputValues ensures fraud proof input values are in range.
+func checkTransactionInputValues(tx *wire.MsgTx) error {
 	for _, txIn := range tx.TxIn {
 		atom := txIn.ValueIn
 		if atom < 0 && atom != wire.NullValueIn {
@@ -306,17 +319,6 @@ func checkTransactionSanity(tx *wire.MsgTx, params *chaincfg.Params) error {
 			return ruleError(ErrFraudAmountIn, str)
 		}
 	}
-
-	// Check for duplicate transaction inputs.
-	existingTxOut := make(map[wire.OutPoint]struct{})
-	for _, txIn := range tx.TxIn {
-		if _, exists := existingTxOut[txIn.PreviousOutPoint]; exists {
-			str := "transaction contains duplicate inputs"
-			return ruleError(ErrDuplicateTxInputs, str)
-		}
-		existingTxOut[txIn.PreviousOutPoint] = struct{}{}
-	}
-
 	return nil
 }
 
@@ -350,6 +352,10 @@ const (
 	// agenda being active are applied.
 	AFSubsidySplitEnabled
 
+	// AFFixTxInputValidation may be set to enable corrected transaction input
+	// validation.
+	AFFixTxInputValidation
+
 	// AFNone is a convenience value to specifically indicate no flags.
 	AFNone AgendaFlags = 0
 )
@@ -376,6 +382,12 @@ func (flags AgendaFlags) IsAutoRevocationsEnabled() bool {
 // subsidy split agenda defined in DCP0010 is enabled.
 func (flags AgendaFlags) IsSubsidySplitEnabled() bool {
 	return flags&AFSubsidySplitEnabled == AFSubsidySplitEnabled
+}
+
+// IsFixTxInputValidationEnabled returns whether corrected transaction input
+// validation is enabled.
+func (flags AgendaFlags) IsFixTxInputValidationEnabled() bool {
+	return flags&AFFixTxInputValidation == AFFixTxInputValidation
 }
 
 // determineCheckTxFlags returns the flags to use when checking transactions
@@ -408,6 +420,11 @@ func (b *BlockChain) determineCheckTxFlags(prevNode *blockNode) (AgendaFlags, er
 		return 0, err
 	}
 
+	fixTxInputValidation, err := b.isFixTxInputValidationAgendaActive(prevNode)
+	if err != nil {
+		return 0, err
+	}
+
 	// Create and return agenda flags for checking transactions based on which
 	// ones are active as of the block being checked.
 	checkTxFlags := AFNone
@@ -423,6 +440,9 @@ func (b *BlockChain) determineCheckTxFlags(prevNode *blockNode) (AgendaFlags, er
 	if isSubsidySplitEnabled {
 		checkTxFlags |= AFSubsidySplitEnabled
 	}
+	if fixTxInputValidation {
+		checkTxFlags |= AFFixTxInputValidation
+	}
 	return checkTxFlags, nil
 }
 
@@ -435,6 +455,12 @@ func (b *BlockChain) determineCheckTxFlags(prevNode *blockNode) (AgendaFlags, er
 // The flags may be used to specify which agendas should be considered as active
 // in order to change how the validation rules are applied accordingly.
 func checkTransactionContext(tx *wire.MsgTx, params *chaincfg.Params, flags AgendaFlags) error {
+	if flags.IsFixTxInputValidationEnabled() {
+		if err := checkTransactionInputValues(tx); err != nil {
+			return err
+		}
+	}
+
 	// Determine active agendas based on flags.
 	isTreasuryEnabled := flags.IsTreasuryEnabled()
 	explicitUpgradesActive := flags.IsExplicitVerUpgradesEnabled()
@@ -605,7 +631,10 @@ func checkTransactionContext(tx *wire.MsgTx, params *chaincfg.Params, flags Agen
 // CheckTransactionSanity performs some preliminary checks on a transaction to
 // ensure it is sane.  These checks are context free.
 func CheckTransactionSanity(tx *wire.MsgTx, params *chaincfg.Params) error {
-	return checkTransactionSanity(tx, params)
+	if err := checkTransactionSanity(tx, params); err != nil {
+		return err
+	}
+	return checkTransactionInputValues(tx)
 }
 
 // CheckTransaction performs several validation checks on a transaction that
@@ -615,7 +644,7 @@ func CheckTransactionSanity(tx *wire.MsgTx, params *chaincfg.Params) error {
 // The flags may be used to specify which agendas should be considered as active
 // in order to change how the validation rules are applied accordingly.
 func CheckTransaction(tx *wire.MsgTx, params *chaincfg.Params, flags AgendaFlags) error {
-	err := checkTransactionSanity(tx, params)
+	err := CheckTransactionSanity(tx, params)
 	if err != nil {
 		return err
 	}
@@ -686,8 +715,8 @@ func standaloneToChainRuleError(err error) error {
 // target difficulty as claimed.
 //
 // The flags modify the behavior of this function as follows:
-//  - BFNoPoWCheck: The check to ensure the block hash is less than the target
-//    difficulty is not performed.
+//   - BFNoPoWCheck: The check to ensure the block hash is less than the target
+//     difficulty is not performed.
 func checkProofOfWork(header *wire.BlockHeader, chainParams *chaincfg.Params, flags BehaviorFlags) error {
 	// Only ensure the target difficulty bits are in the valid range when the
 	// the flag to avoid proof of work checks is set.
@@ -701,11 +730,11 @@ func checkProofOfWork(header *wire.BlockHeader, chainParams *chaincfg.Params, fl
 	// - The target difficulty must be larger than zero.
 	// - The target difficulty must be less than the maximum allowed.
 	// - The block hash must be less than the claimed target.
-	err := standalone.CheckProofOfWork(header, header.Bits, chainParams)
+	err := standalone.CheckProofOfWorkHash(header, header.Bits, chainParams)
 	if err != nil {
 		return standaloneToChainRuleError(err)
 	}
-	return standalone.ValidateEquihashSolution(header, chainParams)
+	return nil
 }
 
 // checkBlockHeaderSanity performs some preliminary checks on a block header to
@@ -1033,12 +1062,7 @@ func (b *BlockChain) checkBlockHeaderPositional(header *wire.BlockHeader, prevNo
 		// Reject old version blocks once a majority of the network has
 		// upgraded.
 		//
-		// Note that the latest block version for all networks other than the
-		// main network is one higher.
-		latestBlockVersion := int32(9)
-		if b.chainParams.Net != wire.MainNet {
-			latestBlockVersion++
-		}
+		const latestBlockVersion = int32(11)
 		for version := latestBlockVersion; version > 1; version-- {
 			if header.Version < version && b.isMajorityVersion(version,
 				prevNode, b.chainParams.BlockRejectNumRequired) {
@@ -1142,13 +1166,28 @@ func (b *BlockChain) checkBlockPositional(block *dcrutil.Block, prevNode *blockN
 // vote will necessarily need to be transitioned to this function.
 //
 // The flags modify the behavior of this function as follows:
-//   - BFFastAdd: No check are performed.
+//   - BFFastAdd: Only vote-activated Equihash validation is performed.
 //
 // This function MUST be called with the chain state lock held (for writes).
 func (b *BlockChain) checkBlockHeaderContext(header *wire.BlockHeader, prevNode *blockNode, flags BehaviorFlags) error {
 	// The genesis block is valid by definition.
 	if prevNode == nil {
 		return nil
+	}
+
+	// Enforce strict Equihash solution validation once its agenda is active.
+	// Block templates are intentionally exempt because they have not been
+	// solved yet.
+	if flags&BFNoPoWCheck != BFNoPoWCheck {
+		isActive, err := b.isEquihashValidationAgendaActive(prevNode)
+		if err != nil {
+			return err
+		}
+		if isActive {
+			if err := standalone.ValidateEquihashSolution(header, b.chainParams); err != nil {
+				return ruleError(ErrInvalidEquihashSolution, err.Error())
+			}
+		}
 	}
 
 	fastAdd := flags&BFFastAdd == BFFastAdd
@@ -2708,7 +2747,7 @@ func checkRevocationInputs(tx *dcrutil.Tx, txHeight int64, view *UtxoViewpoint,
 		false, 0, prevHeader, isTreasuryEnabled, isAutoRevocationsEnabled)
 }
 
-// CheckTransactionInputs performs a series of checks on the inputs to a
+// checkTransactionInputs performs a series of checks on the inputs to a
 // transaction to ensure they are valid.  An example of some of the checks
 // include verifying all inputs exist, ensuring the coinbase seasoning
 // requirements are met, detecting double spends, validating all values and
@@ -2720,10 +2759,11 @@ func checkRevocationInputs(tx *dcrutil.Tx, txHeight int64, view *UtxoViewpoint,
 //
 // NOTE: The transaction MUST have already been sanity checked with the
 // CheckTransactionSanity function prior to calling this function.
-func CheckTransactionInputs(subsidyCache *standalone.SubsidyCache,
+func checkTransactionInputs(subsidyCache *standalone.SubsidyCache,
 	tx *dcrutil.Tx, txHeight int64, view *UtxoViewpoint, checkFraudProof bool,
 	chainParams *chaincfg.Params, prevHeader *wire.BlockHeader,
-	isTreasuryEnabled, isAutoRevocationsEnabled, isSubsidySplitEnabled bool) (int64, error) {
+	isTreasuryEnabled, isAutoRevocationsEnabled, isSubsidySplitEnabled,
+	fixTxInputValidation bool) (int64, error) {
 
 	// Coinbase transactions have no inputs.
 	msgTx := tx.MsgTx()
@@ -2796,6 +2836,10 @@ func CheckTransactionInputs(subsidyCache *standalone.SubsidyCache,
 			stakeVoteSubsidy := subsidyCache.CalcStakeVoteSubsidyV2(
 				int64(heightVotingOn), isSubsidySplitEnabled)
 			totalAtomIn += stakeVoteSubsidy
+			continue
+		}
+		if idx == 0 && !fixTxInputValidation {
+			totalAtomIn += txIn.ValueIn
 			continue
 		}
 
@@ -2990,6 +3034,20 @@ func CheckTransactionInputs(subsidyCache *standalone.SubsidyCache,
 
 	txFeeInAtom := totalAtomIn - totalAtomOut
 	return txFeeInAtom, nil
+}
+
+// CheckTransactionInputs performs strict transaction input validation.  Chain
+// consensus code uses checkTransactionInputs directly so historical rules can
+// be preserved until the associated agenda activates.
+func CheckTransactionInputs(subsidyCache *standalone.SubsidyCache,
+	tx *dcrutil.Tx, txHeight int64, view *UtxoViewpoint, checkFraudProof bool,
+	chainParams *chaincfg.Params, prevHeader *wire.BlockHeader,
+	isTreasuryEnabled, isAutoRevocationsEnabled,
+	isSubsidySplitEnabled bool) (int64, error) {
+
+	return checkTransactionInputs(subsidyCache, tx, txHeight, view,
+		checkFraudProof, chainParams, prevHeader, isTreasuryEnabled,
+		isAutoRevocationsEnabled, isSubsidySplitEnabled, true)
 }
 
 // CountSigOps returns the number of signature operations for all transaction
@@ -3284,6 +3342,11 @@ func (b *BlockChain) checkTransactionsAndConnect(inputFees dcrutil.Amount, node 
 		return err
 	}
 
+	fixTxInputValidation, err := b.isFixTxInputValidationAgendaActive(node.parent)
+	if err != nil {
+		return err
+	}
+
 	// Perform several checks on the inputs for each transaction.  Also
 	// accumulate the total fees.  This could technically be combined with
 	// the loop above instead of running another loop over the
@@ -3318,9 +3381,10 @@ func (b *BlockChain) checkTransactionsAndConnect(inputFees dcrutil.Amount, node 
 		// verifying the signatures to prove the spender was the owner of the
 		// coins and therefore allowed to spend them.
 		const checkFraudProof = true
-		txFee, err := CheckTransactionInputs(b.subsidyCache, tx, node.height,
+		txFee, err := checkTransactionInputs(b.subsidyCache, tx, node.height,
 			view, checkFraudProof, b.chainParams, &prevHeader,
-			isTreasuryEnabled, isAutoRevocationsEnabled, isSubsidySplitEnabled)
+			isTreasuryEnabled, isAutoRevocationsEnabled, isSubsidySplitEnabled,
+			fixTxInputValidation)
 		if err != nil {
 			log.Tracef("CheckTransactionInputs failed; error returned: %v", err)
 			return err

@@ -20,6 +20,10 @@ const (
 	// lower than the required target difficultly.
 	ErrHighHash = ErrorKind("ErrHighHash")
 
+	// ErrInvalidEquihashSolution indicates the block does not contain a valid
+	// Equihash solution.
+	ErrInvalidEquihashSolution = ErrorKind("ErrInvalidEquihashSolution")
+
 	// ErrInvalidTSpendExpiry indicates that an invalid expiry was
 	// provided when calculating the treasury spend voting window.
 	ErrInvalidTSpendExpiry = ErrorKind("ErrInvalidTSpendExpiry")

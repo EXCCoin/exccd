@@ -254,11 +254,7 @@ const (
 	// will require changes to the generated block.  Using the wire constant
 	// for generated block version could allow creation of invalid blocks
 	// for the updated version.
-	generatedBlockVersion = 9
-
-	// generatedBlockVersionTest is the version of the block being generated
-	// for networks other than the main and simulation networks.
-	generatedBlockVersionTest = 10
+	generatedBlockVersion = 11
 
 	// blockHeaderOverhead is the max number of bytes it takes to serialize
 	// a block header and max possible transaction count.
@@ -2023,13 +2019,8 @@ nextPriorityQueueItem:
 		}
 	}
 
-	// Choose the block version to generate based on the network.
+	// Use the block version for the latest vote deployment.
 	blockVersion := int32(generatedBlockVersion)
-	if g.cfg.ChainParams.Net != wire.MainNet &&
-		g.cfg.ChainParams.Net != wire.SimNet {
-
-		blockVersion = generatedBlockVersionTest
-	}
 
 	// Figure out stake version.
 	generatedStakeVersion, err := g.cfg.CalcStakeVersionByHash(&prevHash)

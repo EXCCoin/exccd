@@ -163,6 +163,9 @@ func TestNewBlockTemplate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected err generating block template: %v", err)
 	}
+	if got := blockTemplate.Block.Header.Version; got != generatedBlockVersion {
+		t.Fatalf("block version = %d, want %d", got, generatedBlockVersion)
+	}
 
 	// Validate the number of transactions in the generated block template.
 	gotTx := len(blockTemplate.Block.Transactions)

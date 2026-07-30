@@ -6,6 +6,7 @@ package chaincfg
 
 import (
 	"errors"
+	"math"
 	"testing"
 
 	"github.com/EXCCoin/exccd/wire"
@@ -379,6 +380,37 @@ func TestDeployments(t *testing.T) {
 		if !errors.Is(err, test.expected) {
 			t.Fatalf("%v: got '%v' expected '%v'", test.name, err,
 				test.expected)
+		}
+	}
+}
+
+// TestConsensusFixDeployments ensures every supported network exposes the same
+// independently votable consensus fixes.
+func TestConsensusFixDeployments(t *testing.T) {
+	wantMasks := map[string]uint16{
+		VoteIDEquihashValidation:   0x0006,
+		VoteIDFixTxInputValidation: 0x0018,
+	}
+	for _, params := range allDefaultNetParams() {
+		deployments := params.Deployments[11]
+		if len(deployments) != len(wantMasks) {
+			t.Fatalf("%s: got %d version 11 deployments, want %d",
+				params.Name, len(deployments), len(wantMasks))
+		}
+		for _, deployment := range deployments {
+			wantMask, ok := wantMasks[deployment.Vote.Id]
+			if !ok {
+				t.Fatalf("%s: unexpected deployment %q", params.Name,
+					deployment.Vote.Id)
+			}
+			if deployment.Vote.Mask != wantMask {
+				t.Errorf("%s %s: mask = %#04x, want %#04x", params.Name,
+					deployment.Vote.Id, deployment.Vote.Mask, wantMask)
+			}
+			if deployment.StartTime != 0 || deployment.ExpireTime != math.MaxInt64 {
+				t.Errorf("%s %s: deployment is not always available",
+					params.Name, deployment.Vote.Id)
+			}
 		}
 	}
 }

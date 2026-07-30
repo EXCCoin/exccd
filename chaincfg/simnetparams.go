@@ -153,7 +153,7 @@ func SimNetParams() *Params {
 		RuleChangeActivationMultiplier: 3,   // 75%
 		RuleChangeActivationDivisor:    4,
 		RuleChangeActivationInterval:   320, // 320 seconds
-		Deployments: map[uint32][]ConsensusDeployment{},
+		Deployments:                    consensusFixDeployments(),
 
 		// Enforce current block version once majority of the network has
 		// upgraded.

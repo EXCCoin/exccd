@@ -378,6 +378,27 @@ func TestTransactionInputValueRange(t *testing.T) {
 	}
 }
 
+// TestTransactionInputValueRangeActivation ensures historical blocks retain
+// their original input value rules until the associated agenda activates.
+func TestTransactionInputValueRangeActivation(t *testing.T) {
+	params := chaincfg.RegNetParams()
+	prevOut := wire.NewOutPoint(&chainhash.Hash{0x01}, 0, wire.TxTreeRegular)
+	tx := wire.NewMsgTx()
+	tx.AddTxIn(wire.NewTxIn(prevOut, -2, nil))
+	tx.AddTxOut(wire.NewTxOut(1, []byte{txscript.OP_TRUE}))
+
+	if err := checkTransactionSanity(tx, params); err != nil {
+		t.Fatalf("before activation: unexpected error: %v", err)
+	}
+	if err := checkTransactionContext(tx, params, AFNone); err != nil {
+		t.Fatalf("before activation context: unexpected error: %v", err)
+	}
+	err := checkTransactionContext(tx, params, AFFixTxInputValidation)
+	if !errors.Is(err, ErrFraudAmountIn) {
+		t.Fatalf("at activation: error = %v, want %v", err, ErrFraudAmountIn)
+	}
+}
+
 // TestRegularTxFirstInputValidation ensures regular transaction inputs are
 // handled consistently across positions.
 func TestRegularTxFirstInputValidation(t *testing.T) {
@@ -399,10 +420,15 @@ func TestRegularTxFirstInputValidation(t *testing.T) {
 	msgTx.AddTxIn(txIn)
 	msgTx.AddTxOut(wire.NewTxOut(1, []byte{txscript.OP_TRUE}))
 
-	_, err := CheckTransactionInputs(nil, dcrutil.NewTx(msgTx), 2, view,
-		true, params, nil, false, false, false)
+	if _, err := checkTransactionInputs(nil, dcrutil.NewTx(msgTx), 2, view,
+		true, params, nil, false, false, false, false); err != nil {
+		t.Fatalf("before activation: unexpected error: %v", err)
+	}
+
+	_, err := checkTransactionInputs(nil, dcrutil.NewTx(msgTx), 2, view,
+		true, params, nil, false, false, false, true)
 	if !errors.Is(err, ErrFraudAmountIn) {
-		t.Fatalf("CheckTransactionInputs error = %v, want %v", err,
+		t.Fatalf("at activation: error = %v, want %v", err,
 			ErrFraudAmountIn)
 	}
 }

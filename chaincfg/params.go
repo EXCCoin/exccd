@@ -8,6 +8,7 @@ package chaincfg
 import (
 	"bytes"
 	"encoding/hex"
+	"math"
 	"math/big"
 	"time"
 
@@ -43,35 +44,35 @@ type Checkpoint struct {
 // and only one abstain (bits = 0) and reject vote (IsNo = true).
 //
 // For example, change block height from int64 to uint64.
-// Vote {
-//	Id:          "blockheight",
-//	Description: "Change block height from int64 to uint64"
-//	Mask:        0x0006,
-//	Choices:     []Choice{
-//		{
-//			Id:          "abstain",
-//			Description: "abstain voting for change",
-//			Bits:        0x0000,
-//			IsAbstain:   true,
-//			IsNo:        false,
-//		},
-//		{
-//			Id:          "no",
-//			Description: "reject changing block height to uint64",
-//			Bits:        0x0002,
-//			IsAbstain:   false,
-//			IsNo:        false,
-//		},
-//		{
-//			Id:          "yes",
-//			Description: "accept changing block height to uint64",
-//			Bits:        0x0004,
-//			IsAbstain:   false,
-//			IsNo:        true,
-//		},
-//	},
-// }
 //
+//	Vote {
+//		Id:          "blockheight",
+//		Description: "Change block height from int64 to uint64",
+//		Mask:        0x0006,
+//		Choices:     []Choice{
+//			{
+//				Id:          "abstain",
+//				Description: "abstain voting for change",
+//				Bits:        0x0000,
+//				IsAbstain:   true,
+//				IsNo:        false,
+//			},
+//			{
+//				Id:          "no",
+//				Description: "reject changing block height to uint64",
+//				Bits:        0x0002,
+//				IsAbstain:   false,
+//				IsNo:        true,
+//			},
+//			{
+//				Id:          "yes",
+//				Description: "accept changing block height to uint64",
+//				Bits:        0x0004,
+//				IsAbstain:   false,
+//				IsNo:        false,
+//			},
+//		},
+//	}
 type Vote struct {
 	// Single unique word identifying the vote.
 	Id string
@@ -166,7 +167,68 @@ const (
 	// block reward subsidy split to 10% PoW, 80% PoS, and 10% Treasury as
 	// defined in DCP0010.
 	VoteIDChangeSubsidySplit = "changesubsidysplit"
+
+	// VoteIDEquihashValidation is the vote ID for the agenda that enables
+	// strict validation of Equihash solutions.
+	VoteIDEquihashValidation = "equihashvalidation"
+
+	// VoteIDFixTxInputValidation is the vote ID for the agenda that corrects
+	// transaction input validation.
+	VoteIDFixTxInputValidation = "fixtxinputvalidation"
 )
+
+// consensusFixDeployments returns the deployments for the consensus fixes.
+func consensusFixDeployments() map[uint32][]ConsensusDeployment {
+	return map[uint32][]ConsensusDeployment{
+		11: {{
+			Vote: Vote{
+				Id:          VoteIDEquihashValidation,
+				Description: "Enable strict Equihash solution validation",
+				Mask:        0x0006,
+				Choices: []Choice{{
+					Id:          "abstain",
+					Description: "abstain from voting",
+					Bits:        0x0000,
+					IsAbstain:   true,
+				}, {
+					Id:          "no",
+					Description: "keep the existing Equihash validation rules",
+					Bits:        0x0002,
+					IsNo:        true,
+				}, {
+					Id:          "yes",
+					Description: "enable strict Equihash solution validation",
+					Bits:        0x0004,
+				}},
+			},
+			StartTime:  0,
+			ExpireTime: math.MaxInt64,
+		}, {
+			Vote: Vote{
+				Id:          VoteIDFixTxInputValidation,
+				Description: "Correct transaction input validation",
+				Mask:        0x0018,
+				Choices: []Choice{{
+					Id:          "abstain",
+					Description: "abstain from voting",
+					Bits:        0x0000,
+					IsAbstain:   true,
+				}, {
+					Id:          "no",
+					Description: "keep the existing transaction input rules",
+					Bits:        0x0008,
+					IsNo:        true,
+				}, {
+					Id:          "yes",
+					Description: "enable corrected transaction input validation",
+					Bits:        0x0010,
+				}},
+			},
+			StartTime:  0,
+			ExpireTime: math.MaxInt64,
+		}},
+	}
+}
 
 // ConsensusDeployment defines details related to a specific consensus rule
 // change that is voted in.  This is part of BIP0009.

@@ -46,17 +46,20 @@ func HashToBig(hash *chainhash.Hash) *big.Int {
 // Like IEEE754 floating point, there are three basic components: the sign,
 // the exponent, and the mantissa.  They are broken out as follows:
 //
-//	* the most significant 8 bits represent the unsigned base 256 exponent
-//	* bit 23 (the 24th bit) represents the sign bit
-//	* the least significant 23 bits represent the mantissa
+//   - the most significant 8 bits represent the unsigned base 256 exponent
 //
-//	-------------------------------------------------
-//	|   Exponent     |    Sign    |    Mantissa     |
-//	-------------------------------------------------
-//	| 8 bits [31-24] | 1 bit [23] | 23 bits [22-00] |
-//	-------------------------------------------------
+//   - bit 23 (the 24th bit) represents the sign bit
+//
+//   - the least significant 23 bits represent the mantissa
+//
+//     -------------------------------------------------
+//     |   Exponent     |    Sign    |    Mantissa     |
+//     -------------------------------------------------
+//     | 8 bits [31-24] | 1 bit [23] | 23 bits [22-00] |
+//     -------------------------------------------------
 //
 // The formula to calculate N is:
+//
 //	N = (-1^sign) * mantissa * 256^(exponent-3)
 //
 // This compact form is only used in Decred to encode unsigned 256-bit numbers
@@ -182,10 +185,12 @@ func CheckProofOfWorkRange(difficultyBits uint32, powLimit *big.Int) error {
 	return checkProofOfWorkRange(target, powLimit)
 }
 
-// CheckProofOfWork ensures the provided block hash is less than the provided
-// compact target difficulty and that the target difficulty is in min/max range
-// per the provided proof-of-work limit.
-func CheckProofOfWork(header *wire.BlockHeader, difficultyBits uint32, chainParams *chaincfg.Params) error {
+// CheckProofOfWorkHash ensures the provided block hash is less than the
+// provided compact target difficulty and that the target difficulty is in
+// min/max range per the provided proof-of-work limit.
+func CheckProofOfWorkHash(header *wire.BlockHeader, difficultyBits uint32,
+	chainParams *chaincfg.Params) error {
+
 	target := CompactToBig(difficultyBits)
 	if err := checkProofOfWorkRange(target, chainParams.PowLimit); err != nil {
 		return err
@@ -200,15 +205,21 @@ func CheckProofOfWork(header *wire.BlockHeader, difficultyBits uint32, chainPara
 		return ruleError(ErrHighHash, str)
 	}
 
-	err := ValidateEquihashSolution(header, chainParams)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
-// Validate equihash solution for given block
+// CheckProofOfWork performs all proof of work checks, including strict
+// Equihash solution validation.
+func CheckProofOfWork(header *wire.BlockHeader, difficultyBits uint32,
+	chainParams *chaincfg.Params) error {
+
+	if err := CheckProofOfWorkHash(header, difficultyBits, chainParams); err != nil {
+		return err
+	}
+	return ValidateEquihashSolution(header, chainParams)
+}
+
+// ValidateEquihashSolution validates the Equihash solution for the block.
 func ValidateEquihashSolution(header *wire.BlockHeader, chainParams *chaincfg.Params) error {
 	algo := chainParams.Algorithm(header.Height)
 	headerBytes, err := header.SerializeEquihashHeaderBytes(algo)
@@ -228,7 +239,8 @@ func ValidateEquihashSolution(header *wire.BlockHeader, chainParams *chaincfg.Pa
 	result := cequihash.ValidateEquihash(chainParams.N, chainParams.K, headerBytes, header.EquihashSolution[:])
 
 	if !result {
-		fmt.Errorf("provided equihash solution is invalid")
+		return ruleError(ErrInvalidEquihashSolution,
+			"provided equihash solution is invalid")
 	}
 
 	return nil
