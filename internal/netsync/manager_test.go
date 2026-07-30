@@ -1,13 +1,51 @@
 package netsync
 
 import (
+	"context"
 	"encoding/binary"
+	"path/filepath"
 	"testing"
 
+	"github.com/EXCCoin/exccd/blockchain/v4"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/chaincfg/v3"
+	"github.com/EXCCoin/exccd/database/v3"
+	_ "github.com/EXCCoin/exccd/database/v3/ffldb"
 	peerpkg "github.com/EXCCoin/exccd/peer/v3"
 	"github.com/EXCCoin/exccd/wire"
+	"github.com/syndtr/goleveldb/leveldb"
 )
+
+func testChain(t *testing.T) *blockchain.BlockChain {
+	t.Helper()
+	db, err := database.Create("ffldb", filepath.Join(t.TempDir(), "blocks"),
+		wire.RegNet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	utxoDB, err := leveldb.OpenFile(filepath.Join(t.TempDir(), "utxos"), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = utxoDB.Close() })
+	backend := blockchain.NewLevelDbUtxoBackend(utxoDB)
+	chain, err := blockchain.New(context.Background(), &blockchain.Config{
+		DB:          db,
+		UtxoBackend: backend,
+		ChainParams: chaincfg.RegNetParams(),
+		TimeSource:  blockchain.NewMedianTime(),
+		UtxoCache: blockchain.NewUtxoCache(&blockchain.UtxoCacheConfig{
+			Backend:      backend,
+			FlushBlockDB: func() error { return nil },
+			MaxSize:      1 << 20,
+		}),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return chain
+}
 
 func fullRequestMap(size int) map[chainhash.Hash]struct{} {
 	m := make(map[chainhash.Hash]struct{}, size)
@@ -45,6 +83,7 @@ func TestRequestFromPeerHonorsRequestLimits(t *testing.T) {
 }
 
 func TestDonePeerRerequestsKnownInventory(t *testing.T) {
+	chain := testChain(t)
 	donePeer := peerpkg.NewInboundPeer(&peerpkg.Config{})
 	backupPeer := peerpkg.NewInboundPeer(&peerpkg.Config{})
 	txHash := chainhash.Hash{0x01}
@@ -61,7 +100,8 @@ func TestDonePeerRerequestsKnownInventory(t *testing.T) {
 	})
 
 	doneState := &syncMgrPeer{
-		Peer: donePeer,
+		Peer:          donePeer,
+		syncCandidate: true,
 		requestedTxns: map[chainhash.Hash]struct{}{
 			txHash: {}, unknownTxHash: {},
 		},
@@ -71,10 +111,13 @@ func TestDonePeerRerequestsKnownInventory(t *testing.T) {
 	}
 	backupState := &syncMgrPeer{
 		Peer:            backupPeer,
+		syncCandidate:   true,
 		requestedTxns:   make(map[chainhash.Hash]struct{}),
 		requestedBlocks: make(map[chainhash.Hash]struct{}),
 	}
 	m := SyncManager{
+		cfg:          Config{Chain: chain},
+		hdrSyncState: makeHeaderSyncState(),
 		peers: map[*peerpkg.Peer]*syncMgrPeer{
 			donePeer:   doneState,
 			backupPeer: backupState,
@@ -85,6 +128,7 @@ func TestDonePeerRerequestsKnownInventory(t *testing.T) {
 		requestedBlocks: map[chainhash.Hash]struct{}{
 			blockHash: {}, unknownBlockHash: {},
 		},
+		syncPeer: doneState,
 	}
 
 	m.handleDonePeerMsg(donePeer)

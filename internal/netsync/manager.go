@@ -474,11 +474,6 @@ func (m *SyncManager) startSync() {
 
 	// Start syncing from the best peer.
 
-	// Clear the requestedBlocks if the sync peer changes, otherwise
-	// we may ignore blocks we need that the last sync peer failed
-	// to send.
-	m.requestedBlocks = make(map[chainhash.Hash]struct{})
-
 	syncHeight := bestPeer.LastBlock()
 
 	headersSynced := m.hdrSyncState.headersSynced
