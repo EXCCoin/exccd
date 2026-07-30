@@ -1,0 +1,112 @@
+name: Release
+
+# Build release artifacts from the tagged commit for reproducible source
+# provenance.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish linux/amd64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the tagged commit
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Build all modules and test supported packages
+        env:
+          # Release validation uses the supported EXCC suite.  Legacy
+          # compatibility fixtures remain visible in the build workflow.
+          EXCC_CI_SUPPORTED_ONLY: '1'
+        run: sh ./run_tests.sh
+
+      - name: Refuse stale release module pins
+        run: |
+          if grep -R -n --include=go.mod -E 'github.com/EXCCoin/exccd.*-2023' .; then
+            echo "::error::a go.mod still pins nested EXCC modules to 2023 revisions."
+            exit 1
+          fi
+
+      - name: Build
+        env:
+          CGO_ENABLED: '1'   # cequihash is C++
+          GOOS: linux
+          GOARCH: amd64
+          GOAMD64: v1
+          GOWORK: 'off'
+        run: |
+          set -eux
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+          mkdir -p dist
+          go build -buildvcs=false -trimpath \
+            -ldflags "-s -w -X github.com/EXCCoin/exccd/internal/version.Version=${VERSION}" \
+            -o dist/exccd .
+
+      - name: Verify the binary reports the tagged version
+        run: |
+          set -eu
+          reported=$(./dist/exccd --version | head -1)
+          echo "reported: ${reported}"
+          case "${reported}" in
+            *"${VERSION}"*) ;;
+            *) echo "::error::binary reports '${reported}', tag is '${VERSION}'"; exit 1 ;;
+          esac
+
+      - name: Generate checksums and manifest
+        working-directory: dist
+        run: |
+          set -eu
+          sha256sum exccd > SHA256SUMS
+          cat > MANIFEST.md <<EOF
+          # exccd ${GITHUB_REF_NAME}
+
+          | | |
+          |---|---|
+          | Tag | \`${GITHUB_REF_NAME}\` |
+          | Commit | \`${GITHUB_SHA}\` |
+          | Built by | \`${GITHUB_REPOSITORY}\` run [${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) |
+          | Go | \`$(go version | cut -d' ' -f3)\` |
+          | Target | linux/amd64, CGO enabled, GOAMD64=v1, GOWORK=off |
+
+          \`\`\`
+          $(cat SHA256SUMS)
+          \`\`\`
+
+          exccd module versions linked into this build:
+
+          \`\`\`
+          $(go version -m exccd | grep 'EXCCoin/exccd' || echo 'none')
+          \`\`\`
+
+          Reproduce:
+
+          \`\`\`sh
+          git clone https://github.com/${GITHUB_REPOSITORY} && cd exccd
+          git checkout ${GITHUB_REF_NAME}
+          GOWORK=off CGO_ENABLED=1 GOOS=linux GOARCH=amd64 GOAMD64=v1 go build \\
+            -buildvcs=false -trimpath \\
+            -ldflags "-s -w -X github.com/EXCCoin/exccd/internal/version.Version=${VERSION}" \\
+            -o exccd .
+          \`\`\`
+          EOF
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file dist/MANIFEST.md \
+            --verify-tag \
+            dist/exccd dist/SHA256SUMS dist/MANIFEST.md

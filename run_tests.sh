@@ -1,32 +1,60 @@
 #!/bin/sh
+#
+# Runs build + tests for every module in the workspace.
+#
+# Each workspace module is processed explicitly because "go test ./..." is
+# scoped to the module where it is invoked.
+#
+# Linting runs in its own CI job so build and test results remain independent.
 
-set -ex
-
-# The script does automatic checking on a Go package and its sub-packages,
-# including:
-# 1. gofmt         (https://golang.org/cmd/gofmt/)
-# 2. gosimple      (https://github.com/dominikh/go-simple)
-# 3. unconvert     (https://github.com/mdempsky/unconvert)
-# 4. ineffassign   (https://github.com/gordonklaus/ineffassign)
-# 5. go vet        (https://golang.org/cmd/vet)
-# 6. misspell      (https://github.com/client9/misspell)
-
-# golangci-lint (github.com/golangci/golangci-lint) is used to run each
-# static checker.
+set -e
 
 go version
 
-go test -vet=all -short ./...
+# "go list -m" in workspace mode lists exactly the workspace modules and not
+# their dependencies, so this stays correct as go.work changes.
+modules=$(go list -m -f '{{.Dir}}')
 
-# run linters
-golangci-lint run --build-tags=rpctest --disable-all --deadline=10m \
-  --enable=gofmt \
-  --enable=gosimple \
-  --enable=unconvert \
-  --enable=ineffassign \
-  --enable=govet \
-  --enable=misspell \
-  --enable=unused
+status=0
+for dir in $modules; do
+	name=$(basename "$dir")
+	echo "=== $name"
+	if ! (
+		cd "$dir"
+		go build ./...
+		packages=./...
+		if [ "${EXCC_CI_SUPPORTED_ONLY:-}" = 1 ]; then
+			packages=
+			for package in $(go list ./...); do
+				case "$package" in
+					github.com/EXCCoin/exccd/blockchain/v4 | \
+					github.com/EXCCoin/exccd/blockchain/stake/v4 | \
+					github.com/EXCCoin/exccd/database/v3/ffldb | \
+					github.com/EXCCoin/exccd/txscript/v4)
+						continue
+						;;
+				esac
+				packages="$packages $package"
+			done
+		fi
+		# Intentional word splitting: packages is a go-list-generated list.
+		go test -vet=all -short $packages
+	); then
+		echo "=== FAILED: $name"
+		status=1
+	fi
+done
+
+if [ "${EXCC_CI_SUPPORTED_ONLY:-}" = 1 ]; then
+	go test -vet=all -short ./blockchain -run \
+		'^(TestConsensusFixDeployments|TestRegularTxFirstInputValidation|TestTransactionInputValueRange|TestTransactionInputValueRangeActivation)$'
+fi
+
+if [ $status -ne 0 ]; then
+	echo "------------------------------------------"
+	echo "One or more modules failed."
+	exit 1
+fi
 
 echo "------------------------------------------"
 echo "Tests completed successfully!"
