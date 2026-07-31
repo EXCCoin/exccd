@@ -138,8 +138,11 @@ jobs:
           echo "ASSET_NAME=${ASSET_NAME}" >> "$GITHUB_ENV"
           echo "BINARY=${BINARY}" >> "$GITHUB_ENV"
           mkdir -p "dist/${ASSET_NAME}"
-          go build -buildvcs=false -trimpath \
-            -ldflags "-s -w -X github.com/EXCCoin/exccd/internal/version.Version=${VERSION}" \
+          LDFLAGS="-s -w -X github.com/EXCCoin/exccd/internal/version.Version=${VERSION}"
+          if [ "${GOOS}" = windows ]; then
+            LDFLAGS="${LDFLAGS} -linkmode=external -extldflags=-static"
+          fi
+          go build -buildvcs=false -trimpath -ldflags "${LDFLAGS}" \
             -o "${BINARY}" .
 
       - name: Verify the binary reports the tagged version
@@ -153,9 +156,30 @@ jobs:
             *) echo "::error::binary reports '${reported}', tag is '${VERSION}'"; exit 1 ;;
           esac
 
+      - name: Refuse dynamic compiler runtimes
+        if: matrix.goos == 'windows'
+        shell: bash
+        env:
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          set -eu
+          OBJDUMP=objdump
+          if [ "${GOARCH}" = arm64 ]; then
+            OBJDUMP=llvm-objdump
+          fi
+          IMPORTS=$("${OBJDUMP}" -p "${BINARY}" | sed -n 's/.*DLL Name: //p')
+          printf '%s\n' "${IMPORTS}"
+          if printf '%s\n' "${IMPORTS}" | grep -Eiq \
+            '^(libgcc|libstdc\+\+|libwinpthread|libc\+\+|libunwind).*\.dll$'; then
+            echo '::error::Windows binary depends on a compiler runtime DLL.'
+            exit 1
+          fi
+
       - name: Add build information
         shell: bash
         env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: |
@@ -166,8 +190,8 @@ jobs:
             echo "Commit: ${GITHUB_SHA}"
             echo "Target: ${GOOS}/${GOARCH}"
             echo "Go: $(go version)"
-            echo "CC: $(go env CC)"
-            echo "CXX: $(go env CXX)"
+            echo "CC: ${CC}"
+            echo "CXX: ${CXX}"
             echo
             go version -m "${BINARY}"
           } > "dist/${ASSET_NAME}/BUILDINFO.txt"

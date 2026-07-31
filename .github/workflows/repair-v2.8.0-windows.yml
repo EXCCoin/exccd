@@ -1,0 +1,179 @@
+name: Repair v2.8.0 Windows release
+
+# One-shot packaging repair.  The workflow is removed after the corrected
+# assets are published and verified.
+
+on:
+  push:
+    branches: [master]
+    paths: ['.github/workflows/repair-v2.8.0-windows.yml']
+
+permissions:
+  contents: read
+
+env:
+  RELEASE_TAG: v2.8.0
+  SOURCE_COMMIT: ab9b75d6198109cede4d13bafd5394cc1b6104e5
+
+jobs:
+  build:
+    name: Build Windows/${{ matrix.goarch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2025
+            goarch: amd64
+            goamd64: v1
+            cc: gcc
+            cxx: g++
+            objdump: objdump
+          - runner: windows-11-arm
+            goarch: arm64
+            goarm64: v8.0
+            cc: aarch64-w64-mingw32-gcc
+            cxx: aarch64-w64-mingw32-g++
+            objdump: llvm-objdump
+
+    steps:
+      - name: Check out v2.8.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Set up LLVM-MinGW for Windows ARM64
+        if: matrix.goarch == 'arm64'
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP 'llvm-mingw.zip'
+          $root = Join-Path $env:RUNNER_TEMP 'llvm-mingw'
+          Invoke-WebRequest -Uri 'https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-ucrt-aarch64.zip' -OutFile $archive
+          $actual = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()
+          if ($actual -ne '312593669435bd0bfc1a43ac3fba23c8b27e0610bade88b2738e5a01702a99ba') {
+            throw "LLVM-MinGW checksum mismatch: $actual"
+          }
+          Expand-Archive -Path $archive -DestinationPath $root
+          $toolchain = (Get-ChildItem -Path $root -Directory -Filter 'llvm-mingw-*').FullName
+          "$toolchain\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Build, verify, and package
+        shell: bash
+        env:
+          CGO_ENABLED: '1'
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+          GOOS: windows
+          GOARCH: ${{ matrix.goarch }}
+          GOAMD64: ${{ matrix.goamd64 }}
+          GOARM64: ${{ matrix.goarm64 }}
+          GOWORK: 'off'
+          OBJDUMP: ${{ matrix.objdump }}
+        run: |
+          set -eux
+          test "$(git rev-parse HEAD)" = "${SOURCE_COMMIT}"
+          VERSION="${RELEASE_TAG#v}"
+          ASSET_NAME="exccd-${RELEASE_TAG}-windows-${GOARCH}"
+          BINARY="dist/${ASSET_NAME}/exccd.exe"
+          mkdir -p "dist/${ASSET_NAME}"
+          go build -buildvcs=false -trimpath \
+            -ldflags "-s -w \
+              -X github.com/EXCCoin/exccd/internal/version.Version=${VERSION} \
+              -linkmode=external -extldflags=-static" \
+            -o "${BINARY}" .
+          "${BINARY}" --version | head -1 | grep -F "${VERSION}"
+          IMPORTS=$("${OBJDUMP}" -p "${BINARY}" | sed -n 's/.*DLL Name: //p')
+          printf '%s\n' "${IMPORTS}"
+          if printf '%s\n' "${IMPORTS}" | grep -Eiq \
+            '^(libgcc|libstdc\+\+|libwinpthread|libc\+\+|libunwind).*\.dll$'; then
+            echo '::error::Windows binary depends on a compiler runtime DLL.'
+            exit 1
+          fi
+          cp LICENSE "dist/${ASSET_NAME}/"
+          {
+            echo "Tag: ${RELEASE_TAG}"
+            echo "Commit: ${SOURCE_COMMIT}"
+            echo "Packaging workflow commit: ${GITHUB_SHA}"
+            echo "Target: windows/${GOARCH}"
+            echo "Go: $(go version)"
+            echo "CC: ${CC}"
+            echo "CXX: ${CXX}"
+            echo "Compiler runtimes: static"
+            echo
+            go version -m "${BINARY}"
+          } > "dist/${ASSET_NAME}/BUILDINFO.txt"
+          (cd dist && 7z a "${ASSET_NAME}.zip" "${ASSET_NAME}")
+
+      - name: Upload corrected archive
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: exccd-windows-${{ matrix.goarch }}
+          path: dist/exccd-${{ env.RELEASE_TAG }}-windows-${{ matrix.goarch }}.zip
+          if-no-files-found: error
+          compression-level: 0
+
+  publish:
+    name: Publish corrected Windows assets
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download corrected archives
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          path: fixed
+          merge-multiple: true
+
+      - name: Download current release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release download "${RELEASE_TAG}" --dir release
+
+      - name: Regenerate checksums and manifest
+        run: |
+          set -eux
+          cp fixed/exccd-${RELEASE_TAG}-windows-*.zip release/
+          cd release
+          sha256sum exccd-* > SHA256SUMS
+          cat > MANIFEST.md <<EOF
+          # exccd ${RELEASE_TAG}
+
+          | | |
+          |---|---|
+          | Tag | \`${RELEASE_TAG}\` |
+          | Commit | \`${SOURCE_COMMIT}\` |
+          | Windows repair built by | \`${GITHUB_REPOSITORY}\` run [${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) |
+          | Targets | Linux, Windows, and macOS on amd64 and arm64 |
+
+          **Windows packaging correction:** The amd64 and arm64 Windows archives
+          were rebuilt from the same tag and source commit with the compiler
+          runtimes statically linked.  Source code and reported version are
+          unchanged.  Linux and macOS archives are unchanged.
+
+          Every binary was built with CGO enabled and executed with
+          \`--version\` on its target operating system and architecture.
+          Each archive includes its license and embedded Go module build info.
+
+          \`\`\`
+          $(cat SHA256SUMS)
+          \`\`\`
+          EOF
+
+      - name: Replace release assets and notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -eux
+          gh release upload "${RELEASE_TAG}" \
+            release/exccd-${RELEASE_TAG}-windows-amd64.zip \
+            release/exccd-${RELEASE_TAG}-windows-arm64.zip \
+            release/SHA256SUMS release/MANIFEST.md --clobber
+          gh release edit "${RELEASE_TAG}" --notes-file release/MANIFEST.md

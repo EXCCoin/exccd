@@ -115,8 +115,27 @@ jobs:
         run: |
           set -eux
           mkdir -p dist
-          go build -buildvcs=false -trimpath -o "dist/exccd${{ matrix.exe }}" .
+          LDFLAGS=''
+          if [ "${GOOS}" = windows ]; then
+            LDFLAGS='-linkmode=external -extldflags=-static'
+          fi
+          go build -buildvcs=false -trimpath -ldflags "${LDFLAGS}" \
+            -o "dist/exccd${{ matrix.exe }}" .
           "./dist/exccd${{ matrix.exe }}" --version
+          if [ "${GOOS}" = windows ]; then
+            OBJDUMP=objdump
+            if [ "${GOARCH}" = arm64 ]; then
+              OBJDUMP=llvm-objdump
+            fi
+            IMPORTS=$("${OBJDUMP}" -p "dist/exccd${{ matrix.exe }}" | \
+              sed -n 's/.*DLL Name: //p')
+            printf '%s\n' "${IMPORTS}"
+            if printf '%s\n' "${IMPORTS}" | grep -Eiq \
+              '^(libgcc|libstdc\+\+|libwinpthread|libc\+\+|libunwind).*\.dll$'; then
+              echo '::error::Windows binary depends on a compiler runtime DLL.'
+              exit 1
+            fi
+          fi
 
   lint:
     name: Lint
