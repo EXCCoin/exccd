@@ -49,36 +49,48 @@ jobs:
             goos: linux
             goarch: amd64
             goamd64: v1
+            cc: gcc
+            cxx: g++
             extension: tar.gz
             exe: ''
           - runner: ubuntu-24.04-arm
             goos: linux
             goarch: arm64
             goarm64: v8.0
+            cc: gcc
+            cxx: g++
             extension: tar.gz
             exe: ''
           - runner: windows-2025
             goos: windows
             goarch: amd64
             goamd64: v1
+            cc: gcc
+            cxx: g++
             extension: zip
             exe: .exe
           - runner: windows-11-arm
             goos: windows
             goarch: arm64
             goarm64: v8.0
+            cc: aarch64-w64-mingw32-gcc
+            cxx: aarch64-w64-mingw32-g++
             extension: zip
             exe: .exe
           - runner: macos-26-intel
             goos: darwin
             goarch: amd64
             goamd64: v1
+            cc: clang
+            cxx: clang++
             extension: tar.gz
             exe: ''
           - runner: macos-26
             goos: darwin
             goarch: arm64
             goarm64: v8.0
+            cc: clang
+            cxx: clang++
             extension: tar.gz
             exe: ''
 
@@ -91,10 +103,27 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
+      - name: Set up LLVM-MinGW for Windows ARM64
+        if: matrix.goos == 'windows' && matrix.goarch == 'arm64'
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP 'llvm-mingw.zip'
+          $root = Join-Path $env:RUNNER_TEMP 'llvm-mingw'
+          Invoke-WebRequest -Uri 'https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-ucrt-aarch64.zip' -OutFile $archive
+          $actual = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()
+          if ($actual -ne '312593669435bd0bfc1a43ac3fba23c8b27e0610bade88b2738e5a01702a99ba') {
+            throw "LLVM-MinGW checksum mismatch: $actual"
+          }
+          Expand-Archive -Path $archive -DestinationPath $root
+          $toolchain = (Get-ChildItem -Path $root -Directory -Filter 'llvm-mingw-*').FullName
+          "$toolchain\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
       - name: Build
         shell: bash
         env:
-          CGO_ENABLED: '1' # cequihash is C++
+          CGO_ENABLED: '1' # cequihash uses cgo
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           GOAMD64: ${{ matrix.goamd64 }}
