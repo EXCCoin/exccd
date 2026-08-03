@@ -1120,9 +1120,41 @@ func testSubsidySplitDeployment(t *testing.T, params *chaincfg.Params) {
 	}
 }
 
-// TestSubsidySplitDeployment ensures the deployment of the 10/80/10 subsidy
-// split agenda activates as expected.
-func TestSubsidySplitDeployment(t *testing.T) {
-	testSubsidySplitDeployment(t, chaincfg.MainNetParams())
-	testSubsidySplitDeployment(t, chaincfg.RegNetParams())
+// TestSubsidySplitDeploymentInactive ensures EXCC never advertises or activates
+// Decred's 10/80/10 subsidy split agenda.
+func TestSubsidySplitDeploymentInactive(t *testing.T) {
+	params := []*chaincfg.Params{
+		chaincfg.MainNetParams(),
+		chaincfg.TestNet3Params(),
+		chaincfg.SimNetParams(),
+		chaincfg.RegNetParams(),
+	}
+	for _, params := range params {
+		t.Run(params.Name, func(t *testing.T) {
+			for _, deployments := range params.Deployments {
+				for _, deployment := range deployments {
+					if deployment.Vote.Id == chaincfg.VoteIDChangeSubsidySplit {
+						t.Fatal("DCP0010 deployment is configured")
+					}
+				}
+			}
+
+			bc := newFakeChain(params)
+			node := bc.bestChain.Tip()
+			active, err := bc.isSubsidySplitAgendaActive(node)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if active {
+				t.Fatal("DCP0010 unexpectedly active")
+			}
+			active, err = bc.IsSubsidySplitAgendaActive(&node.hash)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if active {
+				t.Fatal("DCP0010 unexpectedly active through public API")
+			}
+		})
+	}
 }
