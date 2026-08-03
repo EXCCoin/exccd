@@ -1287,13 +1287,17 @@ func (sp *serverPeer) OnGetBlocks(p *peer.Peer, msg *wire.MsgGetBlocks) {
 
 // OnGetHeaders is invoked when a peer receives a getheaders wire message.
 func (sp *serverPeer) OnGetHeaders(p *peer.Peer, msg *wire.MsgGetHeaders) {
-	// Ignore getheaders requests if not in sync unless the local best chain
-	// is exactly at the same tip as the requesting peer.
-	locatorHashes := msg.BlockLocatorHashes
+	// Send empty headers when the local chain has less work than is already
+	// known for the network.  This avoids serving incomplete history without
+	// making the node appear stalled to lightweight peers.
 	chain := sp.server.chain
-	if !sp.server.syncManager.IsCurrent() && (len(locatorHashes) == 0 ||
-		*locatorHashes[0] != chain.BestSnapshot().PrevHash) {
-
+	tipHash := chain.BestSnapshot().Hash
+	workSum, err := chain.ChainWork(&tipHash)
+	minKnownWork := sp.server.chainParams.MinKnownChainWork
+	if err == nil && minKnownWork != nil && workSum.Cmp(minKnownWork) < 0 {
+		srvrLog.Debugf("Sending empty headers to peer %s in response to "+
+			"getheaders due to local best known tip having too little work", p)
+		p.QueueMessage(&wire.MsgHeaders{}, nil)
 		return
 	}
 
@@ -1305,6 +1309,7 @@ func (sp *serverPeer) OnGetHeaders(p *peer.Peer, msg *wire.MsgGetHeaders) {
 	// Use the block after the genesis block if no other blocks in the
 	// provided locator are known.  This does mean the client will start
 	// over with the genesis block if unknown block locators are provided.
+	locatorHashes := msg.BlockLocatorHashes
 	headers := chain.LocateHeaders(locatorHashes, &msg.HashStop)
 
 	// Send found headers to the requesting peer.
