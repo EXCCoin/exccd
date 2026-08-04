@@ -47,7 +47,7 @@ done
 
 if [ "${EXCC_CI_SUPPORTED_ONLY:-}" = 1 ]; then
 	go test -vet=all -short ./blockchain -run \
-		'^(TestConsensusFixDeployments|TestRegularTxFirstInputValidation|TestTransactionInputValueRange|TestTransactionInputValueRangeActivation)$'
+		'^(TestCheckProofOfWorkRejectsInvalidEquihash|TestRegularTxFirstInputValidation|TestTransactionInputValidationDeployment|TestTransactionInputValueRange|TestTransactionInputValueRangeActivation)$'
 fi
 
 if [ $status -ne 0 ]; then

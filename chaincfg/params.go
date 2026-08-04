@@ -168,8 +168,11 @@ const (
 	// defined in DCP0010.
 	VoteIDChangeSubsidySplit = "changesubsidysplit"
 
-	// VoteIDEquihashValidation is the vote ID for the agenda that enables
-	// strict validation of Equihash solutions.
+	// VoteIDEquihashValidation is the retired vote ID for strict Equihash
+	// solution validation.
+	//
+	// Deprecated: Equihash validation is not vote activated and this ID is not
+	// used by any deployment.
 	VoteIDEquihashValidation = "equihashvalidation"
 
 	// VoteIDFixTxInputValidation is the vote ID for the agenda that corrects
@@ -181,29 +184,6 @@ const (
 func consensusFixDeployments() map[uint32][]ConsensusDeployment {
 	return map[uint32][]ConsensusDeployment{
 		11: {{
-			Vote: Vote{
-				Id:          VoteIDEquihashValidation,
-				Description: "Enable strict Equihash solution validation",
-				Mask:        0x0006,
-				Choices: []Choice{{
-					Id:          "abstain",
-					Description: "abstain from voting",
-					Bits:        0x0000,
-					IsAbstain:   true,
-				}, {
-					Id:          "no",
-					Description: "keep the existing Equihash validation rules",
-					Bits:        0x0002,
-					IsNo:        true,
-				}, {
-					Id:          "yes",
-					Description: "enable strict Equihash solution validation",
-					Bits:        0x0004,
-				}},
-			},
-			StartTime:  0,
-			ExpireTime: math.MaxInt64,
-		}, {
 			Vote: Vote{
 				Id:          VoteIDFixTxInputValidation,
 				Description: "Correct transaction input validation",

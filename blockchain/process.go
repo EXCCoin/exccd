@@ -28,9 +28,8 @@ const (
 	// block.  This is primarily used for headers-first mode.
 	BFFastAdd BehaviorFlags = 1 << iota
 
-	// BFNoPoWCheck may be set to indicate the proof of work check which
-	// ensures a block hashes to a value less than the required target will
-	// not be performed.
+	// BFNoPoWCheck may be set to skip the proof of work hash and Equihash
+	// solution checks.  The target difficulty range is still checked.
 	BFNoPoWCheck
 
 	// BFNone is a convenience value to specifically indicate no flags.

@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/EXCCoin/exccd/blockchain/stake/v4"
+	standalone "github.com/EXCCoin/exccd/blockchain/standalone/v2"
 	"github.com/EXCCoin/exccd/blockchain/v4/chaingen"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/chaincfg/v3"
@@ -30,6 +31,27 @@ import (
 	"github.com/EXCCoin/exccd/txscript/v4"
 	"github.com/EXCCoin/exccd/wire"
 )
+
+// TestCheckProofOfWorkRejectsInvalidEquihash ensures the shared proof-of-work
+// check rejects invalid Equihash without an activation agenda while the
+// explicit template bypass remains available.
+func TestCheckProofOfWorkRejectsInvalidEquihash(t *testing.T) {
+	params := chaincfg.RegNetParams()
+	header := params.GenesisBlock.Header
+	header.Height = 1
+	header.EquihashSolution[0] ^= 1
+	for standalone.CheckProofOfWorkHash(&header, header.Bits, params) != nil {
+		header.Nonce++
+	}
+
+	err := checkProofOfWork(&header, params, BFNone)
+	if !errors.Is(err, ErrInvalidEquihashSolution) {
+		t.Fatalf("error = %v, want %v", err, ErrInvalidEquihashSolution)
+	}
+	if err := checkProofOfWork(&header, params, BFNoPoWCheck); err != nil {
+		t.Fatalf("template bypass: %v", err)
+	}
+}
 
 // TestBlockchainSpendJournal tests for whether or not the spend journal is being
 // written to disk correctly on a live blockchain.

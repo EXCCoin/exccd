@@ -705,18 +705,20 @@ func standaloneToChainRuleError(err error) error {
 		return ruleError(ErrUnexpectedDifficulty, err.Error())
 	case errors.Is(err, standalone.ErrHighHash):
 		return ruleError(ErrHighHash, err.Error())
+	case errors.Is(err, standalone.ErrInvalidEquihashSolution):
+		return ruleError(ErrInvalidEquihashSolution, err.Error())
 	}
 
 	return err
 }
 
 // checkProofOfWork ensures the block header bits which indicate the target
-// difficulty is in min/max range and that the block hash is less than the
-// target difficulty as claimed.
+// difficulty is in min/max range, that the block hash is less than the target
+// difficulty as claimed, and that the Equihash solution is valid.
 //
 // The flags modify the behavior of this function as follows:
-//   - BFNoPoWCheck: The check to ensure the block hash is less than the target
-//     difficulty is not performed.
+//   - BFNoPoWCheck: The block hash and Equihash solution checks are not
+//     performed.  The target difficulty range is still checked.
 func checkProofOfWork(header *wire.BlockHeader, chainParams *chaincfg.Params, flags BehaviorFlags) error {
 	// Only ensure the target difficulty bits are in the valid range when the
 	// the flag to avoid proof of work checks is set.
@@ -730,7 +732,8 @@ func checkProofOfWork(header *wire.BlockHeader, chainParams *chaincfg.Params, fl
 	// - The target difficulty must be larger than zero.
 	// - The target difficulty must be less than the maximum allowed.
 	// - The block hash must be less than the claimed target.
-	err := standalone.CheckProofOfWorkHash(header, header.Bits, chainParams)
+	// - The Equihash solution must be valid.
+	err := standalone.CheckProofOfWork(header, header.Bits, chainParams)
 	if err != nil {
 		return standaloneToChainRuleError(err)
 	}
@@ -754,9 +757,8 @@ func checkBlockHeaderSanity(header *wire.BlockHeader, timeSource MedianTimeSourc
 			"height %d", stakeEnabledHeight, stakeValidationHeight))
 	}
 
-	// Ensure the proof of work bits in the block header is in min/max
-	// range and the block hash is less than the target value described by
-	// the bits.
+	// Ensure the proof of work target is valid, the block hash satisfies it,
+	// and the Equihash solution is valid.
 	err := checkProofOfWork(header, chainParams, flags)
 	if err != nil {
 		return err
@@ -1166,28 +1168,13 @@ func (b *BlockChain) checkBlockPositional(block *dcrutil.Block, prevNode *blockN
 // vote will necessarily need to be transitioned to this function.
 //
 // The flags modify the behavior of this function as follows:
-//   - BFFastAdd: Only vote-activated Equihash validation is performed.
+//   - BFFastAdd: No checks are performed.
 //
 // This function MUST be called with the chain state lock held (for writes).
 func (b *BlockChain) checkBlockHeaderContext(header *wire.BlockHeader, prevNode *blockNode, flags BehaviorFlags) error {
 	// The genesis block is valid by definition.
 	if prevNode == nil {
 		return nil
-	}
-
-	// Enforce strict Equihash solution validation once its agenda is active.
-	// Block templates are intentionally exempt because they have not been
-	// solved yet.
-	if flags&BFNoPoWCheck != BFNoPoWCheck {
-		isActive, err := b.isEquihashValidationAgendaActive(prevNode)
-		if err != nil {
-			return err
-		}
-		if isActive {
-			if err := standalone.ValidateEquihashSolution(header, b.chainParams); err != nil {
-				return ruleError(ErrInvalidEquihashSolution, err.Error())
-			}
-		}
 	}
 
 	fastAdd := flags&BFFastAdd == BFFastAdd

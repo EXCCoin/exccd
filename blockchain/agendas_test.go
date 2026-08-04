@@ -5,7 +5,6 @@
 package blockchain
 
 import (
-	"errors"
 	"testing"
 	"time"
 
@@ -17,12 +16,11 @@ import (
 	"github.com/EXCCoin/exccd/wire"
 )
 
-// TestConsensusFixDeployments ensures each fix activates independently via
-// stake voting and strict Equihash validation starts at the activation boundary.
-func TestConsensusFixDeployments(t *testing.T) {
+// TestTransactionInputValidationDeployment ensures corrected transaction input
+// validation activates through its independent stake vote.
+func TestTransactionInputValidationDeployment(t *testing.T) {
 	params := chaincfg.RegNetParams()
 	deploymentVer, yesBits, err := findDeploymentAllYesChoices(params, []string{
-		chaincfg.VoteIDEquihashValidation,
 		chaincfg.VoteIDFixTxInputValidation,
 	})
 	if err != nil {
@@ -44,40 +42,19 @@ func TestConsensusFixDeployments(t *testing.T) {
 		timestamp = timestamp.Add(time.Second)
 	}
 
-	for _, test := range []struct {
-		name   string
-		active func(*blockNode) (bool, error)
-	}{{
-		"equihash", bc.isEquihashValidationAgendaActive,
-	}, {
-		"transaction inputs", bc.isFixTxInputValidationAgendaActive,
-	}} {
-		active, err := test.active(node.parent)
-		if err != nil {
-			t.Fatalf("%s before activation: %v", test.name, err)
-		}
-		if active {
-			t.Fatalf("%s active one block early", test.name)
-		}
-		active, err = test.active(node)
-		if err != nil {
-			t.Fatalf("%s at activation: %v", test.name, err)
-		}
-		if !active {
-			t.Fatalf("%s inactive at activation", test.name)
-		}
+	active, err := bc.isFixTxInputValidationAgendaActive(node.parent)
+	if err != nil {
+		t.Fatalf("before activation: %v", err)
 	}
-
-	header := params.GenesisBlock.Header
-	header.Height = uint32(node.height + 1)
-	header.EquihashSolution[0] ^= 0xff
-	if err := bc.checkBlockHeaderContext(&header, node.parent, BFFastAdd); err != nil {
-		t.Fatalf("Equihash rejected before activation: %v", err)
+	if active {
+		t.Fatal("active one block early")
 	}
-	err = bc.checkBlockHeaderContext(&header, node, BFFastAdd)
-	if !errors.Is(err, ErrInvalidEquihashSolution) {
-		t.Fatalf("Equihash activation error = %v, want %v", err,
-			ErrInvalidEquihashSolution)
+	active, err = bc.isFixTxInputValidationAgendaActive(node)
+	if err != nil {
+		t.Fatalf("at activation: %v", err)
+	}
+	if !active {
+		t.Fatal("inactive at activation")
 	}
 
 	flags, err := bc.determineCheckTxFlags(node)

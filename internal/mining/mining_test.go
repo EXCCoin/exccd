@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/EXCCoin/exccd/blockchain/v4"
+	"github.com/EXCCoin/exccd/blockchain/v4/chaingen"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/chaincfg/v3"
 	"github.com/EXCCoin/exccd/dcrutil/v4"
@@ -18,6 +19,13 @@ import (
 	"github.com/EXCCoin/exccd/txscript/v4/stdaddr"
 	"github.com/EXCCoin/exccd/wire"
 )
+
+func solveTemplate(t *testing.T, block *wire.MsgBlock, params *chaincfg.Params) {
+	t.Helper()
+	if !chaingen.SolveBlockWithEquihash(&block.Header, params) {
+		t.Fatal("unable to solve block template")
+	}
+}
 
 // TestNewBlockTemplateBasicErrorScenarios tests various basic error scenarios
 // that can occur during new block template generation.
@@ -184,6 +192,7 @@ func TestNewBlockTemplate(t *testing.T) {
 	}
 
 	// Validate that the block is sane.  These checks are context free.
+	solveTemplate(t, blockTemplate.Block, harness.chainParams)
 	block := dcrutil.NewBlock(blockTemplate.Block)
 	err = blockchain.CheckBlockSanity(block, harness.generator.cfg.TimeSource,
 		harness.chainParams)
@@ -391,6 +400,7 @@ func TestNewBlockTemplateAutoRevocations(t *testing.T) {
 	}
 
 	// Validate that the block is sane.  These checks are context free.
+	solveTemplate(t, blockTemplate.Block, harness.chainParams)
 	block := dcrutil.NewBlock(blockTemplate.Block)
 	err = blockchain.CheckBlockSanity(block, harness.generator.cfg.TimeSource,
 		harness.chainParams)
@@ -516,6 +526,7 @@ func TestNewBlockTemplateAutoRevocationsVotesOnly(t *testing.T) {
 	}
 
 	// Validate that the block is sane.  These checks are context free.
+	solveTemplate(t, blockTemplate.Block, harness.chainParams)
 	block := dcrutil.NewBlock(blockTemplate.Block)
 	err = blockchain.CheckBlockSanity(block, harness.generator.cfg.TimeSource,
 		harness.chainParams)

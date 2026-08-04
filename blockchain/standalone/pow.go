@@ -208,8 +208,8 @@ func CheckProofOfWorkHash(header *wire.BlockHeader, difficultyBits uint32,
 	return nil
 }
 
-// CheckProofOfWork performs all proof of work checks, including strict
-// Equihash solution validation.
+// CheckProofOfWork performs all proof of work checks, including Equihash
+// solution validation with the required historical compatibility exceptions.
 func CheckProofOfWork(header *wire.BlockHeader, difficultyBits uint32,
 	chainParams *chaincfg.Params) error {
 
@@ -217,6 +217,35 @@ func CheckProofOfWork(header *wire.BlockHeader, difficultyBits uint32,
 		return err
 	}
 	return ValidateEquihashSolution(header, chainParams)
+}
+
+// isHistoricalEquihashException returns whether the hash identifies one of
+// the mainnet blocks accepted by historical software despite not satisfying
+// canonical Equihash solution validation.  All other proof-of-work and block
+// rules remain enforced.
+func isHistoricalEquihashException(hash chainhash.Hash, net wire.CurrencyNet) bool {
+	if net != wire.MainNet {
+		return false
+	}
+
+	switch hash.String() {
+	case "080dca3e1603a4ce3fdb6eb7e86fb460d95ec46df7132b80f8a5547ad877e732",
+		"0b62ebec9ac835c8c31ddc4cc2c6eff47444c9de47fbffa43b1acc25b2f45a13",
+		"028653b73e92f6d4984ae0af271efa3dfd3e7aa02a80a506995438e4a8eb4afb",
+		"000009016dc87ba964b819dcf6612cba4a2439bc62c560aede577336a7804897",
+		"00000fe85253156a3ec146cdde074504a57ddb065588845cfcccba851137b69e",
+		"0000143be1d1bfd29a3e7de6c49dc0754385896ec14cf52d5320c45bc7c728f2",
+		"0000135ecf086f7420f5fb8789146601adef22cb7dfb76bc9c3d5764c800a7c7",
+		"00000304f1b93f032e1c4dd57c5ea53dd5c8b6ef5d5122b1f4a1b693c17b3094",
+		"000010140fe77f88c96178e58fff159a0cdc13abee894cdee6369dff37887963",
+		"000005bbd1590593d2953b3dd2bf38f64b324b12fcc3701844efd006d636ce3b",
+		"00000a7ce7d66e87ce2706644e77acf7ebe16d2e98b680b598dbacdfc456cc3e",
+		"000012a78f34078a0c6619d66763684d3d90a291e804443b7267aedf8552b7bb",
+		"00000bce885cf7e61d95fc74d80178d09e4e51105121994130fc6609427f56cd":
+		return true
+	}
+
+	return false
 }
 
 // ValidateEquihashSolution validates the Equihash solution for the block.
@@ -238,7 +267,7 @@ func ValidateEquihashSolution(header *wire.BlockHeader, chainParams *chaincfg.Pa
 
 	result := cequihash.ValidateEquihash(chainParams.N, chainParams.K, headerBytes, header.EquihashSolution[:])
 
-	if !result {
+	if !result && !isHistoricalEquihashException(header.BlockHash(), chainParams.Net) {
 		return ruleError(ErrInvalidEquihashSolution,
 			"provided equihash solution is invalid")
 	}

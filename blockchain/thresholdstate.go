@@ -864,24 +864,6 @@ func (b *BlockChain) IsSubsidySplitAgendaActive(prevHash *chainhash.Hash) (bool,
 	return false, nil
 }
 
-// isEquihashValidationAgendaActive returns whether strict Equihash solution
-// validation is active for the block after the passed node.
-//
-// This function MUST be called with the chain state lock held (for writes).
-func (b *BlockChain) isEquihashValidationAgendaActive(prevNode *blockNode) (bool, error) {
-	const deploymentID = chaincfg.VoteIDEquihashValidation
-	deploymentVer, ok := b.deploymentVers[deploymentID]
-	if !ok {
-		return false, nil
-	}
-
-	state, err := b.deploymentState(prevNode, deploymentVer, deploymentID)
-	if err != nil {
-		return false, err
-	}
-	return state.State == ThresholdActive, nil
-}
-
 // isFixTxInputValidationAgendaActive returns whether corrected transaction
 // input validation is active for the block after the passed node.
 //

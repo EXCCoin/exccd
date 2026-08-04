@@ -385,10 +385,9 @@ func TestDeployments(t *testing.T) {
 }
 
 // TestConsensusFixDeployments ensures every supported network exposes the same
-// independently votable consensus fixes.
+// votable consensus fix.
 func TestConsensusFixDeployments(t *testing.T) {
 	wantMasks := map[string]uint16{
-		VoteIDEquihashValidation:   0x0006,
 		VoteIDFixTxInputValidation: 0x0018,
 	}
 	for _, params := range allDefaultNetParams() {
