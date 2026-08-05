@@ -46,8 +46,10 @@ for dir in $modules; do
 done
 
 if [ "${EXCC_CI_SUPPORTED_ONLY:-}" = 1 ]; then
-	go test -vet=all -short ./blockchain -run \
-		'^(TestCheckProofOfWorkRejectsInvalidEquihash|TestRegularTxFirstInputValidation|TestTransactionInputValidationDeployment|TestTransactionInputValueRange|TestTransactionInputValueRangeActivation)$'
+	go test -count=1 -vet=all -short ./blockchain -skip '^(TestLNFeaturesDeployment|TestTreasuryFeaturesDeployment|TestExplicitVerUpgradesDeployment|TestAutoRevocationsDeployment|TestExplicitVerUpgradesSemantics|TestAutoRevocations|TestModifiedSubsidySplitSemantics|TestFixedSequenceLocks|TestForceHeadReorg|TestStakeVersion|TestProcessOrder|TestProcessLogic|TestInvalidateReconsider|TestAssumeValid|TestThresholdState|TestInitialize|TestShutdownUtxoCache|TestFetchUtxoView|TestCheckConnectBlockTemplate|TestBlockIndexSerialization|TestBlockIndexDecodeErrors|TestBlockIndexSerializationV2|TestBlockIndexDecodeErrorsV2|TestShortBlockKeyCollisions|TestCalcNextRequiredStakeDiffV2|TestEstimateNextStakeDiffV2|TestBlockchainFunctions|TestBlockchainSpendJournal|TestFullBlocks)$'
+	go test -count=1 -vet=all -short ./blockchain/stake -skip '^(TestTicketDBLongChain|TestTicketDBGeneral)$'
+	go test -count=1 -vet=all -short ./database/ffldb -skip '^(TestFailureScenarios|TestInterface)$'
+	go test -count=1 -vet=all -short ./txscript -skip '^(TestScripts|TestTxValidTests|TestCalcSignatureHashReference)$'
 fi
 
 if [ $status -ne 0 ]; then
