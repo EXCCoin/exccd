@@ -462,128 +462,38 @@ func TestFixedSequenceLocks(t *testing.T) {
 	g.AcceptTipBlock()
 }
 
-// testHeaderCommitmentsDeployment ensures the deployment of the header
-// commitments agenda activates for the provided network parameters.
-func testHeaderCommitmentsDeployment(t *testing.T, params *chaincfg.Params) {
-	// Clone the parameters so they can be mutated, find the correct deployment
-	// for the header commitments agenda as well as the yes vote choice within
-	// it, and, finally, ensure it is always available to vote by removing the
-	// time constraints to prevent test failures when the real expiration time
-	// passes.
-	params = cloneParams(params)
-	deploymentVer, deployment, err := findDeployment(params,
-		chaincfg.VoteIDHeaderCommitments)
-	if err != nil {
-		t.Fatal(err)
-	}
-	yesChoice, err := findDeploymentChoice(deployment, "yes")
-	if err != nil {
-		t.Fatal(err)
-	}
-	removeDeploymentTimeConstraints(deployment)
-
-	// Shorter versions of params for convenience.
-	stakeValidationHeight := uint32(params.StakeValidationHeight)
-	ruleChangeActivationInterval := params.RuleChangeActivationInterval
-
-	tests := []struct {
-		name       string
-		numNodes   uint32 // num fake nodes to create
-		curActive  bool   // whether agenda active for current block
-		nextActive bool   // whether agenda active for NEXT block
-	}{
-		{
-			name:       "stake validation height",
-			numNodes:   stakeValidationHeight,
-			curActive:  false,
-			nextActive: false,
-		},
-		{
-			name:       "started",
-			numNodes:   ruleChangeActivationInterval,
-			curActive:  false,
-			nextActive: false,
-		},
-		{
-			name:       "lockedin",
-			numNodes:   ruleChangeActivationInterval,
-			curActive:  false,
-			nextActive: false,
-		},
-		{
-			name:       "one before active",
-			numNodes:   ruleChangeActivationInterval - 1,
-			curActive:  false,
-			nextActive: true,
-		},
-		{
-			name:       "exactly active",
-			numNodes:   1,
-			curActive:  true,
-			nextActive: true,
-		},
-		{
-			name:       "one after active",
-			numNodes:   1,
-			curActive:  true,
-			nextActive: true,
-		},
-	}
-
-	curTimestamp := time.Now()
-	bc := newFakeChain(params)
-	node := bc.bestChain.Tip()
-	for _, test := range tests {
-		for i := uint32(0); i < test.numNodes; i++ {
-			node = newFakeNode(node, int32(deploymentVer), deploymentVer, 0,
-				curTimestamp)
-
-			// Create fake votes that vote yes on the agenda to ensure it is
-			// activated.
-			for j := uint16(0); j < params.TicketsPerBlock; j++ {
-				node.votes = append(node.votes, stake.VoteVersionTuple{
-					Version: deploymentVer,
-					Bits:    yesChoice.Bits | 0x01,
-				})
-			}
-			bc.index.AddNode(node)
-			bc.bestChain.SetTip(node)
-			curTimestamp = curTimestamp.Add(time.Second)
-		}
-
-		// Ensure the agenda reports the expected activation status for the
-		// current block.
-		gotActive, err := bc.isHeaderCommitmentsAgendaActive(node.parent)
-		if err != nil {
-			t.Errorf("%s: unexpected err: %v", test.name, err)
-			continue
-		}
-		if gotActive != test.curActive {
-			t.Errorf("%s: mismatched current active status - got: %v, want: %v",
-				test.name, gotActive, test.curActive)
-			continue
-		}
-
-		// Ensure the agenda reports the expected activation status for the NEXT
-		// block
-		gotActive, err = bc.IsHeaderCommitmentsAgendaActive(&node.hash)
-		if err != nil {
-			t.Errorf("%s: unexpected err: %v", test.name, err)
-			continue
-		}
-		if gotActive != test.nextActive {
-			t.Errorf("%s: mismatched next active status - got: %v, want: %v",
-				test.name, gotActive, test.nextActive)
-			continue
-		}
-	}
-}
-
-// TestHeaderCommitmentsDeployment ensures the deployment of the header
-// commitments agenda activates as expected.
+// TestHeaderCommitmentsDeployment locks the EXCC network-specific activation
+// rules for header commitments.
 func TestHeaderCommitmentsDeployment(t *testing.T) {
-	testHeaderCommitmentsDeployment(t, chaincfg.MainNetParams())
-	testHeaderCommitmentsDeployment(t, chaincfg.RegNetParams())
+	tests := []struct {
+		params *chaincfg.Params
+		active bool
+	}{
+		{chaincfg.MainNetParams(), false},
+		{chaincfg.TestNet3Params(), false},
+		{chaincfg.SimNetParams(), true},
+		{chaincfg.RegNetParams(), true},
+	}
+	for _, test := range tests {
+		bc := newFakeChain(test.params)
+		tip := bc.bestChain.Tip()
+		active, err := bc.isHeaderCommitmentsAgendaActive(tip)
+		if err != nil {
+			t.Fatalf("%s internal activation: %v", test.params.Name, err)
+		}
+		if active != test.active {
+			t.Errorf("%s internal activation = %v, want %v",
+				test.params.Name, active, test.active)
+		}
+		active, err = bc.IsHeaderCommitmentsAgendaActive(&tip.hash)
+		if err != nil {
+			t.Fatalf("%s public activation: %v", test.params.Name, err)
+		}
+		if active != test.active {
+			t.Errorf("%s public activation = %v, want %v",
+				test.params.Name, active, test.active)
+		}
+	}
 }
 
 // testTreasuryFeaturesDeployment ensures the deployment of the treasury

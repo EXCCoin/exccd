@@ -1468,7 +1468,8 @@ func TestCalcTicketReturnAmounts(t *testing.T) {
 		"958002e000000000000000000000000000000000000000007000000")
 
 	// Default ticket commitment script hex for tests.
-	p2pkhCommitScriptHex := "ba76a914097e847d49c6806f6933e806a350f43b97ac70d088ac"
+	p2pkhCommitScriptHex := "6a1e4cab672d1d6db7605d428119ecf2e74edb533606958e" +
+		"0a87030000000058"
 
 	// createTestTicketOuts is a helper function that creates mock minimal outputs
 	// for a ticket with the given contribution amounts.  Note that this only
@@ -1642,15 +1643,17 @@ func TestCalcTicketReturnAmounts(t *testing.T) {
 		voteSubsidy:              0,
 		prevHeaderBytes:          prevHeaderBytes,
 		isAutoRevocationsEnabled: true,
+		// EXCC's SHA-256 PRNG selects different remainder indexes than the
+		// inherited Decred vector.
 		want: []int64{
-			99999999,
 			100000000,
 			99999999,
 			99999999,
-			99999999,
-			99999999,
+			100000000,
 			100000001,
-			100000000,
+			99999999,
+			99999999,
+			99999999,
 		},
 	}}
 
