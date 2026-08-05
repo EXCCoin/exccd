@@ -46,6 +46,34 @@ func TestInventoryDeadlines(t *testing.T) {
 	}
 }
 
+// TestOptionalResponseDeadlines ensures requests which are allowed to produce
+// no response cannot cause an honest peer to be disconnected as stalled.
+func TestOptionalResponseDeadlines(t *testing.T) {
+	p := NewInboundPeer(&Config{})
+	optionalRequests := []wire.Message{
+		wire.NewMsgMemPool(),
+		wire.NewMsgGetBlocks(&chainhash.Hash{}),
+		wire.NewMsgGetHeaders(),
+		wire.NewMsgGetMiningState(),
+	}
+	for _, msg := range optionalRequests {
+		pendingResponses := make(map[string]time.Time)
+		pendingData := make(map[wire.InvVect]time.Time)
+		p.maybeAddDeadline(pendingResponses, pendingData, msg)
+		if len(pendingResponses) != 0 || len(pendingData) != 0 {
+			t.Fatalf("optional %s request added a response deadline", msg.Command())
+		}
+	}
+
+	// Init state has a guaranteed response and must retain its deadline.
+	pendingResponses := make(map[string]time.Time)
+	p.maybeAddDeadline(pendingResponses, make(map[wire.InvVect]time.Time),
+		wire.NewMsgGetInitState())
+	if _, ok := pendingResponses[wire.CmdInitState]; !ok {
+		t.Fatal("getinitstate did not add its guaranteed response deadline")
+	}
+}
+
 func TestInventoryDeadlineBurstLimit(t *testing.T) {
 	const maxBurst = wire.MaxInvPerMsg + wire.MaxInvPerMsg/2
 	p := NewInboundPeer(&Config{})

@@ -1076,8 +1076,8 @@ func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time,
 	// such as is typical in the case of initial block download, the
 	// response won't be received in time.
 	//
-	// Also, getheaders is intentionally ignored since there is no guaranteed
-	// response if the remote peer does not have any headers for the locator.
+	// Requests are intentionally ignored when an empty result does not require
+	// a response: mempool, getblocks, getheaders, and getminingstate.
 	var addedDeadline bool
 	deadline := time.Now().Add(stallResponseTimeout)
 	if msg, ok := msg.(*wire.MsgGetData); ok {
@@ -1100,30 +1100,6 @@ func (p *Peer) maybeAddDeadline(pendingResponses map[string]time.Time,
 	case wire.CmdVersion:
 		// Expects a verack message.
 		pendingResponses[wire.CmdVerAck] = deadline
-		addedDeadline = true
-
-	case wire.CmdMemPool:
-		// Expects an inv message.
-		pendingResponses[wire.CmdInv] = deadline
-		addedDeadline = true
-
-	case wire.CmdGetBlocks:
-		// Expects an inv message.
-		// Since Equihash significantly slows down block rate, make timeout much longer
-		deadline = time.Now().Add(stallResponseTimeout * 30)
-		pendingResponses[wire.CmdInv] = deadline
-		addedDeadline = true
-
-	case wire.CmdGetHeaders:
-		// Expects a headers message.  Use a longer deadline since it
-		// can take a while for the remote peer to load all of the
-		// headers.
-		// Since Equihash significantly slows down block rate, make timeout much longer
-		deadline = time.Now().Add(stallResponseTimeout * 30)
-		pendingResponses[wire.CmdHeaders] = deadline
-
-	case wire.CmdGetMiningState:
-		pendingResponses[wire.CmdMiningState] = deadline
 		addedDeadline = true
 
 	case wire.CmdGetInitState:
