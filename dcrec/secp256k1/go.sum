@@ -4,6 +4,8 @@ github.com/EXCCoin/exccd/crypto/blake256 v0.0.0-20260730143238-5ec2339c687a h1:U
 github.com/EXCCoin/exccd/crypto/blake256 v0.0.0-20260730143238-5ec2339c687a/go.mod h1:a6dgMwlAl4Sw8AL1aANZdNqEby7g+DdQx7WBzdiYtEk=
 github.com/EXCCoin/exccd/crypto/blake256 v1.0.1-0.20260804195201-ee0256e76758 h1:K9IJvgDrsEE/lAmZ3DuJV29nrDjaD7PcJuTx781/WCI=
 github.com/EXCCoin/exccd/crypto/blake256 v1.0.1-0.20260804195201-ee0256e76758/go.mod h1:a6dgMwlAl4Sw8AL1aANZdNqEby7g+DdQx7WBzdiYtEk=
+github.com/EXCCoin/exccd/crypto/blake256 v1.0.1-0.20260805073314-b1ff084cd983 h1:CXo8DKG3HLskxG7WfE1QAdpiSALiOD03PvZmoFFMtcQ=
+github.com/EXCCoin/exccd/crypto/blake256 v1.0.1-0.20260805073314-b1ff084cd983/go.mod h1:a6dgMwlAl4Sw8AL1aANZdNqEby7g+DdQx7WBzdiYtEk=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=

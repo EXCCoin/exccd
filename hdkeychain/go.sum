@@ -12,6 +12,8 @@ github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20260730143238-5ec2339c687a h
 github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20260730143238-5ec2339c687a/go.mod h1:eMPB49d8cWIAj9q7/pXMFu/lFaxs0dOKgkhEnvUQS+o=
 github.com/EXCCoin/exccd/chaincfg/chainhash v1.0.4-0.20260804195201-ee0256e76758 h1:IW08CcGG9dOWmHxr8jEGF5bUmb0FSQerfiEnrDGhnAs=
 github.com/EXCCoin/exccd/chaincfg/chainhash v1.0.4-0.20260804195201-ee0256e76758/go.mod h1:EWyy+Yo3vlyfk+ynAvSp+SXTMkIuQ1k4RPtN67zY7+E=
+github.com/EXCCoin/exccd/chaincfg/chainhash v1.0.4-0.20260805073314-b1ff084cd983 h1:F2faaTEsG5J07vkyq/hlSf5uVoXZgkLyU/AAG1aN83k=
+github.com/EXCCoin/exccd/chaincfg/chainhash v1.0.4-0.20260805073314-b1ff084cd983/go.mod h1:J3IUeOZH+fT8WaqwejZ/SUM701BsRzhZqpTDj9HYw3I=
 github.com/EXCCoin/exccd/chaincfg/v3 v3.0.0-20230211225306-d2f2c1c04ab7 h1:3o4l6FdD1G7upM5NFn8MFQTdQJWPwer/p58ixsEWt80=
 github.com/EXCCoin/exccd/chaincfg/v3 v3.0.0-20230211225306-d2f2c1c04ab7/go.mod h1:qbWcZdaL4y+HgMVk1e+TpyE3rHyZNSToAaMyHRn9TWg=
 github.com/EXCCoin/exccd/chaincfg/v3 v3.0.0-20230214161233-275859970533 h1:GU4pQg/QdZ7RKnwzhh+Br7af5UotCnbtd1pEAcHJSNA=
@@ -24,6 +26,8 @@ github.com/EXCCoin/exccd/chaincfg/v3 v3.0.0-20260730143238-5ec2339c687a h1:9nLyj
 github.com/EXCCoin/exccd/chaincfg/v3 v3.0.0-20260730143238-5ec2339c687a/go.mod h1:Z9E7kn+Srdn8PXkDWa7GRA+IVxf9Qxvpv5OyGRs02j4=
 github.com/EXCCoin/exccd/chaincfg/v3 v3.1.2-0.20260804195201-ee0256e76758 h1:Qy1hCTxq6sbS8Oplt6baUVRziP3gRmlszxwRzWZaZEk=
 github.com/EXCCoin/exccd/chaincfg/v3 v3.1.2-0.20260804195201-ee0256e76758/go.mod h1:Yv4DsGqzt+oE0hmWzNxl5E4bfBcmmkLfc4mvfHBRuag=
+github.com/EXCCoin/exccd/chaincfg/v3 v3.1.2-0.20260805073314-b1ff084cd983 h1:F9DyCi17oUPkkOW+sIc7AoUXbxLM86UKS4Ozig2NXHg=
+github.com/EXCCoin/exccd/chaincfg/v3 v3.1.2-0.20260805073314-b1ff084cd983/go.mod h1:b3yTBTohS8Gba3TeolxWJb1PO2jU8ZOlSgrR4B4uw9k=
 github.com/EXCCoin/exccd/crypto/blake256 v0.0.0-20230211225306-d2f2c1c04ab7 h1:IOnMj+Q8+4XGM1cB+v3x7m6FWE1W9LSfDxls91D675U=
 github.com/EXCCoin/exccd/crypto/blake256 v0.0.0-20230211225306-d2f2c1c04ab7/go.mod h1:gGGtDzi74jQyKPRjBKT/BSFoRbN33dmgNZgj8jgEFd0=
 github.com/EXCCoin/exccd/crypto/blake256 v0.0.0-20230222134430-694fa0700495 h1:LGX9jhE5t3r16OqrkWqRHNHHCzyUnFeJBJ8kiqFBBS0=
@@ -34,6 +38,8 @@ github.com/EXCCoin/exccd/crypto/blake256 v0.0.0-20260730143238-5ec2339c687a h1:U
 github.com/EXCCoin/exccd/crypto/blake256 v0.0.0-20260730143238-5ec2339c687a/go.mod h1:a6dgMwlAl4Sw8AL1aANZdNqEby7g+DdQx7WBzdiYtEk=
 github.com/EXCCoin/exccd/crypto/blake256 v1.0.1-0.20260804195201-ee0256e76758 h1:K9IJvgDrsEE/lAmZ3DuJV29nrDjaD7PcJuTx781/WCI=
 github.com/EXCCoin/exccd/crypto/blake256 v1.0.1-0.20260804195201-ee0256e76758/go.mod h1:a6dgMwlAl4Sw8AL1aANZdNqEby7g+DdQx7WBzdiYtEk=
+github.com/EXCCoin/exccd/crypto/blake256 v1.0.1-0.20260805073314-b1ff084cd983 h1:CXo8DKG3HLskxG7WfE1QAdpiSALiOD03PvZmoFFMtcQ=
+github.com/EXCCoin/exccd/crypto/blake256 v1.0.1-0.20260805073314-b1ff084cd983/go.mod h1:a6dgMwlAl4Sw8AL1aANZdNqEby7g+DdQx7WBzdiYtEk=
 github.com/EXCCoin/exccd/crypto/ripemd160 v0.0.0-20230211225306-d2f2c1c04ab7 h1:x1X5br9R/d8Wd2RndMps7vfmh2lJUjlNRJ82g2wgTJw=
 github.com/EXCCoin/exccd/crypto/ripemd160 v0.0.0-20230211225306-d2f2c1c04ab7/go.mod h1:aHqP29TIbaWgcd1DlDCVc+QZZqNE5n13C7BHXHiKS0M=
 github.com/EXCCoin/exccd/crypto/ripemd160 v0.0.0-20230222134430-694fa0700495 h1:UIiZAEa90YZQT/ZLY+GnQD6O0O8RW77Tk55GlBb/rBU=
@@ -44,6 +50,8 @@ github.com/EXCCoin/exccd/crypto/ripemd160 v0.0.0-20260730143238-5ec2339c687a h1:
 github.com/EXCCoin/exccd/crypto/ripemd160 v0.0.0-20260730143238-5ec2339c687a/go.mod h1:bLNlDLXx0hrU7NO/4lvWiFLRWA8+DjI0pnS6pUcvvDw=
 github.com/EXCCoin/exccd/crypto/ripemd160 v1.0.2-0.20260804195201-ee0256e76758 h1:Ahmc9Qieklcmf66uMIILfJf6+ARvs80qsgfW6JbKGRo=
 github.com/EXCCoin/exccd/crypto/ripemd160 v1.0.2-0.20260804195201-ee0256e76758/go.mod h1:bLNlDLXx0hrU7NO/4lvWiFLRWA8+DjI0pnS6pUcvvDw=
+github.com/EXCCoin/exccd/crypto/ripemd160 v1.0.2-0.20260805073314-b1ff084cd983 h1:d0DIkEqwq50Wf9SM+8Tz42fiFoLYTtb53KaTAfc7J+c=
+github.com/EXCCoin/exccd/crypto/ripemd160 v1.0.2-0.20260805073314-b1ff084cd983/go.mod h1:bLNlDLXx0hrU7NO/4lvWiFLRWA8+DjI0pnS6pUcvvDw=
 github.com/EXCCoin/exccd/dcrec v0.0.0-20230211225306-d2f2c1c04ab7 h1:zGYA6PKm29oAJWDvmVot7sSWLutzr/wFhYpqr8L1vcU=
 github.com/EXCCoin/exccd/dcrec v0.0.0-20230211225306-d2f2c1c04ab7/go.mod h1:7rbiErKGJZ8XRgmcBzC09YLEBvSJAWMdxrBhW4WXI4w=
 github.com/EXCCoin/exccd/dcrec v0.0.0-20230222134430-694fa0700495 h1:iWGI2UaJ+SNL7mn45PDGxhCTgnUWyf8GC3f8iY+/gK8=
@@ -54,6 +62,8 @@ github.com/EXCCoin/exccd/dcrec v0.0.0-20260730143238-5ec2339c687a h1:wvP/Ol2YA0U
 github.com/EXCCoin/exccd/dcrec v0.0.0-20260730143238-5ec2339c687a/go.mod h1:jaEvYZyvFtTRdOq3gwNzW1Ls3Va+ok52apTcLD7pyOE=
 github.com/EXCCoin/exccd/dcrec v1.0.1-0.20260804195201-ee0256e76758 h1:PYC6vk6vjG8gZdT/C6UPxKcp9CFle/CJcq0rI4Nkrgs=
 github.com/EXCCoin/exccd/dcrec v1.0.1-0.20260804195201-ee0256e76758/go.mod h1:jaEvYZyvFtTRdOq3gwNzW1Ls3Va+ok52apTcLD7pyOE=
+github.com/EXCCoin/exccd/dcrec v1.0.1-0.20260805073314-b1ff084cd983 h1:SnGB76EMSe+2ttCtdDmzSCZjjH7cnQ/rCmhwGaxy2tE=
+github.com/EXCCoin/exccd/dcrec v1.0.1-0.20260805073314-b1ff084cd983/go.mod h1:jaEvYZyvFtTRdOq3gwNzW1Ls3Va+ok52apTcLD7pyOE=
 github.com/EXCCoin/exccd/dcrec/edwards/v2 v2.0.0-20230211225306-d2f2c1c04ab7 h1:syPzKfQ3wRPvkSaFrOEWPAYECFLf4xBxg2XJ6FCb1Es=
 github.com/EXCCoin/exccd/dcrec/edwards/v2 v2.0.0-20230211225306-d2f2c1c04ab7/go.mod h1:MlNonvPYgC7ZU/N3xZdUwIxlr127qxOmqL4ag1Ft+AE=
 github.com/EXCCoin/exccd/dcrec/edwards/v2 v2.0.0-20230222134430-694fa0700495 h1:SxrLgtKwRFub2lKRAPT8y1OHDoRm+ll9zQ8y9sx8RN0=
@@ -64,6 +74,8 @@ github.com/EXCCoin/exccd/dcrec/edwards/v2 v2.0.0-20260730143238-5ec2339c687a h1:
 github.com/EXCCoin/exccd/dcrec/edwards/v2 v2.0.0-20260730143238-5ec2339c687a/go.mod h1:iXj7LWDJurpiMt4QeAsRmRAfMbaCbaLedEkO4YOs/ak=
 github.com/EXCCoin/exccd/dcrec/edwards/v2 v2.0.3-0.20260804195201-ee0256e76758 h1:QAf7MvopOrWVlOtCDmWak6166vjXx7ZIaaCY1hPgw2s=
 github.com/EXCCoin/exccd/dcrec/edwards/v2 v2.0.3-0.20260804195201-ee0256e76758/go.mod h1:iXj7LWDJurpiMt4QeAsRmRAfMbaCbaLedEkO4YOs/ak=
+github.com/EXCCoin/exccd/dcrec/edwards/v2 v2.0.3-0.20260805073314-b1ff084cd983 h1:1XteGA2adyi6fU3LALhv8kjcqsx1WMHCb0r4I79fKvI=
+github.com/EXCCoin/exccd/dcrec/edwards/v2 v2.0.3-0.20260805073314-b1ff084cd983/go.mod h1:iXj7LWDJurpiMt4QeAsRmRAfMbaCbaLedEkO4YOs/ak=
 github.com/EXCCoin/exccd/dcrec/secp256k1/v4 v4.0.0-20230211225306-d2f2c1c04ab7 h1:8KYeObzMyZZYIHYq7ZQ9cjgzE6mTHA+OM2oKX7fdiW8=
 github.com/EXCCoin/exccd/dcrec/secp256k1/v4 v4.0.0-20230211225306-d2f2c1c04ab7/go.mod h1:JZpGOVIOQe+XBfwcc/OZMGCPkl7ZTxi3E5TT2GWri5s=
 github.com/EXCCoin/exccd/dcrec/secp256k1/v4 v4.0.0-20230222134430-694fa0700495 h1:L3Od4bf/RxnY8UdnHkFzGhydGbbDJttiN95Vu4PezmA=
@@ -74,6 +86,8 @@ github.com/EXCCoin/exccd/dcrec/secp256k1/v4 v4.0.0-20260730143238-5ec2339c687a h
 github.com/EXCCoin/exccd/dcrec/secp256k1/v4 v4.0.0-20260730143238-5ec2339c687a/go.mod h1:vD1kBtMbVH/KKf5h+3NKI1YfaIuKEX/ffAQ/axBPzcM=
 github.com/EXCCoin/exccd/dcrec/secp256k1/v4 v4.0.2-0.20260804195201-ee0256e76758 h1:mpOwAKbo0Ib1h9pSDGg8ZtQm/VCpf8mac/swa6eAFsI=
 github.com/EXCCoin/exccd/dcrec/secp256k1/v4 v4.0.2-0.20260804195201-ee0256e76758/go.mod h1:fxio0/+F28LEWr7QKtOhgk+AAuy0J+kCyuJHECSWPaY=
+github.com/EXCCoin/exccd/dcrec/secp256k1/v4 v4.0.2-0.20260805073314-b1ff084cd983 h1:e3m16Sq5TlWx5Hm5IoDAfFB3w4hpOrjBEQ+iFS5Qup0=
+github.com/EXCCoin/exccd/dcrec/secp256k1/v4 v4.0.2-0.20260805073314-b1ff084cd983/go.mod h1:3Q9UjDeUArboaiQLy1OzlTAbC5bJ5AcCUSdKvtvIYVY=
 github.com/EXCCoin/exccd/dcrutil/v4 v4.0.0-20230211225306-d2f2c1c04ab7 h1:iphS+LeFjw8j/O8HdUZUQnFvcpGwqIyu7IKGowHdZWo=
 github.com/EXCCoin/exccd/dcrutil/v4 v4.0.0-20230211225306-d2f2c1c04ab7/go.mod h1:cv/6WVeZNrgWoT6A7T2X3R62gZRoE4wnLq3VpAppyb8=
 github.com/EXCCoin/exccd/dcrutil/v4 v4.0.0-20230222134430-694fa0700495 h1:mJEM4dlXRRhU837VdN2bGdD2WCxCdah5kydsBu5i+7s=
@@ -84,6 +98,8 @@ github.com/EXCCoin/exccd/dcrutil/v4 v4.0.0-20260730143238-5ec2339c687a h1:L3Tbs3
 github.com/EXCCoin/exccd/dcrutil/v4 v4.0.0-20260730143238-5ec2339c687a/go.mod h1:kPQjX8iQ47mA/7PNhfIoUm2n0A/CxeGCKNlP67MzWug=
 github.com/EXCCoin/exccd/dcrutil/v4 v4.0.1-0.20260804195201-ee0256e76758 h1:jlZOZdcy330/f/tvUDaa4GGgLAKYWcMeJx3YNMTkhqA=
 github.com/EXCCoin/exccd/dcrutil/v4 v4.0.1-0.20260804195201-ee0256e76758/go.mod h1:3+loljal2BUB2ujAW6PILFgDLWtQRhnI3oJnX25w580=
+github.com/EXCCoin/exccd/dcrutil/v4 v4.0.1-0.20260805073314-b1ff084cd983 h1:/FH9B2ru+Jv3sZESgut7ycr6G0FtTxV8POBmtQHwPHM=
+github.com/EXCCoin/exccd/dcrutil/v4 v4.0.1-0.20260805073314-b1ff084cd983/go.mod h1:TDYDA8m0/ubQXqsBtu/Sm7i49EB1m2GAkXsBtTt6zno=
 github.com/EXCCoin/exccd/txscript/v4 v4.0.0-20230211225306-d2f2c1c04ab7 h1:IjDN7z8OBF7MCSe41BHu3O5lrk9eCJtNWWIHSxErQi8=
 github.com/EXCCoin/exccd/txscript/v4 v4.0.0-20230211225306-d2f2c1c04ab7/go.mod h1:uwHzVSsqy6pHCawMW8PjLYig7e3NGwFHqbLKXKluCkY=
 github.com/EXCCoin/exccd/txscript/v4 v4.0.0-20230222134430-694fa0700495 h1:+IjWlKUYEbKd+328MaHps5zbnPbSErh8LSCqD/z2w3I=
@@ -94,6 +110,8 @@ github.com/EXCCoin/exccd/txscript/v4 v4.0.0-20260730143238-5ec2339c687a h1:WNko9
 github.com/EXCCoin/exccd/txscript/v4 v4.0.0-20260730143238-5ec2339c687a/go.mod h1:8i0IgolRQMkgR5mNlY4VaIu0FbkNUY6c9fowlRwza3A=
 github.com/EXCCoin/exccd/txscript/v4 v4.0.1-0.20260804195201-ee0256e76758 h1:BSoDg2VTVCNgTStrZHXNAtIuf6bD7jvnLBYV9DanE3Q=
 github.com/EXCCoin/exccd/txscript/v4 v4.0.1-0.20260804195201-ee0256e76758/go.mod h1:IGxqPHHGT9gqBAzoaMlbbrBo8ln9V2g6l+EmDpbZtM4=
+github.com/EXCCoin/exccd/txscript/v4 v4.0.1-0.20260805073314-b1ff084cd983 h1:z411Ssr0B4DBQPQUyHm1MMoVtBsso81TacpkpZxxkD4=
+github.com/EXCCoin/exccd/txscript/v4 v4.0.1-0.20260805073314-b1ff084cd983/go.mod h1:xC8DsYSwxLZKpOlD14Qe/KkWhtWaeR65xHn8+kZw/vY=
 github.com/EXCCoin/exccd/wire v0.0.0-20230211225306-d2f2c1c04ab7 h1:XAWS3kWKOocC1PT9Atpz7U6AzSrNOUkTEEJjS1XMPM8=
 github.com/EXCCoin/exccd/wire v0.0.0-20230211225306-d2f2c1c04ab7/go.mod h1:t749GfscEfBEITr5QKVVWH8Fgfg3VD4vYzMSDdBsg7Y=
 github.com/EXCCoin/exccd/wire v0.0.0-20230214161233-275859970533 h1:LIVcog17e3+nQnzcUT3yk3Me+dKYFoEckJc2Gxe9kS0=
@@ -106,6 +124,8 @@ github.com/EXCCoin/exccd/wire v0.0.0-20260730143238-5ec2339c687a h1:fgOfT/dHYuyz
 github.com/EXCCoin/exccd/wire v0.0.0-20260730143238-5ec2339c687a/go.mod h1:bXhK5c7Mnx2uQ44PQEeY8Z5eBSvra+H2m0lP4zOAZNo=
 github.com/EXCCoin/exccd/wire v1.5.1-0.20260804195201-ee0256e76758 h1:6afypDEN6dwV+g+wzAwRS1i2IsCCnmqhBKOQlMaAqMk=
 github.com/EXCCoin/exccd/wire v1.5.1-0.20260804195201-ee0256e76758/go.mod h1:kBTKzofJxhB9eJRhlmIDDvPb6tFVUz25ZKEk7T6i57M=
+github.com/EXCCoin/exccd/wire v1.5.1-0.20260805073314-b1ff084cd983 h1:Yy7HcQnAGgleCnGFrXzzyp5KtCvfTBpy4yiGOAUahgw=
+github.com/EXCCoin/exccd/wire v1.5.1-0.20260805073314-b1ff084cd983/go.mod h1:5YPQIzN3H0HjCx1SfuZ0TifDiGFZpQtllZ8+ncYT55I=
 github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 h1:w1UutsfOrms1J05zt7ISrnJIXKzwaspym5BTKGx93EI=
 github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412/go.mod h1:WPjqKcmVOxf0XSf3YxCJs6N6AOSrOx3obionmG7T0y0=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

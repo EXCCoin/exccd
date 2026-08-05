@@ -4,31 +4,31 @@ go 1.25.0
 
 require (
 	github.com/EXCCoin/base58 v0.0.0-20180515090142-e1a805ee5d9f
-	github.com/EXCCoin/exccd/addrmgr/v2 v2.0.1-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/bech32 v1.1.3-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/blockchain/stake/v4 v4.0.1-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/blockchain/standalone/v2 v2.1.1-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/blockchain/v4 v4.0.1-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/certgen v1.1.2-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/chaincfg/chainhash v1.0.4-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/chaincfg/v3 v3.1.2-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/connmgr/v3 v3.1.1-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/container/apbf v1.0.1-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/crypto/ripemd160 v1.0.2-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/database/v3 v3.0.1-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/dcrec v1.0.1-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/dcrec/secp256k1/v4 v4.0.2-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/dcrjson/v4 v4.0.1-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/dcrutil/v4 v4.0.1-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/gcs/v3 v3.0.1-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/hdkeychain/v3 v3.1.1-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/lru v1.1.2-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/math/uint256 v1.0.1-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/peer/v3 v3.0.1-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/rpc/jsonrpc/types/v3 v3.0.1-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/rpcclient/v7 v7.0.1-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/txscript/v4 v4.0.1-0.20260804195201-ee0256e76758
-	github.com/EXCCoin/exccd/wire v1.5.1-0.20260804195201-ee0256e76758
+	github.com/EXCCoin/exccd/addrmgr/v2 v2.0.1-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/bech32 v1.1.3-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/blockchain/stake/v4 v4.0.1-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/blockchain/standalone/v2 v2.1.1-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/blockchain/v4 v4.0.1-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/certgen v1.1.2-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/chaincfg/chainhash v1.0.4-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/chaincfg/v3 v3.1.2-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/connmgr/v3 v3.1.1-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/container/apbf v1.0.1-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/crypto/ripemd160 v1.0.2-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/database/v3 v3.0.1-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/dcrec v1.0.1-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/dcrec/secp256k1/v4 v4.0.2-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/dcrjson/v4 v4.0.1-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/dcrutil/v4 v4.0.1-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/gcs/v3 v3.0.1-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/hdkeychain/v3 v3.1.1-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/lru v1.1.2-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/math/uint256 v1.0.1-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/peer/v3 v3.0.1-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/rpc/jsonrpc/types/v3 v3.0.1-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/rpcclient/v7 v7.0.1-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/txscript/v4 v4.0.1-0.20260805073314-b1ff084cd983
+	github.com/EXCCoin/exccd/wire v1.5.1-0.20260805073314-b1ff084cd983
 	github.com/davecgh/go-spew v1.1.1
 	github.com/decred/go-socks v1.1.0
 	github.com/decred/slog v1.2.0
@@ -43,8 +43,8 @@ require (
 )
 
 require (
-	github.com/EXCCoin/exccd/crypto/blake256 v1.0.1-0.20260804195201-ee0256e76758 // indirect
-	github.com/EXCCoin/exccd/dcrec/edwards/v2 v2.0.3-0.20260804195201-ee0256e76758 // indirect
+	github.com/EXCCoin/exccd/crypto/blake256 v1.0.1-0.20260805073314-b1ff084cd983 // indirect
+	github.com/EXCCoin/exccd/dcrec/edwards/v2 v2.0.3-0.20260805073314-b1ff084cd983 // indirect
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/dchest/siphash v1.2.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
