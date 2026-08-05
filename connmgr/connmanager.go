@@ -204,6 +204,11 @@ type Config struct {
 	// to.  If nil, no new connections will be made automatically.
 	GetNewAddress func() (net.Addr, error)
 
+	// OutboundGroup returns the network group for an address.  Automatic
+	// outbound selection strongly prefers at most one pending or active
+	// connection per group.  Group limiting is disabled when nil.
+	OutboundGroup func(net.Addr) string
+
 	// Dial connects to the address on the named network. Either Dial or
 	// DialAddr need to be specified (but not both).
 	Dial func(ctx context.Context, network, addr string) (net.Conn, error)
@@ -295,6 +300,9 @@ type ConnManager struct {
 	// hostCounts tracks pending and active connections by host.
 	hostMtx    sync.Mutex
 	hostCounts map[string]uint32
+
+	// outboundGroups tracks pending and active outbound network groups.
+	outboundGroups *outboundGroupState
 }
 
 // handleFailedConn handles a connection failed due to a disconnect or any
@@ -578,7 +586,7 @@ func (cm *ConnManager) newConnReq(ctx context.Context) {
 		return
 	}
 
-	addr, err := cm.cfg.GetNewAddress()
+	addr, releaseGroup, err := cm.pickOutboundAddr()
 	if err != nil {
 		select {
 		case cm.requests <- handleFailed{c, err}:
@@ -588,6 +596,7 @@ func (cm *ConnManager) newConnReq(ctx context.Context) {
 	}
 
 	c.Addr = addr
+	r.add(releaseGroup)
 	releaseHost, err := cm.reserveHost(addr)
 	if err != nil {
 		select {
@@ -873,12 +882,17 @@ func New(cfg *Config) (*ConnManager, error) {
 	if cfg.TargetOutbound > cfg.MaxNormalConns {
 		cfg.TargetOutbound = cfg.MaxNormalConns
 	}
+	outboundGroups, err := newOutboundGroupState()
+	if err != nil {
+		return nil, MakeError(ErrCSPRNG, "unable to initialize connection manager randomness")
+	}
 	cm := ConnManager{
-		cfg:        *cfg, // Copy so caller can't mutate
-		requests:   make(chan interface{}),
-		quit:       make(chan struct{}),
-		normalSem:  makeSemaphore(cfg.MaxNormalConns),
-		hostCounts: make(map[string]uint32),
+		cfg:            *cfg, // Copy so caller can't mutate
+		requests:       make(chan interface{}),
+		quit:           make(chan struct{}),
+		normalSem:      makeSemaphore(cfg.MaxNormalConns),
+		hostCounts:     make(map[string]uint32),
+		outboundGroups: outboundGroups,
 	}
 	return &cm, nil
 }

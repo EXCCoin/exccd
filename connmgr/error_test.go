@@ -18,6 +18,7 @@ func TestErrorKindStringer(t *testing.T) {
 	}{
 		{ErrMaxNormalConns, "ErrMaxNormalConns"},
 		{ErrMaxConnsPerHost, "ErrMaxConnsPerHost"},
+		{ErrCSPRNG, "ErrCSPRNG"},
 		{ErrDialNil, "ErrDialNil"},
 		{ErrBothDialsFilled, "ErrBothDialsFilled"},
 		{ErrTorInvalidAddressResponse, "ErrTorInvalidAddressResponse"},

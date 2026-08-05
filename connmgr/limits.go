@@ -191,6 +191,7 @@ func (cm *ConnManager) reserveOutbound(ctx context.Context, c *ConnReq,
 	}
 
 	if c.Addr != nil {
+		r.add(cm.reserveOutboundGroup(c.Addr))
 		releaseHost, err := cm.reserveHost(c.Addr)
 		if err != nil {
 			r.release()

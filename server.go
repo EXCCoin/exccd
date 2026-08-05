@@ -3778,6 +3778,15 @@ func newServer(ctx context.Context, listenAddrs []string, db database.DB,
 		Timeout:         cfg.DialTimeout,
 		OnConnection:    s.outboundPeerConnected,
 		GetNewAddress:   newAddressFunc,
+		OutboundGroup: func(addr net.Addr) string {
+			tcpAddr, ok := addr.(*net.TCPAddr)
+			if !ok {
+				return addr.String()
+			}
+			netAddr := addrmgr.NewNetAddressIPPort(tcpAddr.IP,
+				uint16(tcpAddr.Port), 0)
+			return netAddr.GroupKey()
+		},
 	})
 	if err != nil {
 		return nil, err

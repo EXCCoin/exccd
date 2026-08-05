@@ -18,6 +18,9 @@ const (
 	// allowed number of connections with the same host.
 	ErrMaxConnsPerHost = ErrorKind("ErrMaxConnsPerHost")
 
+	// ErrCSPRNG indicates secure random initialization failed.
+	ErrCSPRNG = ErrorKind("ErrCSPRNG")
+
 	// ErrDialNil is used to indicate that Dial cannot be nil in
 	// the configuration.
 	ErrDialNil = ErrorKind("ErrDialNil")
