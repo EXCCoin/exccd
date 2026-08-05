@@ -35,6 +35,48 @@ func makeHeader(dcrnet CurrencyNet, command string,
 	return buf
 }
 
+// headerOnlyReader records whether message decoding attempts to read a payload
+// after a header has already proven the message invalid.
+type headerOnlyReader struct {
+	header      []byte
+	headerRead  bool
+	payloadRead bool
+}
+
+func (r *headerOnlyReader) Read(p []byte) (int, error) {
+	if r.headerRead {
+		r.payloadRead = true
+		return 0, io.EOF
+	}
+	r.headerRead = true
+	return copy(p, r.header), nil
+}
+
+func TestReadMessageRejectsInvalidHeaderWithoutReadingPayload(t *testing.T) {
+	tests := []struct {
+		name   string
+		header []byte
+	}{
+		{"wrong network", makeHeader(TestNet3, "version", 1, 0)},
+		{"malformed command", makeHeader(MainNet, "\x81", 1, 0)},
+		{"unsupported command", makeHeader(MainNet, "bogus", 1, 0)},
+		{"message payload too large", makeHeader(MainNet, "getaddr", 1, 0)},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			r := &headerOnlyReader{header: test.header}
+			_, _, _, err := ReadMessageN(r, ProtocolVersion, MainNet)
+			if err == nil {
+				t.Fatal("expected invalid message header error")
+			}
+			if r.payloadRead {
+				t.Fatal("read payload after rejecting message header")
+			}
+		})
+	}
+}
+
 // TestMessage tests the Read/WriteMessage and Read/WriteMessageN API.
 func TestMessage(t *testing.T) {
 	pver := ProtocolVersion
