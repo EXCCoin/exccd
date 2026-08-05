@@ -313,27 +313,6 @@ type peerState struct {
 	subCache        *naSubmissionCache
 }
 
-// ConnectionsWithIP returns the number of connections with the given IP.
-func (ps *peerState) ConnectionsWithIP(ip net.IP) int {
-	var total int
-	for _, p := range ps.inboundPeers {
-		if ip.Equal(p.NA().IP) {
-			total++
-		}
-	}
-	for _, p := range ps.outboundPeers {
-		if ip.Equal(p.NA().IP) {
-			total++
-		}
-	}
-	for _, p := range ps.persistentPeers {
-		if ip.Equal(p.NA().IP) {
-			total++
-		}
-	}
-	return total
-}
-
 // Count returns the count of all known peers.
 func (ps *peerState) Count() int {
 	return len(ps.inboundPeers) + len(ps.outboundPeers) +
@@ -1720,29 +1699,6 @@ func (s *server) handleAddPeerMsg(state *peerState, sp *serverPeer) bool {
 		delete(state.banned, host)
 	}
 
-	// Limit max number of connections from a single IP.  However, allow
-	// whitelisted inbound peers and localhost connections regardless.
-	isInboundWhitelisted := sp.isWhitelisted && sp.Inbound()
-	peerIP := sp.NA().IP
-	if cfg.MaxSameIP > 0 && !isInboundWhitelisted && !peerIP.IsLoopback() &&
-		state.ConnectionsWithIP(peerIP)+1 > cfg.MaxSameIP {
-		srvrLog.Infof("Max connections with %s reached [%d] - "+
-			"disconnecting peer", sp, cfg.MaxSameIP)
-		sp.Disconnect()
-		return false
-	}
-
-	// Limit max number of total peers.  However, allow whitelisted inbound
-	// peers regardless.
-	if state.Count()+1 > cfg.MaxPeers && !isInboundWhitelisted {
-		srvrLog.Infof("Max peers reached [%d] - disconnecting peer %s",
-			cfg.MaxPeers, sp)
-		sp.Disconnect()
-		// TODO: how to handle permanent peers here?
-		// they should be rescheduled.
-		return false
-	}
-
 	sp.peerNaMtx.Lock()
 	na := sp.peerNa
 	sp.peerNaMtx.Unlock()
@@ -2039,11 +1995,6 @@ func (s *server) handleQuery(state *peerState, querymsg interface{}) {
 
 	case connectNodeMsg:
 		// XXX duplicate oneshots?
-		// Limit max number of total peers.
-		if state.Count() >= cfg.MaxPeers {
-			msg.reply <- errors.New("max peers reached")
-			return
-		}
 		err := s.connManager.ForEachConnReq(func(c *connmgr.ConnReq) error {
 			if c.Addr != nil && c.Addr.String() == msg.addr {
 				if c.Permanent {
