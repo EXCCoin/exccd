@@ -20,12 +20,13 @@ for dir in $modules; do
 	name=$(basename "$dir")
 	echo "=== $name"
 	if ! (
-		cd "$dir"
-		go build ./...
+		cd "$dir" || exit 1
+		go build ./... || exit 1
 		packages=./...
 		if [ "${EXCC_CI_SUPPORTED_ONLY:-}" = 1 ]; then
 			packages=
-			for package in $(go list ./...); do
+			listed_packages=$(go list ./...) || exit 1
+			for package in $listed_packages; do
 				case "$package" in
 					github.com/EXCCoin/exccd/blockchain/v4 | \
 					github.com/EXCCoin/exccd/blockchain/stake/v4 | \
@@ -38,7 +39,7 @@ for dir in $modules; do
 			done
 		fi
 		# Intentional word splitting: packages is a go-list-generated list.
-		go test -vet=all -short $packages
+		go test -vet=all -short $packages || exit 1
 	); then
 		echo "=== FAILED: $name"
 		status=1
