@@ -139,6 +139,14 @@ func TestIPTypes(t *testing.T) {
 			t.Errorf("IsRoutable %s\n got: %v want: %v", test.ip, rv, test.routable)
 		}
 	}
+
+	orchidV2 := net.ParseIP("2001:20:abcd::1:1")
+	if !isRFC7343(orchidV2) {
+		t.Fatal("ORCHIDv2 address not recognized")
+	}
+	if IsRoutable(orchidV2) {
+		t.Fatal("ORCHIDv2 address considered publicly routable")
+	}
 }
 
 // TestGroupKey tests the GroupKey function to ensure it properly groups various
@@ -164,6 +172,7 @@ func TestGroupKey(t *testing.T) {
 		{name: "ipv4 rfc3927 169.254/16", ip: "169.254.1.2", expected: "unroutable"},
 		{name: "ipv6 rfc4193 fc00::/7", ip: "fc00::1234", expected: "unroutable"},
 		{name: "ipv6 rfc4843 2001:10::/28", ip: "2001:10::1234", expected: "unroutable"},
+		{name: "ipv6 rfc7343 2001:20::/28", ip: "2001:20::1234", expected: "unroutable"},
 		{name: "ipv6 rfc4862 fe80::/64", ip: "fe80::1234", expected: "unroutable"},
 
 		// IPv4 normal.

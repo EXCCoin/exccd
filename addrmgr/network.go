@@ -70,6 +70,10 @@ var (
 	// rfc6598Net specifies the IPv4 block as defined by RFC6598 (100.64.0.0/10)
 	rfc6598Net = ipNet("100.64.0.0", 10, 32)
 
+	// rfc7343Net specifies the IPv6 ORCHIDv2 address block as defined by
+	// RFC7343 (2001:20::/28).
+	rfc7343Net = ipNet("2001:20::", 28, 128)
+
 	// onionCatNet defines the IPv6 address block used to support Tor.
 	// bitcoind encodes a .onion address as a 16 byte number by decoding the
 	// address prior to the .onion (i.e. the key hash) base32 into a ten
@@ -235,6 +239,12 @@ func isRFC6598(netIP net.IP) bool {
 	return rfc6598Net.Contains(netIP)
 }
 
+// isRFC7343 returns whether or not the passed address is part of the IPv6
+// ORCHIDv2 range as defined by RFC7343 (2001:20::/28).
+func isRFC7343(netIP net.IP) bool {
+	return rfc7343Net.Contains(netIP)
+}
+
 // isValid returns whether or not the passed address is valid.  The address is
 // considered invalid under the following circumstances:
 // IPv4: It is either a zero or all bits set address.
@@ -253,7 +263,8 @@ func IsRoutable(netIP net.IP) bool {
 	return isValid(netIP) && !(isRFC1918(netIP) || isRFC2544(netIP) ||
 		isRFC3927(netIP) || isRFC4862(netIP) || isRFC3849(netIP) ||
 		isRFC4843(netIP) || isRFC5737(netIP) || isRFC6598(netIP) ||
-		isLocal(netIP) || (isRFC4193(netIP) && !isOnionCatTor(netIP)))
+		isRFC7343(netIP) || isLocal(netIP) ||
+		(isRFC4193(netIP) && !isOnionCatTor(netIP)))
 }
 
 // GroupKey returns a string representing the network group an address is part
