@@ -303,6 +303,10 @@ type ConnManager struct {
 
 	// outboundGroups tracks pending and active outbound network groups.
 	outboundGroups *outboundGroupState
+
+	// inboundLimiter rate limits inbound groups and applies additional pressure
+	// when the aggregate admitted connection rate indicates a flood.
+	inboundLimiter *inboundRateLimiter
 }
 
 // handleFailedConn handles a connection failed due to a disconnect or any
@@ -794,9 +798,33 @@ func (cm *ConnManager) listenHandler(ctx context.Context, listener net.Listener)
 			continue
 		}
 
+		remoteAddr := conn.RemoteAddr()
+		_, remoteIP, err := addrHostKey(remoteAddr)
+		if err != nil {
+			cm.inboundLimiter.logDrop(remoteAddr, "failed to parse address")
+			conn.Close()
+			continue
+		}
+		isWhitelisted := cm.isWhitelisted(remoteAddr)
+		isLoopback := remoteIP != nil && remoteIP.IsLoopback()
+
+		if !isWhitelisted && !isLoopback {
+			if !cm.inboundLimiter.allow(remoteAddr) {
+				cm.inboundLimiter.logDrop(remoteAddr, "rate limited")
+				conn.Close()
+				continue
+			}
+			if cm.inboundLimiter.shouldDropProbabilistic() {
+				cm.inboundLimiter.logDrop(remoteAddr,
+					"probabilistically blocked during flood")
+				conn.Close()
+				continue
+			}
+		}
+
 		reservation, err := cm.reserveInbound(conn)
 		if err != nil {
-			log.Debugf("Dropped connection from %v: %v", conn.RemoteAddr(), err)
+			cm.inboundLimiter.logDrop(remoteAddr, err.Error())
 			conn.Close()
 			continue
 		}
@@ -893,6 +921,7 @@ func New(cfg *Config) (*ConnManager, error) {
 		normalSem:      makeSemaphore(cfg.MaxNormalConns),
 		hostCounts:     make(map[string]uint32),
 		outboundGroups: outboundGroups,
+		inboundLimiter: newInboundRateLimiter(outboundGroups.key),
 	}
 	return &cm, nil
 }

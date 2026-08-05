@@ -114,6 +114,8 @@ func TestInboundPerHostLimit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Keep this test focused on per-host lifecycle behavior.
+	cm.inboundLimiter.burstLimit = 100
 	_, shutdown, wg := runConnMgrAsync(context.Background(), cm)
 	defer func() {
 		shutdown()
