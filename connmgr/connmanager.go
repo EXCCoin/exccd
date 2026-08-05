@@ -7,6 +7,7 @@ package connmgr
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"sync"
@@ -24,6 +25,11 @@ var (
 )
 
 const (
+	// MaxPersistent is the maximum number of persistent connections that can be
+	// registered.  Persistent connections do not count towards the normal
+	// connection limit.
+	MaxPersistent = 8
+
 	// maxFailedAttempts is the maximum number of successive failed connection
 	// attempts after which network failure is assumed and new connections will
 	// be delayed by the configured retry duration.
@@ -229,7 +235,7 @@ type Config struct {
 // longer wanted.
 type registerPending struct {
 	c    *ConnReq
-	done chan struct{}
+	done chan error
 }
 
 // handleConnected is used to queue a successful connection.
@@ -367,6 +373,10 @@ func (cm *ConnManager) connHandler(ctx context.Context) {
 
 		// conns represents the set of all actively connected peers.
 		conns = make(map[uint64]*ConnReq, cm.cfg.TargetOutbound)
+
+		// numPersistent includes pending, established, and retrying persistent
+		// requests.  It is intentionally independent of the normal limit.
+		numPersistent int
 	)
 
 out:
@@ -376,9 +386,51 @@ out:
 			switch msg := req.(type) {
 			case registerPending:
 				connReq := msg.c
+				if connReq.Permanent {
+					if numPersistent >= MaxPersistent {
+						connReq.updateState(ConnFailed)
+						msg.done <- MakeError(ErrMaxPersistent, fmt.Sprintf(
+							"a maximum of %d persistent connections is allowed",
+							MaxPersistent))
+						continue
+					}
+
+					host, limited, err := cm.limitedHostKey(connReq.Addr)
+					if err != nil {
+						connReq.updateState(ConnFailed)
+						msg.done <- err
+						continue
+					}
+					if limited {
+						count := 0
+						countHost := func(req *ConnReq) {
+							if !req.Permanent {
+								return
+							}
+							reqHost, _, err := addrHostKey(req.Addr)
+							if err == nil && reqHost == host {
+								count++
+							}
+						}
+						for _, req := range pending {
+							countHost(req)
+						}
+						for _, req := range conns {
+							countHost(req)
+						}
+						if uint32(count) >= cm.cfg.MaxConnsPerHost {
+							connReq.updateState(ConnFailed)
+							msg.done <- MakeError(ErrMaxPersistentPerHost,
+								fmt.Sprintf("a maximum of %d persistent connections per host is allowed",
+									cm.cfg.MaxConnsPerHost))
+							continue
+						}
+					}
+					numPersistent++
+				}
 				connReq.updateState(ConnPending)
 				pending[msg.c.id] = connReq
-				close(msg.done)
+				msg.done <- nil
 
 			case handleConnected:
 				connReq := msg.c
@@ -422,6 +474,9 @@ out:
 					connReq.updateState(ConnCanceled)
 					log.Debugf("Canceling: %v", connReq)
 					delete(pending, msg.id)
+					if connReq.Permanent {
+						numPersistent--
+					}
 					connReq.releaseReservation()
 					continue
 				}
@@ -445,6 +500,9 @@ out:
 				// this connection is being removed, we will
 				// make no further attempts with this request.
 				if !msg.retry {
+					if connReq.Permanent {
+						numPersistent--
+					}
 					connReq.updateState(ConnDisconnected)
 					continue
 				}
@@ -498,6 +556,9 @@ out:
 				}
 				if connReq != nil {
 					delete(pending, idToRemove)
+					if connReq.Permanent {
+						numPersistent--
+					}
 					connReq.updateState(ConnCanceled)
 					connReq.releaseReservation()
 					log.Debugf("Canceled pending connection to %v", msg.addr)
@@ -548,6 +609,24 @@ out:
 	log.Trace("Connection handler done")
 }
 
+// registerPendingReq registers a new connection request and returns any
+// admission error reported by the connection handler.
+func (cm *ConnManager) registerPendingReq(c *ConnReq) error {
+	done := make(chan error, 1)
+	select {
+	case cm.requests <- registerPending{c, done}:
+	case <-cm.quit:
+		return context.Canceled
+	}
+
+	select {
+	case err := <-done:
+		return err
+	case <-cm.quit:
+		return context.Canceled
+	}
+}
+
 // newConnReq creates a new connection request and connects to the
 // corresponding address.
 func (cm *ConnManager) newConnReq(ctx context.Context) {
@@ -573,19 +652,7 @@ func (cm *ConnManager) newConnReq(ctx context.Context) {
 	// manager. By registering the id before the connection is even
 	// established, we'll be able to later cancel the connection via the
 	// Remove method.
-	done := make(chan struct{})
-	select {
-	case cm.requests <- registerPending{c, done}:
-	case <-cm.quit:
-		c.releaseReservation()
-		return
-	}
-
-	// Wait for the registration to successfully add the pending conn req to
-	// the conn manager's internal state.
-	select {
-	case <-done:
-	case <-cm.quit:
+	if err := cm.registerPendingReq(c); err != nil {
 		c.releaseReservation()
 		return
 	}
@@ -651,18 +718,7 @@ func (cm *ConnManager) Connect(ctx context.Context, c *ConnReq) {
 		// connection manager. By registering the id before the
 		// connection is even established, we'll be able to later
 		// cancel the connection via the Remove method.
-		done := make(chan struct{})
-		select {
-		case cm.requests <- registerPending{c, done}:
-		case <-cm.quit:
-			return
-		}
-
-		// Wait for the registration to successfully add the pending
-		// conn req to the conn manager's internal state.
-		select {
-		case <-done:
-		case <-cm.quit:
+		if err := cm.registerPendingReq(c); err != nil {
 			return
 		}
 	}
@@ -679,6 +735,71 @@ func (cm *ConnManager) Connect(ctx context.Context, c *ConnReq) {
 		return
 	}
 	cm.dial(ctx, c)
+}
+
+// ConnectAsync registers a new connection request, performs admission checks,
+// and starts the dial asynchronously.  Admission errors are returned before
+// the method returns so callers do not report false success.
+func (cm *ConnManager) ConnectAsync(ctx context.Context, c *ConnReq) error {
+	select {
+	case <-cm.quit:
+		return context.Canceled
+	default:
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if c.State() == ConnCanceled {
+		return context.Canceled
+	}
+	if c.ID() != 0 {
+		return errors.New("connection request is already registered")
+	}
+
+	// Persistent requests must be registered first because their limit covers
+	// the request throughout retries, not only an individual dial attempt.
+	if c.Permanent {
+		atomic.StoreUint64(&c.id, atomic.AddUint64(&cm.connReqCount, 1))
+		if err := cm.registerPendingReq(c); err != nil {
+			return err
+		}
+
+		r, err := cm.reserveOutbound(ctx, c, false)
+		if err != nil {
+			// The persistent request was accepted.  Treat a temporary lack of a
+			// host slot like a failed attempt so it remains registered and retries.
+			select {
+			case cm.requests <- handleFailed{c, err}:
+			case <-cm.quit:
+				return context.Canceled
+			}
+			return nil
+		}
+		if !c.setReservation(r) {
+			return context.Canceled
+		}
+		go cm.dial(ctx, c)
+		return nil
+	}
+
+	// Reserve normal and per-host capacity before registering the request so a
+	// rejected RPC request never leaves a stale pending entry.
+	r, err := cm.reserveOutbound(ctx, c, false)
+	if err != nil {
+		c.updateState(ConnFailed)
+		return err
+	}
+	if !c.setReservation(r) {
+		return context.Canceled
+	}
+	atomic.StoreUint64(&c.id, atomic.AddUint64(&cm.connReqCount, 1))
+	if err := cm.registerPendingReq(c); err != nil {
+		c.releaseReservation()
+		return err
+	}
+
+	go cm.dial(ctx, c)
+	return nil
 }
 
 // dial performs an outbound connection attempt after admission resources have

@@ -239,6 +239,183 @@ func TestOutboundReservationLifecycle(t *testing.T) {
 	cm.Remove(last.ID())
 }
 
+// TestConnectAsyncReportsAdmissionErrors ensures manual connection callers can
+// report total and per-host admission failures without registering stale
+// pending requests.
+func TestConnectAsyncReportsAdmissionErrors(t *testing.T) {
+	tests := []struct {
+		name       string
+		config     Config
+		firstAddr  net.Addr
+		secondAddr net.Addr
+		wantErr    error
+	}{
+		{
+			name: "normal limit",
+			config: Config{
+				MaxNormalConns: 1,
+			},
+			firstAddr:  &net.TCPAddr{IP: net.ParseIP("10.0.0.1"), Port: 1001},
+			secondAddr: &net.TCPAddr{IP: net.ParseIP("10.0.0.2"), Port: 1002},
+			wantErr:    ErrMaxNormalConns,
+		},
+		{
+			name: "per-host limit",
+			config: Config{
+				MaxNormalConns:  10,
+				MaxConnsPerHost: 1,
+			},
+			firstAddr:  &net.TCPAddr{IP: net.ParseIP("10.0.0.1"), Port: 1001},
+			secondAddr: &net.TCPAddr{IP: net.ParseIP("10.0.0.1"), Port: 1002},
+			wantErr:    ErrMaxConnsPerHost,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			connected := make(chan *ConnReq, 1)
+			test.config.DialAddr = mockDialerAddr
+			test.config.OnConnection = func(req *ConnReq, conn net.Conn) {
+				connected <- req
+			}
+			cm, err := New(&test.config)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ctx, shutdown, wg := runConnMgrAsync(context.Background(), cm)
+			defer func() {
+				shutdown()
+				wg.Wait()
+			}()
+
+			first := &ConnReq{Addr: test.firstAddr}
+			if err := cm.ConnectAsync(ctx, first); err != nil {
+				t.Fatalf("first connection: %v", err)
+			}
+			select {
+			case <-connected:
+			case <-time.After(admissionTestTimeout):
+				t.Fatal("timeout waiting for first connection")
+			}
+
+			second := &ConnReq{Addr: test.secondAddr}
+			err = cm.ConnectAsync(ctx, second)
+			if !errors.Is(err, test.wantErr) {
+				t.Fatalf("second connection error is %v, want %v", err,
+					test.wantErr)
+			}
+			if second.ID() != 0 {
+				t.Fatalf("rejected request was registered with id %d", second.ID())
+			}
+
+			count := 0
+			err = cm.ForEachConnReq(func(*ConnReq) error {
+				count++
+				return nil
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if count != 1 {
+				t.Fatalf("got %d registered requests, want 1", count)
+			}
+		})
+	}
+}
+
+// TestPersistentAdmissionLimits ensures persistent requests are bounded while
+// pending, active, and waiting to retry, and that removing one releases its
+// registration slot.
+func TestPersistentAdmissionLimits(t *testing.T) {
+	dialer := func(ctx context.Context, addr net.Addr) (net.Conn, error) {
+		if addr.(*net.TCPAddr).Port == 1000 {
+			return mockDialerAddr(ctx, addr)
+		}
+		return nil, errors.New("test dial failure")
+	}
+	cm, err := New(&Config{
+		MaxConnsPerHost: 1,
+		RetryDuration:   time.Hour,
+		DialAddr:        dialer,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, shutdown, wg := runConnMgrAsync(context.Background(), cm)
+	defer func() {
+		shutdown()
+		wg.Wait()
+	}()
+
+	requests := make([]*ConnReq, 0, MaxPersistent)
+	for i := 0; i < MaxPersistent; i++ {
+		req := &ConnReq{
+			Addr: &net.TCPAddr{
+				IP:   net.IPv4(10, 0, byte(i+1), 1),
+				Port: 1000 + i,
+			},
+			Permanent: true,
+		}
+		if err := cm.ConnectAsync(ctx, req); err != nil {
+			t.Fatalf("persistent request %d: %v", i, err)
+		}
+		requests = append(requests, req)
+	}
+	waitConnReqState(t, requests[0], ConnEstablished)
+	for _, req := range requests[1:] {
+		waitConnReqState(t, req, ConnFailed)
+	}
+
+	overLimit := &ConnReq{
+		Addr:      &net.TCPAddr{IP: net.ParseIP("10.1.0.1"), Port: 2000},
+		Permanent: true,
+	}
+	err = cm.ConnectAsync(ctx, overLimit)
+	if !errors.Is(err, ErrMaxPersistent) {
+		t.Fatalf("persistent limit error is %v, want %v", err,
+			ErrMaxPersistent)
+	}
+
+	cm.Remove(requests[0].ID())
+	waitConnReqState(t, requests[0], ConnDisconnected)
+	replacement := &ConnReq{
+		Addr:      &net.TCPAddr{IP: net.ParseIP("10.2.0.1"), Port: 2001},
+		Permanent: true,
+	}
+	if err := cm.ConnectAsync(ctx, replacement); err != nil {
+		t.Fatalf("replacement persistent request: %v", err)
+	}
+
+	sameHost := &ConnReq{
+		Addr: &net.TCPAddr{
+			IP:   requests[1].Addr.(*net.TCPAddr).IP,
+			Port: 3000,
+		},
+		Permanent: true,
+	}
+	err = cm.ConnectAsync(ctx, sameHost)
+	if !errors.Is(err, ErrMaxPersistent) {
+		// The global limit is checked first.  Remove a different host and retry
+		// to specifically exercise persistent per-host registration.
+		t.Fatalf("persistent limit error is %v, want %v", err,
+			ErrMaxPersistent)
+	}
+	cm.Remove(requests[2].ID())
+	waitConnReqState(t, requests[2], ConnCanceled)
+	sameHost = &ConnReq{
+		Addr: &net.TCPAddr{
+			IP:   requests[1].Addr.(*net.TCPAddr).IP,
+			Port: 3000,
+		},
+		Permanent: true,
+	}
+	err = cm.ConnectAsync(ctx, sameHost)
+	if !errors.Is(err, ErrMaxPersistentPerHost) {
+		t.Fatalf("persistent per-host error is %v, want %v", err,
+			ErrMaxPersistentPerHost)
+	}
+}
+
 // TestPermanentRetryReleasesHostPermit ensures failed and disconnected
 // persistent attempts release their per-host permit before retrying.
 func TestPermanentRetryReleasesHostPermit(t *testing.T) {

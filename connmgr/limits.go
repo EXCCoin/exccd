@@ -130,18 +130,31 @@ func (cm *ConnManager) isWhitelisted(addr net.Addr) bool {
 	return cm.cfg.IsWhitelisted != nil && cm.cfg.IsWhitelisted(addr)
 }
 
-// reserveHost reserves a per-host connection slot unless the address is
-// exempt.  The returned callback releases the slot.
-func (cm *ConnManager) reserveHost(addr net.Addr) (func(), error) {
+// limitedHostKey returns the host key for an address subject to per-host
+// limits.  The bool result is false when the address is exempt.
+func (cm *ConnManager) limitedHostKey(addr net.Addr) (string, bool, error) {
 	if cm.cfg.MaxConnsPerHost == 0 || cm.isWhitelisted(addr) {
-		return nil, nil
+		return "", false, nil
 	}
 
 	host, ip, err := addrHostKey(addr)
 	if err != nil {
-		return nil, err
+		return "", false, err
 	}
 	if ip != nil && ip.IsLoopback() {
+		return "", false, nil
+	}
+	return host, true, nil
+}
+
+// reserveHost reserves a per-host connection slot unless the address is
+// exempt.  The returned callback releases the slot.
+func (cm *ConnManager) reserveHost(addr net.Addr) (func(), error) {
+	host, limited, err := cm.limitedHostKey(addr)
+	if err != nil {
+		return nil, err
+	}
+	if !limited {
 		return nil, nil
 	}
 

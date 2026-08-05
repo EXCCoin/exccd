@@ -17,6 +17,8 @@ func TestErrorKindStringer(t *testing.T) {
 		want string
 	}{
 		{ErrMaxNormalConns, "ErrMaxNormalConns"},
+		{ErrMaxPersistent, "ErrMaxPersistent"},
+		{ErrMaxPersistentPerHost, "ErrMaxPersistentPerHost"},
 		{ErrMaxConnsPerHost, "ErrMaxConnsPerHost"},
 		{ErrCSPRNG, "ErrCSPRNG"},
 		{ErrDialNil, "ErrDialNil"},

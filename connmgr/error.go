@@ -14,6 +14,14 @@ const (
 	// allowed number of normal inbound, outbound, and pending connections.
 	ErrMaxNormalConns = ErrorKind("ErrMaxNormalConns")
 
+	// ErrMaxPersistent indicates a connection would exceed the maximum allowed
+	// number of persistent connections.
+	ErrMaxPersistent = ErrorKind("ErrMaxPersistent")
+
+	// ErrMaxPersistentPerHost indicates a persistent connection would exceed
+	// the maximum allowed number of persistent connections with the same host.
+	ErrMaxPersistentPerHost = ErrorKind("ErrMaxPersistentPerHost")
+
 	// ErrMaxConnsPerHost indicates a connection would exceed the maximum
 	// allowed number of connections with the same host.
 	ErrMaxConnsPerHost = ErrorKind("ErrMaxConnsPerHost")

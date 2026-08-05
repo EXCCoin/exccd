@@ -2022,13 +2022,11 @@ func (s *server) handleQuery(state *peerState, querymsg interface{}) {
 			return
 		}
 
-		// TODO: if too many, nuke a non-perm peer.
-		go s.connManager.Connect(context.Background(),
-			&connmgr.ConnReq{
-				Addr:      netAddr,
-				Permanent: msg.permanent,
-			})
-		msg.reply <- nil
+		err = s.connManager.ConnectAsync(context.Background(), &connmgr.ConnReq{
+			Addr:      netAddr,
+			Permanent: msg.permanent,
+		})
+		msg.reply <- err
 
 	case removeNodeMsg:
 		found := disconnectPeer(state.persistentPeers, msg.cmp, func(sp *serverPeer) {
@@ -3749,12 +3747,12 @@ func newServer(ctx context.Context, listenAddrs []string, db database.DB,
 	if len(permanentPeers) == 0 {
 		permanentPeers = cfg.AddPeers
 	}
-	for _, addr := range permanentPeers {
-		tcpAddr, err := addrStringToNetAddr(addr)
-		if err != nil {
-			return nil, err
-		}
-
+	persistentAddrs, err := persistentPeerAddrs(permanentPeers,
+		maxConnsPerHost)
+	if err != nil {
+		return nil, err
+	}
+	for _, tcpAddr := range persistentAddrs {
 		go s.connManager.Connect(context.Background(),
 			&connmgr.ConnReq{
 				Addr:      tcpAddr,
@@ -3938,6 +3936,41 @@ func addrStringToNetAddr(addr string) (net.Addr, error) {
 		IP:   ips[0],
 		Port: port,
 	}, nil
+}
+
+// persistentPeerAddrs resolves and validates persistent peer addresses before
+// the connection manager starts so configuration errors are not lost in
+// asynchronous connection attempts.
+func persistentPeerAddrs(peers []string, maxConnsPerHost uint32) ([]net.Addr, error) {
+	if len(peers) > connmgr.MaxPersistent {
+		return nil, connmgr.MakeError(connmgr.ErrMaxPersistent, fmt.Sprintf(
+			"a maximum of %d persistent connections is allowed",
+			connmgr.MaxPersistent))
+	}
+
+	addrs := make([]net.Addr, 0, len(peers))
+	hostCounts := make(map[string]uint32)
+	for _, peer := range peers {
+		addr, err := addrStringToNetAddr(peer)
+		if err != nil {
+			return nil, err
+		}
+
+		tcpAddr := addr.(*net.TCPAddr)
+		if maxConnsPerHost > 0 && !tcpAddr.IP.IsLoopback() &&
+			!isWhitelisted(tcpAddr) {
+
+			host := tcpAddr.IP.String()
+			hostCounts[host]++
+			if hostCounts[host] > maxConnsPerHost {
+				return nil, connmgr.MakeError(connmgr.ErrMaxPersistentPerHost,
+					fmt.Sprintf("a maximum of %d persistent connections per host is allowed",
+						maxConnsPerHost))
+			}
+		}
+		addrs = append(addrs, tcpAddr)
+	}
+	return addrs, nil
 }
 
 // addLocalAddress adds an address that this node is listening on to the
