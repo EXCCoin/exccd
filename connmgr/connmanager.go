@@ -36,6 +36,10 @@ const (
 	// defaultTargetOutbound is the default number of outbound connections to
 	// maintain.
 	defaultTargetOutbound = uint32(8)
+
+	// defaultMaxNormalConns is the default maximum number of normal inbound,
+	// outbound, and pending connections.
+	defaultMaxNormalConns = uint32(125)
 )
 
 // ConnState represents the state of the requested connection.
@@ -75,6 +79,10 @@ type ConnReq struct {
 	retryCount uint32
 	conn       net.Conn
 
+	// reservation owns admission resources for the current connection attempt.
+	reservationMtx sync.Mutex
+	reservation    *connReservation
+
 	// Addr is the address to connect to.
 	Addr net.Addr
 
@@ -83,6 +91,35 @@ type ConnReq struct {
 	// manager will try to always maintain the connection including retries with
 	// increasing backoff timeouts.
 	Permanent bool
+}
+
+// setReservation assigns admission resources to the current attempt.  It
+// returns false and releases them when the request was canceled concurrently.
+func (c *ConnReq) setReservation(r *connReservation) bool {
+	c.reservationMtx.Lock()
+	if c.State() == ConnCanceled {
+		c.reservationMtx.Unlock()
+		r.release()
+		return false
+	}
+	old := c.reservation
+	c.reservation = r
+	c.reservationMtx.Unlock()
+	if old != nil {
+		old.release()
+	}
+	return true
+}
+
+// releaseReservation releases admission resources for the current attempt.
+func (c *ConnReq) releaseReservation() {
+	c.reservationMtx.Lock()
+	r := c.reservation
+	c.reservation = nil
+	c.reservationMtx.Unlock()
+	if r != nil {
+		r.release()
+	}
 }
 
 // updateState updates the state of the connection request.
@@ -132,6 +169,20 @@ type Config struct {
 	// also specified since there couldn't possibly be any accepted
 	// connections in that case.
 	OnAccept func(net.Conn)
+
+	// MaxNormalConns is the maximum number of normal inbound, outbound, and
+	// pending connections.  Persistent and whitelisted connections are exempt.
+	// Defaults to 125.
+	MaxNormalConns uint32
+
+	// MaxConnsPerHost is the maximum number of pending and active connections
+	// with the same host.  Zero disables the limit.  Whitelisted and loopback
+	// connections are exempt.
+	MaxConnsPerHost uint32
+
+	// IsWhitelisted reports whether an address is exempt from normal and
+	// per-host connection limits.
+	IsWhitelisted func(net.Addr) bool
 
 	// TargetOutbound is the number of outbound network connections to
 	// maintain. Defaults to 8.
@@ -237,6 +288,13 @@ type ConnManager struct {
 	// requests is used internally to interact with the connection handler
 	// goroutine.
 	requests chan interface{}
+
+	// normalSem limits pending and active normal connections.
+	normalSem semaphore
+
+	// hostCounts tracks pending and active connections by host.
+	hostMtx    sync.Mutex
+	hostCounts map[string]uint32
 }
 
 // handleFailedConn handles a connection failed due to a disconnect or any
@@ -316,6 +374,7 @@ out:
 					if msg.conn != nil {
 						msg.conn.Close()
 					}
+					connReq.releaseReservation()
 					log.Debugf("Ignoring connection for "+
 						"canceled connreq=%v", connReq)
 					continue
@@ -351,6 +410,7 @@ out:
 					connReq.updateState(ConnCanceled)
 					log.Debugf("Canceling: %v", connReq)
 					delete(pending, msg.id)
+					connReq.releaseReservation()
 					continue
 				}
 
@@ -363,6 +423,7 @@ out:
 				if connReq.conn != nil {
 					connReq.conn.Close()
 				}
+				connReq.releaseReservation()
 
 				if cm.cfg.OnDisconnection != nil {
 					go cm.cfg.OnDisconnection(connReq)
@@ -382,13 +443,14 @@ out:
 				// re added to the pending map, so that
 				// subsequent processing of connections and
 				// failures do not ignore the request.
-				if uint32(len(conns)) < cm.cfg.TargetOutbound ||
-					connReq.Permanent {
-
+				if connReq.Permanent {
 					connReq.updateState(ConnPending)
 					log.Debugf("Reconnecting to %v",
 						connReq)
 					pending[msg.id] = connReq
+					cm.handleFailedConn(ctx, connReq)
+				} else if uint32(len(conns)) < cm.cfg.TargetOutbound {
+					connReq.updateState(ConnDisconnected)
 					cm.handleFailedConn(ctx, connReq)
 				}
 
@@ -401,8 +463,12 @@ out:
 				}
 
 				connReq.updateState(ConnFailed)
+				connReq.releaseReservation()
 				log.Debugf("Failed to connect to %v: %v",
 					connReq, msg.err)
+				if !connReq.Permanent && cm.cfg.GetNewAddress != nil {
+					delete(pending, connReq.id)
+				}
 				cm.handleFailedConn(ctx, connReq)
 
 			case handleCancelPending:
@@ -421,6 +487,7 @@ out:
 				if connReq != nil {
 					delete(pending, idToRemove)
 					connReq.updateState(ConnCanceled)
+					connReq.releaseReservation()
 					log.Debugf("Canceled pending connection to %v", msg.addr)
 					msg.done <- nil
 				} else {
@@ -453,6 +520,18 @@ out:
 		}
 	}
 
+	// Release all admission resources and close active connections on shutdown.
+	for _, connReq := range pending {
+		connReq.updateState(ConnCanceled)
+		connReq.releaseReservation()
+	}
+	for _, connReq := range conns {
+		if connReq.conn != nil {
+			connReq.conn.Close()
+		}
+		connReq.releaseReservation()
+	}
+
 	cm.wg.Done()
 	log.Trace("Connection handler done")
 }
@@ -468,6 +547,16 @@ func (cm *ConnManager) newConnReq(ctx context.Context) {
 	c := &ConnReq{}
 	atomic.StoreUint64(&c.id, atomic.AddUint64(&cm.connReqCount, 1))
 
+	// Wait for room before registering another automatic connection so pending
+	// and active attempts are both included in the overall limit.
+	r, err := cm.reserveOutbound(ctx, c, true)
+	if err != nil {
+		return
+	}
+	if !c.setReservation(r) {
+		return
+	}
+
 	// Submit a request of a pending connection attempt to the connection
 	// manager. By registering the id before the connection is even
 	// established, we'll be able to later cancel the connection via the
@@ -476,6 +565,7 @@ func (cm *ConnManager) newConnReq(ctx context.Context) {
 	select {
 	case cm.requests <- registerPending{c, done}:
 	case <-cm.quit:
+		c.releaseReservation()
 		return
 	}
 
@@ -484,6 +574,7 @@ func (cm *ConnManager) newConnReq(ctx context.Context) {
 	select {
 	case <-done:
 	case <-cm.quit:
+		c.releaseReservation()
 		return
 	}
 
@@ -497,8 +588,18 @@ func (cm *ConnManager) newConnReq(ctx context.Context) {
 	}
 
 	c.Addr = addr
+	releaseHost, err := cm.reserveHost(addr)
+	if err != nil {
+		select {
+		case cm.requests <- handleFailed{c, err}:
+		case <-cm.quit:
+			c.releaseReservation()
+		}
+		return
+	}
+	r.add(releaseHost)
 
-	cm.Connect(ctx, c)
+	cm.dial(ctx, c)
 }
 
 // Connect assigns an id and dials a connection to the address of the connection
@@ -553,6 +654,24 @@ func (cm *ConnManager) Connect(ctx context.Context, c *ConnReq) {
 		}
 	}
 
+	r, err := cm.reserveOutbound(ctx, c, false)
+	if err != nil {
+		select {
+		case cm.requests <- handleFailed{c, err}:
+		case <-cm.quit:
+		}
+		return
+	}
+	if !c.setReservation(r) {
+		return
+	}
+	cm.dial(ctx, c)
+}
+
+// dial performs an outbound connection attempt after admission resources have
+// been reserved and the request has been registered as pending.
+func (cm *ConnManager) dial(ctx context.Context, c *ConnReq) {
+
 	log.Debugf("Attempting to connect to %v", c)
 
 	if cm.cfg.Timeout != 0 {
@@ -571,6 +690,7 @@ func (cm *ConnManager) Connect(ctx context.Context, c *ConnReq) {
 		select {
 		case cm.requests <- handleFailed{c, err}:
 		case <-cm.quit:
+			c.releaseReservation()
 		}
 		return
 	}
@@ -578,6 +698,8 @@ func (cm *ConnManager) Connect(ctx context.Context, c *ConnReq) {
 	select {
 	case cm.requests <- handleConnected{c, conn}:
 	case <-cm.quit:
+		conn.Close()
+		c.releaseReservation()
 	}
 }
 
@@ -662,7 +784,14 @@ func (cm *ConnManager) listenHandler(ctx context.Context, listener net.Listener)
 			}
 			continue
 		}
-		go cm.cfg.OnAccept(conn)
+
+		reservation, err := cm.reserveInbound(conn)
+		if err != nil {
+			log.Debugf("Dropped connection from %v: %v", conn.RemoteAddr(), err)
+			conn.Close()
+			continue
+		}
+		go cm.cfg.OnAccept(&limitedConn{Conn: conn, reservation: reservation})
 	}
 
 	cm.wg.Done()
@@ -738,10 +867,18 @@ func New(cfg *Config) (*ConnManager, error) {
 	if cfg.TargetOutbound == 0 {
 		cfg.TargetOutbound = defaultTargetOutbound
 	}
+	if cfg.MaxNormalConns == 0 {
+		cfg.MaxNormalConns = defaultMaxNormalConns
+	}
+	if cfg.TargetOutbound > cfg.MaxNormalConns {
+		cfg.TargetOutbound = cfg.MaxNormalConns
+	}
 	cm := ConnManager{
-		cfg:      *cfg, // Copy so caller can't mutate
-		requests: make(chan interface{}),
-		quit:     make(chan struct{}),
+		cfg:        *cfg, // Copy so caller can't mutate
+		requests:   make(chan interface{}),
+		quit:       make(chan struct{}),
+		normalSem:  makeSemaphore(cfg.MaxNormalConns),
+		hostCounts: make(map[string]uint32),
 	}
 	return &cm, nil
 }

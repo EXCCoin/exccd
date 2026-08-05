@@ -16,6 +16,8 @@ func TestErrorKindStringer(t *testing.T) {
 		in   ErrorKind
 		want string
 	}{
+		{ErrMaxNormalConns, "ErrMaxNormalConns"},
+		{ErrMaxConnsPerHost, "ErrMaxConnsPerHost"},
 		{ErrDialNil, "ErrDialNil"},
 		{ErrBothDialsFilled, "ErrBothDialsFilled"},
 		{ErrTorInvalidAddressResponse, "ErrTorInvalidAddressResponse"},

@@ -10,6 +10,14 @@ package connmgr
 type ErrorKind string
 
 const (
+	// ErrMaxNormalConns indicates a connection would exceed the maximum
+	// allowed number of normal inbound, outbound, and pending connections.
+	ErrMaxNormalConns = ErrorKind("ErrMaxNormalConns")
+
+	// ErrMaxConnsPerHost indicates a connection would exceed the maximum
+	// allowed number of connections with the same host.
+	ErrMaxConnsPerHost = ErrorKind("ErrMaxConnsPerHost")
+
 	// ErrDialNil is used to indicate that Dial cannot be nil in
 	// the configuration.
 	ErrDialNil = ErrorKind("ErrDialNil")

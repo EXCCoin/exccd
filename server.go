@@ -3762,15 +3762,22 @@ func newServer(ctx context.Context, listenAddrs []string, db database.DB,
 	if cfg.MaxPeers < targetOutbound {
 		targetOutbound = cfg.MaxPeers
 	}
+	var maxConnsPerHost uint32
+	if cfg.MaxSameIP > 0 {
+		maxConnsPerHost = uint32(cfg.MaxSameIP)
+	}
 	cmgr, err := connmgr.New(&connmgr.Config{
-		Listeners:      listeners,
-		OnAccept:       s.inboundPeerConnected,
-		RetryDuration:  connectionRetryInterval,
-		TargetOutbound: uint32(targetOutbound),
-		Dial:           dcrdDial,
-		Timeout:        cfg.DialTimeout,
-		OnConnection:   s.outboundPeerConnected,
-		GetNewAddress:  newAddressFunc,
+		Listeners:       listeners,
+		OnAccept:        s.inboundPeerConnected,
+		MaxNormalConns:  uint32(cfg.MaxPeers),
+		MaxConnsPerHost: maxConnsPerHost,
+		IsWhitelisted:   isWhitelisted,
+		RetryDuration:   connectionRetryInterval,
+		TargetOutbound:  uint32(targetOutbound),
+		Dial:            dcrdDial,
+		Timeout:         cfg.DialTimeout,
+		OnConnection:    s.outboundPeerConnected,
+		GetNewAddress:   newAddressFunc,
 	})
 	if err != nil {
 		return nil, err
