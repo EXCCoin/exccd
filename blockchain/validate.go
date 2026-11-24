@@ -142,7 +142,7 @@ func headerApprovesParent(header *wire.BlockHeader) bool {
 }
 
 // Mainnet activates the recovery rules for blocks at and above this height.
-const mainNetInputRecoveryHeight int64 = 1_728_000
+const mainNetInputRecoveryHeight int64 = 1_726_904
 
 func mainNetInputRecoveryActive(params *chaincfg.Params, height int64) bool {
 	return params.Net == wire.MainNet && height >= mainNetInputRecoveryHeight
