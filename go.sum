@@ -12,6 +12,8 @@ github.com/EXCCoin/exccd/blockchain/standalone/v2 v2.0.0-20260805085534-876fd2dc
 github.com/EXCCoin/exccd/blockchain/standalone/v2 v2.0.0-20260805085534-876fd2dce75d/go.mod h1:fPyVSCBAb6zPtwmDOavaw4kgPHvW/3nKWd3BiBOELY4=
 github.com/EXCCoin/exccd/blockchain/v4 v4.0.0-20260805085534-876fd2dce75d h1:EZsyaxGQP8AGamFG8T7vY35ln3kBU56sEr72fLjTD24=
 github.com/EXCCoin/exccd/blockchain/v4 v4.0.0-20260805085534-876fd2dce75d/go.mod h1:dq40fTL3KKf0pr4dAex5OGeATlzf7KRgQ9lOxOWBWQ4=
+github.com/EXCCoin/exccd/blockchain/v4 v4.0.1-0.20261124205939-eaf920965cb0 h1:0dvL3/qMs/TIVwjLdXCt+kZbJrfAgSDg3EDd7CYQAyU=
+github.com/EXCCoin/exccd/blockchain/v4 v4.0.1-0.20261124205939-eaf920965cb0/go.mod h1:CDTGKfU9N3CW97Nm4qN+SeWL5ueBe0Rb2yupG2ml1n4=
 github.com/EXCCoin/exccd/certgen v0.0.0-20260805085534-876fd2dce75d h1:fFokSQt5TsuuRkKfEWblUYA/qXolMX+6vU5LyaBxN5Q=
 github.com/EXCCoin/exccd/certgen v0.0.0-20260805085534-876fd2dce75d/go.mod h1:FTQdHaj2p9j9xL4ww+kXLyT6fGr4PWejx5hS/M8QloI=
 github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20230211225306-d2f2c1c04ab7/go.mod h1:TtjGhhFlbfS1fOTl7avuIUsHsGnBAytY+jCs9Ei45E8=

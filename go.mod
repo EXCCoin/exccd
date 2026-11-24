@@ -8,7 +8,7 @@ require (
 	github.com/EXCCoin/exccd/bech32 v0.0.0-20260805085534-876fd2dce75d
 	github.com/EXCCoin/exccd/blockchain/stake/v4 v4.0.0-20260805085534-876fd2dce75d
 	github.com/EXCCoin/exccd/blockchain/standalone/v2 v2.0.0-20260805085534-876fd2dce75d
-	github.com/EXCCoin/exccd/blockchain/v4 v4.0.0-20260805085534-876fd2dce75d
+	github.com/EXCCoin/exccd/blockchain/v4 v4.0.1-0.20261124205939-eaf920965cb0
 	github.com/EXCCoin/exccd/certgen v0.0.0-20260805085534-876fd2dce75d
 	github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20260805085534-876fd2dce75d
 	github.com/EXCCoin/exccd/chaincfg/v3 v3.0.0-20260805085534-876fd2dce75d
