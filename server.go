@@ -3487,8 +3487,12 @@ func newServer(ctx context.Context, listenAddrs []string, db database.DB,
 		return nil, err
 	}
 
+	if len(cfg.rejectedSpends) != 0 {
+		srvrLog.Infof("Local relay and mining policy blocks spends of %d configured outpoints", len(cfg.rejectedSpends))
+	}
 	txC := mempool.Config{
 		Policy: mempool.Policy{
+			RejectedSpends:         cfg.rejectedSpends,
 			EnableAncestorTracking: len(cfg.miningAddrs) > 0,
 			DisableRelayPriority:   cfg.NoRelayPriority,
 			AcceptNonStd:           cfg.AcceptNonStd,
@@ -3588,6 +3592,7 @@ func newServer(ctx context.Context, listenAddrs []string, db database.DB,
 		// NOTE: The CPU miner relies on the mempool, so the mempool has to be
 		// created before calling the function to create the CPU miner.
 		policy := mining.Policy{
+			RejectedSpends:    cfg.rejectedSpends,
 			BlockMinSize:      cfg.BlockMinSize,
 			BlockMaxSize:      cfg.BlockMaxSize,
 			BlockPrioritySize: cfg.BlockPrioritySize,

@@ -966,7 +966,7 @@ func (c *UtxoCache) Initialize(ctx context.Context, b *BlockChain, tip *blockNod
 		// created by the block.  Also, if the block votes against its parent,
 		// reconnect all of the regular transactions.
 		err = view.disconnectBlock(block, parent, stxos, isTreasuryEnabled,
-			isAutoRevocationsEnabled)
+			isAutoRevocationsEnabled, b.chainParams)
 		if err != nil {
 			return err
 		}
@@ -1051,7 +1051,7 @@ func (c *UtxoCache) Initialize(ctx context.Context, b *BlockChain, tip *blockNod
 		// In the case the block votes against the parent, also disconnect
 		// all of the regular transactions in the parent block.
 		err = view.connectBlock(b.db, block, parent, nil, isTreasuryEnabled,
-			isAutoRevocationsEnabled)
+			isAutoRevocationsEnabled, b.chainParams)
 		if err != nil {
 			return err
 		}

@@ -141,6 +141,41 @@ func headerApprovesParent(header *wire.BlockHeader) bool {
 	return voteBitsApproveParent(header.VoteBits)
 }
 
+// Mainnet activates the recovery rules for blocks at and above this height.
+const mainNetInputRecoveryHeight int64 = 1_728_000
+
+func mainNetInputRecoveryActive(params *chaincfg.Params, height int64) bool {
+	return params.Net == wire.MainNet && height >= mainNetInputRecoveryHeight
+}
+
+// The parent journal can be consumed by a disapproving activation block.
+func requiresRecoveryJournal(params *chaincfg.Params, height int64) bool {
+	return params.Net == wire.MainNet && height >= mainNetInputRecoveryHeight-1
+}
+
+// Each entry covers all regular outputs of one confirmed transaction in the
+// November inflation traces. The value is its verified output count.
+var mainNetQuarantinedTxs = map[chainhash.Hash]uint32{
+	*mustParseHash("7a9a1a571b302c6bf65287999fbdf912db7570ae6f00020d27dfabe03a8dd7c4"): 2,
+	*mustParseHash("e0f645c9e04b8c79de41aae4d9b7cb3a6c634bd11d9f6085f8e6dcb58d23c4f1"): 2,
+	*mustParseHash("4d3b79348f9b795928c8506b3cb9a8b082c054feb800d65fdf22c8303d17c236"): 2,
+	*mustParseHash("871f2f4ad5ba3ef5facb17283f0fa3c7e1a3bb5764ec13adf25c118ed47b9811"): 1,
+	*mustParseHash("d55f267cceea4eeb97c26cc6235cfcbf7b57d576266dbf1c06de08696e476733"): 2,
+	*mustParseHash("d8e6904a1e6d5c443c29c8edab386ba51a23e3b20b28ef1c581fd224e9998fda"): 3,
+}
+
+// MainNetRecoveryOutpoints returns a new set for immediate local relay and
+// mining policy. Block validation separately enforces the activation height.
+func MainNetRecoveryOutpoints() map[wire.OutPoint]struct{} {
+	outputs := make(map[wire.OutPoint]struct{})
+	for hash, count := range mainNetQuarantinedTxs {
+		for index := uint32(0); index < count; index++ {
+			outputs[wire.OutPoint{Hash: hash, Index: index, Tree: wire.TxTreeRegular}] = struct{}{}
+		}
+	}
+	return outputs
+}
+
 // isNullOutpoint determines whether or not a previous transaction output point
 // is set.
 func isNullOutpoint(outpoint *wire.OutPoint) bool {
@@ -2813,6 +2848,7 @@ func checkTransactionInputs(subsidyCache *standalone.SubsidyCache,
 	// Decred general transaction testing (and a few stake exceptions).
 	// -------------------------------------------------------------------
 
+	recoveryActive := mainNetInputRecoveryActive(chainParams, txHeight)
 	txHash := tx.Hash()
 	var totalAtomIn int64
 	for idx, txIn := range msgTx.TxIn {
@@ -2824,6 +2860,11 @@ func checkTransactionInputs(subsidyCache *standalone.SubsidyCache,
 				int64(heightVotingOn), isSubsidySplitEnabled)
 			totalAtomIn += stakeVoteSubsidy
 			continue
+		}
+		prev := txIn.PreviousOutPoint
+		if recoveryActive && prev.Tree == wire.TxTreeRegular && prev.Index < mainNetQuarantinedTxs[prev.Hash] {
+			str := fmt.Sprintf("spend of quarantined mainnet output %v", prev)
+			return 0, ruleError(ErrBadTxInput, str)
 		}
 		if idx == 0 && !fixTxInputValidation {
 			totalAtomIn += txIn.ValueIn
@@ -3622,7 +3663,7 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block, parent *dcrutil.B
 	// the parent if the block being checked votes against it.
 	if node.height > 1 && !voteBitsApproveParent(node.voteBits) {
 		err = view.disconnectDisapprovedBlock(b.db, parent, isTreasuryEnabled,
-			isAutoRevocationsEnabled)
+			isAutoRevocationsEnabled, b.chainParams)
 		if err != nil {
 			return err
 		}
@@ -3927,7 +3968,7 @@ func (b *BlockChain) CheckConnectBlockTemplate(block *dcrutil.Block) error {
 	// Update the view to unspend all of the spent txos and remove the utxos
 	// created by the tip block.  Also, if the block votes against its parent,
 	// reconnect all of the regular transactions.
-	err = view.disconnectBlock(tipBlock, parent, stxos, isTreasuryEnabled, isAutoRevocationsEnabled)
+	err = view.disconnectBlock(tipBlock, parent, stxos, isTreasuryEnabled, isAutoRevocationsEnabled, b.chainParams)
 	if err != nil {
 		return err
 	}

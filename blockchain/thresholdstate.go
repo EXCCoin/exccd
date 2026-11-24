@@ -869,6 +869,9 @@ func (b *BlockChain) IsSubsidySplitAgendaActive(prevHash *chainhash.Hash) (bool,
 //
 // This function MUST be called with the chain state lock held (for writes).
 func (b *BlockChain) isFixTxInputValidationAgendaActive(prevNode *blockNode) (bool, error) {
+	if prevNode != nil && mainNetInputRecoveryActive(b.chainParams, prevNode.height+1) {
+		return true, nil
+	}
 	const deploymentID = chaincfg.VoteIDFixTxInputValidation
 	deploymentVer, ok := b.deploymentVers[deploymentID]
 	if !ok {

@@ -2229,3 +2229,49 @@ func TestModifiedSubsidySplitSemantics(t *testing.T) {
 	g.SaveTipCoinbaseOuts()
 	g.AcceptTipBlock()
 }
+
+func TestMainnetQuarantinedSpends(t *testing.T) {
+	params := chaincfg.MainNetParams()
+	for hash, count := range mainNetQuarantinedTxs {
+		for i := uint32(0); i < count; i++ {
+			op := wire.OutPoint{Hash: hash, Index: i, Tree: wire.TxTreeRegular}
+			view := NewUtxoViewpoint(nil)
+			view.entries[op] = &UtxoEntry{amount: 10}
+			tx := wire.NewMsgTx()
+			tx.AddTxIn(wire.NewTxIn(&op, 10, nil))
+			tx.AddTxOut(wire.NewTxOut(10, nil))
+			for _, height := range []int64{mainNetInputRecoveryHeight - 1, mainNetInputRecoveryHeight} {
+				_, err := CheckTransactionInputs(nil, dcrutil.NewTx(tx), height, view, false, params, nil, false, false, false)
+				if height < mainNetInputRecoveryHeight && err != nil {
+					t.Fatalf("historical spend %v: %v", op, err)
+				}
+				if height == mainNetInputRecoveryHeight && !errors.Is(err, ErrBadTxInput) {
+					t.Fatalf("quarantined spend %v: %v", op, err)
+				}
+			}
+		}
+	}
+}
+
+func TestRecoveryRelaySet(t *testing.T) {
+	params := chaincfg.MainNetParams()
+	if requiresRecoveryJournal(params, mainNetInputRecoveryHeight-2) ||
+		!requiresRecoveryJournal(params, mainNetInputRecoveryHeight-1) ||
+		mainNetInputRecoveryActive(params, mainNetInputRecoveryHeight-1) ||
+		requiresRecoveryJournal(chaincfg.TestNet3Params(), mainNetInputRecoveryHeight) {
+		t.Fatal("invalid recovery journal boundary")
+	}
+	outputs := MainNetRecoveryOutpoints()
+	if len(outputs) != 12 {
+		t.Fatalf("got %d historical outputs, want 12", len(outputs))
+	}
+	for op := range outputs {
+		if op.Tree != wire.TxTreeRegular || op.Index >= mainNetQuarantinedTxs[op.Hash] {
+			t.Fatalf("unexpected relay output %v", op)
+		}
+		delete(outputs, op)
+	}
+	if len(MainNetRecoveryOutpoints()) != 12 {
+		t.Fatal("local policy changed the consensus output set")
+	}
+}

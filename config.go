@@ -24,15 +24,19 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EXCCoin/exccd/blockchain/v4"
+	"github.com/EXCCoin/exccd/chaincfg/chainhash"
 	"github.com/EXCCoin/exccd/connmgr/v3"
 	"github.com/EXCCoin/exccd/database/v3"
 	_ "github.com/EXCCoin/exccd/database/v3/ffldb"
 	"github.com/EXCCoin/exccd/dcrutil/v4"
 	"github.com/EXCCoin/exccd/internal/mempool"
+	"github.com/EXCCoin/exccd/internal/mining"
 	"github.com/EXCCoin/exccd/internal/version"
 	"github.com/EXCCoin/exccd/rpc/jsonrpc/types/v3"
 	"github.com/EXCCoin/exccd/sampleconfig"
 	"github.com/EXCCoin/exccd/txscript/v4/stdaddr"
+	"github.com/EXCCoin/exccd/wire"
 	"github.com/decred/go-socks/socks"
 	"github.com/decred/slog"
 	flags "github.com/jessevdk/go-flags"
@@ -199,14 +203,15 @@ type config struct {
 	AssumeValid        string `long:"assumevalid" description:"Hash of an assumed valid block.  Defaults to the hard-coded assumed valid block that is updated periodically with new releases.  Don't use a different hash unless you understand the implications.  Set to 0 to disable"`
 
 	// Relay and mempool policy.
-	MinRelayTxFee    float64 `long:"minrelaytxfee" description:"The minimum transaction fee in EXCC/kB to be considered a non-zero fee"`
-	FreeTxRelayLimit float64 `long:"limitfreerelay" description:"Limit relay of transactions with no transaction fee to the given amount in thousands of bytes per minute"`
-	NoRelayPriority  bool    `long:"norelaypriority" description:"Do not require free or low-fee transactions to have high priority for relaying"`
-	MaxOrphanTxs     int     `long:"maxorphantx" description:"Max number of orphan transactions to keep in memory"`
-	BlocksOnly       bool    `long:"blocksonly" description:"Do not accept transactions from remote peers"`
-	AcceptNonStd     bool    `long:"acceptnonstd" description:"Accept and relay non-standard transactions to the network regardless of the default settings for the active network"`
-	RejectNonStd     bool    `long:"rejectnonstd" description:"Reject non-standard transactions regardless of the default settings for the active network"`
-	AllowOldVotes    bool    `long:"allowoldvotes" description:"Enable the addition of very old votes to the mempool"`
+	MinRelayTxFee    float64  `long:"minrelaytxfee" description:"The minimum transaction fee in EXCC/kB to be considered a non-zero fee"`
+	FreeTxRelayLimit float64  `long:"limitfreerelay" description:"Limit relay of transactions with no transaction fee to the given amount in thousands of bytes per minute"`
+	NoRelayPriority  bool     `long:"norelaypriority" description:"Do not require free or low-fee transactions to have high priority for relaying"`
+	MaxOrphanTxs     int      `long:"maxorphantx" description:"Max number of orphan transactions to keep in memory"`
+	BlocksOnly       bool     `long:"blocksonly" description:"Do not accept transactions from remote peers"`
+	AcceptNonStd     bool     `long:"acceptnonstd" description:"Accept and relay non-standard transactions to the network regardless of the default settings for the active network"`
+	RejectSpends     []string `long:"rejectspend" description:"Exclude an outpoint (txid:index:tree, tree 0 regular or 1 stake) from relay and local mining. May be repeated."`
+	RejectNonStd     bool     `long:"rejectnonstd" description:"Reject non-standard transactions regardless of the default settings for the active network"`
+	AllowOldVotes    bool     `long:"allowoldvotes" description:"Enable the addition of very old votes to the mempool"`
 
 	// Mining options and policy.
 	Generate            bool     `long:"generate" description:"Generate (mine) coins using the CPU"`
@@ -233,23 +238,54 @@ type config struct {
 	LifetimeEvents bool `long:"lifetimeevents" description:"Send lifetime notifications over the TX pipe"`
 
 	// Cooked options ready for use.
-	onionlookup   func(string) ([]net.IP, error)
-	lookup        func(string) ([]net.IP, error)
-	oniondial     func(context.Context, string, string) (net.Conn, error)
-	dial          func(context.Context, string, string) (net.Conn, error)
-	miningAddrs   []stdaddr.Address
-	minRelayTxFee dcrutil.Amount
-	whitelists    []netip.Prefix
-	ipv4NetInfo   types.NetworksResult
-	ipv6NetInfo   types.NetworksResult
-	onionNetInfo  types.NetworksResult
-	params        *params
+	onionlookup    func(string) ([]net.IP, error)
+	lookup         func(string) ([]net.IP, error)
+	oniondial      func(context.Context, string, string) (net.Conn, error)
+	dial           func(context.Context, string, string) (net.Conn, error)
+	miningAddrs    []stdaddr.Address
+	rejectedSpends mining.RejectedSpends
+	minRelayTxFee  dcrutil.Amount
+	whitelists     []netip.Prefix
+	ipv4NetInfo    types.NetworksResult
+	ipv6NetInfo    types.NetworksResult
+	onionNetInfo   types.NetworksResult
+	params         *params
 }
 
 // serviceOptions defines the configuration options for the daemon as a service on
 // Windows.
 type serviceOptions struct {
 	ServiceCommand string `short:"s" long:"service" description:"Service command {install, remove, start, stop}"`
+}
+
+func parseRejectedSpends(values []string) (mining.RejectedSpends, error) {
+	var rejected mining.RejectedSpends
+	for _, value := range values {
+		parts := strings.Split(value, ":")
+		if len(parts) != 3 || len(parts[0]) != chainhash.MaxHashStringSize {
+			return nil, fmt.Errorf("invalid rejectspend %q (want txid:index:tree)", value)
+		}
+		hash, err := chainhash.NewHashFromStr(parts[0])
+		if err != nil {
+			return nil, fmt.Errorf("invalid rejectspend hash: %w", err)
+		}
+		index, err := strconv.ParseUint(parts[1], 10, 32)
+		if err != nil {
+			return nil, fmt.Errorf("invalid rejectspend index: %w", err)
+		}
+		if parts[2] != "0" && parts[2] != "1" {
+			return nil, fmt.Errorf("invalid rejectspend tree %q (want 0 or 1)", parts[2])
+		}
+		tree := int8(wire.TxTreeRegular)
+		if parts[2] == "1" {
+			tree = wire.TxTreeStake
+		}
+		if rejected == nil {
+			rejected = make(mining.RejectedSpends)
+		}
+		rejected[wire.OutPoint{Hash: *hash, Index: uint32(index), Tree: tree}] = struct{}{}
+	}
+	return rejected, nil
 }
 
 // cleanAndExpandPath expands environment variables and leading ~ in the
@@ -832,6 +868,19 @@ func loadConfig(appName string) (*config, []string, error) {
 			"used together -- choose one of the three"
 		err := fmt.Errorf(str, funcName)
 		return nil, nil, err
+	}
+
+	cfg.rejectedSpends, err = parseRejectedSpends(cfg.RejectSpends)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if cfg.params.Net == wire.MainNet {
+		defaults := blockchain.MainNetRecoveryOutpoints()
+		for op := range cfg.rejectedSpends {
+			defaults[op] = struct{}{}
+		}
+		cfg.rejectedSpends = defaults
 	}
 
 	// Set the default policy for relaying non-standard transactions

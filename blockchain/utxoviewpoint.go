@@ -11,6 +11,7 @@ import (
 	"github.com/EXCCoin/exccd/blockchain/stake/v4"
 	"github.com/EXCCoin/exccd/blockchain/standalone/v2"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/chaincfg/v3"
 	"github.com/EXCCoin/exccd/database/v3"
 	"github.com/EXCCoin/exccd/dcrutil/v4"
 	"github.com/EXCCoin/exccd/txscript/v4"
@@ -217,9 +218,11 @@ func (view *UtxoViewpoint) PriorityInput(prevOut *wire.OutPoint) (int64, int64, 
 
 // utxoEntryToSpentTxOut converts the provided utxo entry to a spent txout for
 // use in tracking all spent txouts for the spend journal.
-func utxoEntryToSpentTxOut(entry *UtxoEntry) spentTxOut {
+func utxoEntryToSpentTxOut(entry *UtxoEntry, input *wire.TxIn) spentTxOut {
 	// Populate the stxo details using the utxo entry.
 	return spentTxOut{
+		witnessMismatch: entry.Amount() != input.ValueIn ||
+			uint32(entry.BlockHeight()) != input.BlockHeight || entry.BlockIndex() != input.BlockIndex,
 		amount:        entry.Amount(),
 		pkScript:      entry.PkScript(),
 		ticketMinOuts: entry.ticketMinOuts,
@@ -271,7 +274,7 @@ func (view *UtxoViewpoint) connectStakeTransaction(tx *dcrutil.Tx,
 		// Only create the stxo details if requested.
 		if stxos != nil {
 			// Populate the stxo details using the utxo entry.
-			*stxos = append(*stxos, utxoEntryToSpentTxOut(entry))
+			*stxos = append(*stxos, utxoEntryToSpentTxOut(entry, txIn))
 		}
 
 		// Mark the entry as spent.  This is not done until after the relevant
@@ -348,7 +351,7 @@ func (view *UtxoViewpoint) connectRegularTransaction(tx *dcrutil.Tx,
 		// Only create the stxo details if requested.
 		if stxos != nil {
 			// Populate the stxo details using the utxo entry.
-			*stxos = append(*stxos, utxoEntryToSpentTxOut(entry))
+			*stxos = append(*stxos, utxoEntryToSpentTxOut(entry, txIn))
 		}
 
 		// Mark the entry as spent.  This is not done until after the relevant
@@ -406,7 +409,7 @@ func (view *UtxoViewpoint) connectRegularTransactions(block *dcrutil.Block,
 // using the provided spent txo information.
 func (view *UtxoViewpoint) disconnectTransactions(block *dcrutil.Block,
 	stxos []spentTxOut, stakeTree, isTreasuryEnabled,
-	isAutoRevocationsEnabled bool) error {
+	isAutoRevocationsEnabled, recoveryActive bool) error {
 
 	// Choose which transaction tree to use and the appropriate offset into the
 	// spent transaction outputs that corresponds to them depending on the flag.
@@ -540,10 +543,10 @@ func (view *UtxoViewpoint) disconnectTransactions(block *dcrutil.Block,
 			if entry == nil {
 				entry = &UtxoEntry{
 					amount:        txIn.ValueIn,
+					blockHeight:   txIn.BlockHeight,
+					blockIndex:    txIn.BlockIndex,
 					pkScript:      stxo.pkScript,
 					ticketMinOuts: stxo.ticketMinOuts,
-					blockHeight:   stxo.blockHeight,
-					blockIndex:    stxo.blockIndex,
 					scriptVersion: stxo.scriptVersion,
 					state:         utxoStateModified,
 					packedFlags: encodeUtxoFlags(stxo.IsCoinBase(),
@@ -551,6 +554,14 @@ func (view *UtxoViewpoint) disconnectTransactions(block *dcrutil.Block,
 				}
 
 				view.entries[txIn.PreviousOutPoint] = entry
+			}
+
+			// Historical undo kept cached metadata and otherwise reconstructed
+			// it from the witness. Recovery always uses the funding output.
+			if recoveryActive {
+				entry.amount = stxo.amount
+				entry.blockHeight = stxo.blockHeight
+				entry.blockIndex = stxo.blockIndex
 			}
 
 			// Mark the existing referenced transaction output as unspent and
@@ -575,10 +586,10 @@ func (view *UtxoViewpoint) disconnectTransactions(block *dcrutil.Block,
 // of the txos spent by those same transactions by using the provided spent txo
 // information.
 func (view *UtxoViewpoint) disconnectRegularTransactions(block *dcrutil.Block,
-	stxos []spentTxOut, isTreasuryEnabled, isAutoRevocationsEnabled bool) error {
+	stxos []spentTxOut, isTreasuryEnabled, isAutoRevocationsEnabled, recoveryActive bool) error {
 
 	return view.disconnectTransactions(block, stxos, false, isTreasuryEnabled,
-		isAutoRevocationsEnabled)
+		isAutoRevocationsEnabled, recoveryActive)
 }
 
 // disconnectStakeTransactions updates the view by removing all utxos created
@@ -586,10 +597,10 @@ func (view *UtxoViewpoint) disconnectRegularTransactions(block *dcrutil.Block,
 // of the txos spent by those same transactions by using the provided spent txo
 // information.
 func (view *UtxoViewpoint) disconnectStakeTransactions(block *dcrutil.Block,
-	stxos []spentTxOut, isTreasuryEnabled, isAutoRevocationsEnabled bool) error {
+	stxos []spentTxOut, isTreasuryEnabled, isAutoRevocationsEnabled, recoveryActive bool) error {
 
 	return view.disconnectTransactions(block, stxos, true, isTreasuryEnabled,
-		isAutoRevocationsEnabled)
+		isAutoRevocationsEnabled, recoveryActive)
 }
 
 // disconnectDisapprovedBlock updates the view by disconnecting all of the
@@ -599,7 +610,7 @@ func (view *UtxoViewpoint) disconnectStakeTransactions(block *dcrutil.Block,
 // restoring the outputs spent by it with the help of the provided spent txo
 // information.
 func (view *UtxoViewpoint) disconnectDisapprovedBlock(db database.DB, block *dcrutil.Block,
-	isTreasuryEnabled, isAutoRevocationsEnabled bool) error {
+	isTreasuryEnabled, isAutoRevocationsEnabled bool, params *chaincfg.Params) error {
 
 	// Load all of the spent txos for the block from the database spend journal.
 	var stxos []spentTxOut
@@ -627,8 +638,11 @@ func (view *UtxoViewpoint) disconnectDisapprovedBlock(db database.DB, block *dcr
 			countSpentOutputs(block, isTreasuryEnabled))
 	}
 
+	// The child decides whether to disapprove its parent, including when
+	// the parent is the last block before recovery activates.
+	recoveryActive := mainNetInputRecoveryActive(params, block.Height()+1)
 	return view.disconnectRegularTransactions(block, stxos, isTreasuryEnabled,
-		isAutoRevocationsEnabled)
+		isAutoRevocationsEnabled, recoveryActive)
 }
 
 // connectBlock updates the view by potentially disconnecting all of the
@@ -647,13 +661,13 @@ func (view *UtxoViewpoint) disconnectDisapprovedBlock(db database.DB, block *dcr
 // In addition, when the 'stxos' argument is not nil, it will be updated to
 // append an entry for each spent txout.
 func (view *UtxoViewpoint) connectBlock(db database.DB, block, parent *dcrutil.Block,
-	stxos *[]spentTxOut, isTreasuryEnabled, isAutoRevocationsEnabled bool) error {
+	stxos *[]spentTxOut, isTreasuryEnabled, isAutoRevocationsEnabled bool, params *chaincfg.Params) error {
 
 	// Disconnect the transactions in the regular tree of the parent block if
 	// the passed block disapproves it.
 	if !headerApprovesParent(&block.MsgBlock().Header) {
 		err := view.disconnectDisapprovedBlock(db, parent, isTreasuryEnabled,
-			isAutoRevocationsEnabled)
+			isAutoRevocationsEnabled, params)
 		if err != nil {
 			return err
 		}
@@ -707,7 +721,7 @@ func (view *UtxoViewpoint) connectBlock(db database.DB, block, parent *dcrutil.B
 // information is required and failure to provide it will result in an assertion
 // panic.
 func (view *UtxoViewpoint) disconnectBlock(block, parent *dcrutil.Block,
-	stxos []spentTxOut, isTreasuryEnabled, isAutoRevocationsEnabled bool) error {
+	stxos []spentTxOut, isTreasuryEnabled, isAutoRevocationsEnabled bool, params *chaincfg.Params) error {
 
 	// Sanity check the correct number of stxos are provided.
 	if len(stxos) != countSpentOutputs(block, isTreasuryEnabled) {
@@ -727,13 +741,14 @@ func (view *UtxoViewpoint) disconnectBlock(block, parent *dcrutil.Block,
 	// Disconnect all of the transactions in both the regular and stake trees of
 	// the block.  Notice that the regular tree is disconnected before the stake
 	// tree since that is the reverse of how they are connected.
+	recoveryActive := mainNetInputRecoveryActive(params, block.Height())
 	err = view.disconnectRegularTransactions(block, stxos, isTreasuryEnabled,
-		isAutoRevocationsEnabled)
+		isAutoRevocationsEnabled, recoveryActive)
 	if err != nil {
 		return err
 	}
 	err = view.disconnectStakeTransactions(block, stxos, isTreasuryEnabled,
-		isAutoRevocationsEnabled)
+		isAutoRevocationsEnabled, recoveryActive)
 	if err != nil {
 		return err
 	}
@@ -982,7 +997,7 @@ func (b *BlockChain) FetchUtxoView(tx *dcrutil.Tx, includeRegularTxns bool) (*Ut
 
 			// Disconnect the transactions in the regular tree of the tip block.
 			err = view.disconnectDisapprovedBlock(b.db, tipBlock,
-				isTreasuryEnabled, isAutoRevocationsEnabled)
+				isTreasuryEnabled, isAutoRevocationsEnabled, b.chainParams)
 			if err != nil {
 				b.disapprovedViewLock.Unlock()
 				return nil, err

@@ -166,3 +166,17 @@ func TestRemovedUpnpFlag(t *testing.T) {
 		t.Fatal("deprecated upnp flag was not retained for startup warning")
 	}
 }
+
+func TestRejectedSpends(t *testing.T) {
+	hash := strings.Repeat("ab", 32)
+	values := []string{hash + ":0:0", hash + ":0:1", hash + ":1:0", hash + ":1:0"}
+	got, err := parseRejectedSpends(values)
+	if err != nil || len(got) != 3 {
+		t.Fatalf("got %v, %v", got, err)
+	}
+	for _, value := range []string{hash + ":1", hash[2:] + ":1:0", hash + ":4294967296:0", hash + ":0:2", strings.Repeat("zz", 32) + ":0:0"} {
+		if _, err := parseRejectedSpends([]string{value}); err == nil {
+			t.Errorf("accepted invalid outpoint %q", value)
+		}
+	}
+}

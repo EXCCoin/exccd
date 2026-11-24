@@ -6,6 +6,8 @@
 package mining
 
 import (
+	"fmt"
+
 	"github.com/EXCCoin/exccd/dcrutil/v4"
 	"github.com/EXCCoin/exccd/txscript/v4"
 	"github.com/EXCCoin/exccd/wire"
@@ -18,10 +20,28 @@ const (
 	UnminedHeight = 0x7fffffff
 )
 
+// RejectedSpends lists outpoints excluded from relay and local mining.
+type RejectedSpends map[wire.OutPoint]struct{}
+
+// CheckTx checks the configured local policy against every input.
+func (r RejectedSpends) CheckTx(tx *wire.MsgTx) error {
+	if len(r) != 0 {
+		for _, input := range tx.TxIn {
+			if _, blocked := r[input.PreviousOutPoint]; blocked {
+				return fmt.Errorf("local policy rejects spend of %v (tree %d)",
+					input.PreviousOutPoint, input.PreviousOutPoint.Tree)
+			}
+		}
+	}
+	return nil
+}
+
 // Policy houses the policy (configuration parameters) which is used to control
 // the generation of block templates.  See the documentation for
 // NewBlockTemplate for more details on each of these parameters are used.
 type Policy struct {
+	RejectedSpends RejectedSpends
+
 	// BlockMinSize is the minimum block size in bytes to be used when
 	// generating a block template.
 	BlockMinSize uint32

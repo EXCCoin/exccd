@@ -1144,7 +1144,7 @@ func (b *BlockChain) reorganizeChainInternal(target *blockNode) error {
 		// created by the block.  Also, if the block votes against its parent,
 		// reconnect all of the regular transactions.
 		err = view.disconnectBlock(block, parent, stxos, isTreasuryEnabled,
-			isAutoRevocationsEnabled)
+			isAutoRevocationsEnabled, b.chainParams)
 		if err != nil {
 			return err
 		}
@@ -1239,7 +1239,7 @@ func (b *BlockChain) reorganizeChainInternal(target *blockNode) error {
 			// all of the regular transactions in the parent block.  Finally,
 			// provide an stxo slice so the spent txout details are generated.
 			err := view.connectBlock(b.db, block, parent, &stxos,
-				isTreasuryEnabled, isAutoRevocationsEnabled)
+				isTreasuryEnabled, isAutoRevocationsEnabled, b.chainParams)
 			if err != nil {
 				return err
 			}
@@ -1276,7 +1276,11 @@ func (b *BlockChain) reorganizeChainInternal(target *blockNode) error {
 				}
 				return err
 			}
-			b.index.SetStatusFlags(n, statusValidated)
+			status := statusValidated
+			if requiresRecoveryJournal(b.chainParams, n.height) {
+				status |= statusRecoveryValidated
+			}
+			b.index.SetStatusFlags(n, status)
 		}
 
 		// Update the database and chain state.

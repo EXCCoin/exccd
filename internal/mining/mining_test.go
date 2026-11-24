@@ -685,3 +685,26 @@ func TestSortParentsByVotes(t *testing.T) {
 		}
 	}
 }
+
+func TestRejectedSpendTemplates(t *testing.T) {
+	op := wire.OutPoint{Index: 1, Tree: wire.TxTreeRegular}
+	stakeOp := op
+	stakeOp.Tree = wire.TxTreeStake
+	tx := wire.NewMsgTx()
+	tx.AddTxIn(wire.NewTxIn(&stakeOp, 1, nil))
+	tx.AddTxIn(wire.NewTxIn(&op, 1, nil))
+	called := false
+	g := &BlkTmplGenerator{cfg: &Config{
+		Policy:                    &Policy{RejectedSpends: RejectedSpends{op: {}}},
+		CheckConnectBlockTemplate: func(*dcrutil.Block) error { called = true; return nil },
+	}}
+	for _, b := range []*wire.MsgBlock{{Transactions: []*wire.MsgTx{tx}}, {STransactions: []*wire.MsgTx{tx}}} {
+		if err := g.checkConnectBlockTemplate(dcrutil.NewBlock(b)); err == nil || called {
+			t.Fatal("template with blocked input reached consensus validation")
+		}
+	}
+	tx.TxIn = tx.TxIn[:1]
+	if err := g.checkConnectBlockTemplate(dcrutil.NewBlock(&wire.MsgBlock{STransactions: []*wire.MsgTx{tx}})); err != nil || !called {
+		t.Fatalf("unrelated outpoint should pass policy: %v", err)
+	}
+}

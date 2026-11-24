@@ -2867,3 +2867,24 @@ func TestSubsidySplitSemantics(t *testing.T) {
 	}
 	testPoolMembership(tc, postDCP0010Vote, false, true)
 }
+
+func TestRejectedSpendAdmission(t *testing.T) {
+	h, outputs, err := newPoolHarness(chaincfg.MainNetParams())
+	if err != nil {
+		t.Fatal(err)
+	}
+	txs, err := h.CreateTxChain(outputs[0], 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	op := txs[0].MsgTx().TxIn[0].PreviousOutPoint
+	h.txPool.cfg.Policy.AcceptNonStd = true
+	h.txPool.cfg.Policy.RejectedSpends = mining.RejectedSpends{op: {}}
+	if _, err := h.txPool.ProcessTransaction(txs[0], true, false, true, 0); !errors.Is(err, ErrNonStandard) {
+		t.Fatalf("quarantined spend: got %v", err)
+	}
+	delete(h.txPool.cfg.Policy.RejectedSpends, op)
+	if _, err := h.txPool.ProcessTransaction(txs[0], true, false, true, 0); err != nil {
+		t.Fatalf("ordinary spend: %v", err)
+	}
+}

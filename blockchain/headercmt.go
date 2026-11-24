@@ -111,7 +111,7 @@ func (b *BlockChain) FetchUtxoViewParentTemplate(block *wire.MsgBlock) (*UtxoVie
 	// created by the tip block.  Also, if the block votes against its parent,
 	// reconnect all of the regular transactions.
 	err = view.disconnectBlock(tipBlock, parent, stxos, isTreasuryEnabled,
-		isAutoRevocationsEnabled)
+		isAutoRevocationsEnabled, b.chainParams)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (b *BlockChain) FetchUtxoViewParentTemplate(block *wire.MsgBlock) (*UtxoVie
 	// block.
 	utilBlock := dcrutil.NewBlock(block)
 	err = view.connectBlock(b.db, utilBlock, parent, nil, isTreasuryEnabled,
-		isAutoRevocationsEnabled)
+		isAutoRevocationsEnabled, b.chainParams)
 	if err != nil {
 		return nil, err
 	}

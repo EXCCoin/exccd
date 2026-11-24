@@ -691,6 +691,22 @@ func (g *BlkTmplGenerator) maybeInsertStakeTx(stx *dcrutil.Tx, treeValid bool, i
 	return !missingInput
 }
 
+// The aggressive-mining path can copy transactions from a peer's block.
+func (g *BlkTmplGenerator) checkConnectBlockTemplate(block *dcrutil.Block) error {
+	rejected := g.cfg.Policy.RejectedSpends
+	if len(rejected) != 0 {
+		msg := block.MsgBlock()
+		for _, tree := range [][]*wire.MsgTx{msg.Transactions, msg.STransactions} {
+			for _, tx := range tree {
+				if err := rejected.CheckTx(tx); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return g.cfg.CheckConnectBlockTemplate(block)
+}
+
 // handleTooFewVoters handles the situation in which there are too few voters on
 // of the blockchain. If there are too few voters and a cached parent template to
 // work off of is present, it will return a copy of that template to pass to the
@@ -819,7 +835,7 @@ func (g *BlkTmplGenerator) handleTooFewVoters(nextHeight int64,
 
 		// Make sure the block validates.
 		btBlock := dcrutil.NewBlockDeepCopyCoinbase(&block)
-		err = g.cfg.CheckConnectBlockTemplate(btBlock)
+		err = g.checkConnectBlockTemplate(btBlock)
 		if err != nil {
 			str := fmt.Sprintf("failed to check template: %v while "+
 				"constructing a new parent", err.Error())
@@ -1560,6 +1576,12 @@ nextPriorityQueueItem:
 
 		txBundle := append(ancestors, prioItem.txDesc)
 		for _, bundledTx := range txBundle {
+			if err := g.cfg.Policy.RejectedSpends.CheckTx(bundledTx.Tx.MsgTx()); err != nil {
+				log.Tracef("Skipping tx %s: %v", bundledTx.Tx.Hash(), err)
+				logSkippedDeps(bundledTx.Tx, deps)
+				miningView.reject(bundledTx.Tx.Hash())
+				continue nextPriorityQueueItem
+			}
 			// Ensure the transaction inputs pass all of the necessary
 			// preconditions before allowing it to be added to the block.
 			// The fraud proof is not checked because it will be filled in
@@ -2090,7 +2112,7 @@ nextPriorityQueueItem:
 	// consensus rules to ensure it properly connects to the current best
 	// chain with no issues.
 	block := dcrutil.NewBlockDeepCopyCoinbase(&msgBlock)
-	err = g.cfg.CheckConnectBlockTemplate(block)
+	err = g.checkConnectBlockTemplate(block)
 	if err != nil {
 		str := fmt.Sprintf("failed to do final check for check connect "+
 			"block when making new block template: %v", err)

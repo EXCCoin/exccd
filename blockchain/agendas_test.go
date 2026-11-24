@@ -1045,3 +1045,17 @@ func TestSubsidySplitDeploymentInactive(t *testing.T) {
 		})
 	}
 }
+
+func TestMainnetInputRecoveryBoundary(t *testing.T) {
+	for _, params := range []*chaincfg.Params{chaincfg.MainNetParams(), chaincfg.TestNet3Params(), chaincfg.RegNetParams()} {
+		// No vote activation in this fixture. Only the emergency rule can turn on.
+		b := &BlockChain{chainParams: params}
+		for _, height := range []int64{1_726_718, mainNetInputRecoveryHeight - 1, mainNetInputRecoveryHeight, mainNetInputRecoveryHeight + 1} {
+			active, err := b.isFixTxInputValidationAgendaActive(&blockNode{height: height - 1})
+			want := params.Net == wire.MainNet && height >= mainNetInputRecoveryHeight
+			if err != nil || active != want {
+				t.Errorf("%s height %d: got %v, %v; want %v", params.Name, height, active, err, want)
+			}
+		}
+	}
+}

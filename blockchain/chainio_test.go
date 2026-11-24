@@ -17,7 +17,9 @@ import (
 	"github.com/EXCCoin/exccd/blockchain/stake/v4"
 	"github.com/EXCCoin/exccd/blockchain/standalone/v2"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/chaincfg/v3"
 	"github.com/EXCCoin/exccd/database/v3"
+	"github.com/EXCCoin/exccd/dcrutil/v4"
 	"github.com/EXCCoin/exccd/wire"
 )
 
@@ -889,6 +891,106 @@ func TestBestChainStateDeserializeErrors(t *testing.T) {
 			t.Errorf("%q: wrong error code got: %v, want: %v", test.name, err,
 				test.err)
 			continue
+		}
+	}
+}
+
+func TestJournalRestoresOriginalUTXO(t *testing.T) {
+	origin := wire.OutPoint{Hash: chainhash.Hash{1}, Index: 2, Tree: wire.TxTreeRegular}
+	input := wire.NewTxIn(&origin, 0, nil)
+	tx := wire.NewMsgTx()
+	tx.AddTxIn(input)
+	entry := &UtxoEntry{amount: 15, blockHeight: 10, blockIndex: 2}
+	spent := utxoEntryToSpentTxOut(entry, input)
+	if !spent.witnessMismatch {
+		t.Fatal("missing journal correction")
+	}
+	data, err := serializeSpendJournalEntry([]spentTxOut{spent})
+	if err != nil {
+		t.Fatal(err)
+	}
+	transactions := []*wire.MsgTx{tx}
+	oldRecords := data[:len(data)-spendCorrectionSize]
+	for _, n := range []int{1, 8, spendCorrectionSize - 1} {
+		if _, err := deserializeSpendJournalEntry(data[:len(oldRecords)+n], transactions, false); err == nil {
+			t.Fatal("accepted partial correction")
+		}
+	}
+	got, err := deserializeSpendJournalEntry(data, transactions, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	db, teardown, err := createTestDatabase("undo-height", testDbType, wire.MainNet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer teardown()
+	params := chaincfg.MainNetParams()
+	for _, disapprove := range []bool{false, true} {
+		for _, decisionHeight := range []int64{mainNetInputRecoveryHeight - 1, mainNetInputRecoveryHeight} {
+			height := decisionHeight
+			if disapprove {
+				height-- // The child votes on this block.
+			}
+			block := dcrutil.NewBlock(&wire.MsgBlock{
+				Header:       wire.BlockHeader{Height: uint32(height), VoteBits: 1},
+				Transactions: []*wire.MsgTx{wire.NewMsgTx(), tx},
+			})
+			child := dcrutil.NewBlock(&wire.MsgBlock{
+				Header:       wire.BlockHeader{Height: uint32(height + 1), PrevBlock: *block.Hash()},
+				Transactions: []*wire.MsgTx{wire.NewMsgTx()},
+			})
+			if err := db.Update(func(dbTx database.Tx) error {
+				bucket, err := dbTx.Metadata().CreateBucketIfNotExists(spendJournalBucketName)
+				if err != nil {
+					return err
+				}
+				return bucket.Put(block.Hash()[:], data)
+			}); err != nil {
+				t.Fatal(err)
+			}
+			for _, cached := range []bool{false, true} {
+				view := NewUtxoViewpoint(nil)
+				view.entries[origin] = nil
+				if cached {
+					view.entries[origin] = &UtxoEntry{amount: 2, blockHeight: 3, blockIndex: 7}
+				}
+				if disapprove {
+					err = view.connectBlock(db, child, block, nil, false, false, params)
+				} else {
+					err = view.disconnectBlock(block, nil, got, false, false, params)
+				}
+				if err != nil {
+					t.Fatal(err)
+				}
+				wantAmount, wantHeight, wantIndex := input.ValueIn, int64(input.BlockHeight), input.BlockIndex
+				if decisionHeight >= mainNetInputRecoveryHeight {
+					wantAmount, wantHeight, wantIndex = 15, 10, 2
+				} else if cached {
+					wantAmount, wantHeight, wantIndex = 2, 3, 7
+				}
+				restored := view.LookupEntry(origin)
+				if restored == nil || restored.Amount() != wantAmount ||
+					restored.BlockHeight() != wantHeight || restored.BlockIndex() != wantIndex {
+					t.Fatalf("decision height %d, disapprove=%v, cached=%v: restored %+v", decisionHeight, disapprove, cached, restored)
+				}
+				if disapprove {
+					if err := view.disconnectBlock(child, block, nil, false, false, params); err != nil {
+						t.Fatal(err)
+					}
+					if !view.LookupEntry(origin).IsSpent() {
+						t.Fatal("detaching the disapproving child did not restore its parent's spend")
+					}
+				}
+			}
+		}
+	}
+	// Existing databases have no correction record for the known incident.
+	for op, amount := range legacyFundingAmounts {
+		input.PreviousOutPoint = op
+		got, err = deserializeSpendJournalEntry(oldRecords, transactions, false)
+		if err != nil || len(got) != 1 || got[0].amount != amount {
+			t.Fatalf("legacy journal: %+v, %v", got, err)
 		}
 	}
 }

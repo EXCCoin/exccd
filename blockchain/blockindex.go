@@ -44,6 +44,9 @@ const (
 	// statusInvalidAncestor indicates that one of the ancestors of the block
 	// has failed validation, thus the block is also invalid.
 	statusInvalidAncestor blockStatus = 1 << 3
+
+	// statusRecoveryValidated marks a fully validated block with recovery-aware undo data.
+	statusRecoveryValidated blockStatus = 1 << 4
 )
 
 const (

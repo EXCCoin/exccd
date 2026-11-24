@@ -174,6 +174,8 @@ type Config struct {
 // Policy houses the policy (configuration parameters) which is used to
 // control the mempool.
 type Policy struct {
+	RejectedSpends mining.RejectedSpends
+
 	// DisableRelayPriority defines whether to relay free or low-fee
 	// transactions that do not have enough priority to be relayed.
 	DisableRelayPriority bool
@@ -1278,6 +1280,10 @@ func (mp *TxPool) maybeAcceptTransaction(tx *dcrutil.Tx, isNew, rateLimit,
 			return nil, chainRuleError(cerr)
 		}
 		return nil, err
+	}
+
+	if err := mp.cfg.Policy.RejectedSpends.CheckTx(msgTx); err != nil {
+		return nil, txRuleError(ErrNonStandard, err.Error())
 	}
 
 	// Determine active agendas based on flags.

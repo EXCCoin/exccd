@@ -16,6 +16,7 @@ import (
 
 	"github.com/EXCCoin/exccd/blockchain/stake/v4"
 	"github.com/EXCCoin/exccd/chaincfg/chainhash"
+	"github.com/EXCCoin/exccd/chaincfg/v3"
 	"github.com/EXCCoin/exccd/database/v3"
 	"github.com/EXCCoin/exccd/dcrutil/v4"
 	"github.com/EXCCoin/exccd/gcs/v3"
@@ -521,7 +522,8 @@ type spentTxOut struct {
 	// packedFlags contains additional info about the output as defined by
 	// txOutFlags.  This approach is used in order to reduce memory usage since
 	// there will be a lot of these in memory.
-	packedFlags txOutFlags
+	packedFlags     txOutFlags
+	witnessMismatch bool
 }
 
 // IsCoinBase returns whether or not the output was contained in a coinbase
@@ -634,6 +636,18 @@ func decodeSpentTxOut(serialized []byte, stxo *spentTxOut, amount int64,
 	return offset, nil
 }
 
+// Legacy readers finish after the ordinary stxos. A trailing correction stores
+// the original UTXO data only when a historical witness disagrees with it.
+// Each record is the stxo index, amount, origin height and transaction index.
+const spendCorrectionSize = 4 + 8 + 4 + 4
+
+// Previously written journals omitted the true values of these outputs. The
+// funding transactions commit to them at heights 1725633 and 1725775.
+var legacyFundingAmounts = map[wire.OutPoint]int64{
+	{Hash: *mustParseHash("8d54661b92e42a82e54fd3cce1f4126a05f65c5ee0166c5be1ba8b11a7414930"), Index: 1, Tree: wire.TxTreeRegular}: 1_513_310_000,
+	{Hash: *mustParseHash("d9414ee81f077502fc6685e4edfe8191c4d7884cfd0fc522554e36fe1e53565d"), Index: 0, Tree: wire.TxTreeRegular}: 8_832_381_000,
+}
+
 // deserializeSpendJournalEntry decodes the passed serialized byte slice into a
 // slice of spent txouts according to the format described in detail above.
 //
@@ -687,7 +701,11 @@ func deserializeSpendJournalEntry(serialized []byte, txns []*wire.MsgTx, isTreas
 			stxo := &stxos[stxoIdx]
 			stxoIdx--
 
-			n, err := decodeSpentTxOut(serialized[offset:], stxo, txIn.ValueIn,
+			amount := txIn.ValueIn
+			if original, ok := legacyFundingAmounts[txIn.PreviousOutPoint]; ok {
+				amount = original
+			}
+			n, err := decodeSpentTxOut(serialized[offset:], stxo, amount,
 				txIn.BlockHeight, txIn.BlockIndex, txIn.PreviousOutPoint.Index)
 			offset += n
 			if err != nil {
@@ -696,6 +714,26 @@ func deserializeSpendJournalEntry(serialized []byte, txns []*wire.MsgTx, isTreas
 					txIn.PreviousOutPoint, err))
 			}
 		}
+	}
+
+	lastIndex := int64(-1)
+	for offset < len(serialized) {
+		if len(serialized)-offset < spendCorrectionSize {
+			return nil, errDeserialize("truncated spend journal correction")
+		}
+		record := serialized[offset : offset+spendCorrectionSize]
+		index := int64(byteOrder.Uint32(record))
+		amount := int64(byteOrder.Uint64(record[4:]))
+		if index <= lastIndex || index >= int64(len(stxos)) || amount < 0 || amount > dcrutil.MaxAmount {
+			return nil, errDeserialize("invalid spend journal correction")
+		}
+		stxo := &stxos[index]
+		stxo.amount = amount
+		stxo.blockHeight = byteOrder.Uint32(record[12:])
+		stxo.blockIndex = byteOrder.Uint32(record[16:])
+		stxo.witnessMismatch = true
+		lastIndex = index
+		offset += spendCorrectionSize
 	}
 
 	return stxos, nil
@@ -715,6 +753,9 @@ func serializeSpendJournalEntry(stxos []spentTxOut) ([]byte, error) {
 		sz := spentTxOutSerializeSize(&stxos[i])
 		sizes = append(sizes, sz)
 		size += sz
+		if stxos[i].witnessMismatch {
+			size += spendCorrectionSize
+		}
 	}
 	serialized := make([]byte, size)
 
@@ -729,6 +770,18 @@ func serializeSpendJournalEntry(stxos []spentTxOut) ([]byte, error) {
 			return nil, AssertError(fmt.Sprintf("bad write; expect sz %v, "+
 				"got sz %v (wrote %x)", sizes[i], offset-oldOffset,
 				serialized[oldOffset:offset]))
+		}
+	}
+
+	for i := range stxos {
+		stxo := &stxos[i]
+		if stxo.witnessMismatch {
+			record := serialized[offset : offset+spendCorrectionSize]
+			byteOrder.PutUint32(record, uint32(i))
+			byteOrder.PutUint64(record[4:], uint64(stxo.amount))
+			byteOrder.PutUint32(record[12:], stxo.blockHeight)
+			byteOrder.PutUint32(record[16:], stxo.blockIndex)
+			offset += spendCorrectionSize
 		}
 	}
 
@@ -1210,7 +1263,7 @@ func (b *BlockChain) createChainState() error {
 // constructs the block index into the provided index parameter.  It is not safe
 // for concurrent access as it is only intended to be used during initialization
 // and database migration.
-func loadBlockIndex(dbTx database.Tx, genesisHash *chainhash.Hash, index *blockIndex) error {
+func loadBlockIndex(dbTx database.Tx, params *chaincfg.Params, index *blockIndex) error {
 	// Determine how many blocks will be loaded into the index in order to
 	// allocate the right amount as a single alloc versus a whole bunch of
 	// little ones to reduce pressure on the GC.
@@ -1241,6 +1294,10 @@ func loadBlockIndex(dbTx database.Tx, genesisHash *chainhash.Hash, index *blockI
 			return err
 		}
 		header := &entry.header
+		if requiresRecoveryJournal(params, int64(header.Height)) && entry.status.HasValidated() &&
+			entry.status&statusRecoveryValidated == 0 {
+			return fmt.Errorf("mainnet block %d was validated without the required recovery journal for activation at %d; preserve this database and resync in a new data directory", header.Height, mainNetInputRecoveryHeight)
+		}
 
 		// Determine the parent block node.  Since the block headers are
 		// iterated in order of height, there is a very good chance the
@@ -1248,7 +1305,7 @@ func loadBlockIndex(dbTx database.Tx, genesisHash *chainhash.Hash, index *blockI
 		var parent *blockNode
 		if lastNode == nil {
 			blockHash := header.BlockHash()
-			if blockHash != *genesisHash {
+			if blockHash != params.GenesisHash {
 				return AssertError(fmt.Sprintf("loadBlockIndex: expected "+
 					"first entry in block index to be genesis block, "+
 					"found %s", blockHash))
@@ -1403,7 +1460,7 @@ func (b *BlockChain) initChainState(ctx context.Context,
 
 		// Load all of the block index entries from the database and
 		// construct the block index.
-		err = loadBlockIndex(dbTx, &b.chainParams.GenesisHash, b.index)
+		err = loadBlockIndex(dbTx, b.chainParams, b.index)
 		if err != nil {
 			return err
 		}

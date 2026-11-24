@@ -5,7 +5,7 @@ WORKDIR /go/src/github.com/EXCCoin/exccd
 COPY . .
 
 ENV GO111MODULE=on
-ARG BUILD_VERSION=2.7.6-maintenance.20260729
+ARG BUILD_VERSION=2.8.3
 RUN go build -buildvcs=false -trimpath \
     -ldflags="-s -w -X github.com/EXCCoin/exccd/internal/version.Version=${BUILD_VERSION} -extldflags '-static'" .
 
