@@ -2379,6 +2379,20 @@ func checkTicketSubmissionInput(ticketUtxo *UtxoEntry) error {
 	return nil
 }
 
+// minTicketPayment applies the fee exponent encoded in a ticket commitment.
+// An exponent of 63 permits the entire (signed int64) amount to be used as a fee.
+func minTicketPayment(amount int64, encoded, mask, shift uint16) int64 {
+	exponent := (encoded & mask) >> shift
+	if exponent >= 63 {
+		return 0
+	}
+	limit := int64(1) << exponent
+	if limit >= amount {
+		return 0
+	}
+	return amount - limit
+}
+
 // checkTicketRedeemerCommitments ensures the outputs of the provided
 // transaction, which MUST be either a vote or revocation, adhere to the
 // commitments in the provided ticket outputs.  The vote subsidy MUST be zero
@@ -2389,7 +2403,7 @@ func checkTicketSubmissionInput(ticketUtxo *UtxoEntry) error {
 func checkTicketRedeemerCommitments(ticketHash *chainhash.Hash,
 	ticketOuts []*stake.MinimalOutput, msgTx *wire.MsgTx, isVote bool,
 	voteSubsidy int64, prevHeader *wire.BlockHeader, isTreasuryEnabled,
-	isAutoRevocationsEnabled bool) error {
+	isAutoRevocationsEnabled bool, feeLimitShift uint16) error {
 
 	// The outputs that satisfy the commitments of the ticket start at offset
 	// 2 for votes while they start at 0 for revocations.  Also, the payments
@@ -2508,22 +2522,7 @@ func checkTicketRedeemerCommitments(ticketHash *chainhash.Hash,
 				return ruleError(ErrBadPayeeValue, str)
 			}
 		} else {
-			// Calculate the minimum allowed amount based on the fee limit.
-			//
-			// Notice that, since the fee limit is in terms of a log2 value, and
-			// amounts are int64, anything greater than or equal to 63 is
-			// interpreted to mean allow spending the entire amount as a fee.
-			// This allows fast left shifts to be used to calculate the fee
-			// limit while preventing degenerate cases such as negative numbers
-			// for 63.
-			var amtLimitLow int64
-			feeLimitLog2 := feeLimitsEncoded & feeLimitMask
-			if feeLimitLog2 < 63 {
-				feeLimit := int64(1 << uint64(feeLimitLog2))
-				if feeLimit < expectedOutAmt {
-					amtLimitLow = expectedOutAmt - feeLimit
-				}
-			}
+			amtLimitLow := minTicketPayment(expectedOutAmt, feeLimitsEncoded, feeLimitMask, feeLimitShift)
 
 			// The output must not be less than the minimum amount.
 			if txOut.Value < amtLimitLow {
@@ -2672,7 +2671,7 @@ func checkVoteInputs(subsidyCache *standalone.SubsidyCache, tx *dcrutil.Tx,
 	// Ensure the outputs adhere to the ticket commitments.
 	return checkTicketRedeemerCommitments(ticketHash, ticketOuts, msgTx,
 		true, voteSubsidy, prevHeader, isTreasuryEnabled,
-		isAutoRevocationsEnabled)
+		isAutoRevocationsEnabled, 0)
 }
 
 // checkRevocationInputs performs a series of checks on the inputs to a
@@ -2684,7 +2683,7 @@ func checkVoteInputs(subsidyCache *standalone.SubsidyCache, tx *dcrutil.Tx,
 // is a revocation.
 func checkRevocationInputs(tx *dcrutil.Tx, txHeight int64, view *UtxoViewpoint,
 	params *chaincfg.Params, prevHeader *wire.BlockHeader, isTreasuryEnabled,
-	isAutoRevocationsEnabled bool) error {
+	isAutoRevocationsEnabled bool, feeLimitShift uint16) error {
 
 	ticketMaturity := int64(params.TicketMaturity)
 	revokeHash := tx.Hash()
@@ -2775,7 +2774,16 @@ func checkRevocationInputs(tx *dcrutil.Tx, txHeight int64, view *UtxoViewpoint,
 	// Ensure the outputs adhere to the ticket commitments.  Zero is passed for
 	// the vote subsidy since revocations do not produce any subsidy.
 	return checkTicketRedeemerCommitments(ticketHash, ticketOuts, msgTx,
-		false, 0, prevHeader, isTreasuryEnabled, isAutoRevocationsEnabled)
+		false, 0, prevHeader, isTreasuryEnabled, isAutoRevocationsEnabled, feeLimitShift)
+}
+
+type txInputRules struct {
+	strictInputs bool
+
+	// Legacy block validation interpreted the masked revocation exponent
+	// without shifting. Relay and mining interpret the specified exponent.
+	// Automatic revocations use an exact zero fee regardless of this field.
+	revocationFeeLimitShift uint16
 }
 
 // checkTransactionInputs performs a series of checks on the inputs to a
@@ -2793,8 +2801,8 @@ func checkRevocationInputs(tx *dcrutil.Tx, txHeight int64, view *UtxoViewpoint,
 func checkTransactionInputs(subsidyCache *standalone.SubsidyCache,
 	tx *dcrutil.Tx, txHeight int64, view *UtxoViewpoint, checkFraudProof bool,
 	chainParams *chaincfg.Params, prevHeader *wire.BlockHeader,
-	isTreasuryEnabled, isAutoRevocationsEnabled, isSubsidySplitEnabled,
-	fixTxInputValidation bool) (int64, error) {
+	isTreasuryEnabled, isAutoRevocationsEnabled, isSubsidySplitEnabled bool,
+	rules txInputRules) (int64, error) {
 
 	// Coinbase transactions have no inputs.
 	msgTx := tx.MsgTx()
@@ -2847,7 +2855,7 @@ func checkTransactionInputs(subsidyCache *standalone.SubsidyCache,
 	isRevocation := stake.IsSSRtx(msgTx, isAutoRevocationsEnabled)
 	if isRevocation {
 		err := checkRevocationInputs(tx, txHeight, view, chainParams,
-			prevHeader, isTreasuryEnabled, isAutoRevocationsEnabled)
+			prevHeader, isTreasuryEnabled, isAutoRevocationsEnabled, rules.revocationFeeLimitShift)
 		if err != nil {
 			return 0, err
 		}
@@ -2875,7 +2883,7 @@ func checkTransactionInputs(subsidyCache *standalone.SubsidyCache,
 			str := fmt.Sprintf("spend of quarantined mainnet output %v", prev)
 			return 0, ruleError(ErrBadTxInput, str)
 		}
-		if idx == 0 && !fixTxInputValidation {
+		if idx == 0 && !rules.strictInputs {
 			totalAtomIn += txIn.ValueIn
 			continue
 		}
@@ -3083,7 +3091,10 @@ func CheckTransactionInputs(subsidyCache *standalone.SubsidyCache,
 
 	return checkTransactionInputs(subsidyCache, tx, txHeight, view,
 		checkFraudProof, chainParams, prevHeader, isTreasuryEnabled,
-		isAutoRevocationsEnabled, isSubsidySplitEnabled, true)
+		isAutoRevocationsEnabled, isSubsidySplitEnabled, txInputRules{
+			strictInputs:            true,
+			revocationFeeLimitShift: stake.SStxRevReturnFractionShift,
+		})
 }
 
 // CountSigOps returns the number of signature operations for all transaction
@@ -3440,7 +3451,7 @@ func (b *BlockChain) checkTransactionsAndConnect(inputFees dcrutil.Amount, node 
 		txFee, err := checkTransactionInputs(b.subsidyCache, tx, node.height,
 			view, checkFraudProof, b.chainParams, &prevHeader,
 			isTreasuryEnabled, isAutoRevocationsEnabled, isSubsidySplitEnabled,
-			fixTxInputValidation)
+			txInputRules{strictInputs: fixTxInputValidation})
 		if err != nil {
 			log.Tracef("CheckTransactionInputs failed; error returned: %v", err)
 			return err

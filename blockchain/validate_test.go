@@ -444,12 +444,12 @@ func TestRegularTxFirstInputValidation(t *testing.T) {
 	msgTx.AddTxOut(wire.NewTxOut(1, []byte{txscript.OP_TRUE}))
 
 	if _, err := checkTransactionInputs(nil, dcrutil.NewTx(msgTx), 2, view,
-		true, params, nil, false, false, false, false); err != nil {
+		true, params, nil, false, false, false, txInputRules{}); err != nil {
 		t.Fatalf("before activation: unexpected error: %v", err)
 	}
 
 	_, err := checkTransactionInputs(nil, dcrutil.NewTx(msgTx), 2, view,
-		true, params, nil, false, false, false, true)
+		true, params, nil, false, false, false, txInputRules{strictInputs: true})
 	if !errors.Is(err, ErrFraudAmountIn) {
 		t.Fatalf("at activation: error = %v, want %v", err,
 			ErrFraudAmountIn)
@@ -2332,6 +2332,26 @@ func TestStakeFeeAccumulatorBounds(t *testing.T) {
 		const amountSlots = math.MaxInt64 / int64(dcrutil.MaxAmount)
 		if inputs+votes > amountSlots || outputSums+votes > amountSlots {
 			t.Errorf("%s stake limits exceed the int64 fee accumulator", params.Name)
+		}
+	}
+}
+
+// TestTicketFeeExponents uses commitment values only. Vote and revocation
+// exponents occupy different bytes and the historical revocation interpretation
+// must remain available for old blocks.
+func TestTicketFeeExponents(t *testing.T) {
+	const encoded = uint16(9<<stake.SStxRevReturnFractionShift | 2)
+	for _, tc := range []struct {
+		name        string
+		mask, shift uint16
+		want        int64
+	}{
+		{"vote", stake.SStxVoteReturnFractionMask, 0, 996},
+		{"revocation", stake.SStxRevReturnFractionMask, stake.SStxRevReturnFractionShift, 488},
+		{"legacy revocation", stake.SStxRevReturnFractionMask, 0, 0},
+	} {
+		if got := minTicketPayment(1000, encoded, tc.mask, tc.shift); got != tc.want {
+			t.Errorf("%s: got %d, want %d", tc.name, got, tc.want)
 		}
 	}
 }
