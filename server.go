@@ -302,13 +302,11 @@ func (sc *naSubmissionCache) bestSubmission(net addrmgr.NetAddressType) *naSubmi
 	return best
 }
 
-// peerState maintains state of inbound, persistent, outbound peers as well
-// as banned peers and outbound groups.
+// peerState tracks inbound, persistent and outbound peers and outbound groups.
 type peerState struct {
 	inboundPeers    map[int32]*serverPeer
 	outboundPeers   map[int32]*serverPeer
 	persistentPeers map[int32]*serverPeer
-	banned          map[string]time.Time
 	outboundGroups  map[string]int
 	subCache        *naSubmissionCache
 }
@@ -450,6 +448,9 @@ type server struct {
 	bytesReceived uint64 // Total bytes received from all peers since start.
 	bytesSent     uint64 // Total bytes sent by all peers since start.
 	shutdown      int32
+
+	banMtx sync.Mutex
+	banned map[string]time.Time
 
 	chainParams          *chaincfg.Params
 	addrManager          *addrmgr.AddrManager
@@ -730,38 +731,6 @@ func (sp *serverPeer) OnVersion(_ *peer.Peer, msg *wire.MsgVersion) {
 		return
 	}
 
-	// Update the address manager and request known addresses from the
-	// remote peer for outbound connections.  This is skipped when running
-	// on the simulation and regression test networks since they are only
-	// intended to connect to specified peers and actively avoid advertising
-	// and connecting to discovered peers.
-	if !cfg.SimNet && !cfg.RegNet && !isInbound {
-		// Advertise the local address when the server accepts incoming
-		// connections and it believes itself to be close to the best
-		// known tip.
-		if !cfg.DisableListen && sp.server.syncManager.IsCurrent() {
-			// Get address that best matches.
-			lna := addrManager.GetBestLocalAddress(remoteAddr)
-			if lna.IsRoutable() {
-				// Filter addresses the peer already knows about.
-				addresses := []*addrmgr.NetAddress{lna}
-				sp.pushAddrMsg(addresses)
-			}
-		}
-
-		// Request known addresses if the server address manager needs
-		// more.
-		if addrManager.NeedMoreAddresses() {
-			sp.QueueMessage(wire.NewMsgGetAddr(), nil)
-		}
-
-		// Mark the address as a known good address.
-		err := addrManager.Good(remoteAddr)
-		if err != nil {
-			srvrLog.Debugf("Marking address as good failed: %v", err)
-		}
-	}
-
 	sp.peerNaMtx.Lock()
 	sp.peerNa = &msg.AddrYou
 	sp.peerNaMtx.Unlock()
@@ -773,15 +742,41 @@ func (sp *serverPeer) OnVersion(_ *peer.Peer, msg *wire.MsgVersion) {
 	// the local clock to keep the network time in sync.
 	sp.server.timeSource.AddTimeSample(sp.Addr(), msg.Timestamp)
 
-	// Add valid peer to the server.
 	sp.server.AddPeer(sp)
 }
 
-// OnVerAck is invoked when a peer receives a verack wire message.  It creates
-// and sends a sendheaders message to request all block annoucements are made
-// via full headers instead of the inv message.
+// OnVerAck requests header announcements and starts outbound address discovery.
 func (sp *serverPeer) OnVerAck(_ *peer.Peer, msg *wire.MsgVerAck) {
 	sp.QueueMessage(wire.NewMsgSendHeaders(), nil)
+	if sp.Inbound() || cfg.SimNet || cfg.RegNet || !sp.Connected() || sp.server.isBanned(sp.Addr()) {
+		return
+	}
+	remoteAddr := wireToAddrmgrNetAddress(sp.NA())
+	addrManager := sp.server.addrManager
+	// Advertise the local address when the server accepts incoming
+	// connections and it believes itself to be close to the best
+	// known tip.
+	if !cfg.DisableListen && sp.server.syncManager.IsCurrent() {
+		// Get address that best matches.
+		lna := addrManager.GetBestLocalAddress(remoteAddr)
+		if lna.IsRoutable() {
+			// Filter addresses the peer already knows about.
+			addresses := []*addrmgr.NetAddress{lna}
+			sp.pushAddrMsg(addresses)
+		}
+	}
+
+	// Request known addresses if the server address manager needs
+	// more.
+	if addrManager.NeedMoreAddresses() {
+		sp.QueueMessage(wire.NewMsgGetAddr(), nil)
+	}
+
+	// Mark the address as a known good address.
+	err := addrManager.Good(remoteAddr)
+	if err != nil {
+		srvrLog.Debugf("Marking address as good failed: %v", err)
+	}
 }
 
 // OnMemPool is invoked when a peer receives a mempool wire message.  It creates
@@ -1680,23 +1675,10 @@ func (s *server) handleAddPeerMsg(state *peerState, sp *serverPeer) bool {
 		return false
 	}
 
-	// Disconnect banned peers.
-	host, _, err := net.SplitHostPort(sp.Addr())
-	if err != nil {
-		srvrLog.Debugf("can't split hostport %v", err)
+	// A ban can also take effect while a peer is negotiating.
+	if s.isBanned(sp.Addr()) {
 		sp.Disconnect()
 		return false
-	}
-	if banEnd, ok := state.banned[host]; ok {
-		if time.Now().Before(banEnd) {
-			srvrLog.Debugf("Peer %s is banned for another %v - disconnecting",
-				host, time.Until(banEnd))
-			sp.Disconnect()
-			return false
-		}
-
-		srvrLog.Infof("Peer %s is no longer banned", host)
-		delete(state.banned, host)
 	}
 
 	sp.peerNaMtx.Lock()
@@ -1838,7 +1820,7 @@ func (s *server) handleDonePeerMsg(state *peerState, sp *serverPeer) {
 
 // handleBanPeerMsg deals with banning peers.  It is invoked from the
 // peerHandler goroutine.
-func (s *server) handleBanPeerMsg(state *peerState, sp *serverPeer) {
+func (s *server) handleBanPeerMsg(sp *serverPeer) {
 	host, _, err := net.SplitHostPort(sp.Addr())
 	if err != nil {
 		srvrLog.Debugf("can't split ban peer %s %v", sp.Addr(), err)
@@ -1847,7 +1829,12 @@ func (s *server) handleBanPeerMsg(state *peerState, sp *serverPeer) {
 	direction := directionString(sp.Inbound())
 	srvrLog.Infof("Banned peer %s (%s) for %v", host, direction,
 		cfg.BanDuration)
-	state.banned[host] = time.Now().Add(cfg.BanDuration)
+	s.banMtx.Lock()
+	if s.banned == nil {
+		s.banned = make(map[string]time.Time)
+	}
+	s.banned[host] = time.Now().Add(cfg.BanDuration)
+	s.banMtx.Unlock()
 }
 
 // handleRelayInvMsg deals with relaying inventory to peers that are not already
@@ -2186,11 +2173,36 @@ func newPeerConfig(sp *serverPeer) *peer.Config {
 	}
 }
 
+// isBanned checks an endpoint at connection time and again at peer admission.
+func (s *server) isBanned(addr string) bool {
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		srvrLog.Debugf("Invalid peer endpoint %s: %v", addr, err)
+		return true
+	}
+	s.banMtx.Lock()
+	defer s.banMtx.Unlock()
+	expires, ok := s.banned[host]
+	if ok && time.Now().Before(expires) {
+		srvrLog.Debugf("Peer %s is banned until %v", host, expires)
+		return true
+	}
+	if ok {
+		delete(s.banned, host)
+	}
+	return false
+}
+
 // inboundPeerConnected is invoked by the connection manager when a new inbound
 // connection is established.  It initializes a new inbound server peer
 // instance, associates it with the connection, and starts a goroutine to wait
 // for disconnection.
 func (s *server) inboundPeerConnected(conn net.Conn) {
+	if s.isBanned(conn.RemoteAddr().String()) {
+		conn.Close()
+		return
+	}
+
 	sp := newServerPeer(s, false)
 	sp.isWhitelisted = isWhitelisted(conn.RemoteAddr())
 	sp.Peer = peer.NewInboundPeer(newPeerConfig(sp))
@@ -2204,6 +2216,12 @@ func (s *server) inboundPeerConnected(conn net.Conn) {
 // request instance and the connection itself, and finally notifies the address
 // manager of the attempt.
 func (s *server) outboundPeerConnected(c *connmgr.ConnReq, conn net.Conn) {
+	if s.isBanned(c.Addr.String()) {
+		conn.Close()
+		s.connManager.Disconnect(c.ID())
+		return
+	}
+
 	sp := newServerPeer(s, c.Permanent)
 	p, err := peer.NewOutboundPeer(newPeerConfig(sp), c.Addr.String())
 	if err != nil {
@@ -2280,7 +2298,6 @@ func (s *server) peerHandler(ctx context.Context) {
 		inboundPeers:    make(map[int32]*serverPeer),
 		persistentPeers: make(map[int32]*serverPeer),
 		outboundPeers:   make(map[int32]*serverPeer),
-		banned:          make(map[string]time.Time),
 		outboundGroups:  make(map[string]int),
 		subCache: &naSubmissionCache{
 			cache: make(map[string]*naSubmission, maxCachedNaSubmissions),
@@ -2310,7 +2327,7 @@ out:
 
 		// Peer to ban.
 		case p := <-s.banPeers:
-			s.handleBanPeerMsg(state, p)
+			s.handleBanPeerMsg(p)
 
 		// New inventory to potentially be relayed to other peers.
 		case invMsg := <-s.relayInv:

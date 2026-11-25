@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"errors"
+	"io"
 	"net"
 	"strconv"
 	"testing"
@@ -21,7 +22,6 @@ func emptyPeerState() *peerState {
 		inboundPeers:    make(map[int32]*serverPeer),
 		outboundPeers:   make(map[int32]*serverPeer),
 		persistentPeers: make(map[int32]*serverPeer),
-		banned:          make(map[string]time.Time),
 		outboundGroups:  make(map[string]int),
 		subCache: &naSubmissionCache{
 			cache: make(map[string]*naSubmission),
@@ -224,5 +224,41 @@ func TestPersistentPeerAddrs(t *testing.T) {
 	}
 	if len(addrs) != 2 {
 		t.Fatalf("got %d addresses, want 2", len(addrs))
+	}
+}
+
+func TestPeerBanExpiry(t *testing.T) {
+	s := &server{banned: map[string]time.Time{
+		"192.0.2.1":   time.Now().Add(time.Minute),
+		"2001:db8::1": time.Now().Add(-time.Minute),
+	}}
+	for addr, want := range map[string]bool{
+		"192.0.2.1:1234": true, "192.0.2.1:5678": true, "[2001:db8::1]:1234": false,
+		"192.0.2.2:1234": false, "bad endpoint": true,
+	} {
+		if got := s.isBanned(addr); got != want {
+			t.Errorf("isBanned(%q) = %t, want %t", addr, got, want)
+		}
+	}
+	if len(s.banned) != 1 {
+		t.Fatalf("retained %d bans, want 1", len(s.banned))
+	}
+}
+
+type peerTestConn struct {
+	net.Conn
+	remote net.Addr
+}
+
+func (c peerTestConn) RemoteAddr() net.Addr { return c.remote }
+
+func TestBannedInboundClosesBeforeHandshake(t *testing.T) {
+	host := net.IPv4(192, 0, 2, 9)
+	s := &server{banned: map[string]time.Time{host.String(): time.Now().Add(time.Minute)}}
+	inbound, remote := net.Pipe()
+	defer remote.Close()
+	s.inboundPeerConnected(peerTestConn{Conn: inbound, remote: &net.TCPAddr{IP: host, Port: 1234}})
+	if _, err := remote.Read(make([]byte, 1)); err != io.EOF {
+		t.Fatalf("expected closed connection, got %v", err)
 	}
 }
