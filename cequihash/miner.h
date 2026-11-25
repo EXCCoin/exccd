@@ -259,14 +259,11 @@ struct TrompEquihash {
     struct htalloc {
         bucket0 *heap0;
         bucket1 *heap1;
-        uint32_t alloced;
-
-        htalloc() { alloced = 0; }
 
         void alloctrees() {
             static_assert(2 * DIGITBITS >= TREEBITS, "needed to ensure hashes shorten by 1 unit every 2 digits");
-            heap0 = (bucket0 *)alloc(NBUCKETS, sizeof(bucket0));
-            heap1 = (bucket1 *)alloc(NBUCKETS, sizeof(bucket1));
+            heap0 = (bucket0 *)calloc(NBUCKETS, sizeof(bucket0));
+            heap1 = (bucket1 *)calloc(NBUCKETS, sizeof(bucket1));
         }
 
         void dealloctrees() {
@@ -274,12 +271,6 @@ struct TrompEquihash {
             free(heap1);
         }
 
-        void *alloc(const uint32_t n, const uint32_t sz) {
-            void *mem = calloc(n, sz);
-            assert(mem);
-            alloced += n * sz;
-            return mem;
-        }
     };
 
     //----------------------------------------------
@@ -297,8 +288,8 @@ struct TrompEquihash {
         static_assert(sizeof(htunit) == sizeof(tree_t), "");
         static_assert(WK & 1, "K assumed odd in candidate() calling indices1()");
         hta.alloctrees();
-        nslots = (bsizes *)hta.alloc(2 * NBUCKETS, sizeof(uint32_t));
-        sols   = (proof *)hta.alloc(MAXSOLS, sizeof(proof));
+        nslots = (bsizes *)calloc(2 * NBUCKETS, sizeof(uint32_t));
+        sols   = (proof *)calloc(MAXSOLS, sizeof(proof));
     }
 
     ~TrompEquihash() {
@@ -318,6 +309,7 @@ struct TrompEquihash {
 
     // prepare blake2b midstate for new run and initialize counters
     bool setstate(const unsigned char *input, const uint32_t len, uint32_t nonce, uint8_t algo_version) {
+        if (!hta.heap0 || !hta.heap1 || !nslots || !sols) return false;
         setperson(&blake_ctx);
         nsols = 0;
         return setheader(&blake_ctx, input, len, nonce, algo_version);
