@@ -2296,3 +2296,23 @@ func TestAddAmount(t *testing.T) {
 		}
 	}
 }
+
+func TestBlockSigOpAccumulator(t *testing.T) {
+	for _, tc := range []struct {
+		total uint32
+		add   int
+		want  uint32
+		valid bool
+	}{
+		{0, 0, 0, true},
+		{MaxSigOpsPerBlock - 1, 1, MaxSigOpsPerBlock, true},
+		{MaxSigOpsPerBlock, 1, 0, false},
+		{1, math.MaxInt, 0, false},
+		{math.MaxUint32, 1, 0, false},
+	} {
+		got, err := addBlockSigOps(tc.total, tc.add)
+		if tc.valid && (err != nil || got != tc.want) || !tc.valid && !errors.Is(err, ErrTooManySigOps) {
+			t.Errorf("adding %d to %d: count %d, err %v", tc.add, tc.total, got, err)
+		}
+	}
+}

@@ -1897,7 +1897,7 @@ func (b *BlockChain) checkBlockContext(block *dcrutil.Block, prevNode *blockNode
 
 	// The number of signature operations must be less than the maximum allowed
 	// per block.
-	totalSigOps := 0
+	var totalSigOps uint32
 	regularTxns := block.Transactions()
 	stakeTxns := block.STransactions()
 	allTxns := make([]*dcrutil.Tx, 0, len(regularTxns)+len(stakeTxns))
@@ -1906,15 +1906,12 @@ func (b *BlockChain) checkBlockContext(block *dcrutil.Block, prevNode *blockNode
 	for _, tx := range allTxns {
 		msgTx := tx.MsgTx()
 
-		// We could potentially overflow the accumulator so check for overflow.
-		lastSigOps := totalSigOps
 		isCoinBase := standalone.IsCoinBaseTx(msgTx, isTreasuryEnabled)
 		isSSGen := stake.IsSSGen(msgTx, isTreasuryEnabled)
-		totalSigOps += CountSigOps(tx, isCoinBase, isSSGen, isTreasuryEnabled)
-		if totalSigOps < lastSigOps || totalSigOps > MaxSigOpsPerBlock {
-			str := fmt.Sprintf("block contains too many signature operations "+
-				"- got %v, max %v", totalSigOps, MaxSigOpsPerBlock)
-			return ruleError(ErrTooManySigOps, str)
+		count := CountSigOps(tx, isCoinBase, isSSGen, isTreasuryEnabled)
+		totalSigOps, err = addBlockSigOps(totalSigOps, count)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -3096,7 +3093,7 @@ func CheckTransactionInputs(subsidyCache *standalone.SubsidyCache,
 func CountSigOps(tx *dcrutil.Tx, isCoinBaseTx bool, isSSGen bool, isTreasuryEnabled bool) int {
 	msgTx := tx.MsgTx()
 
-	totalSigOps := 0
+	var totalSigOps uint64
 
 	if !isCoinBaseTx {
 		// Accumulate the number of signature operations in all
@@ -3109,7 +3106,7 @@ func CountSigOps(tx *dcrutil.Tx, isCoinBaseTx bool, isSSGen bool, isTreasuryEnab
 
 			numSigOps := txscript.GetSigOpCount(txIn.SignatureScript,
 				isTreasuryEnabled)
-			totalSigOps += numSigOps
+			totalSigOps += uint64(numSigOps)
 		}
 	}
 
@@ -3118,10 +3115,16 @@ func CountSigOps(tx *dcrutil.Tx, isCoinBaseTx bool, isSSGen bool, isTreasuryEnab
 	for _, txOut := range msgTx.TxOut {
 		numSigOps := txscript.GetSigOpCount(txOut.PkScript,
 			isTreasuryEnabled)
-		totalSigOps += numSigOps
+		totalSigOps += uint64(numSigOps)
 	}
 
-	return totalSigOps
+	// Each script byte can contribute at most MaxPubKeysPerMultiSig operations;
+	// valid transaction sizes keep the result representable even on 32-bit
+	// platforms. For a larger in-memory transaction, return an over-limit count.
+	if totalSigOps > uint64(math.MaxInt) {
+		return MaxSigOpsPerBlock + 1
+	}
+	return int(totalSigOps)
 }
 
 // CountP2SHSigOps returns the number of signature operations for all input
@@ -3143,7 +3146,7 @@ func CountP2SHSigOps(tx *dcrutil.Tx, isCoinBaseTx bool, isStakeBaseTx bool, view
 	msgTx := tx.MsgTx()
 	// Accumulate the number of signature operations in all transaction
 	// inputs.
-	totalSigOps := 0
+	var totalSigOps uint64
 	for txInIndex, txIn := range msgTx.TxIn {
 		// Ensure the referenced input transaction is available.
 		txInOutpoint := txIn.PreviousOutPoint
@@ -3169,25 +3172,28 @@ func CountP2SHSigOps(tx *dcrutil.Tx, isCoinBaseTx bool, isStakeBaseTx bool, view
 		numSigOps := txscript.GetPreciseSigOpCount(sigScript, pkScript,
 			isTreasuryEnabled)
 
-		// We could potentially overflow the accumulator so check for
-		// overflow.
-		lastSigOps := totalSigOps
-		totalSigOps += numSigOps
-		if totalSigOps < lastSigOps {
-			str := fmt.Sprintf("the public key script from output "+
-				"%v contains too many signature operations - "+
-				"overflow", txInOutpoint)
-			return 0, ruleError(ErrTooManySigOps, str)
+		totalSigOps += uint64(numSigOps)
+		if totalSigOps > uint64(math.MaxInt) {
+			return 0, ruleError(ErrTooManySigOps, "P2SH signature operation count exceeds int range")
 		}
 	}
 
-	return totalSigOps, nil
+	return int(totalSigOps), nil
 }
 
-// checkNumSigOps Checks the number of P2SH signature operations to make
-// sure they don't overflow the limits.  It takes a cumulative number of sig
-// ops as an argument and increments will each call.
-func checkNumSigOps(tx *dcrutil.Tx, view *UtxoViewpoint, index int, stakeTree bool, cumulativeSigOps int, isTreasuryEnabled bool) (int, error) {
+// addBlockSigOps checks the limit before addition. The returned block count
+// never exceeds the consensus limit or depends on the platform's int width.
+func addBlockSigOps(total uint32, count int) (uint32, error) {
+	if total > MaxSigOpsPerBlock || count < 0 || uint64(count) > uint64(MaxSigOpsPerBlock-total) {
+		str := fmt.Sprintf("block signature operation count exceeds %d (%d plus %d)",
+			MaxSigOpsPerBlock, total, count)
+		return 0, ruleError(ErrTooManySigOps, str)
+	}
+	return total + uint32(count), nil
+}
+
+// checkNumSigOps adds script and P2SH signature operations to the tree count.
+func checkNumSigOps(tx *dcrutil.Tx, view *UtxoViewpoint, index int, stakeTree bool, cumulativeSigOps uint32, isTreasuryEnabled bool) (uint32, error) {
 	msgTx := tx.MsgTx()
 	isSSGen := stake.IsSSGen(msgTx, isTreasuryEnabled)
 	isCoinbaseTx := (index == 0) && !stakeTree
@@ -3205,21 +3211,11 @@ func checkNumSigOps(tx *dcrutil.Tx, view *UtxoViewpoint, index int, stakeTree bo
 		return 0, err
 	}
 
-	startCumSigOps := cumulativeSigOps
-	cumulativeSigOps += numsigOps
-	cumulativeSigOps += numP2SHSigOps
-
-	// Check for overflow or going over the limits.  We have to do
-	// this on every loop iteration to avoid overflow.
-	if cumulativeSigOps < startCumSigOps ||
-		cumulativeSigOps > MaxSigOpsPerBlock {
-		str := fmt.Sprintf("block contains too many signature "+
-			"operations - got %v, max %v", cumulativeSigOps,
-			MaxSigOpsPerBlock)
-		return 0, ruleError(ErrTooManySigOps, str)
+	cumulativeSigOps, err = addBlockSigOps(cumulativeSigOps, numsigOps)
+	if err != nil {
+		return 0, err
 	}
-
-	return cumulativeSigOps, nil
+	return addBlockSigOps(cumulativeSigOps, numP2SHSigOps)
 }
 
 // checkStakeBaseAmounts calculates the total amount given as subsidy from
@@ -3415,7 +3411,7 @@ func (b *BlockChain) checkTransactionsAndConnect(inputFees dcrutil.Amount, node 
 	}
 	totalFees := int64(inputFees) // Stake tx tree carry forward
 	prevHeader := node.parent.Header()
-	var cumulativeSigOps int
+	var cumulativeSigOps uint32
 	for idx, tx := range txs {
 		// Ensure that the number of signature operations is not beyond
 		// the consensus limit.
