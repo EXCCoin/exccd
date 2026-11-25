@@ -1,5 +1,5 @@
-github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20260805085534-876fd2dce75d/go.mod h1:HugQl51HouJ13KKyxNQHARMq/mrpjfi7jUM2Iv3kgjI=
-github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20261125083122-c3eb1f1428d5 h1:sVhDirA3uxt7ipaO7VbvyHy957LHmKWx/qYHafbb8sk=
 github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20261125083122-c3eb1f1428d5/go.mod h1:HugQl51HouJ13KKyxNQHARMq/mrpjfi7jUM2Iv3kgjI=
-github.com/EXCCoin/exccd/dcrjson/v4 v4.0.0-20261125083122-c3eb1f1428d5 h1:qb16Xyl6bfunfUjbygEdExotCTpXL0v72p5tDNK1V/0=
-github.com/EXCCoin/exccd/dcrjson/v4 v4.0.0-20261125083122-c3eb1f1428d5/go.mod h1:ueVobb/7kYA3MLc0hcdQWgL18XRQN1p38XaLkv8g1sY=
+github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20261125084949-1a7c4026f68e h1:RpOkiWW+V5Fak2QUl1bua9Xsh3VTdYdT08U4RnhayAs=
+github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20261125084949-1a7c4026f68e/go.mod h1:HugQl51HouJ13KKyxNQHARMq/mrpjfi7jUM2Iv3kgjI=
+github.com/EXCCoin/exccd/dcrjson/v4 v4.0.0-20261125084949-1a7c4026f68e h1:PFjwgReRVeJAE5hIQhg8/oLew9ITeLWfnBNYHQLt7IQ=
+github.com/EXCCoin/exccd/dcrjson/v4 v4.0.0-20261125084949-1a7c4026f68e/go.mod h1:shCVtAeLTi7+x4Y61jWmWX63WWdYX3YSh4ErnsEESSQ=
