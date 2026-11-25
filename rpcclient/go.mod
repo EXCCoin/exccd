@@ -20,6 +20,5 @@ require (
 	github.com/EXCCoin/exccd/wire v0.0.0-20260805085534-876fd2dce75d
 	github.com/decred/go-socks v1.1.0
 	github.com/decred/slog v1.2.0
-	github.com/gorilla/websocket v1.5.1
-	golang.org/x/net v0.18.0 // indirect
+	github.com/gorilla/websocket v1.5.3
 )
