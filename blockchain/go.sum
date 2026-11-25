@@ -2,11 +2,17 @@ github.com/EXCCoin/base58 v0.0.0-20180515090142-e1a805ee5d9f h1:ucGdoqYaaO8y9CF/
 github.com/EXCCoin/base58 v0.0.0-20180515090142-e1a805ee5d9f/go.mod h1:FWlYa+QpsFceLY9PQfQrt5R64DlCpuCoDmmZDtN78Q8=
 github.com/EXCCoin/exccd v0.0.0-20260805085534-876fd2dce75d h1:Ypf0nD2peTqB3w4LURjQ/9p0VKD74dj/1O2jhuvkODg=
 github.com/EXCCoin/exccd v0.0.0-20260805085534-876fd2dce75d/go.mod h1:SuHKts60iXHIm3LVVVegv3L18zo1voyxbaK2PNA4aR0=
+github.com/EXCCoin/exccd v1.2.1-0.20261125062206-154cf3b74aa6 h1:E4TQGiOTxbXAcg7pQbQFtR0F//8nqM/cOp4CJ/lVIqY=
+github.com/EXCCoin/exccd v1.2.1-0.20261125062206-154cf3b74aa6/go.mod h1:dRsZegGXE2QVw1dn9HXJIIMz03u5mClrCZOmnP+Jf+M=
 github.com/EXCCoin/exccd/blockchain/stake/v4 v4.0.0-20260804195201-ee0256e76758/go.mod h1:PlrWDiwz68NYZYWkqA4KzHboHMTOsedCiLuiWOu0o/g=
 github.com/EXCCoin/exccd/blockchain/stake/v4 v4.0.0-20260805085534-876fd2dce75d h1:1NC0JaJO34XNg72qqrJWSu9zokfenXDGOotHt5UoqY4=
 github.com/EXCCoin/exccd/blockchain/stake/v4 v4.0.0-20260805085534-876fd2dce75d/go.mod h1:8GmutVfyCSlf0WpFWYM4w/+cxw0I/Te4pLSCRYKNFfk=
+github.com/EXCCoin/exccd/blockchain/stake/v4 v4.0.1-0.20261125062305-34ba6e73f07a h1:T+bZY1GSAAKPlmE9INFhQWxoenGxjp200/oNpSiFj0E=
+github.com/EXCCoin/exccd/blockchain/stake/v4 v4.0.1-0.20261125062305-34ba6e73f07a/go.mod h1:YvUh5NgWYIz7Or0efsBrJw8RAQQhbUKxqNE9TYB4DBg=
 github.com/EXCCoin/exccd/blockchain/standalone/v2 v2.0.0-20260805085534-876fd2dce75d h1:YBun+PP2LwkHGr/AdALt35pvrVQKWPsv3QiISKaioGg=
 github.com/EXCCoin/exccd/blockchain/standalone/v2 v2.0.0-20260805085534-876fd2dce75d/go.mod h1:fPyVSCBAb6zPtwmDOavaw4kgPHvW/3nKWd3BiBOELY4=
+github.com/EXCCoin/exccd/blockchain/standalone/v2 v2.1.1-0.20261125062231-aa99a5709a64 h1:ZoMZYx5cJCzhyRem0HLe2lKJsL6cPYtqn1WO5fyOhRM=
+github.com/EXCCoin/exccd/blockchain/standalone/v2 v2.1.1-0.20261125062231-aa99a5709a64/go.mod h1:XMXdMfIa/ZOl+qrxNyYkO2A3iJ1oKzgdb6t+2MOHi6E=
 github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20230211225306-d2f2c1c04ab7/go.mod h1:TtjGhhFlbfS1fOTl7avuIUsHsGnBAytY+jCs9Ei45E8=
 github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20230214161233-275859970533/go.mod h1:HugQl51HouJ13KKyxNQHARMq/mrpjfi7jUM2Iv3kgjI=
 github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20230222134430-694fa0700495/go.mod h1:ys9yYgU0MOSy9fG7vf8IelJbnlVCKaYNses/1kkwW/o=
@@ -21,6 +27,8 @@ github.com/EXCCoin/exccd/chaincfg/v3 v3.0.0-20260730143238-5ec2339c687a/go.mod h
 github.com/EXCCoin/exccd/chaincfg/v3 v3.0.0-20260804195201-ee0256e76758/go.mod h1:Yv4DsGqzt+oE0hmWzNxl5E4bfBcmmkLfc4mvfHBRuag=
 github.com/EXCCoin/exccd/chaincfg/v3 v3.0.0-20260805085534-876fd2dce75d h1:gcb3SxEMRnYoB7I2poAXXdhuAVQhQf9bWFZO2NRf5dI=
 github.com/EXCCoin/exccd/chaincfg/v3 v3.0.0-20260805085534-876fd2dce75d/go.mod h1:GV7CT28t6uqTfSMZCmxuxi5yJyPl1inEjTGvYmvj8+8=
+github.com/EXCCoin/exccd/chaincfg/v3 v3.1.2-0.20261125061651-8208cd1f77e3 h1:a29ppTDpdkCLfjSE1iZYA5vNV17V5v72FNyqcQgrSqg=
+github.com/EXCCoin/exccd/chaincfg/v3 v3.1.2-0.20261125061651-8208cd1f77e3/go.mod h1:3w0JF/oJEqmyU1vv9g15A6croEhU4kt0Neiy/W7Fhnk=
 github.com/EXCCoin/exccd/crypto/blake256 v0.0.0-20230211225306-d2f2c1c04ab7/go.mod h1:gGGtDzi74jQyKPRjBKT/BSFoRbN33dmgNZgj8jgEFd0=
 github.com/EXCCoin/exccd/crypto/blake256 v0.0.0-20230222134430-694fa0700495/go.mod h1:gGGtDzi74jQyKPRjBKT/BSFoRbN33dmgNZgj8jgEFd0=
 github.com/EXCCoin/exccd/crypto/blake256 v0.0.0-20231114084634-503e41f75524/go.mod h1:a6dgMwlAl4Sw8AL1aANZdNqEby7g+DdQx7WBzdiYtEk=
@@ -75,6 +83,8 @@ github.com/EXCCoin/exccd/txscript/v4 v4.0.0-20260730143238-5ec2339c687a/go.mod h
 github.com/EXCCoin/exccd/txscript/v4 v4.0.0-20260804195201-ee0256e76758/go.mod h1:IGxqPHHGT9gqBAzoaMlbbrBo8ln9V2g6l+EmDpbZtM4=
 github.com/EXCCoin/exccd/txscript/v4 v4.0.0-20260805085534-876fd2dce75d h1:EtUom/kVHgWiXn3M5q5Zwgdgu9s7LJHcP0GCjQ1PzG4=
 github.com/EXCCoin/exccd/txscript/v4 v4.0.0-20260805085534-876fd2dce75d/go.mod h1:ZR1vFlwSF2XXacQIahXAv3iE/q0WOgW+kC8BKXZLaww=
+github.com/EXCCoin/exccd/txscript/v4 v4.0.1-0.20261125061606-d0481c1e61c2 h1:YDXCh52TvqxLw0nKhh8SJqTzp9tFZyg3+ZwfeXrlycM=
+github.com/EXCCoin/exccd/txscript/v4 v4.0.1-0.20261125061606-d0481c1e61c2/go.mod h1:vOyJ1ROda6SDUyZVI3NYEfX3kWgICWDPDaxKdzdGmz0=
 github.com/EXCCoin/exccd/wire v0.0.0-20230211225306-d2f2c1c04ab7/go.mod h1:t749GfscEfBEITr5QKVVWH8Fgfg3VD4vYzMSDdBsg7Y=
 github.com/EXCCoin/exccd/wire v0.0.0-20230214161233-275859970533/go.mod h1:el5FLbXOcf7c23bJEl29h8Anj9jMTHp/yhJTBs9Nf8E=
 github.com/EXCCoin/exccd/wire v0.0.0-20230222134430-694fa0700495/go.mod h1:Ful+jkeQxfQZB7I2NjeWCe7xXaH5U0BI6Fo6u6uujRk=
