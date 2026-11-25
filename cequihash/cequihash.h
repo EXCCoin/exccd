@@ -6,6 +6,7 @@
 extern "C" {
 #endif
 
+int EquihashPackedSize(int n, int k);
 int EquihashValidate(int n, int k, const void *input, int len, const void *soln);
 void EquihashSolve(int n, int k, const void *input, int len, uint32_t nonce, uint8_t algo_version, const void *validBlockData);
 void *SolutionFromIndices(int n, int k, const void *indices, uint32_t numIndices);

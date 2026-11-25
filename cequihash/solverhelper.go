@@ -12,30 +12,21 @@ package cequihash
 */
 import "C"
 import (
-	"bytes"
-	"encoding/binary"
 	"unsafe"
 )
 
 func expandArray(n, k int, solution unsafe.Pointer) []uint32 {
+	if EquihashSolutionSize(n, k) == 0 {
+		return nil
+	}
 	ptr := C.IndicesFromSolution(C.int(n), C.int(k), solution)
+	if ptr == nil {
+		return nil
+	}
 	defer C.free(ptr)
 
-	indexCount := 1 << uint32(k)
-
-	buf := bytes.NewBuffer(C.GoBytes(ptr, C.int(indexCount*4)))
-	var tmp [4]byte
-	var result []uint32
-
-	num_read, _ := buf.Read(tmp[:])
-
-	for num_read > 0 {
-		index := binary.LittleEndian.Uint32(tmp[:])
-		result = append(result, index)
-		num_read, _ = buf.Read(tmp[:])
-	}
-
-	return result
+	indices := unsafe.Slice((*uint32)(ptr), 1<<uint(k))
+	return append([]uint32(nil), indices...)
 }
 
 type SolutionHolder struct {
@@ -59,7 +50,13 @@ func (data SolutionAppenderData) Validate(solution unsafe.Pointer) int {
 }
 
 func compressIndices(n, k int, nonce uint32, input []byte, solutionIndices []uint32) []byte {
+	if EquihashSolutionSize(n, k) == 0 || len(solutionIndices) != 1<<uint(k) {
+		return nil
+	}
 	ptr := C.SolutionFromIndices(C.int(n), C.int(k), unsafe.Pointer(&solutionIndices[0]), C.uint32_t(len(solutionIndices)))
+	if ptr == nil {
+		return nil
+	}
 	defer C.free(ptr)
 
 	cBitLen := n / (k + 1)

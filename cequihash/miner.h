@@ -317,10 +317,10 @@ struct TrompEquihash {
     static uint32_t hashwords(uint32_t bytes) { return (bytes + TREEBYTES - 1) / TREEBYTES; }
 
     // prepare blake2b midstate for new run and initialize counters
-    void setstate(const unsigned char *input, const uint32_t len, uint32_t nonce, uint8_t algo_version) {
+    bool setstate(const unsigned char *input, const uint32_t len, uint32_t nonce, uint8_t algo_version) {
         setperson(&blake_ctx);
-        setheader(&blake_ctx, input, len, nonce, algo_version);
         nsols = 0;
+        return setheader(&blake_ctx, input, len, nonce, algo_version);
     }
 
     // get heap0 bucket size in threadsafe manner
@@ -746,9 +746,9 @@ struct TrompEquihash {
         blake2b_init_param(ctx, &P);
     }
 
-    static void setheader(blake2b_state *ctx, const uint8_t *input, uint32_t input_len, uint32_t nonce, uint8_t algo_version) {
+    static bool setheader(blake2b_state *ctx, const uint8_t *input, uint32_t input_len, uint32_t nonce, uint8_t algo_version) {
         switch (algo_version) {
-        case 0: return setheaderv0(ctx, input, input_len, nonce);
+        case 0: setheaderv0(ctx, input, input_len, nonce); return true;
         default: return setheaderv1(ctx, input, input_len, nonce);
         }
     }
@@ -762,9 +762,7 @@ struct TrompEquihash {
         blake2b_update(ctx, reinterpret_cast<uint8_t *>(&expandedNonce), sizeof(expandedNonce));
     }
 
-    static void setheaderv1(blake2b_state *ctx, const uint8_t *input, uint32_t input_len, uint32_t nonce) {
-        uint8_t *localInput = static_cast<uint8_t*>(malloc(input_len));
-        memcpy(localInput, input, input_len);
+    static bool setheaderv1(blake2b_state *ctx, const uint8_t *input, uint32_t input_len, uint32_t nonce) {
 
         nonce = htole32(nonce);
         constexpr int nonceOffset =
@@ -785,11 +783,12 @@ struct TrompEquihash {
             sizeof(uint32_t); // Timestamp
 
         static_assert(nonceOffset == 140, "Nonce offset is required to be 140");
-        memcpy(localInput+nonceOffset, &nonce, sizeof(nonce));
-
-        blake2b_update(ctx, localInput, input_len);
-
-        free(localInput);
+        constexpr size_t endOfNonce = nonceOffset + sizeof(nonce);
+        if (input_len < endOfNonce) return false;
+        blake2b_update(ctx, input, nonceOffset);
+        blake2b_update(ctx, reinterpret_cast<const uint8_t *>(&nonce), sizeof(nonce));
+        blake2b_update(ctx, input + endOfNonce, input_len - endOfNonce);
+        return true;
     }
 
     static void genhash(const blake2b_state *ctx, uint32_t idx, uint8_t *hash) {
@@ -905,7 +904,7 @@ verify_code verify(uint32_t *indices, uint32_t proofsize, const unsigned char *i
 template <uint32_t WN, uint32_t WK>
 void solve(const unsigned char *input, uint32_t input_len, uint32_t nonce, uint8_t algo_version, const void *userData) {
     TrompEquihash<WN, WK> eq(userData);
-    eq.setstate(input, input_len, nonce, algo_version);
+    if (!eq.setstate(input, input_len, nonce, algo_version)) return;
     eq.worker();
 
     uint32_t maxsols = std::min(TrompEquihash<WN, WK>::MAXSOLS, eq.nsols);

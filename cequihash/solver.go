@@ -15,6 +15,7 @@ import "C"
 import (
 	"bytes"
 	"encoding/binary"
+	"math"
 	"unsafe"
 
 	cptr "github.com/mattn/go-pointer"
@@ -65,10 +66,16 @@ func equihashProxy(callback_data unsafe.Pointer, extra_data unsafe.Pointer) C.in
 func ExtractSolution(n, k int, solptr unsafe.Pointer) []byte {
 	size := EquihashSolutionSize(n, k)
 
+	if solptr == nil || size == 0 {
+		return nil
+	}
 	return C.GoBytes(solptr, C.int(size))
 }
 
 func SolveEquihash(n, k int, input []byte, nonce uint32, algoVersion uint8, callback EquihashCallback) {
+	if len(input) == 0 || len(input) > math.MaxInt32 || callback == nil || EquihashSolutionSize(n, k) == 0 {
+		return
+	}
 	callbackptr := cptr.Save(&callback)
 	defer cptr.Unref(callbackptr)
 
@@ -79,7 +86,7 @@ func SolveEquihash(n, k int, input []byte, nonce uint32, algoVersion uint8, call
 func ValidateEquihash(n, k int, input []byte, solution []byte) bool {
 	equihashSolutionSize := EquihashSolutionSize(n, k)
 
-	if len(solution) < equihashSolutionSize {
+	if len(input) == 0 || len(input) > math.MaxInt32 || equihashSolutionSize == 0 || len(solution) < equihashSolutionSize {
 		return false
 	}
 
@@ -87,8 +94,12 @@ func ValidateEquihash(n, k int, input []byte, solution []byte) bool {
 		unsafe.Pointer(&solution[0])) == 0
 }
 
+// EquihashSolutionSize returns the packed size for a supported parameter pair, or zero.
 func EquihashSolutionSize(n, k int) int {
-	return 1 << uint32(k) * (n/(k+1) + 1) / 8
+	if n <= 0 || k <= 0 || n > math.MaxInt32 || k > math.MaxInt32 {
+		return 0
+	}
+	return int(C.EquihashPackedSize(C.int(n), C.int(k)))
 }
 
 func AppendExpandedNonce(headerBytes []byte, nonce uint32) []byte {
