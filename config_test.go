@@ -12,6 +12,10 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/EXCCoin/exccd/blockchain/v4"
+	"github.com/EXCCoin/exccd/internal/mining"
+	"github.com/EXCCoin/exccd/wire"
 )
 
 func TestMain(m *testing.M) {
@@ -201,6 +205,24 @@ func TestMempoolLimits(t *testing.T) {
 			}
 		} else if err == nil || !strings.Contains(err.Error(), "maxmempool") {
 			t.Fatalf("expected limit error for %v, got %v", test.args, err)
+		}
+	}
+}
+
+func TestMiningStakeExclusions(t *testing.T) {
+	target := wire.OutPoint{Tree: wire.TxTreeStake}
+	exclusions := mining.RejectedSpends{target: {}, {Tree: wire.TxTreeRegular}: {}, {Tree: wire.TxTreeStake, Index: 1}: {}}
+	for _, utxo := range []*blockchain.UtxoEntry{nil, {}} {
+		lookups := 0
+		err := validateMiningSpends(exclusions, func(op wire.OutPoint) (*blockchain.UtxoEntry, error) {
+			lookups++
+			if op != target {
+				t.Fatalf("unexpected lookup of %v", op)
+			}
+			return utxo, nil
+		})
+		if lookups != 1 || (err != nil) != (utxo == nil) {
+			t.Fatalf("entry %v, lookups %d, error %v", utxo, lookups, err)
 		}
 	}
 }

@@ -212,7 +212,7 @@ type config struct {
 	MaxOrphanTxs     int      `long:"maxorphantx" description:"Max number of orphan transactions to keep in memory"`
 	BlocksOnly       bool     `long:"blocksonly" description:"Do not accept transactions from remote peers"`
 	AcceptNonStd     bool     `long:"acceptnonstd" description:"Accept and relay non-standard transactions to the network regardless of the default settings for the active network"`
-	RejectSpends     []string `long:"rejectspend" description:"Exclude an outpoint (txid:index:tree, tree 0 regular or 1 stake) from relay and local mining. May be repeated."`
+	RejectSpends     []string `long:"rejectspend" description:"Exclude an outpoint (txid:index:tree, tree 0 regular or 1 stake) from relay and local mining. Miners may exclude stake output zero only for known unspent non-ticket payouts. May be repeated."`
 	RejectNonStd     bool     `long:"rejectnonstd" description:"Reject non-standard transactions regardless of the default settings for the active network"`
 	AllowOldVotes    bool     `long:"allowoldvotes" description:"Enable the addition of very old votes to the mempool"`
 

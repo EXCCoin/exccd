@@ -3324,6 +3324,26 @@ func setupRPCListeners() ([]net.Listener, error) {
 	return listeners, nil
 }
 
+// Mining must be able to include mandatory revocations for ticket submissions.
+func validateMiningSpends(rejected mining.RejectedSpends, fetch func(wire.OutPoint) (*blockchain.UtxoEntry, error)) error {
+	for op := range rejected {
+		if op.Tree != wire.TxTreeStake || op.Index != 0 {
+			continue
+		}
+		entry, err := fetch(op)
+		if err != nil {
+			return fmt.Errorf("checking mining rejectspend %v: %w", op, err)
+		}
+		if entry == nil {
+			return fmt.Errorf("mining rejectspend %v has no known unspent output; a ticket submission may require automatic revocation", op)
+		}
+		if entry.TransactionType() == stake.TxTypeSStx {
+			return fmt.Errorf("mining rejectspend %v is a ticket submission that may require automatic revocation", op)
+		}
+	}
+	return nil
+}
+
 // newServer returns a new dcrd server configured to listen on addr for the
 // decred network type specified by chainParams.  Use start to begin accepting
 // connections from peers.
@@ -3447,6 +3467,12 @@ func newServer(ctx context.Context, listenAddrs []string, db database.DB,
 		})
 	if err != nil {
 		return nil, err
+	}
+
+	if len(cfg.miningAddrs) != 0 {
+		if err := validateMiningSpends(cfg.rejectedSpends, s.chain.FetchUtxoEntry); err != nil {
+			return nil, err
+		}
 	}
 
 	queryer := &blockchain.ChainQueryerAdapter{BlockChain: s.chain}

@@ -698,6 +698,9 @@ func TestRejectedSpendTemplates(t *testing.T) {
 		Policy:                    &Policy{RejectedSpends: RejectedSpends{op: {}}},
 		CheckConnectBlockTemplate: func(*dcrutil.Block) error { called = true; return nil },
 	}}
+	if g.maybeInsertStakeTx(dcrutil.NewTx(tx), true, false) {
+		t.Fatal("stake transaction with excluded input was selected")
+	}
 	for _, b := range []*wire.MsgBlock{{Transactions: []*wire.MsgTx{tx}}, {STransactions: []*wire.MsgTx{tx}}} {
 		if err := g.checkConnectBlockTemplate(dcrutil.NewBlock(b)); err == nil || called {
 			t.Fatal("template with blocked input reached consensus validation")

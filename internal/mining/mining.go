@@ -659,6 +659,10 @@ func (g *BlkTmplGenerator) medianAdjustedTime() time.Time {
 // the mempool or block) before inserting into a tx tree.
 // If it fails the check, it returns false; otherwise true.
 func (g *BlkTmplGenerator) maybeInsertStakeTx(stx *dcrutil.Tx, treeValid bool, isTreasuryEnabled bool) bool {
+	if err := g.cfg.Policy.RejectedSpends.CheckTx(stx.MsgTx()); err != nil {
+		log.Tracef("Skipping stake transaction %s: %v", stx.Hash(), err)
+		return false
+	}
 	missingInput := false
 
 	view, err := g.cfg.FetchUtxoView(stx, treeValid)
