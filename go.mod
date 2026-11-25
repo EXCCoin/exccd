@@ -6,12 +6,12 @@ require (
 	github.com/EXCCoin/base58 v0.0.0-20180515090142-e1a805ee5d9f
 	github.com/EXCCoin/exccd/addrmgr/v2 v2.0.0-20260805085534-876fd2dce75d
 	github.com/EXCCoin/exccd/bech32 v0.0.0-20260805085534-876fd2dce75d
-	github.com/EXCCoin/exccd/blockchain/stake/v4 v4.0.0-20260805085534-876fd2dce75d
-	github.com/EXCCoin/exccd/blockchain/standalone/v2 v2.0.0-20260805085534-876fd2dce75d
-	github.com/EXCCoin/exccd/blockchain/v4 v4.0.1-0.20261124205939-eaf920965cb0
+	github.com/EXCCoin/exccd/blockchain/stake/v4 v4.0.1-0.20261125062305-34ba6e73f07a
+	github.com/EXCCoin/exccd/blockchain/standalone/v2 v2.1.1-0.20261125062231-aa99a5709a64
+	github.com/EXCCoin/exccd/blockchain/v4 v4.0.1-0.20261125062346-b04387af15cf
 	github.com/EXCCoin/exccd/certgen v0.0.0-20260805085534-876fd2dce75d
 	github.com/EXCCoin/exccd/chaincfg/chainhash v0.0.0-20260805085534-876fd2dce75d
-	github.com/EXCCoin/exccd/chaincfg/v3 v3.0.0-20260805085534-876fd2dce75d
+	github.com/EXCCoin/exccd/chaincfg/v3 v3.1.2-0.20261125061651-8208cd1f77e3
 	github.com/EXCCoin/exccd/connmgr/v3 v3.0.0-20260805085534-876fd2dce75d
 	github.com/EXCCoin/exccd/container/apbf v0.0.0-20260805085534-876fd2dce75d
 	github.com/EXCCoin/exccd/crypto/ripemd160 v0.0.0-20260805085534-876fd2dce75d
@@ -26,8 +26,8 @@ require (
 	github.com/EXCCoin/exccd/math/uint256 v0.0.0-20260805085534-876fd2dce75d
 	github.com/EXCCoin/exccd/peer/v3 v3.0.0-20260805085534-876fd2dce75d
 	github.com/EXCCoin/exccd/rpc/jsonrpc/types/v3 v3.0.0-20260805085534-876fd2dce75d
-	github.com/EXCCoin/exccd/rpcclient/v7 v7.0.0-20260805085534-876fd2dce75d
-	github.com/EXCCoin/exccd/txscript/v4 v4.0.0-20260805085534-876fd2dce75d
+	github.com/EXCCoin/exccd/rpcclient/v7 v7.0.1-0.20261125061919-99badd9281ab
+	github.com/EXCCoin/exccd/txscript/v4 v4.0.1-0.20261125061606-d0481c1e61c2
 	github.com/EXCCoin/exccd/wire v0.0.0-20260805085534-876fd2dce75d
 	github.com/davecgh/go-spew v1.1.1
 	github.com/decred/go-socks v1.1.0
