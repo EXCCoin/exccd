@@ -260,6 +260,11 @@ type BlockChain struct {
 	// checks can be avoided when bulk importing blocks already known to be valid.
 	// It is protected by the chain lock.
 	bulkImportMode bool
+
+	// retirementPlan optionally overrides the active Option B consensus
+	// retirement plan (primarily for tests and private rehearsal networks).
+	// It is protected by the chain lock.
+	retirementPlan *RetirementPlan
 }
 
 const (

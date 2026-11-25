@@ -711,3 +711,131 @@ func TestRejectedSpendTemplates(t *testing.T) {
 		t.Fatalf("unrelated outpoint should pass policy: %v", err)
 	}
 }
+
+func TestNewBlockTemplateWithRetirementTxs(t *testing.T) {
+	t.Parallel()
+
+	harness, spendableOuts, err := newMiningHarness(chaincfg.TestNet3Params())
+	if err != nil {
+		t.Fatalf("error creating mining harness: %v", err)
+	}
+	// Enable header commitments so calcBlockCommitmentRootV1 exercises blockcf2
+	// with the injected retirement transaction inputs in blockUtxos.
+	harness.chain.isHeaderCommitmentsAgendaActive = true
+
+	address, err := stdaddr.DecodeAddress("TsebVL4jcgJ2uVqZS2HutWTb4KnJLc9FdLR",
+		harness.chainParams)
+	if err != nil {
+		t.Fatalf("error decoding address: %v", err)
+	}
+
+	// Create 2 spendable outputs: vout 0 will be retired, vout 1 is a normal mempool spend.
+	baseTx, err := harness.CreateSignedTx(spendableOuts, 2)
+	if err != nil {
+		t.Fatalf("CreateSignedTx: %v", err)
+	}
+	baseHeight := harness.chain.bestState.Height
+	harness.AddFakeUTXO(baseTx, baseHeight, 1, harness.chain.isTreasuryAgendaActive)
+
+	retireOp := wire.OutPoint{Hash: *baseTx.Hash(), Index: 0, Tree: wire.TxTreeRegular}
+	retireAmt := baseTx.MsgTx().TxOut[0].Value
+
+	// Build a canonical zero-fee OP_RETURN burn tx spending retireOp with empty sigScript.
+	burnMsg := wire.NewMsgTx()
+	burnMsg.SerType = wire.TxSerializeFull
+	burnMsg.Version = 1
+	burnIn := wire.NewTxIn(&retireOp, retireAmt, nil)
+	burnIn.BlockHeight = uint32(baseHeight)
+	burnIn.BlockIndex = 1
+	burnMsg.AddTxIn(burnIn)
+	opRetScript, err := txscript.NewScriptBuilder().
+		AddOp(txscript.OP_RETURN).
+		AddData([]byte("TEST-MINING-RETIRE")).
+		Script()
+	if err != nil {
+		t.Fatal(err)
+	}
+	burnMsg.AddTxOut(wire.NewTxOut(retireAmt, opRetScript))
+	burnTx := dcrutil.NewTx(burnMsg)
+	burnTx.SetTree(wire.TxTreeRegular)
+
+	// Put a normal mempool tx spending vout 1 AND a conflicting mempool tx spending retireOp.
+	applyTxFee := func(fee int64) func(*wire.MsgTx) {
+		return func(tx *wire.MsgTx) {
+			tx.TxOut[0].Value -= fee
+		}
+	}
+	normalTx, err := harness.CreateSignedTx([]spendableOutput{
+		txOutToSpendableOut(baseTx, 1, wire.TxTreeRegular),
+	}, 1, applyTxFee(5000))
+	if err != nil {
+		t.Fatalf("CreateSignedTx(normal): %v", err)
+	}
+	conflictTx, err := harness.CreateSignedTx([]spendableOutput{
+		txOutToSpendableOut(baseTx, 0, wire.TxTreeRegular),
+	}, 1, applyTxFee(5000))
+	if err != nil {
+		t.Fatalf("CreateSignedTx(conflict): %v", err)
+	}
+	if _, err := harness.AddTransactionToTxSource(normalTx); err != nil {
+		t.Fatalf("AddTransactionToTxSource(normal): %v", err)
+	}
+	if _, err := harness.AddTransactionToTxSource(conflictTx); err != nil {
+		t.Fatalf("AddTransactionToTxSource(conflict): %v", err)
+	}
+
+	nextHeight := harness.chain.bestState.Height + 1
+	// Block retireOp via local RejectedSpends policy (matching mainnet quarantine policy).
+	harness.policy.RejectedSpends = RejectedSpends{retireOp: {}}
+	harness.generator.cfg.RequiredRetirementTxs = func(h int64, includeRegular bool) ([]*dcrutil.Tx, error) {
+		if h == nextHeight {
+			cp := dcrutil.NewTx(burnTx.MsgTx().Copy())
+			cp.SetTree(wire.TxTreeRegular)
+			return []*dcrutil.Tx{cp}, nil
+		}
+		return nil, nil
+	}
+	harness.generator.cfg.IsCanonicalRetirementTx = func(h int64, tx *dcrutil.Tx) bool {
+		return h == nextHeight && tx != nil && tx.MsgTx().TxHashFull() == burnTx.MsgTx().TxHashFull()
+	}
+
+	tmpl, err := harness.generator.NewBlockTemplate(address)
+	if err != nil {
+		t.Fatalf("NewBlockTemplate failed with retirement tx + RejectedSpends: %v", err)
+	}
+
+	// Expected regular tree: [coinbase, burnTx, normalTx]. conflictTx must be excluded.
+	if got := len(tmpl.Block.Transactions); got != 3 {
+		t.Fatalf("got %d regular txs, want 3", got)
+	}
+	if got := tmpl.Block.Transactions[1].TxHashFull(); got != burnTx.MsgTx().TxHashFull() {
+		t.Fatalf("Transactions[1] = %s, want canonical burn tx %s", got, burnTx.MsgTx().TxHashFull())
+	}
+	if got := tmpl.Block.Transactions[2].TxHash(); got != *normalTx.Hash() {
+		t.Fatalf("Transactions[2] = %s, want normal tx %s", got, normalTx.Hash())
+	}
+
+	solveTemplate(t, tmpl.Block, harness.chainParams)
+	if err := blockchain.CheckBlockSanity(dcrutil.NewBlock(tmpl.Block),
+		harness.generator.cfg.TimeSource, harness.chainParams); err != nil {
+		t.Fatalf("CheckBlockSanity failed: %v", err)
+	}
+
+	// Ensure a canonical burn tx placed in the stake tree is STILL blocked by RejectedSpends.
+	stakeBad := &wire.MsgBlock{
+		Header:        wire.BlockHeader{Height: uint32(nextHeight)},
+		STransactions: []*wire.MsgTx{burnTx.MsgTx().Copy()},
+	}
+	if err := harness.generator.checkConnectBlockTemplate(dcrutil.NewBlock(stakeBad)); err == nil {
+		t.Fatal("canonical retirement tx in stake tree unexpectedly bypassed RejectedSpends")
+	}
+
+	// Ensure a non-canonical regular tx spending retireOp is STILL blocked by RejectedSpends.
+	regBad := &wire.MsgBlock{
+		Header:       wire.BlockHeader{Height: uint32(nextHeight)},
+		Transactions: []*wire.MsgTx{conflictTx.MsgTx().Copy()},
+	}
+	if err := harness.generator.checkConnectBlockTemplate(dcrutil.NewBlock(regBad)); err == nil {
+		t.Fatal("non-canonical regular tx spending rejected outpoint unexpectedly passed")
+	}
+}

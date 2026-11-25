@@ -491,8 +491,9 @@ func (b *BlockChain) ProcessBlock(block *dcrutil.Block) (int64, error) {
 	// block is both an ancestor of the assumed valid block and an ancestor of
 	// the best header.
 	flags := BFNone
-	// Post-activation imports must independently enforce the recovery rules.
+	// Post-activation imports must independently enforce recovery and retirement rules.
 	if !requiresRecoveryJournal(b.chainParams, node.height) &&
+		b.activeRetirementPlan(node.height) == nil &&
 		(b.bulkImportMode || b.isAssumeValidAncestor(node)) {
 		b.index.SetStatusFlags(node, statusValidated)
 		flags |= BFFastAdd

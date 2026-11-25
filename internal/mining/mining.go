@@ -191,6 +191,15 @@ type Config struct {
 	ValidateTransactionScripts func(tx *dcrutil.Tx,
 		utxoView *blockchain.UtxoViewpoint, flags txscript.ScriptFlags,
 		isAutoRevocationsEnabled bool) error
+
+	// RequiredRetirementTxs returns canonical retirement transactions that must
+	// appear immediately after the coinbase transaction in a block at
+	// nextHeight. Optional.
+	RequiredRetirementTxs func(nextHeight int64, includeRegularTxns bool) ([]*dcrutil.Tx, error)
+
+	// IsCanonicalRetirementTx reports whether tx is an exact canonical
+	// retirement transaction active at height. Optional.
+	IsCanonicalRetirementTx func(height int64, tx *dcrutil.Tx) bool
 }
 
 // TxDesc is a descriptor about a transaction in a transaction source along with
@@ -700,11 +709,19 @@ func (g *BlkTmplGenerator) checkConnectBlockTemplate(block *dcrutil.Block) error
 	rejected := g.cfg.Policy.RejectedSpends
 	if len(rejected) != 0 {
 		msg := block.MsgBlock()
-		for _, tree := range [][]*wire.MsgTx{msg.Transactions, msg.STransactions} {
-			for _, tx := range tree {
-				if err := rejected.CheckTx(tx); err != nil {
-					return err
-				}
+		blockHeight := int64(msg.Header.Height)
+		for _, tx := range msg.Transactions {
+			if g.cfg.IsCanonicalRetirementTx != nil &&
+				g.cfg.IsCanonicalRetirementTx(blockHeight, dcrutil.NewTx(tx)) {
+				continue
+			}
+			if err := rejected.CheckTx(tx); err != nil {
+				return err
+			}
+		}
+		for _, tx := range msg.STransactions {
+			if err := rejected.CheckTx(tx); err != nil {
+				return err
 			}
 		}
 	}
@@ -1232,6 +1249,15 @@ func (g *BlkTmplGenerator) NewBlockTemplate(payToAddress stdaddr.Address) (*Bloc
 		len(sourceTxns))
 	knownDisapproved := g.cfg.TxSource.IsRegTxTreeKnownDisapproved(&prevHash)
 
+	var retirementTxns []*dcrutil.Tx
+	if g.cfg.RequiredRetirementTxs != nil {
+		retirementTxns, err = g.cfg.RequiredRetirementTxs(nextBlockHeight,
+			!knownDisapproved)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// Tracks the total number of transactions that depend on another
 	// from the tx source.
 	totalDescendantTxns := 0
@@ -1373,6 +1399,24 @@ mempoolLoop:
 	// Maintain lookup of transactions that have been included in the block
 	// template.
 	templateTxnMap := make(map[chainhash.Hash]struct{})
+
+	// Reserve space and UTXO state for any mandatory canonical retirement
+	// transactions before selecting regular mempool transactions.
+	for _, rtx := range retirementTxns {
+		utxos, err := g.cfg.FetchUtxoView(rtx, !knownDisapproved)
+		if err != nil {
+			str := fmt.Sprintf("failed to fetch utxo view for retirement tx %v: %s",
+				rtx.Hash(), err.Error())
+			return nil, makeError(ErrFetchTxStore, str)
+		}
+		mergeUtxoView(blockUtxos, utxos)
+		spendTransaction(blockUtxos, rtx, nextBlockHeight, isTreasuryEnabled,
+			isAutoRevocationsEnabled)
+		blockSize += uint32(rtx.MsgTx().SerializeSize())
+		txFeesMap[*rtx.Hash()] = 0
+		txSigOpCountsMap[*rtx.Hash()] = 0
+		templateTxnMap[*rtx.Hash()] = struct{}{}
+	}
 
 	// Track if auto revocations have been added to the priority queue.
 	addedAutoRevocations := false
@@ -1884,10 +1928,11 @@ nextPriorityQueueItem:
 	txSigOpCountsMap[*coinbaseTx.Hash()] = numCoinbaseSigOps
 
 	// Build tx lists for regular tx.
-	blockTxnsRegular := make([]*dcrutil.Tx, 0, len(blockTxns)+1)
+	blockTxnsRegular := make([]*dcrutil.Tx, 0, len(blockTxns)+len(retirementTxns)+1)
 
-	// Append coinbase.
+	// Append coinbase, followed by any mandatory canonical retirement txs.
 	blockTxnsRegular = append(blockTxnsRegular, coinbaseTx)
+	blockTxnsRegular = append(blockTxnsRegular, retirementTxns...)
 
 	// Assemble the two transaction trees.
 	for _, tx := range blockTxns {
@@ -1985,6 +2030,10 @@ nextPriorityQueueItem:
 		// block.
 		if nextBlockHeight == 1 {
 			break
+		}
+		// Preserve canonical retirement transactions verbatim.
+		if i > 0 && i <= len(retirementTxns) {
+			continue
 		}
 
 		view, err := g.cfg.FetchUtxoView(tx, !knownDisapproved)

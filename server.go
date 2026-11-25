@@ -3694,6 +3694,8 @@ func newServer(ctx context.Context, listenAddrs []string, db database.DB,
 				return blockchain.ValidateTransactionScripts(tx, utxoView, flags,
 					s.sigCache, isAutoRevocationsEnabled)
 			},
+			RequiredRetirementTxs:   s.chain.RequiredRetirementTxs,
+			IsCanonicalRetirementTx: s.chain.IsCanonicalRetirementTx,
 		})
 
 		s.bg = mining.NewBgBlkTmplGenerator(&mining.BgBlkTmplConfig{

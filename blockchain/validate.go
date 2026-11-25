@@ -2780,6 +2780,10 @@ func checkRevocationInputs(tx *dcrutil.Tx, txHeight int64, view *UtxoViewpoint,
 type txInputRules struct {
 	strictInputs bool
 
+	// allowQuarantined is set only for exact canonical consensus retirement
+	// transactions once retirement is active.
+	allowQuarantined bool
+
 	// Legacy block validation interpreted the masked revocation exponent
 	// without shifting. Relay and mining interpret the specified exponent.
 	// Automatic revocations use an exact zero fee regardless of this field.
@@ -2879,7 +2883,7 @@ func checkTransactionInputs(subsidyCache *standalone.SubsidyCache,
 			continue
 		}
 		prev := txIn.PreviousOutPoint
-		if quarantineActive && prev.Tree == wire.TxTreeRegular && prev.Index < mainNetQuarantinedTxs[prev.Hash] {
+		if quarantineActive && !rules.allowQuarantined && prev.Tree == wire.TxTreeRegular && prev.Index < mainNetQuarantinedTxs[prev.Hash] {
 			str := fmt.Sprintf("spend of quarantined mainnet output %v", prev)
 			return 0, ruleError(ErrBadTxInput, str)
 		}
@@ -3451,7 +3455,10 @@ func (b *BlockChain) checkTransactionsAndConnect(inputFees dcrutil.Amount, node 
 		txFee, err := checkTransactionInputs(b.subsidyCache, tx, node.height,
 			view, checkFraudProof, b.chainParams, &prevHeader,
 			isTreasuryEnabled, isAutoRevocationsEnabled, isSubsidySplitEnabled,
-			txInputRules{strictInputs: fixTxInputValidation})
+			txInputRules{
+				strictInputs:     fixTxInputValidation,
+				allowQuarantined: !stakeTree && b.isCanonicalRetirementTx(node.height, tx),
+			})
 		if err != nil {
 			log.Tracef("CheckTransactionInputs failed; error returned: %v", err)
 			return err
@@ -3780,12 +3787,20 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block, parent *dcrutil.B
 
 	if runScripts {
 		err = checkBlockScripts(block, view, false, scriptFlags,
-			b.sigCache, isAutoRevocationsEnabled)
+			b.sigCache, isAutoRevocationsEnabled, nil)
 		if err != nil {
 			log.Tracef("checkBlockScripts failed; error returned "+
 				"on txtreestake of cur block: %v", err)
 			return err
 		}
+	}
+
+	// Enforce mandatory Option B canonical retirement transactions (if active
+	// and unspent in view after any parent disapproval).
+	err = b.checkBlockRetirementTxs(node.height, block, view)
+	if err != nil {
+		log.Tracef("checkBlockRetirementTxs failed: %v", err)
+		return err
 	}
 
 	// Ensure the regular transaction tree does not contain any transactions
@@ -3870,8 +3885,11 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block, parent *dcrutil.B
 	}
 
 	if runScripts {
+		skipRetirement := func(tx *dcrutil.Tx) bool {
+			return b.isCanonicalRetirementTx(node.height, tx)
+		}
 		err = checkBlockScripts(block, view, true, scriptFlags,
-			b.sigCache, isAutoRevocationsEnabled)
+			b.sigCache, isAutoRevocationsEnabled, skipRetirement)
 		if err != nil {
 			log.Tracef("checkBlockScripts failed; error returned "+
 				"on txtreeregular of cur block: %v", err)

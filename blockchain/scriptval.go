@@ -225,7 +225,7 @@ func ValidateTransactionScripts(tx *dcrutil.Tx, utxoView *UtxoViewpoint,
 // txTree = true is TxTreeRegular, txTree = false is TxTreeStake.
 func checkBlockScripts(block *dcrutil.Block, utxoView *UtxoViewpoint, txTree bool,
 	scriptFlags txscript.ScriptFlags, sigCache *txscript.SigCache,
-	isAutoRevocationsEnabled bool) error {
+	isAutoRevocationsEnabled bool, skipTx func(*dcrutil.Tx) bool) error {
 
 	// Collect all of the transaction inputs and required information for
 	// validation for all transactions in the block into a single slice.
@@ -244,6 +244,9 @@ func checkBlockScripts(block *dcrutil.Block, utxoView *UtxoViewpoint, txTree boo
 	}
 	txValItems := make([]*txValidateItem, 0, numInputs)
 	for _, tx := range txs {
+		if skipTx != nil && skipTx(tx) {
+			continue
+		}
 		// Skip revocations if the automatic ticket revocations agenda is active and
 		// the transaction version is greater than or equal to 2.  This is allowed
 		// since consensus rules enforce that revocations MUST pay to the addresses
