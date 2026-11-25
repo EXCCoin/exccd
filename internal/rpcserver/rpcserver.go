@@ -5973,6 +5973,39 @@ func equalASCIIFold(s, t string) bool {
 	return s == t
 }
 
+// checkWebsocketOrigin allows native RPC clients without an Origin and browser
+// clients from the HTTP(S) origin serving this listener. Forwarded headers are
+// not trusted to change the scheme, hostname, or port.
+func checkWebsocketOrigin(r *http.Request) bool {
+	origins := r.Header.Values("Origin")
+	if len(origins) == 0 {
+		return true
+	}
+	if len(origins) != 1 {
+		return false
+	}
+	scheme, defaultPort := "http", ":80"
+	if r.TLS != nil {
+		scheme, defaultPort = "https", ":443"
+	}
+	u, err := url.Parse(origins[0])
+	if err != nil || u.Scheme != scheme || u.Hostname() == "" || u.User != nil {
+		return false
+	}
+	// A serialized origin consists only of its scheme and authority.
+	if !equalASCIIFold(origins[0], scheme+"://"+u.Host) ||
+		strings.ContainsAny(u.Host, ", ") || strings.HasSuffix(u.Host, ":") {
+		return false
+	}
+	if port := u.Port(); port != "" {
+		if _, err := strconv.ParseUint(port, 10, 16); err != nil {
+			return false
+		}
+	}
+	return equalASCIIFold(strings.TrimSuffix(u.Host, defaultPort),
+		strings.TrimSuffix(r.Host, defaultPort))
+}
+
 // route sets up the endpoints of the rpc server.
 func (s *Server) route(ctx context.Context) *http.Server {
 	rpcServeMux := http.NewServeMux()
@@ -6022,41 +6055,7 @@ func (s *Server) route(ctx context.Context) *http.Server {
 		// default size for read/write buffers and impose a read limit that
 		// depends on whether or not the connection is authenticated yet.
 		upgrader := websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool {
-				// Allow requests with no origin header set.
-				origin := r.Header["Origin"]
-				if len(origin) == 0 {
-					return true
-				}
-
-				// Reject requests with origin headers that are not valid URLs.
-				originURL, err := url.Parse(origin[0])
-				if err != nil {
-					return false
-				}
-
-				// Allow local resources on browsers that set the origin header
-				// for them.  In particular:
-				// - Firefox which sets it to "null"
-				// - Chrome which sets it to "file://"
-				// - Edge which sets it to "file://"
-				if originURL.Scheme == "file" || originURL.Path == "null" {
-					return true
-				}
-
-				// Strip the port from both the origin and request hosts.
-				originHost := originURL.Host
-				requestHost := r.Host
-				if host, _, err := net.SplitHostPort(originHost); err == nil {
-					originHost = host
-				}
-				if host, _, err := net.SplitHostPort(requestHost); err == nil {
-					requestHost = host
-				}
-
-				// Reject mismatched hosts.
-				return equalASCIIFold(originHost, requestHost)
-			},
+			CheckOrigin: checkWebsocketOrigin,
 		}
 		ws, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
