@@ -758,7 +758,7 @@ var helpDescsEnUS = map[string]string{
 	"searchrawtransactions--condition0": "verbose=0",
 	"searchrawtransactions--condition1": "verbose=1",
 	"searchrawtransactions-skip":        "The number of leading transactions to leave out of the final response",
-	"searchrawtransactions-count":       "The maximum number of transactions to return",
+	"searchrawtransactions-count":       "The maximum number of transactions to return (maximum 1000)",
 	"searchrawtransactions-vinextra":    "Specify that extra data from previous output will be returned in vin",
 	"searchrawtransactions-reverse":     "Specifies that the transactions should be returned in reverse chronological order",
 	"searchrawtransactions-filteraddrs": "Address list.  Only inputs or outputs with matching address will be returned",
@@ -913,8 +913,8 @@ var helpDescsEnUS = map[string]string{
 
 	// TicketFeeInfo help.
 	"ticketfeeinfo--synopsis":            "Get various information about ticket fees from the mempool, blocks, and difficulty windows (units: EXCC/kB)",
-	"ticketfeeinfo-blocks":               "The number of blocks, starting from the chain tip and descending, to return fee information about",
-	"ticketfeeinfo-windows":              "The number of difficulty windows to return ticket fee information about",
+	"ticketfeeinfo-blocks":               "The number of blocks, starting from the chain tip and descending, to return fee information about (maximum 256)",
+	"ticketfeeinfo-windows":              "The number of difficulty windows to return ticket fee information about (maximum 4)",
 	"ticketfeeinforesult-feeinfomempool": "Ticket fee information for all tickets in the mempool (units: EXCC/kB)",
 	"ticketfeeinforesult-feeinfoblocks":  "Ticket fee information for a given list of blocks descending from the chain tip (units: EXCC/kB)",
 	"ticketfeeinforesult-feeinfowindows": "Ticket fee information for a window period where the stake difficulty was the same (units: EXCC/kB)",
@@ -958,14 +958,14 @@ var helpDescsEnUS = map[string]string{
 	// TicketVWAP help.
 	"ticketvwap--synopsis": "Calculate the volume weighted average price of tickets for a range of blocks (default: full PoS difficulty adjustment depth)",
 	"ticketvwap-start":     "The start height to begin calculating the VWAP from",
-	"ticketvwap-end":       "The end height to begin calculating the VWAP from",
+	"ticketvwap-end":       "The end height to begin calculating the VWAP from (maximum 4096 headers per inclusive range)",
 	"ticketvwap--result0":  "The volume weighted average price",
 
 	// TxFeeInfo help.
 	"txfeeinfo--synopsis":            "Get various information about regular transaction fees from the mempool, blocks, and difficulty windows",
-	"txfeeinfo-blocks":               "The number of blocks to calculate transaction fees for, starting from the end of the tip moving backwards",
+	"txfeeinfo-blocks":               "The number of blocks to calculate transaction fees for, starting from the end of the tip moving backwards (maximum 256)",
 	"txfeeinfo-rangestart":           "The start height of the block range to calculate transaction fees for",
-	"txfeeinfo-rangeend":             "The end height of the block range to calculate transaction fees for",
+	"txfeeinfo-rangeend":             "The end height of the block range to calculate transaction fees for (maximum 512 blocks per inclusive range)",
 	"txfeeinforesult-feeinfomempool": "Transaction fee information for all regular transactions in the mempool",
 	"txfeeinforesult-feeinfoblocks":  "Transaction fee information for a given list of blocks descending from the chain tip",
 	"txfeeinforesult-feeinforange":   "Transaction fee information for a window period where the stake difficulty was the same",

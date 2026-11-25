@@ -378,10 +378,8 @@ var rpcLimited = map[string]struct{}{
 	"getvoteinfo":           {},
 	"livetickets":           {},
 	"missedtickets":         {},
-	"regentemplate":         {},
 	"searchrawtransactions": {},
 	"sendrawtransaction":    {},
-	"submitblock":           {},
 	"ticketfeeinfo":         {},
 	"ticketsforaddress":     {},
 	"ticketvwap":            {},
@@ -4182,6 +4180,35 @@ func handleSearchRawTransactions(_ context.Context, s *Server, cmd interface{}) 
 	// Override the flag for including extra previous output information in
 	// each input if needed.
 	c := cmd.(*types.SearchRawTransactionsCmd)
+	// Override the default number of requested entries if needed.  Also,
+	// just return now if the number of requested entries is zero to avoid
+	// extra work.
+	numRequested := 100
+	if c.Count != nil {
+		numRequested = *c.Count
+		if numRequested < 0 {
+			numRequested = 1
+		} else if numRequested > maxSearchTxCount {
+			return nil, rpcInvalidError("Requested count exceeds the limit of %d", maxSearchTxCount)
+		}
+	}
+	if numRequested == 0 {
+		return nil, nil
+	}
+
+	// Override the default number of entries to skip if needed.
+	var numToSkip int
+	if c.Skip != nil {
+		numToSkip = *c.Skip
+		if numToSkip < 0 {
+			numToSkip = 0
+		}
+		// The address index represents page offsets and counts as uint32.
+		if uint64(numToSkip) > math.MaxUint32-uint64(numRequested) {
+			return nil, rpcInvalidError("Requested page exceeds the address index offset range")
+		}
+	}
+
 	vinExtra := false
 	if c.VinExtra != nil {
 		vinExtra = *c.VinExtra != 0
@@ -4202,32 +4229,6 @@ func handleSearchRawTransactions(_ context.Context, s *Server, cmd interface{}) 
 	if err != nil {
 		return nil, rpcAddressKeyError("Could not decode address: %v",
 			err)
-	}
-
-	// Override the default number of requested entries if needed.  Also,
-	// just return now if the number of requested entries is zero to avoid
-	// extra work.
-	numRequested := 100
-	if c.Count != nil {
-		numRequested = *c.Count
-		const maxCount = 10000
-		if numRequested < 0 {
-			numRequested = 1
-		} else if numRequested > maxCount {
-			numRequested = maxCount
-		}
-	}
-	if numRequested == 0 {
-		return nil, nil
-	}
-
-	// Override the default number of entries to skip if needed.
-	var numToSkip int
-	if c.Skip != nil {
-		numToSkip = *c.Skip
-		if numToSkip < 0 {
-			numToSkip = 0
-		}
 	}
 
 	// Override the reverse flag if needed.
@@ -4911,21 +4912,75 @@ func ticketFeeInfoForRange(s *Server, start int64, end int64, txType stake.TxTyp
 	}, nil
 }
 
+// Bound full-block work separately from cheaper header-only scans. The default
+// mainnet fee range is 145 blocks and the default VWAP range is 2,881 headers.
+const (
+	maxFeeInfoBlocks    = 256
+	maxTicketFeeWindows = 4
+	maxFeeRangeBlocks   = 512
+	maxVWAPHeaders      = 4096
+	maxSearchTxCount    = 1000
+)
+
+// feeBlockCount validates the per-block breakdown before any mempool or block
+// reads, including requests that would extend below genesis.
+func feeBlockCount(requested *uint32, tip int64) (uint32, error) {
+	if requested == nil {
+		return 0, nil
+	}
+	n := *requested
+	if n > maxFeeInfoBlocks || int64(n)-1 > tip {
+		return 0, rpcInvalidError("Requested block count exceeds the chain length or the limit of %d", maxFeeInfoBlocks)
+	}
+	return n, nil
+}
+
+// statsHeightRange returns inclusive heights, preserving the historical default
+// lookback from the best block. Use int64 for the exclusive endpoint and loops.
+func statsHeightRange(first, last *uint32, tip, lookback, limit int64) (int64, int64, error) {
+	start := tip - lookback
+	if start < 1 {
+		start = 1
+		if tip == 0 {
+			start = 0
+		}
+	}
+	if first != nil {
+		start = int64(*first)
+	}
+	end := tip
+	if last != nil {
+		end = int64(*last)
+	}
+	if start > end || end > tip {
+		return 0, 0, rpcInvalidError("Invalid block range [%d, %d] for tip %d", start, end, tip)
+	}
+	if end-start+1 > limit {
+		return 0, 0, rpcInvalidError("Block range exceeds the limit of %d", limit)
+	}
+	return start, end, nil
+}
+
 // handleTicketFeeInfo implements the ticketfeeinfo command.
 func handleTicketFeeInfo(_ context.Context, s *Server, cmd interface{}) (interface{}, error) {
 	c := cmd.(*types.TicketFeeInfoCmd)
 
 	bestHeight := s.cfg.Chain.BestSnapshot().Height
 
-	// Memory pool first.
-	feeInfoMempool := feeInfoForMempool(s, stake.TxTypeSStx)
-
-	// Blocks requested, descending from the chain tip.
-	var feeInfoBlocks []types.FeeInfoBlock
-	blocks := uint32(0)
-	if c.Blocks != nil {
-		blocks = *c.Blocks
+	blocks, err := feeBlockCount(c.Blocks, bestHeight)
+	if err != nil {
+		return nil, err
 	}
+	var windows uint32
+	if c.Windows != nil {
+		windows = *c.Windows
+	}
+	if windows > maxTicketFeeWindows {
+		return nil, rpcInvalidError("Requested windows exceed the limit of %d", maxTicketFeeWindows)
+	}
+
+	feeInfoMempool := feeInfoForMempool(s, stake.TxTypeSStx)
+	var feeInfoBlocks []types.FeeInfoBlock
 	if blocks > 0 {
 		start := bestHeight
 		end := bestHeight - int64(blocks)
@@ -4941,10 +4996,6 @@ func handleTicketFeeInfo(_ context.Context, s *Server, cmd interface{}) (interfa
 	}
 
 	var feeInfoWindows []types.FeeInfoWindow
-	windows := uint32(0)
-	if c.Windows != nil {
-		windows = *c.Windows
-	}
 	if windows > 0 {
 		// The first window is special because it may not be finished.
 		// Perform this first and return if it's the only window the
@@ -4964,24 +5015,13 @@ func handleTicketFeeInfo(_ context.Context, s *Server, cmd interface{}) (interfa
 		// the last adjustment and move backwards through window
 		// lengths, calculating the fees data and appending it
 		// each time.
-		if windows > 1 {
-			// Go down to the last height requested, except
-			// in the case that the user has specified to
-			// many windows. In that case, just proceed to the
-			// first block.
-			end := int64(-1)
-			if lastChange-int64(windows)*winLen > end {
-				end = lastChange - int64(windows)*winLen
+		for n := uint32(1); n < windows && lastChange >= winLen; n++ {
+			feeInfo, err := ticketFeeInfoForRange(s, lastChange-winLen, lastChange, stake.TxTypeSStx)
+			if err != nil {
+				return nil, rpcInternalError(err.Error(), "Could not obtain ticket fee info")
 			}
-			for i := lastChange; i > end+winLen; i -= winLen {
-				feeInfo, err := ticketFeeInfoForRange(s, i-winLen, i,
-					stake.TxTypeSStx)
-				if err != nil {
-					return nil, rpcInternalError(err.Error(),
-						"Could not obtain ticket fee info")
-				}
-				feeInfoWindows = append(feeInfoWindows, *feeInfo)
-			}
+			feeInfoWindows = append(feeInfoWindows, *feeInfo)
+			lastChange -= winLen
 		}
 	}
 
@@ -5032,57 +5072,32 @@ func handleTicketsForAddress(_ context.Context, s *Server, cmd interface{}) (int
 func handleTicketVWAP(_ context.Context, s *Server, cmd interface{}) (interface{}, error) {
 	c := cmd.(*types.TicketVWAPCmd)
 
-	// The default VWAP is for the past WorkDiffWindows * WorkDiffWindowSize
-	// many blocks.
-	bestHeight := s.cfg.Chain.BestSnapshot().Height
-	var start uint32
-	if c.Start == nil {
-		params := s.cfg.ChainParams
-		toEval := params.WorkDiffWindows * params.WorkDiffWindowSize
-		startI64 := bestHeight - toEval
-
-		// Use 1 as the first block if there aren't enough blocks.
-		if startI64 <= 0 {
-			start = 1
-		} else {
-			start = uint32(startI64)
-		}
-	} else {
-		start = *c.Start
-	}
-
-	end := uint32(bestHeight)
-	if c.End != nil {
-		end = *c.End
-	}
-	if start > end {
-		return nil, rpcInvalidError("Start height %v is beyond end "+
-			"height %v", start, end)
-	}
-	if end > uint32(bestHeight) {
-		return nil, rpcInvalidError("End height %v is beyond "+
-			"blockchain tip height %v", end, bestHeight)
+	params := s.cfg.ChainParams
+	start, end, err := statsHeightRange(c.Start, c.End, s.cfg.Chain.BestSnapshot().Height,
+		params.WorkDiffWindows*params.WorkDiffWindowSize, maxVWAPHeaders)
+	if err != nil {
+		return nil, err
 	}
 
 	// Calculate the volume weighted average price of a ticket for the
 	// given range.
-	ticketNum := int64(0)
-	totalValue := int64(0)
+	var ticketNum int64
+	var totalValue, price, count big.Int
 	for i := start; i <= end; i++ {
-		blockHeader, err := s.cfg.Chain.HeaderByHeight(int64(i))
+		blockHeader, err := s.cfg.Chain.HeaderByHeight(i)
 		if err != nil {
-			return nil, rpcInternalError(err.Error(),
-				"Could not obtain header")
+			return nil, rpcInternalError(err.Error(), "Could not obtain header")
 		}
 
 		ticketNum += int64(blockHeader.FreshStake)
-		totalValue += blockHeader.SBits * int64(blockHeader.FreshStake)
+		price.SetInt64(blockHeader.SBits)
+		count.SetInt64(int64(blockHeader.FreshStake))
+		totalValue.Add(&totalValue, price.Mul(&price, &count))
 	}
-	vwap := int64(0)
+	var vwap int64
 	if ticketNum > 0 {
-		vwap = totalValue / ticketNum
+		vwap = totalValue.Quo(&totalValue, count.SetInt64(ticketNum)).Int64()
 	}
-
 	return dcrutil.Amount(vwap).ToCoin(), nil
 }
 
@@ -5092,15 +5107,18 @@ func handleTxFeeInfo(_ context.Context, s *Server, cmd interface{}) (interface{}
 
 	bestHeight := s.cfg.Chain.BestSnapshot().Height
 
-	// Memory pool first.
-	feeInfoMempool := feeInfoForMempool(s, stake.TxTypeRegular)
-
-	// Blocks requested, descending from the chain tip.
-	var feeInfoBlocks []types.FeeInfoBlock
-	blocks := uint32(0)
-	if c.Blocks != nil {
-		blocks = *c.Blocks
+	blocks, err := feeBlockCount(c.Blocks, bestHeight)
+	if err != nil {
+		return nil, err
 	}
+	start, end, err := statsHeightRange(c.RangeStart, c.RangeEnd, bestHeight,
+		s.cfg.ChainParams.WorkDiffWindowSize, maxFeeRangeBlocks)
+	if err != nil {
+		return nil, err
+	}
+
+	feeInfoMempool := feeInfoForMempool(s, stake.TxTypeRegular)
+	var feeInfoBlocks []types.FeeInfoBlock
 	if blocks > 0 {
 		start := bestHeight
 		end := bestHeight - int64(blocks)
@@ -5116,46 +5134,14 @@ func handleTxFeeInfo(_ context.Context, s *Server, cmd interface{}) (interface{}
 		}
 	}
 
-	// Get the fee info for the range requested, unless none is given.  The
-	// default range is for the past WorkDiffWindowSize many blocks.
-	var feeInfoRange types.FeeInfoRange
-
-	var start uint32
-	if c.RangeStart == nil {
-		toEval := s.cfg.ChainParams.WorkDiffWindowSize
-		startI64 := bestHeight - toEval
-
-		// Use 1 as the first block if there aren't enough blocks.
-		if startI64 <= 0 {
-			start = 1
-		} else {
-			start = uint32(startI64)
-		}
-	} else {
-		start = *c.RangeStart
-	}
-
-	end := uint32(bestHeight)
-	if c.RangeEnd != nil {
-		end = *c.RangeEnd
-	}
-	if start > end {
-		return nil, rpcInvalidError("Start height %v is beyond end "+
-			"height %v", start, end)
-	}
-	if end > uint32(bestHeight) {
-		return nil, rpcInvalidError("End height %v is beyond "+
-			"blockchain tip height %v", end, bestHeight)
-	}
-
-	feeInfo, err := ticketFeeInfoForRange(s, int64(start), int64(end+1),
+	feeInfo, err := ticketFeeInfoForRange(s, start, end+1,
 		stake.TxTypeRegular)
 	if err != nil {
 		return nil, rpcInternalError(err.Error(),
 			"Could not obtain ticket fee info")
 	}
 
-	feeInfoRange = types.FeeInfoRange{
+	feeInfoRange := types.FeeInfoRange{
 		Number: feeInfo.Number,
 		Min:    feeInfo.Min,
 		Max:    feeInfo.Max,
