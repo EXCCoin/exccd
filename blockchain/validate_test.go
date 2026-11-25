@@ -14,6 +14,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math"
 	mrand "math/rand"
 	"os"
 	"path/filepath"
@@ -2273,5 +2274,25 @@ func TestRecoveryRelaySet(t *testing.T) {
 	}
 	if len(MainNetRecoveryOutpoints()) != 12 {
 		t.Fatal("local policy changed the consensus output set")
+	}
+}
+
+func TestAddAmount(t *testing.T) {
+	for _, tc := range []struct {
+		a, b, want int64
+		ok         bool
+	}{
+		{0, 0, 0, true},
+		{math.MaxInt64 - 1, 1, math.MaxInt64, true},
+		{math.MaxInt64, 1, 0, false},
+		{math.MinInt64 + 1, -1, math.MinInt64, true},
+		{math.MinInt64, -1, 0, false},
+		{5, -3, 2, true},
+		{math.MaxInt64, math.MinInt64, -1, true},
+	} {
+		got, ok := addAmount(tc.a, tc.b)
+		if ok != tc.ok || (ok && got != tc.want) {
+			t.Errorf("%d + %d: got %d, %v; want %d, %v", tc.a, tc.b, got, ok, tc.want, tc.ok)
+		}
 	}
 }

@@ -3044,10 +3044,9 @@ func checkTransactionInputs(subsidyCache *standalone.SubsidyCache,
 		// The total of all outputs must not be more than the max
 		// allowed per transaction.  Also, we could potentially
 		// overflow the accumulator so check for overflow.
-		lastAtomIn := totalAtomIn
-		totalAtomIn += originTxAtom
-		if totalAtomIn < lastAtomIn ||
-			totalAtomIn > dcrutil.MaxAmount {
+		var ok bool
+		totalAtomIn, ok = addAmount(totalAtomIn, originTxAtom)
+		if !ok || totalAtomIn > dcrutil.MaxAmount {
 			str := fmt.Sprintf("total value of all transaction "+
 				"inputs is %v which is higher than max "+
 				"allowed value of %v", totalAtomIn,
@@ -3303,14 +3302,20 @@ func getStakeBaseAmounts(txs []*dcrutil.Tx, view *UtxoViewpoint, isTreasuryEnabl
 	return totalOutputs - totalInputs, nil
 }
 
+// addAmount adds two atom amounts and reports whether the result fits in int64.
+func addAmount(a, b int64) (int64, bool) {
+	sum := a + b
+	return sum, (sum > a) == (b > 0)
+}
+
 // getStakeTreeFees determines the amount of fees for in the stake tx tree of
 // some node given a utxo view.
 func getStakeTreeFees(subsidyCache *standalone.SubsidyCache, height int64,
 	txs []*dcrutil.Tx, view *UtxoViewpoint, isTreasuryEnabled,
 	isSubsidySplitEnabled bool) (dcrutil.Amount, error) {
 
-	totalInputs := int64(0)
-	totalOutputs := int64(0)
+	var totalInputs, totalOutputs int64
+	var ok bool
 	for _, tx := range txs {
 		msgTx := tx.MsgTx()
 		isSSGen := stake.IsSSGen(msgTx, isTreasuryEnabled)
@@ -3331,30 +3336,40 @@ func getStakeTreeFees(subsidyCache *standalone.SubsidyCache, height int64,
 				return 0, ruleError(ErrTicketUnavailable, str)
 			}
 
-			originTxAtom := utxoEntry.Amount()
-
-			totalInputs += originTxAtom
+			totalInputs, ok = addAmount(totalInputs, utxoEntry.Amount())
+			if !ok {
+				return 0, ruleError(ErrStakeFees, "stake tree input sum overflows accumulator")
+			}
 		}
 
 		for _, out := range msgTx.TxOut {
-			totalOutputs += out.Value
+			totalOutputs, ok = addAmount(totalOutputs, out.Value)
+			if !ok {
+				return 0, ruleError(ErrStakeFees, "stake tree output sum overflows accumulator")
+			}
 		}
 
 		// For votes, subtract the subsidy to determine actual fees.
 		if isSSGen {
 			// Subsidy aligns with the height we're voting on, not with the
 			// height of the current block.
-			totalOutputs -= subsidyCache.CalcStakeVoteSubsidyV2(height-1,
-				isSubsidySplitEnabled)
+			subsidy := subsidyCache.CalcStakeVoteSubsidyV2(height-1, isSubsidySplitEnabled)
+			totalOutputs, ok = addAmount(totalOutputs, -subsidy)
+			if !ok {
+				return 0, ruleError(ErrStakeFees, "stake tree vote subsidy overflows accumulator")
+			}
 		}
 	}
 
 	if totalInputs < totalOutputs {
-		str := fmt.Sprintf("negative cumulative fees found in stake " +
-			"tx tree")
-		return 0, ruleError(ErrStakeFees, str)
+		return 0, ruleError(ErrStakeFees, "negative cumulative fees found in stake tx tree")
 	}
 
+	// The output sum can be negative after removing vote subsidies. Compare
+	// before subtracting to handle math.MinInt64 without negating it.
+	if totalOutputs < 0 && totalInputs > math.MaxInt64+totalOutputs {
+		return 0, ruleError(ErrStakeFees, "stake tree fees overflow accumulator")
+	}
 	return dcrutil.Amount(totalInputs - totalOutputs), nil
 }
 
@@ -3432,9 +3447,9 @@ func (b *BlockChain) checkTransactionsAndConnect(inputFees dcrutil.Amount, node 
 
 		// Sum the total fees and ensure we don't overflow the
 		// accumulator.
-		lastTotalFees := totalFees
-		totalFees += txFee
-		if totalFees < lastTotalFees {
+		var ok bool
+		totalFees, ok = addAmount(totalFees, txFee)
+		if !ok {
 			return ruleError(ErrBadFees, "total fees for block "+
 				"overflows accumulator")
 		}
