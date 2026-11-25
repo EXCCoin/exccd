@@ -1340,7 +1340,10 @@ func (mp *TxPool) maybeAcceptTransaction(tx *dcrutil.Tx, isNew,
 	// Perform preliminary validation checks on the transaction.  This makes use
 	// of blockchain which contains the invariant rules for what transactions
 	// are allowed into blocks.
-	err := blockchain.CheckTransaction(msgTx, mp.cfg.ChainParams, checkTxFlags)
+	// Reject out-of-range input amounts before even caching an orphan. The
+	// permitted unset value is filled from the UTXO once its parent arrives.
+	err := blockchain.CheckTransaction(msgTx, mp.cfg.ChainParams,
+		checkTxFlags|blockchain.AFFixTxInputValidation)
 	if err != nil {
 		var cerr blockchain.RuleError
 		if errors.As(err, &cerr) {

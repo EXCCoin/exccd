@@ -2863,3 +2863,36 @@ func TestRejectedSpendAdmission(t *testing.T) {
 		t.Fatalf("ordinary spend: %v", err)
 	}
 }
+
+func TestOrphanInputAmountPolicy(t *testing.T) {
+	h, outputs, err := newPoolHarness(chaincfg.MainNetParams())
+	if err != nil {
+		t.Fatal(err)
+	}
+	chain, err := h.CreateTxChain(outputs[0], 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	parent, child := chain[0], chain[1]
+	p := h.txPool
+	for _, value := range []int64{wire.NullValueIn - 1, dcrutil.MaxAmount + 1} {
+		tx := dcrutil.NewTxDeepTxIns(child)
+		tx.MsgTx().TxIn[0].ValueIn = value
+		_, err := p.ProcessTransaction(tx, true, true, true, 0)
+		if !errors.Is(err, blockchain.ErrFraudAmountIn) || p.HaveTransaction(tx.Hash()) {
+			t.Fatalf("invalid amount %d entered orphan handling: %v", value, err)
+		}
+	}
+	unset := dcrutil.NewTxDeepTxIns(child)
+	unset.MsgTx().TxIn[0].ValueIn = wire.NullValueIn
+	if _, err := p.ProcessTransaction(unset, true, true, true, 0); err != nil || !p.IsOrphanInPool(unset.Hash()) {
+		t.Fatalf("unset amount orphan rejected: %v", err)
+	}
+	if _, err := p.ProcessTransaction(parent, false, true, true, 0); err != nil {
+		t.Fatal(err)
+	}
+	stored, err := p.FetchTransaction(unset.Hash())
+	if err != nil || stored.MsgTx().TxIn[0].ValueIn != parent.MsgTx().TxOut[0].Value {
+		t.Fatalf("unset amount did not resolve to its UTXO: %v", err)
+	}
+}
