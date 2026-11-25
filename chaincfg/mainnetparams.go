@@ -118,6 +118,7 @@ func MainNetParams() *Params {
 		Checkpoints: []Checkpoint{
 			{120, newHashFromStr("0076826c6b55e5c2d27afb67f6d087b782d7c86bea3a5f2a3acbded8f5cdab55")},
 			{87550, newHashFromStr("000187f6de1d0a99db6eb832f09d803cd95723b2e95d2a7d051e7a6f3809ba63")},
+			{1726905, newHashFromStr("0000193e7b4c05dd28f56bc7c9180364dab3357b5a4a23f2a776fc44d7b61901")},
 		},
 
 		// No mainnet block is assumed valid by default. A release may opt in
@@ -128,9 +129,9 @@ func MainNetParams() *Params {
 		// chain at a given point in time.  This is intended to be updated
 		// periodically with new releases.
 		//
-		// Block 0000076fff5da5604856e135e81cfc4459ef3fdbb04b720710d30950091d8b9e
-		// Height: 899030
-		MinKnownChainWork: hexToBigInt("000000000000000000000000000000000000000000000000000000b60cab914c"),
+		// Block 0000193e7b4c05dd28f56bc7c9180364dab3357b5a4a23f2a776fc44d7b61901
+		// Height: 1726905
+		MinKnownChainWork: hexToBigInt("000000000000000000000000000000000000000000000000000001354afc88da"),
 
 		// The miner confirmation window is defined as:
 		//   target proof of work timespan / target proof of work spacing
