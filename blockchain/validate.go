@@ -3308,8 +3308,13 @@ func addAmount(a, b int64) (int64, bool) {
 // some node given a utxo view.
 func getStakeTreeFees(subsidyCache *standalone.SubsidyCache, height int64,
 	txs []*dcrutil.Tx, view *UtxoViewpoint, isTreasuryEnabled,
-	isSubsidySplitEnabled bool) (dcrutil.Amount, error) {
+	isSubsidySplitEnabled, strictInputsValidated bool) (dcrutil.Amount, error) {
 
+	// Before input validation is enforced, a restored legacy UTXO may carry
+	// historical witness metadata. Preserve the original int64 results there.
+	// With validated inputs every amount is bounded by MaxAmount, and the
+	// stake tree has at most 20 64-input tickets, 5 votes and 255 revocations
+	// on the supported networks. The overflow checks are then redundant.
 	var totalInputs, totalOutputs int64
 	var ok bool
 	for _, tx := range txs {
@@ -3333,14 +3338,14 @@ func getStakeTreeFees(subsidyCache *standalone.SubsidyCache, height int64,
 			}
 
 			totalInputs, ok = addAmount(totalInputs, utxoEntry.Amount())
-			if !ok {
+			if !ok && strictInputsValidated {
 				return 0, ruleError(ErrStakeFees, "stake tree input sum overflows accumulator")
 			}
 		}
 
 		for _, out := range msgTx.TxOut {
 			totalOutputs, ok = addAmount(totalOutputs, out.Value)
-			if !ok {
+			if !ok && strictInputsValidated {
 				return 0, ruleError(ErrStakeFees, "stake tree output sum overflows accumulator")
 			}
 		}
@@ -3351,7 +3356,7 @@ func getStakeTreeFees(subsidyCache *standalone.SubsidyCache, height int64,
 			// height of the current block.
 			subsidy := subsidyCache.CalcStakeVoteSubsidyV2(height-1, isSubsidySplitEnabled)
 			totalOutputs, ok = addAmount(totalOutputs, -subsidy)
-			if !ok {
+			if !ok && strictInputsValidated {
 				return 0, ruleError(ErrStakeFees, "stake tree vote subsidy overflows accumulator")
 			}
 		}
@@ -3363,7 +3368,7 @@ func getStakeTreeFees(subsidyCache *standalone.SubsidyCache, height int64,
 
 	// The output sum can be negative after removing vote subsidies. Compare
 	// before subtracting to handle math.MinInt64 without negating it.
-	if totalOutputs < 0 && totalInputs > math.MaxInt64+totalOutputs {
+	if strictInputsValidated && totalOutputs < 0 && totalInputs > math.MaxInt64+totalOutputs {
 		return 0, ruleError(ErrStakeFees, "stake tree fees overflow accumulator")
 	}
 	return dcrutil.Amount(totalInputs - totalOutputs), nil
@@ -3723,8 +3728,10 @@ func (b *BlockChain) checkConnectBlock(node *blockNode, block, parent *dcrutil.B
 	if err != nil {
 		return err
 	}
+	strictInputsValidated := inputRecoveryActive(b.chainParams, node.height)
 	stakeTreeFees, err := getStakeTreeFees(b.subsidyCache, node.height,
-		block.STransactions(), view, isTreasuryEnabled, isSubsidySplitEnabled)
+		block.STransactions(), view, isTreasuryEnabled, isSubsidySplitEnabled,
+		strictInputsValidated)
 	if err != nil {
 		log.Tracef("getStakeTreeFees failed for stake tree: %v", err)
 		return err

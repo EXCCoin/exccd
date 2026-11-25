@@ -2316,3 +2316,22 @@ func TestBlockSigOpAccumulator(t *testing.T) {
 		}
 	}
 }
+
+// TestStakeFeeAccumulatorBounds verifies the bounds relied on when a block has
+// passed strict input checks. Reevaluate the arithmetic if these limits change.
+func TestStakeFeeAccumulatorBounds(t *testing.T) {
+	for _, params := range []*chaincfg.Params{
+		chaincfg.MainNetParams(), chaincfg.TestNet3Params(), chaincfg.SimNetParams(), chaincfg.RegNetParams(),
+	} {
+		tickets := int64(params.MaxFreshStakePerBlock)
+		votes := int64(params.TicketsPerBlock)
+		inputs := tickets*stake.MaxInputsPerSStx + votes + maxRevocationsPerBlock
+		// The output total of each transaction is already limited to MaxAmount.
+		// Up to one vote subsidy per vote may also be added to the net fees.
+		outputSums := tickets + votes + maxRevocationsPerBlock
+		const amountSlots = math.MaxInt64 / int64(dcrutil.MaxAmount)
+		if inputs+votes > amountSlots || outputSums+votes > amountSlots {
+			t.Errorf("%s stake limits exceed the int64 fee accumulator", params.Name)
+		}
+	}
+}
