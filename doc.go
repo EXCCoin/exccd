@@ -128,7 +128,7 @@ Application Options:
 	                             different hash unless you understand the
 	                             implications. Set to 0 to disable
 	    --minrelaytxfee=         Minimum fee to relay regular transactions, tickets
-	                             and treasury operations in EXCC/kB (default: 0.0001)
+	                             and treasury operations in EXCC/kB (default: 0.001)
 	    --limitfreerelay=        Deprecated free-relay setting (ignored)
 	    --norelaypriority        Deprecated relay-priority setting (ignored)
 	    --maxmempoolbytes=       Combined main and staged serialized byte limit

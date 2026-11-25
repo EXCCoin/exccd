@@ -238,7 +238,7 @@ const fileContents = `[Application Options]
 
 ; Minimum relay fee for regular transactions, tickets and treasury operations,
 ; in EXCC per 1000 bytes.
-; minrelaytxfee=0.0001
+; minrelaytxfee=0.001
 
 ; Bound the combined main and staged pools by serialized bytes and transaction
 ; count. At capacity, higher-feerate transactions can displace lower-feerate

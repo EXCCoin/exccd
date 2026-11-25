@@ -31,8 +31,8 @@ const (
 	DefaultBlockPrioritySize = 20000
 
 	// maxRelayFeeMultiplier is the factor that we disallow fees / kB above the
-	// minimum tx fee.  At the current default minimum relay fee of 0.0001
-	// DCR/kB, this results in a maximum allowed high fee of 1 DCR/kB.
+	// minimum tx fee.  At the current default minimum relay fee of 0.001
+	// EXCC/kB, this results in a maximum allowed high fee of 10 EXCC/kB.
 	maxRelayFeeMultiplier = 1e4
 
 	// maxVoteDoubleSpends is the maximum number of vote double spends allowed

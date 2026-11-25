@@ -68,6 +68,18 @@ func TestCalcMinRequiredTxRelayFee(t *testing.T) {
 			dcrutil.MaxAmount,
 		},
 		{
+			"large but valid rate and size saturate before multiplying",
+			1 << 16,
+			1 << 48,
+			dcrutil.MaxAmount,
+		},
+		{
+			"zero minimum fee",
+			MaxStandardTxSize,
+			0,
+			0,
+		},
+		{
 			"1500 bytes with 5000 relay fee",
 			1500,
 			5000,
