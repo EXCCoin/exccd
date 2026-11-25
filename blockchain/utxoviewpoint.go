@@ -90,7 +90,7 @@ func (view *UtxoViewpoint) addTxOut(outpoint wire.OutPoint, txOut *wire.TxOut,
 
 	// The referenced transaction output should always be marked as unspent and
 	// modified when being added to the view.
-	entry.state &^= utxoStateSpent | utxoStateSpentByZeroConf
+	entry.state &^= utxoStateSpent | utxoStateSpentByZeroConf | utxoStateResurrected
 	entry.state |= utxoStateModified
 
 	// Deep copy the script.  This is required since the tx out script is a
@@ -567,7 +567,7 @@ func (view *UtxoViewpoint) disconnectTransactions(block *dcrutil.Block,
 			// Mark the existing referenced transaction output as unspent and
 			// modified.
 			entry.state &^= utxoStateSpent | utxoStateSpentByZeroConf
-			entry.state |= utxoStateModified
+			entry.state |= utxoStateModified | utxoStateResurrected
 
 			// Keep track of all in-flight spends by the regular transaction
 			// tree in order detect spends of earlier outputs by transactions

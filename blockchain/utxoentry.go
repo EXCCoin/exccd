@@ -24,7 +24,9 @@ const (
 //	bit  1    - transaction output has been spent
 //	bit  2    - transaction output has been spent by tx later in the same block
 //	bit  3    - transaction output is fresh
-//	bits 4-7  - unused
+//	bit  4    - transaction output was resurrected from a disconnected block in
+//	            the current view
+//	bits 5-7  - unused
 type utxoState uint8
 
 const (
@@ -42,6 +44,12 @@ const (
 	// utxoStateFresh indicates that a txout is fresh, which means that it
 	// exists in the utxo cache but does not exist in the underlying database.
 	utxoStateFresh
+
+	// utxoStateResurrected indicates that a txout was unspent in the current
+	// view by disconnecting a block (which had already spent it in the cache or
+	// backend). If the same view immediately re-spends it, the net cache state
+	// is unchanged.
+	utxoStateResurrected
 )
 
 // utxoFlags defines additional information for the containing transaction of a
@@ -159,6 +167,12 @@ func (entry *UtxoEntry) isFresh() bool {
 // created in a block and later spent by another transaction in the same block.
 func (entry *UtxoEntry) isSpentByZeroConf() bool {
 	return entry.state&utxoStateSpentByZeroConf == utxoStateSpentByZeroConf
+}
+
+// isResurrected returns whether or not the output was unspent in the current
+// view by disconnecting a previously connected block.
+func (entry *UtxoEntry) isResurrected() bool {
+	return entry.state&utxoStateResurrected == utxoStateResurrected
 }
 
 // IsCoinBase returns whether or not the output was contained in a coinbase

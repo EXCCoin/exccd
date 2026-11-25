@@ -278,6 +278,7 @@ func (c *UtxoCache) addEntry(outpoint wire.OutPoint, entry *UtxoEntry) {
 	// an existing entry for the specified outpoint or will overwrite the
 	// existing one when there is, but in either case the resulting cache
 	// entry is modified and thus needs to be marked as such.
+	entry.state &^= utxoStateResurrected
 	entry.state |= utxoStateModified
 
 	// Attempt to get an existing entry from the cache.
@@ -635,6 +636,13 @@ func (c *UtxoCache) Commit(view *UtxoViewpoint) error {
 		// cache to ensure the utxo is later removed from the backend on the
 		// next cache flush.
 		if entry.IsSpent() {
+			// An output resurrected by disconnecting a block (parent
+			// disapproval or disconnecting a disapproving block) and re-spent
+			// in the same view is already marked spent in the cache/backend.
+			if entry.isResurrected() {
+				delete(view.entries, outpoint)
+				continue
+			}
 			if err := c.spendEntry(outpoint); err != nil {
 				return err
 			}
