@@ -279,7 +279,7 @@ func parseRejectedSpends(values []string) (mining.RejectedSpends, error) {
 		if parts[2] != "0" && parts[2] != "1" {
 			return nil, fmt.Errorf("invalid rejectspend tree %q (want 0 or 1)", parts[2])
 		}
-		tree := int8(wire.TxTreeRegular)
+		tree := wire.TxTreeRegular
 		if parts[2] == "1" {
 			tree = wire.TxTreeStake
 		}
