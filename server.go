@@ -168,7 +168,7 @@ type broadcastMsg struct {
 
 // broadcastInventoryAdd is a type used to declare that the InvVect it contains
 // needs to be added to the rebroadcast map
-type broadcastInventoryAdd relayMsg
+type broadcastInventoryAdd *wire.InvVect
 
 // broadcastInventoryDel is a type used to declare that the InvVect it contains
 // needs to be removed from the rebroadcast map
@@ -1529,10 +1529,10 @@ func randomUint16Number(max uint16) uint16 {
 
 // AddRebroadcastInventory adds 'iv' to the list of inventories to be
 // rebroadcasted at random intervals until they show up in a block.
-func (s *server) AddRebroadcastInventory(iv *wire.InvVect, data interface{}) {
+func (s *server) AddRebroadcastInventory(iv *wire.InvVect, _ interface{}) {
 	select {
 	case <-s.quit:
-	case s.modifyRebroadcastInv <- broadcastInventoryAdd{invVect: iv, data: data}:
+	case s.modifyRebroadcastInv <- broadcastInventoryAdd(iv):
 	}
 }
 
@@ -2454,22 +2454,6 @@ func headerApprovesParent(header *wire.BlockHeader) bool {
 	return dcrutil.IsFlagSet16(header.VoteBits, dcrutil.BlockValid)
 }
 
-// isDoubleSpendOrDuplicateError returns whether or not the passed error, which
-// is expected to have come from mempool, indicates a transaction was rejected
-// either due to containing a double spend or already existing in the pool.
-func isDoubleSpendOrDuplicateError(err error) bool {
-	switch {
-	case errors.Is(err, mempool.ErrDuplicate):
-		return true
-	case errors.Is(err, mempool.ErrAlreadyExists):
-		return true
-	case errors.Is(err, blockchain.ErrMissingTxOut):
-		return true
-	}
-
-	return false
-}
-
 // proactivelyEvictSigCacheEntries fetches the block that is
 // txscript.ProactiveEvictionDepth levels deep from bestHeight and passes it to
 // SigCache to evict the entries associated with the transactions in that block.
@@ -2713,11 +2697,7 @@ func (s *server) handleBlockchainNotification(notification *blockchain.Notificat
 		// transaction is still valid.
 		if !headerApprovesParent(&block.MsgBlock().Header) {
 			for _, tx := range parentBlock.Transactions()[1:] {
-				_, err := txMemPool.MaybeAcceptTransaction(tx, false, true)
-				if err != nil && !isDoubleSpendOrDuplicateError(err) {
-					txMemPool.RemoveTransaction(tx, true, isTreasuryEnabled,
-						isAutoRevocationsEnabled)
-				}
+				txMemPool.ReinsertTransaction(tx, ntfn.CheckTxFlags)
 			}
 		}
 
@@ -2839,11 +2819,7 @@ func (s *server) handleBlockchainNotification(notification *blockchain.Notificat
 		// pool which depends on the transaction is still valid.
 		handleDisconnectedBlockTxns := func(txns []*dcrutil.Tx) {
 			for _, tx := range txns {
-				_, err := txMemPool.MaybeAcceptTransaction(tx, false, true)
-				if err != nil && !isDoubleSpendOrDuplicateError(err) {
-					txMemPool.RemoveTransaction(tx, true, isTreasuryEnabled,
-						isAutoRevocationsEnabled)
-				}
+				txMemPool.ReinsertTransaction(tx, ntfn.CheckTxFlags)
 			}
 		}
 		handleDisconnectedBlockTxns(block.Transactions()[1:])
@@ -2915,13 +2891,46 @@ func (s *server) handleBlockchainNotification(notification *blockchain.Notificat
 	}
 }
 
+// pendingRebroadcast holds only inventory IDs. The pool owns the normalized
+// transaction bodies and may evict them between rebroadcasts.
+type pendingRebroadcast map[wire.InvVect]struct{}
+
+func (p pendingRebroadcast) visit(fetch func(*chainhash.Hash) (*dcrutil.Tx, error),
+	visit func(wire.InvVect, *dcrutil.Tx)) {
+	for iv := range p {
+		tx, err := fetch(&iv.Hash)
+		if err != nil {
+			delete(p, iv)
+			continue
+		}
+		visit(iv, tx)
+	}
+}
+
+func (p pendingRebroadcast) add(iv wire.InvVect, limit int,
+	snapshot func() map[chainhash.Hash]struct{}) {
+	// Reclaim stale IDs even with no new blocks and before the timer fires.
+	// Leave room between sweeps to amortize the membership checks. The
+	// difference avoids overflow for large configured count limits.
+	if len(p)-limit >= limit {
+		active := snapshot()
+		for pending := range p {
+			if _, ok := active[pending.Hash]; !ok {
+				delete(p, pending)
+			}
+		}
+	}
+	p[iv] = struct{}{}
+}
+
 // rebroadcastHandler keeps track of user submitted inventories that we have
 // sent out but have not yet made it into a block. We periodically rebroadcast
 // them in case our peers restarted or otherwise lost track of them.
 func (s *server) rebroadcastHandler(ctx context.Context) {
 	// Wait 5 min before first tx rebroadcast.
 	timer := time.NewTimer(5 * time.Minute)
-	pendingInvs := make(map[wire.InvVect]interface{})
+	pendingInvs := make(pendingRebroadcast)
+	fetch := s.txMemPool.FetchTransaction
 
 	for {
 		select {
@@ -2930,7 +2939,7 @@ func (s *server) rebroadcastHandler(ctx context.Context) {
 
 			// Incoming InvVects are added to our map of RPC txs.
 			case broadcastInventoryAdd:
-				pendingInvs[*msg.invVect] = msg.data
+				pendingInvs.add(*msg, cfg.MaxMempoolTxs, s.txMemPool.AcceptedTxHashes)
 
 			// When an InvVect has been added to a block, we can
 			// now remove it, if it was present.
@@ -2953,11 +2962,7 @@ func (s *server) rebroadcastHandler(ctx context.Context) {
 					break
 				}
 
-				for iv, data := range pendingInvs {
-					tx, ok := data.(*dcrutil.Tx)
-					if !ok {
-						continue
-					}
+				pendingInvs.visit(fetch, func(iv wire.InvVect, tx *dcrutil.Tx) {
 
 					txType := stake.DetermineTxType(tx.MsgTx(),
 						isTreasuryEnabled, isAutoRevocationsEnabled)
@@ -2970,7 +2975,7 @@ func (s *server) rebroadcastHandler(ctx context.Context) {
 						srvrLog.Debugf("Pending ticket purchase broadcast "+
 							"inventory for tx %v removed. Ticket value not "+
 							"equal to stake difficulty.", tx.Hash())
-						continue
+						return
 					}
 
 					// Remove the ticket rebroadcast if it has already expired.
@@ -2980,7 +2985,7 @@ func (s *server) rebroadcastHandler(ctx context.Context) {
 						srvrLog.Debugf("Pending ticket purchase broadcast "+
 							"inventory for tx %v removed. Transaction "+
 							"expired.", tx.Hash())
-						continue
+						return
 					}
 
 					// Remove the revocation rebroadcast if the associated
@@ -2992,19 +2997,18 @@ func (s *server) rebroadcastHandler(ctx context.Context) {
 							srvrLog.Debugf("Pending revocation broadcast "+
 								"inventory for tx %v removed. "+
 								"Associated ticket was revived.", tx.Hash())
-							continue
+							return
 						}
 					}
-				}
+				})
 			}
 
 		case <-timer.C:
 			// Any inventory we have has not made it into a block
 			// yet. We periodically resubmit them until they have.
-			for iv, data := range pendingInvs {
-				ivCopy := iv
-				s.RelayInventory(&ivCopy, data, false)
-			}
+			pendingInvs.visit(fetch, func(iv wire.InvVect, tx *dcrutil.Tx) {
+				s.RelayInventory(&iv, tx, false)
+			})
 
 			// Process at a random time up to 30mins (in seconds)
 			// in the future.
@@ -3494,9 +3498,9 @@ func newServer(ctx context.Context, listenAddrs []string, db database.DB,
 		Policy: mempool.Policy{
 			RejectedSpends:         cfg.rejectedSpends,
 			EnableAncestorTracking: len(cfg.miningAddrs) > 0,
-			DisableRelayPriority:   cfg.NoRelayPriority,
 			AcceptNonStd:           cfg.AcceptNonStd,
-			FreeTxRelayLimit:       cfg.FreeTxRelayLimit,
+			MaxMempoolBytes:        cfg.MaxMempoolBytes,
+			MaxMempoolTxs:          cfg.MaxMempoolTxs,
 			MaxOrphanTxs:           cfg.MaxOrphanTxs,
 			MaxOrphanTxSize:        mempool.MaxStandardTxSize,
 			MaxSigOpsPerTx:         blockchain.MaxSigOpsPerBlock / 5,
@@ -3524,6 +3528,7 @@ func newServer(ctx context.Context, listenAddrs []string, db database.DB,
 		},
 		FetchUtxoView:    s.chain.FetchUtxoView,
 		BlockByHash:      s.chain.BlockByHash,
+		BestSnapshot:     s.chain.BestSnapshot,
 		BestHash:         func() *chainhash.Hash { return &s.chain.BestSnapshot().Hash },
 		BestHeight:       func() int64 { return s.chain.BestSnapshot().Height },
 		HeaderByHash:     s.chain.HeaderByHash,

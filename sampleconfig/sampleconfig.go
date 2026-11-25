@@ -236,15 +236,20 @@ const fileContents = `[Application Options]
 ; Mempool Settings - The following options
 ; ------------------------------------------------------------------------------
 
-; Set the minimum transaction fee to be considered a non-zero fee,
+; Minimum relay fee for regular transactions, tickets and treasury operations,
+; in EXCC per 1000 bytes.
 ; minrelaytxfee=0.0001
 
-; Rate-limit free transactions to the value 15 * 1000 bytes per
-; minute.
-; limitfreerelay=15
+; Bound the combined main and staged pools by serialized bytes and transaction
+; count. At capacity, higher-feerate transactions can displace lower-feerate
+; transactions without leaving any dependents behind. Votes and revocations
+; have priority over fee-paying traffic, with current winning votes protected.
+; The limits must accommodate one maximum-size block and its winning votes.
+; Orphans have their own limit below.
+; maxmempoolbytes=67108864
+; maxmempooltxs=50000
 
-; Require high priority for relaying free or low-fee transactions.
-; norelaypriority=0
+; Legacy limitfreerelay and norelaypriority options are accepted and ignored.
 
 ; Limit orphan transaction pool to 100 transactions.
 ; maxorphantx=100

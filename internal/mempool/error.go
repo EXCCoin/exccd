@@ -47,7 +47,10 @@ const (
 	// ErrDustOutput indicates a transaction has one or more dust outputs.
 	ErrDustOutput = ErrorKind("ErrDustOutput")
 
-	// ErrInsufficientFee indicates a transaction cannot does not pay the minimum
+	// ErrMempoolFull indicates the transaction cannot fit within local pool limits.
+	ErrMempoolFull = ErrorKind("ErrMempoolFull")
+
+	// ErrInsufficientFee indicates a transaction does not pay the minimum
 	// fee required by the active policy.
 	ErrInsufficientFee = ErrorKind("ErrInsufficientFee")
 

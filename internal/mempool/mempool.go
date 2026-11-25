@@ -8,7 +8,7 @@ package mempool
 import (
 	"errors"
 	"fmt"
-	"math"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -26,10 +26,8 @@ import (
 )
 
 const (
-	// DefaultBlockPrioritySize is the default size in bytes for high-
-	// priority / low-fee transactions.  It is used to help determine which
-	// are allowed into the mempool and consequently affects their relay and
-	// inclusion when generating block templates.
+	// DefaultBlockPrioritySize is the space reserved for priority transactions
+	// when generating block templates.
 	DefaultBlockPrioritySize = 20000
 
 	// maxRelayFeeMultiplier is the factor that we disallow fees / kB above the
@@ -97,6 +95,9 @@ type Config struct {
 	// BlockByHash defines the function use to fetch the block identified
 	// by the given hash.
 	BlockByHash func(*chainhash.Hash) (*dcrutil.Block, error)
+
+	// BestSnapshot gives capacity policy the canonical tip and winning tickets.
+	BestSnapshot func() *blockchain.BestState
 
 	// BestHash defines the function to use to access the block hash of
 	// the current best chain.
@@ -176,19 +177,16 @@ type Config struct {
 type Policy struct {
 	RejectedSpends mining.RejectedSpends
 
-	// DisableRelayPriority defines whether to relay free or low-fee
-	// transactions that do not have enough priority to be relayed.
-	DisableRelayPriority bool
-
 	// AcceptNonStd defines whether to accept and relay non-standard
 	// transactions to the network. If true, non-standard transactions
 	// will be accepted into the mempool and relayed to the rest of the
 	// network. Otherwise, all non-standard transactions will be rejected.
 	AcceptNonStd bool
 
-	// FreeTxRelayLimit defines the given amount in thousands of bytes
-	// per minute that transactions with no fee are rate limited to.
-	FreeTxRelayLimit float64
+	// MaxMempoolBytes and MaxMempoolTxs bound main and staged transactions
+	// together. Zero selects the corresponding default.
+	MaxMempoolBytes int64
+	MaxMempoolTxs   int
 
 	// MaxOrphanTxs is the maximum number of orphan transactions
 	// that can be queued.
@@ -204,8 +202,7 @@ type Policy struct {
 	// of the max signature operations for a block.
 	MaxSigOpsPerTx int
 
-	// MinRelayTxFee defines the minimum transaction fee in DCR/kB to be
-	// considered a non-zero fee.
+	// MinRelayTxFee is the minimum fee in atoms per kilobyte for fee-paying transactions.
 	MinRelayTxFee dcrutil.Amount
 
 	// AllowOldVotes defines whether or not votes on old blocks will be
@@ -279,7 +276,9 @@ type TxPool struct {
 	orphans       map[chainhash.Hash]*orphanTx
 	orphansByPrev map[wire.OutPoint]map[chainhash.Hash]*dcrutil.Tx
 	outpoints     map[wire.OutPoint]*dcrutil.Tx
-	miningView    *mining.TxMiningView
+	// Competing stake votes may legitimately spend the same ticket on forks.
+	alternateSpenders map[wire.OutPoint][]*dcrutil.Tx
+	miningView        *mining.TxMiningView
 
 	staged          map[chainhash.Hash]*TxDesc
 	stagedOutpoints map[wire.OutPoint]*dcrutil.Tx
@@ -291,8 +290,7 @@ type TxPool struct {
 	// TSpends. Access MUST be protected by the mempool mutex.
 	tspends map[chainhash.Hash]*dcrutil.Tx
 
-	pennyTotal    float64 // exponentially decaying total for penny spends.
-	lastPennyUnix int64   // unix time of last ``penny spend''
+	capacity poolCapacity
 
 	// nextExpireScan is the time after which the orphan pool will be
 	// scanned in order to evict orphans.  This is NOT a hard deadline as
@@ -339,6 +337,27 @@ func (mp *TxPool) insertVote(ssgen *dcrutil.Tx) {
 	log.Debugf("Accepted vote %v for block hash %v (height %v), voting "+
 		"%v on the transaction tree", voteHash, blockHash, blockHeight,
 		vote)
+}
+
+// forgetEvictedVote removes only the exact vote dropped by capacity policy.
+// Other removal paths retain historical vote metadata for existing consumers.
+// Readers may retain old slices after releasing votesMtx, so copy on write.
+func (mp *TxPool) forgetEvictedVote(tx *dcrutil.Tx) {
+	block, _ := stake.SSGenBlockVotedOn(tx.MsgTx())
+	mp.votesMtx.Lock()
+	defer mp.votesMtx.Unlock()
+	votes := mp.votes[block]
+	for i, vote := range votes {
+		if vote.VoteHash != *tx.Hash() {
+			continue
+		}
+		if len(votes) == 1 {
+			delete(mp.votes, block)
+		} else {
+			mp.votes[block] = slices.Delete(slices.Clone(votes), i, i+1)
+		}
+		break
+	}
 }
 
 // VoteHashesForBlock returns the hashes for all votes on the provided block
@@ -677,6 +696,7 @@ func (mp *TxPool) isTransactionStaged(hash *chainhash.Hash) bool {
 // This function MUST be called with the mempool lock held (for writes).
 func (mp *TxPool) stageTransaction(txDesc *TxDesc) {
 	tx := txDesc.Tx
+	mp.capacity.insert(&capacityEntry{desc: txDesc, index: -1})
 	mp.staged[*tx.Hash()] = txDesc
 	for _, txIn := range tx.MsgTx().TxIn {
 		mp.stagedOutpoints[txIn.PreviousOutPoint] = tx
@@ -690,6 +710,10 @@ func (mp *TxPool) stageTransaction(txDesc *TxDesc) {
 //
 // This function MUST be called with the mempool lock held (for writes).
 func (mp *TxPool) removeStagedTransaction(stagedTx *dcrutil.Tx) {
+	if !mp.isTransactionStaged(stagedTx.Hash()) {
+		return
+	}
+	mp.capacity.remove(stagedTx.Hash())
 	delete(mp.staged, *stagedTx.Hash())
 	for _, txIn := range stagedTx.MsgTx().TxIn {
 		delete(mp.stagedOutpoints, txIn.PreviousOutPoint)
@@ -841,6 +865,9 @@ func (mp *TxPool) removeTransaction(tx *dcrutil.Tx, removeRedeemers,
 		outpoint := wire.OutPoint{Hash: *txHash, Tree: tree}
 		for i := uint32(0); i < uint32(len(tx.MsgTx().TxOut)); i++ {
 			outpoint.Index = i
+			for _, alt := range slices.Clone(mp.alternateSpenders[outpoint]) {
+				mp.removeTransaction(alt, true, isTreasuryEnabled, isAutoRevocationsEnabled)
+			}
 			if txRedeemer, exists := mp.outpoints[outpoint]; exists {
 				mp.removeTransaction(txRedeemer, true,
 					isTreasuryEnabled, isAutoRevocationsEnabled)
@@ -865,7 +892,7 @@ func (mp *TxPool) removeTransaction(tx *dcrutil.Tx, removeRedeemers,
 
 		// Mark the referenced outpoints as unspent by the pool.
 		for _, txIn := range txDesc.Tx.MsgTx().TxIn {
-			delete(mp.outpoints, txIn.PreviousOutPoint)
+			mp.untrackSpender(txIn.PreviousOutPoint, txDesc.Tx)
 		}
 
 		// Stop tracking this transaction in the mining view.
@@ -874,6 +901,7 @@ func (mp *TxPool) removeTransaction(tx *dcrutil.Tx, removeRedeemers,
 		updateDescendantStats := !removeRedeemers
 		mp.miningView.RemoveTransaction(tx.Hash(), updateDescendantStats)
 
+		mp.capacity.remove(txHash)
 		delete(mp.pool, *txHash)
 
 		atomic.StoreInt64(&mp.lastUpdated, time.Now().Unix())
@@ -918,6 +946,13 @@ func (mp *TxPool) RemoveDoubleSpends(tx *dcrutil.Tx, isTreasuryEnabled,
 	// Protect concurrent access.
 	mp.mtx.Lock()
 	for _, txIn := range tx.MsgTx().TxIn {
+		// Removal mutates the alternate-spender slice. Its size is bounded
+		// by the permitted number of competing votes for one ticket.
+		for _, alt := range slices.Clone(mp.alternateSpenders[txIn.PreviousOutPoint]) {
+			if *alt.Hash() != *tx.Hash() {
+				mp.removeTransaction(alt, true, isTreasuryEnabled, isAutoRevocationsEnabled)
+			}
+		}
 		if txRedeemer, ok := mp.outpoints[txIn.PreviousOutPoint]; ok {
 			if !txRedeemer.Hash().IsEqual(tx.Hash()) {
 				mp.removeTransaction(txRedeemer, true,
@@ -965,12 +1000,20 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 
 	// Add the transaction to the pool and mark the referenced outpoints
 	// as spent by the pool.
+	mp.capacity.insert(&capacityEntry{desc: txDesc, index: -1})
 	mp.pool[*txHash] = txDesc
 	mp.miningView.AddTransaction(&txDesc.TxDesc, mp.findTx)
 
 	msgTx := tx.MsgTx()
 	for _, txIn := range msgTx.TxIn {
-		mp.outpoints[txIn.PreviousOutPoint] = tx
+		op := txIn.PreviousOutPoint
+		if op.Index == wire.MaxPrevOutIndex {
+			continue // A stakebase or treasurybase does not spend an output.
+		}
+		if other := mp.outpoints[op]; other != nil {
+			mp.alternateSpenders[op] = append(mp.alternateSpenders[op], other)
+		}
+		mp.outpoints[op] = tx
 	}
 	atomic.StoreInt64(&mp.lastUpdated, time.Now().Unix())
 
@@ -987,6 +1030,30 @@ func (mp *TxPool) addTransaction(utxoView *blockchain.UtxoViewpoint,
 	// to the mempool.
 	if mp.cfg.AddTxToFeeEstimation != nil {
 		mp.cfg.AddTxToFeeEstimation(txHash, txDesc.Fee, txDesc.TxSize, txType)
+	}
+}
+
+// untrackSpender preserves competing votes for the same ticket when a
+// particular vote is evicted or mined.
+func (mp *TxPool) untrackSpender(op wire.OutPoint, tx *dcrutil.Tx) {
+	others := mp.alternateSpenders[op]
+	if mp.outpoints[op] == tx {
+		if len(others) == 0 {
+			delete(mp.outpoints, op)
+			return
+		}
+		last := len(others) - 1
+		mp.outpoints[op] = others[last]
+		others = slices.Delete(others, last, last+1)
+	} else if i := slices.Index(others, tx); i >= 0 {
+		others = slices.Delete(others, i, i+1)
+	} else {
+		return
+	}
+	if len(others) == 0 {
+		delete(mp.alternateSpenders, op)
+	} else {
+		mp.alternateSpenders[op] = others
 	}
 }
 
@@ -1254,7 +1321,7 @@ func (mp *TxPool) MaybeAcceptDependents(tx *dcrutil.Tx, isTreasuryEnabled,
 // so that we can easily pick different stake tx types from the mempool later.
 // This should probably be done at the bottom using "IsSStx" etc functions.
 // It should also set the dcrutil tree type for the tx as well.
-func (mp *TxPool) maybeAcceptTransaction(tx *dcrutil.Tx, isNew, rateLimit,
+func (mp *TxPool) maybeAcceptTransaction(tx *dcrutil.Tx, isNew,
 	allowHighFees, rejectDupOrphans bool,
 	checkTxFlags blockchain.AgendaFlags) ([]*chainhash.Hash, error) {
 
@@ -1639,89 +1706,15 @@ func (mp *TxPool) maybeAcceptTransaction(tx *dcrutil.Tx, isNew, rateLimit,
 		return nil, txRuleError(ErrNonStandard, str)
 	}
 
-	// Don't allow transactions with fees too low to get into a mined block.
-	//
-	// Most miners allow a free transaction area in blocks they mine to go
-	// alongside the area used for high-priority transactions as well as
-	// transactions with fees.  A transaction size of up to 1000 bytes is
-	// considered safe to go into this section.  Further, the minimum fee
-	// calculated below on its own would encourage several small
-	// transactions to avoid fees rather than one single larger transaction
-	// which is more desirable.  Therefore, as long as the size of the
-	// transaction does not exceed 1000 less than the reserved space for
-	// high-priority transactions, don't require a fee for it.
-	// This applies to non-stake transactions only.
+	// Fee policy applies to regular transfers, tickets and treasury operations.
+	// Votes and revocations participate in block production without a fee.
 	serializedSize := int64(msgTx.SerializeSize())
-	minFee := calcMinRequiredTxRelayFee(serializedSize,
-		mp.cfg.Policy.MinRelayTxFee)
-	if txType == stake.TxTypeRegular { // Non-stake only
-		if serializedSize >= (DefaultBlockPrioritySize-1000) &&
-			txFee < minFee {
-
-			str := fmt.Sprintf("transaction %v has %v fees which "+
-				"is under the required amount of %v", txHash,
-				txFee, minFee)
-			return nil, txRuleError(ErrInsufficientFee, str)
-		}
-	}
-
-	// Require that free transactions have sufficient priority to be mined
-	// in the next block.  Transactions which are being added back to the
-	// memory pool from blocks that have been disconnected during a reorg
-	// are exempted.
-	//
-	// This applies to non-stake transactions only.
-	if isNew && !mp.cfg.Policy.DisableRelayPriority && txFee < minFee &&
-		txType == stake.TxTypeRegular {
-
-		currentPriority := mining.CalcPriority(msgTx, utxoView,
-			nextBlockHeight)
-		if currentPriority <= mining.MinHighPriority {
-			str := fmt.Sprintf("transaction %v has insufficient "+
-				"priority (%g <= %g)", txHash,
-				currentPriority, mining.MinHighPriority)
-			return nil, txRuleError(ErrInsufficientPriority, str)
-		}
-	}
-
-	// Free-to-relay transactions are rate limited here to prevent
-	// penny-flooding with tiny transactions as a form of attack.
-	// This applies to non-stake transactions only.
-	if rateLimit && txFee < minFee && txType == stake.TxTypeRegular {
-		nowUnix := time.Now().Unix()
-		// Decay passed data with an exponentially decaying ~10 minute
-		// window.
-		mp.pennyTotal *= math.Pow(1.0-1.0/600.0,
-			float64(nowUnix-mp.lastPennyUnix))
-		mp.lastPennyUnix = nowUnix
-
-		// Are we still over the limit?
-		if mp.pennyTotal >= mp.cfg.Policy.FreeTxRelayLimit*10*1000 {
-			str := fmt.Sprintf("transaction %v has been rejected "+
-				"by the rate limiter due to low fees", txHash)
-			return nil, txRuleError(ErrInsufficientFee, str)
-		}
-		oldTotal := mp.pennyTotal
-
-		mp.pennyTotal += float64(serializedSize)
-		log.Tracef("rate limit: curTotal %v, nextTotal: %v, "+
-			"limit %v", oldTotal, mp.pennyTotal,
-			mp.cfg.Policy.FreeTxRelayLimit*10*1000)
-	}
-
-	// Check that tickets also pay the minimum of the relay fee.  This fee is
-	// also performed on regular transactions above, but fees lower than the
-	// minimum may be allowed when there is sufficient priority, and these
-	// checks aren't desired for ticket purchases.
-	if isTicket {
-		minTicketFee := calcMinRequiredTxRelayFee(serializedSize,
-			mp.cfg.Policy.MinRelayTxFee)
-		if txFee < minTicketFee {
-			str := fmt.Sprintf("ticket purchase transaction %v has a %v "+
-				"fee which is under the required threshold amount of %d",
-				txHash, txFee, minTicketFee)
-			return nil, txRuleError(ErrInsufficientFee, str)
-		}
+	minFee := calcMinRequiredTxRelayFee(serializedSize, mp.cfg.Policy.MinRelayTxFee)
+	isTAdd := isTreasuryEnabled && txType == stake.TxTypeTAdd
+	if txFee < minFee && (txType == stake.TxTypeRegular || isTicket || isTAdd || isTSpend) {
+		str := fmt.Sprintf("transaction %v pays %d atoms in fees, requires %d for %d bytes",
+			txHash, txFee, minFee, serializedSize)
+		return nil, txRuleError(ErrInsufficientFee, str)
 	}
 
 	// Check whether allowHighFees is set to false (default), if so, then make
@@ -1756,6 +1749,21 @@ func (mp *TxPool) maybeAcceptTransaction(tx *dcrutil.Tx, isNew, rateLimit,
 
 	txDesc := mp.newTxDesc(utxoView, tx, txType, bestHeight, txFee, totalSigOps,
 		serializedSize)
+
+	victims, err := mp.capacity.makeRoom(txDesc, mp.cfg.BestSnapshot)
+	if err != nil {
+		return nil, err
+	}
+	for _, victim := range victims {
+		if mp.isTransactionStaged(victim.Tx.Hash()) {
+			mp.removeStagedTransaction(victim.Tx)
+		} else {
+			mp.removeTransaction(victim.Tx, false, isTreasuryEnabled, isAutoRevocationsEnabled)
+			if victim.Type == stake.TxTypeSSGen {
+				mp.forgetEvictedVote(victim.Tx)
+			}
+		}
+	}
 
 	// Tickets cannot be included in a block until all inputs have
 	// been approved by stakeholders. Consensus rules dictate that stake
@@ -1852,7 +1860,7 @@ func (mp *TxPool) determineCheckTxFlags() (blockchain.AgendaFlags, error) {
 // rules, orphan transaction handling, and insertion into the memory pool.
 //
 // This function is safe for concurrent access.
-func (mp *TxPool) MaybeAcceptTransaction(tx *dcrutil.Tx, isNew, rateLimit bool) ([]*chainhash.Hash, error) {
+func (mp *TxPool) MaybeAcceptTransaction(tx *dcrutil.Tx, isNew, _ bool) ([]*chainhash.Hash, error) {
 	// Create agenda flags for checking transactions based on which ones are
 	// active or should otherwise always be enforced.
 	checkTxFlags, err := mp.determineCheckTxFlags()
@@ -1862,11 +1870,29 @@ func (mp *TxPool) MaybeAcceptTransaction(tx *dcrutil.Tx, isNew, rateLimit bool) 
 
 	// Protect concurrent access.
 	mp.mtx.Lock()
-	hashes, err := mp.maybeAcceptTransaction(tx, isNew, rateLimit, true,
+	hashes, err := mp.maybeAcceptTransaction(tx, isNew, true,
 		true, checkTxFlags)
 	mp.mtx.Unlock()
 
 	return hashes, err
+}
+
+// ReinsertTransaction restores a disconnected or disapproved block transaction.
+// A missing dependency may be a parent rejected earlier in the same block.
+// Remove its descendants as well so the mining view never retains orphans.
+func (mp *TxPool) ReinsertTransaction(tx *dcrutil.Tx, flags blockchain.AgendaFlags) {
+	checkFlags, err := mp.determineCheckTxFlags()
+	mp.mtx.Lock()
+	defer mp.mtx.Unlock()
+	var missing []*chainhash.Hash
+	if err == nil {
+		missing, err = mp.maybeAcceptTransaction(tx, false, true, true, checkFlags)
+	}
+	if len(missing) == 0 && (err == nil || errors.Is(err, ErrDuplicate) ||
+		errors.Is(err, ErrAlreadyExists) || errors.Is(err, blockchain.ErrMissingTxOut)) {
+		return
+	}
+	mp.removeTransaction(tx, true, flags.IsTreasuryEnabled(), flags.IsAutoRevocationsEnabled())
 }
 
 // processOrphans is the internal function which implements the public
@@ -1917,7 +1943,7 @@ func (mp *TxPool) processOrphans(acceptedTx *dcrutil.Tx, checkTxFlags blockchain
 			// Potentially accept an orphan into the tx pool.
 			for _, tx := range orphans {
 				missing, err := mp.maybeAcceptTransaction(
-					tx, true, true, true, false,
+					tx, true, true, false,
 					checkTxFlags)
 				if err != nil {
 					// The orphan is now invalid, so there
@@ -1926,7 +1952,8 @@ func (mp *TxPool) processOrphans(acceptedTx *dcrutil.Tx, checkTxFlags blockchain
 					// accepted.  Remove them.
 					mp.removeOrphan(tx, true,
 						isTreasuryEnabled, isAutoRevocationsEnabled)
-					break
+					// A competing orphan for this output may still qualify.
+					continue
 				}
 
 				// Transaction is still an orphan.  Try the next
@@ -1959,11 +1986,16 @@ func (mp *TxPool) processOrphans(acceptedTx *dcrutil.Tx, checkTxFlags blockchain
 	// spends.
 	mp.removeOrphanDoubleSpends(acceptedTx, isTreasuryEnabled,
 		isAutoRevocationsEnabled)
+	retained := acceptedTxns[:0]
 	for _, tx := range acceptedTxns {
+		if !mp.isTransactionInPool(tx.Hash()) && !mp.isTransactionStaged(tx.Hash()) {
+			continue
+		}
+		retained = append(retained, tx)
 		mp.removeOrphanDoubleSpends(tx, isTreasuryEnabled, isAutoRevocationsEnabled)
 	}
 
-	return acceptedTxns
+	return retained
 }
 
 // pruneStakeTx is the internal function which implements the public
@@ -2135,7 +2167,7 @@ func (mp *TxPool) ProcessOrphans(acceptedTx *dcrutil.Tx, checkTxFlags blockchain
 // passed one being accepted.
 //
 // This function is safe for concurrent access.
-func (mp *TxPool) ProcessTransaction(tx *dcrutil.Tx, allowOrphan, rateLimit, allowHighFees bool, tag Tag) ([]*dcrutil.Tx, error) {
+func (mp *TxPool) ProcessTransaction(tx *dcrutil.Tx, allowOrphan, _, allowHighFees bool, tag Tag) ([]*dcrutil.Tx, error) {
 	// Create agenda flags for checking transactions based on which ones are
 	// active or should otherwise always be enforced.
 	checkTxFlags, err := mp.determineCheckTxFlags()
@@ -2156,7 +2188,7 @@ func (mp *TxPool) ProcessTransaction(tx *dcrutil.Tx, allowOrphan, rateLimit, all
 	}()
 
 	// Potentially accept the transaction to the memory pool.
-	missingParents, err := mp.maybeAcceptTransaction(tx, true, rateLimit,
+	missingParents, err := mp.maybeAcceptTransaction(tx, true,
 		allowHighFees, true, checkTxFlags)
 	if err != nil {
 		return nil, err
@@ -2200,6 +2232,18 @@ func (mp *TxPool) ProcessTransaction(tx *dcrutil.Tx, allowOrphan, rateLimit, all
 	// Potentially add the orphan transaction to the orphan pool.
 	err = mp.maybeAddOrphan(tx, tag, isTreasuryEnabled, isAutoRevocationsEnabled)
 	return nil, err
+}
+
+// AcceptedTxHashes snapshots the main and staged pools together. Orphans are
+// excluded because their transactions are unavailable for rebroadcast.
+func (mp *TxPool) AcceptedTxHashes() map[chainhash.Hash]struct{} {
+	mp.mtx.RLock()
+	defer mp.mtx.RUnlock()
+	hashes := make(map[chainhash.Hash]struct{}, len(mp.capacity.entries))
+	for hash := range mp.capacity.entries {
+		hashes[hash] = struct{}{}
+	}
+	return hashes
 }
 
 // Count returns the number of transactions in the main pool.  It does not
@@ -2344,16 +2388,18 @@ func (mp *TxPool) MiningView() *mining.TxMiningView {
 // transactions until they are mined into a block.
 func New(cfg *Config) *TxPool {
 	mp := &TxPool{
-		cfg:             *cfg,
-		pool:            make(map[chainhash.Hash]*TxDesc),
-		orphans:         make(map[chainhash.Hash]*orphanTx),
-		orphansByPrev:   make(map[wire.OutPoint]map[chainhash.Hash]*dcrutil.Tx),
-		outpoints:       make(map[wire.OutPoint]*dcrutil.Tx),
-		votes:           make(map[chainhash.Hash][]mining.VoteDesc),
-		tspends:         make(map[chainhash.Hash]*dcrutil.Tx),
-		nextExpireScan:  time.Now().Add(orphanExpireScanInterval),
-		staged:          make(map[chainhash.Hash]*TxDesc),
-		stagedOutpoints: make(map[wire.OutPoint]*dcrutil.Tx),
+		capacity:          newPoolCapacity(cfg.Policy),
+		cfg:               *cfg,
+		pool:              make(map[chainhash.Hash]*TxDesc),
+		orphans:           make(map[chainhash.Hash]*orphanTx),
+		orphansByPrev:     make(map[wire.OutPoint]map[chainhash.Hash]*dcrutil.Tx),
+		outpoints:         make(map[wire.OutPoint]*dcrutil.Tx),
+		alternateSpenders: make(map[wire.OutPoint][]*dcrutil.Tx),
+		votes:             make(map[chainhash.Hash][]mining.VoteDesc),
+		tspends:           make(map[chainhash.Hash]*dcrutil.Tx),
+		nextExpireScan:    time.Now().Add(orphanExpireScanInterval),
+		staged:            make(map[chainhash.Hash]*TxDesc),
+		stagedOutpoints:   make(map[wire.OutPoint]*dcrutil.Tx),
 	}
 
 	// for a given transaction, scan the mempool to find which transactions
@@ -2363,6 +2409,9 @@ func New(cfg *Config) *TxPool {
 		txOutLen := uint32(len(tx.MsgTx().TxOut))
 		for i := uint32(0); i < txOutLen; i++ {
 			outpoint.Index = i
+			for _, alt := range mp.alternateSpenders[outpoint] {
+				f(&mp.pool[*alt.Hash()].TxDesc)
+			}
 			if txRedeemer, exists := mp.outpoints[outpoint]; exists {
 				f(&mp.pool[txRedeemer.MsgTx().TxHash()].TxDesc)
 			}

@@ -25,6 +25,7 @@ func TestErrorKindStringer(t *testing.T) {
 		{ErrExpired, "ErrExpired"},
 		{ErrNonStandard, "ErrNonStandard"},
 		{ErrDustOutput, "ErrDustOutput"},
+		{ErrMempoolFull, "ErrMempoolFull"},
 		{ErrInsufficientFee, "ErrInsufficientFee"},
 		{ErrTooManyVotes, "ErrTooManyVotes"},
 		{ErrDuplicateRevocation, "ErrDuplicateRevocation"},

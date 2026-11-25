@@ -180,3 +180,27 @@ func TestRejectedSpends(t *testing.T) {
 		}
 	}
 }
+
+func TestMempoolLimits(t *testing.T) {
+	oldArgs := os.Args
+	t.Cleanup(func() { os.Args = oldArgs })
+	for _, test := range []struct {
+		args  []string
+		valid bool
+	}{
+		{[]string{"--maxmempoolbytes=2097152", "--maxmempooltxs=30", "--limitfreerelay=45", "--norelaypriority"}, true},
+		{[]string{"--maxmempoolbytes=0"}, false},
+		{[]string{"--maxmempooltxs=-1"}, false},
+		{[]string{"--maxmempooltxs=1"}, false},
+	} {
+		os.Args = append([]string{oldArgs[0], "--appdata=" + t.TempDir()}, test.args...)
+		conf, _, err := loadConfig("exccd")
+		if test.valid {
+			if err != nil || conf.MaxMempoolBytes != 2097152 || conf.MaxMempoolTxs != 30 {
+				t.Fatalf("load %v: %v", test.args, err)
+			}
+		} else if err == nil || !strings.Contains(err.Error(), "maxmempool") {
+			t.Fatalf("expected limit error for %v, got %v", test.args, err)
+		}
+	}
+}

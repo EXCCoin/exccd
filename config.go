@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -203,9 +204,11 @@ type config struct {
 	AssumeValid        string `long:"assumevalid" description:"Hash of an assumed valid block.  Defaults to the hard-coded assumed valid block that is updated periodically with new releases.  Don't use a different hash unless you understand the implications.  Set to 0 to disable"`
 
 	// Relay and mempool policy.
-	MinRelayTxFee    float64  `long:"minrelaytxfee" description:"The minimum transaction fee in EXCC/kB to be considered a non-zero fee"`
-	FreeTxRelayLimit float64  `long:"limitfreerelay" description:"Limit relay of transactions with no transaction fee to the given amount in thousands of bytes per minute"`
-	NoRelayPriority  bool     `long:"norelaypriority" description:"Do not require free or low-fee transactions to have high priority for relaying"`
+	MinRelayTxFee    float64  `long:"minrelaytxfee" description:"Minimum fee for relaying regular transactions, ticket purchases and treasury operations, in EXCC/kB"`
+	FreeTxRelayLimit float64  `long:"limitfreerelay" description:"Deprecated free-relay setting (ignored)"`
+	NoRelayPriority  bool     `long:"norelaypriority" description:"Deprecated relay-priority setting (ignored)"`
+	MaxMempoolBytes  int64    `long:"maxmempoolbytes" description:"Maximum combined serialized bytes of main and staged mempool transactions"`
+	MaxMempoolTxs    int      `long:"maxmempooltxs" description:"Maximum combined number of main and staged mempool transactions"`
 	MaxOrphanTxs     int      `long:"maxorphantx" description:"Max number of orphan transactions to keep in memory"`
 	BlocksOnly       bool     `long:"blocksonly" description:"Do not accept transactions from remote peers"`
 	AcceptNonStd     bool     `long:"acceptnonstd" description:"Accept and relay non-standard transactions to the network regardless of the default settings for the active network"`
@@ -679,6 +682,8 @@ func loadConfig(appName string) (*config, []string, error) {
 		// Relay and mempool policy.
 		MinRelayTxFee:    mempool.DefaultMinRelayTxFee.ToCoin(),
 		FreeTxRelayLimit: defaultFreeTxRelayLimit,
+		MaxMempoolBytes:  mempool.DefaultMaxMempoolBytes,
+		MaxMempoolTxs:    mempool.DefaultMaxMempoolTxs,
 		MaxOrphanTxs:     defaultMaxOrphanTransactions,
 		AllowOldVotes:    defaultAllowOldVotes,
 
@@ -1155,6 +1160,13 @@ func loadConfig(appName string) (*config, []string, error) {
 		err := fmt.Errorf(str, funcName, blockMaxSizeMin,
 			blockMaxSizeMax, cfg.BlockMaxSize)
 		return nil, nil, err
+	}
+
+	// Leave room for every winning vote in a consensus-valid block.
+	minPoolBytes := int64(slices.Max(cfg.params.MaximumBlockSizes))
+	if cfg.MaxMempoolBytes < minPoolBytes || cfg.MaxMempoolTxs < int(cfg.params.TicketsPerBlock) {
+		return nil, nil, fmt.Errorf("%s: maxmempoolbytes must be at least %d and maxmempooltxs at least %d",
+			funcName, minPoolBytes, cfg.params.TicketsPerBlock)
 	}
 
 	// Limit the max orphan count to a sane value.

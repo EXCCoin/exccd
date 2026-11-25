@@ -127,13 +127,14 @@ Application Options:
 	                             periodically with new releases. Don't use a
 	                             different hash unless you understand the
 	                             implications. Set to 0 to disable
-	    --minrelaytxfee=         The minimum transaction fee in DCR/kB to be
-	                             considered a non-zero fee (default: 0.0001)
-	    --limitfreerelay=        Limit relay of transactions with no transaction
-	                             fee to the given amount in thousands of bytes per
-	                             minute (default: 15)
-	    --norelaypriority        Do not require free or low-fee transactions to
-	                             have high priority for relaying
+	    --minrelaytxfee=         Minimum fee to relay regular transactions, tickets
+	                             and treasury operations in EXCC/kB (default: 0.0001)
+	    --limitfreerelay=        Deprecated free-relay setting (ignored)
+	    --norelaypriority        Deprecated relay-priority setting (ignored)
+	    --maxmempoolbytes=       Combined main and staged serialized byte limit
+	                             (default: 67108864)
+	    --maxmempooltxs=         Combined main and staged transaction limit
+	                             (default: 50000)
 	    --maxorphantx=           Max number of orphan transactions to keep in
 	                             memory (default: 100)
 	    --blocksonly             Do not accept transactions from remote peers

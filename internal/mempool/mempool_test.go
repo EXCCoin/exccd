@@ -433,7 +433,7 @@ func (p *poolHarness) CreateCoinbaseTx(blockHeight int64, numOutputs uint32) (*d
 
 // CreateSignedTx creates a new signed transaction that consumes the provided
 // inputs and generates the provided number of outputs by evenly splitting the
-// total input amount.  All outputs will be to the payment script associated
+// input amount after the relay fee.  All outputs are to the payment script associated
 // with the harness and all inputs are assumed to do the same.
 //
 // Additionally, if one or more munge functions are specified, they will be
@@ -473,6 +473,12 @@ func (p *poolHarness) CreateSignedTx(inputs []spendableOutput, numOutputs uint32
 		})
 	}
 
+	// Estimate the maximum signed size of a compressed P2PKH input, then
+	// let callers override the default relay fee before signing.
+	const maxSigScriptSize = 108
+	size := tx.SerializeSize() + maxSigScriptSize*len(tx.TxIn)
+	tx.TxOut[len(tx.TxOut)-1].Value -= calcMinRequiredTxRelayFee(int64(size), p.txPool.cfg.Policy.MinRelayTxFee)
+
 	// Perform any transaction munging just before signing.
 	for _, f := range mungers {
 		f(tx)
@@ -491,55 +497,25 @@ func (p *poolHarness) CreateSignedTx(inputs []spendableOutput, numOutputs uint32
 	return dcrutil.NewTx(tx), nil
 }
 
-// CreateTxChain creates a chain of zero-fee transactions (each subsequent
-// transaction spends the entire amount from the previous one) with the first
-// one spending the provided outpoint.  Each transaction spends the entire
-// amount of the previous one and as such does not include any fees.
+// CreateTxChain creates transactions spending the first output in sequence.
 func (p *poolHarness) CreateTxChain(firstOutput spendableOutput, numTxns uint32) ([]*dcrutil.Tx, error) {
 	txChain := make([]*dcrutil.Tx, 0, numTxns)
-	prevOutPoint := firstOutput.outPoint
-	spendableAmount := firstOutput.amount
+	output := firstOutput
 	for i := uint32(0); i < numTxns; i++ {
-		// Create the transaction using the previous transaction output
-		// and paying the full amount to the payment address associated
-		// with the harness.
-		tx := wire.NewMsgTx()
-		tx.AddTxIn(&wire.TxIn{
-			PreviousOutPoint: prevOutPoint,
-			SignatureScript:  nil,
-			Sequence:         wire.MaxTxInSequenceNum,
-			ValueIn:          int64(spendableAmount),
-		})
-		tx.AddTxOut(&wire.TxOut{
-			PkScript: p.payScript,
-			Value:    int64(spendableAmount),
-		})
-
-		// Sign the new transaction.
-		sigScript, err := sign.SignatureScript(tx, 0, p.payScript,
-			txscript.SigHashAll, p.signKey, dcrec.STEcdsaSecp256k1, true)
+		tx, err := p.CreateSignedTx([]spendableOutput{output}, 1)
 		if err != nil {
 			return nil, err
 		}
-		tx.TxIn[0].SignatureScript = sigScript
-
-		txChain = append(txChain, dcrutil.NewTx(tx))
-
-		// Next transaction uses outputs from this one.
-		prevOutPoint = wire.OutPoint{Hash: tx.TxHash(), Index: 0}
+		txChain = append(txChain, tx)
+		output = txOutToSpendableOut(tx, 0, wire.TxTreeRegular)
 	}
-
 	return txChain, nil
 }
 
-// CreateTx creates a zero-fee regular transaction from the provided spendable
+// CreateTx creates a regular transaction from the provided spendable
 // output.
 func (p *poolHarness) CreateTx(out spendableOutput) (*dcrutil.Tx, error) {
-	txns, err := p.CreateTxChain(out, 1)
-	if err != nil {
-		return nil, err
-	}
-	return txns[0], err
+	return p.CreateSignedTx([]spendableOutput{out}, 1)
 }
 
 // CreateTicketPurchase creates a ticket purchase from the provided spendable
@@ -808,8 +784,6 @@ func newPoolHarness(chainParams *chaincfg.Params) (*poolHarness, []spendableOutp
 		txPool: New(&Config{
 			Policy: Policy{
 				EnableAncestorTracking: true,
-				DisableRelayPriority:   true,
-				FreeTxRelayLimit:       15.0,
 				MaxOrphanTxs:           5,
 				MaxOrphanTxSize:        1000,
 				MaxSigOpsPerTx:         blockchain.MaxSigOpsPerBlock / 5,
@@ -915,6 +889,7 @@ func testPoolMembership(tc *testContext, tx *dcrutil.Tx, inOrphanPool, inTxPool 
 	gotHaveTx := tc.harness.txPool.HaveTransaction(txHash)
 	wantHaveTx := inOrphanPool || inTxPool
 	gotTxStaged := tc.harness.txPool.isTransactionStaged(txHash)
+	assertCapacity(tc.t, tc.harness.txPool)
 	if gotTxStaged && (gotOrphanPool || gotTxPool) {
 		_, file, line, _ := runtime.Caller(1)
 		tc.t.Fatalf("%s:%d -- HaveTransaction: tx exists "+
