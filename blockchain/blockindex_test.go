@@ -68,6 +68,37 @@ func TestBlockNodeHeader(t *testing.T) {
 	}
 }
 
+// TestInvalidateRecoveryStatus ensures reconsideration cannot reuse a recovery
+// marker from an invalidated block or any of its descendants.
+func TestInvalidateRecoveryStatus(t *testing.T) {
+	chain := newFakeChain(chaincfg.RegNetParams())
+	parent := chain.bestChain.Tip()
+	add := func(prev *blockNode) *blockNode {
+		node := newFakeNode(prev, 1, 0, 0, time.Unix(prev.timestamp+1, 0))
+		chain.index.AddNode(node)
+		chain.index.SetStatusFlags(node, statusRecoveryValidated)
+		return node
+	}
+	sibling := add(parent)
+	failed := add(parent)
+	child := add(failed)
+	chain.index.MarkBlockFailedValidation(failed)
+
+	for _, tc := range []struct {
+		node *blockNode
+		want blockStatus
+	}{
+		{failed, statusDataStored | statusValidateFailed},
+		{child, statusDataStored | statusInvalidAncestor},
+		{sibling, statusDataStored | statusValidated | statusRecoveryValidated},
+	} {
+		if got := chain.index.NodeStatus(tc.node); got != tc.want {
+			t.Errorf("height %d (%v): status %#x, want %#x", tc.node.height,
+				tc.node.hash, got, tc.want)
+		}
+	}
+}
+
 // TestCalcPastMedianTime ensures the CalcPastMedianTie function works as
 // intended including when there are less than the typical number of blocks
 // which happens near the beginning of the chain.

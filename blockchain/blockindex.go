@@ -1084,7 +1084,7 @@ func (bi *blockIndex) maybeUpdateBestHeaderForTip(tip *blockNode) {
 func (bi *blockIndex) MarkBlockFailedValidation(node *blockNode) {
 	bi.Lock()
 	bi.setStatusFlags(node, statusValidateFailed)
-	bi.unsetStatusFlags(node, statusValidated)
+	bi.unsetStatusFlags(node, statusValidated|statusRecoveryValidated)
 	bi.removeBestChainCandidate(node)
 	bi.maybeUpdateBestInvalid(node)
 	delete(bi.unlinkedChildrenOf, node)
@@ -1157,7 +1157,7 @@ func (bi *blockIndex) MarkBlockFailedValidation(node *blockNode) {
 			}
 
 			bi.setStatusFlags(n, statusInvalidAncestor)
-			bi.unsetStatusFlags(n, statusValidated)
+			bi.unsetStatusFlags(n, statusValidated|statusRecoveryValidated)
 			bi.removeBestChainCandidate(n)
 
 			// Remove any children that depend on the failed block from the set
