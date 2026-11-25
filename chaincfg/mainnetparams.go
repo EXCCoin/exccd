@@ -120,15 +120,9 @@ func MainNetParams() *Params {
 			{87550, newHashFromStr("000187f6de1d0a99db6eb832f09d803cd95723b2e95d2a7d051e7a6f3809ba63")},
 		},
 
-		// AssumeValid is the hash of a block that has been externally verified
-		// to be valid.  It allows several validation checks to be skipped for
-		// blocks that are both an ancestor of the assumed valid block and an
-		// ancestor of the best header.  This is intended to be updated
-		// periodically with new releases.
-		//
-		// Block 00000000000000001251efb83ad1a5c71351b50fe9195f009cf0bf5a7cd99d52
-		// Height: 606000
-		AssumeValid: *newHashFromStr("00000000000000001251efb83ad1a5c71351b50fe9195f009cf0bf5a7cd99d52"),
+		// No mainnet block is assumed valid by default. A release may opt in
+		// after independently verifying an EXCC mainnet anchor.
+		AssumeValid: chainhash.Hash{},
 
 		// MinKnownChainWork is the minimum amount of known total work for the
 		// chain at a given point in time.  This is intended to be updated
