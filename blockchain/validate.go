@@ -144,13 +144,25 @@ func headerApprovesParent(header *wire.BlockHeader) bool {
 // Mainnet activates the recovery rules for blocks at and above this height.
 const mainNetInputRecoveryHeight int64 = 1_726_904
 
-func mainNetInputRecoveryActive(params *chaincfg.Params, height int64) bool {
-	return params.Net == wire.MainNet && height >= mainNetInputRecoveryHeight
+func inputRecoveryHeight(params *chaincfg.Params) int64 {
+	switch params.Net {
+	case wire.MainNet:
+		return mainNetInputRecoveryHeight
+	case wire.TestNet3, wire.SimNet, wire.RegNet:
+		return params.TxInputValidationHeight
+	}
+	return 0
+}
+
+func inputRecoveryActive(params *chaincfg.Params, height int64) bool {
+	activation := inputRecoveryHeight(params)
+	return activation > 0 && height >= activation
 }
 
 // The parent journal can be consumed by a disapproving activation block.
 func requiresRecoveryJournal(params *chaincfg.Params, height int64) bool {
-	return params.Net == wire.MainNet && height >= mainNetInputRecoveryHeight-1
+	activation := inputRecoveryHeight(params)
+	return height > 0 && activation > 0 && height >= activation-1
 }
 
 // Each entry covers all regular outputs of one confirmed transaction in the
@@ -2848,7 +2860,7 @@ func checkTransactionInputs(subsidyCache *standalone.SubsidyCache,
 	// Decred general transaction testing (and a few stake exceptions).
 	// -------------------------------------------------------------------
 
-	recoveryActive := mainNetInputRecoveryActive(chainParams, txHeight)
+	quarantineActive := chainParams.Net == wire.MainNet && txHeight >= mainNetInputRecoveryHeight
 	txHash := tx.Hash()
 	var totalAtomIn int64
 	for idx, txIn := range msgTx.TxIn {
@@ -2862,7 +2874,7 @@ func checkTransactionInputs(subsidyCache *standalone.SubsidyCache,
 			continue
 		}
 		prev := txIn.PreviousOutPoint
-		if recoveryActive && prev.Tree == wire.TxTreeRegular && prev.Index < mainNetQuarantinedTxs[prev.Hash] {
+		if quarantineActive && prev.Tree == wire.TxTreeRegular && prev.Index < mainNetQuarantinedTxs[prev.Hash] {
 			str := fmt.Sprintf("spend of quarantined mainnet output %v", prev)
 			return 0, ruleError(ErrBadTxInput, str)
 		}

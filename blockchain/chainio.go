@@ -1296,7 +1296,7 @@ func loadBlockIndex(dbTx database.Tx, params *chaincfg.Params, index *blockIndex
 		header := &entry.header
 		if requiresRecoveryJournal(params, int64(header.Height)) && entry.status.HasValidated() &&
 			entry.status&statusRecoveryValidated == 0 {
-			return fmt.Errorf("mainnet block %d was validated without the required recovery journal for activation at %d; preserve this database and resync in a new data directory", header.Height, mainNetInputRecoveryHeight)
+			return fmt.Errorf("%s block %d was validated without the required recovery journal for activation at %d; preserve this database and resync in a new data directory", params.Name, header.Height, inputRecoveryHeight(params))
 		}
 
 		// Determine the parent block node.  Since the block headers are

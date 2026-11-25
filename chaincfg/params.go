@@ -373,6 +373,12 @@ type Params struct {
 	// to the modified values defined in DCP0010.
 	StakeRewardProportion uint16
 
+	// TxInputValidationHeight is an optional network-wide activation height
+	// for authoritative transaction input validation on test and private
+	// networks. Zero retains the voting schedule. A new private network may
+	// set it to one before its first block. Mainnet has a fixed recovery height.
+	TxInputValidationHeight int64
+
 	// Checkpoints ordered from oldest to newest.
 	//
 	// Note: Only the most recent checkpoint is used and all others are ignored.

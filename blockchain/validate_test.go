@@ -2257,7 +2257,7 @@ func TestRecoveryRelaySet(t *testing.T) {
 	params := chaincfg.MainNetParams()
 	if requiresRecoveryJournal(params, mainNetInputRecoveryHeight-2) ||
 		!requiresRecoveryJournal(params, mainNetInputRecoveryHeight-1) ||
-		mainNetInputRecoveryActive(params, mainNetInputRecoveryHeight-1) ||
+		inputRecoveryActive(params, mainNetInputRecoveryHeight-1) ||
 		requiresRecoveryJournal(chaincfg.TestNet3Params(), mainNetInputRecoveryHeight) {
 		t.Fatal("invalid recovery journal boundary")
 	}

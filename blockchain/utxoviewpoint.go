@@ -640,7 +640,7 @@ func (view *UtxoViewpoint) disconnectDisapprovedBlock(db database.DB, block *dcr
 
 	// The child decides whether to disapprove its parent, including when
 	// the parent is the last block before recovery activates.
-	recoveryActive := mainNetInputRecoveryActive(params, block.Height()+1)
+	recoveryActive := inputRecoveryActive(params, block.Height()+1)
 	return view.disconnectRegularTransactions(block, stxos, isTreasuryEnabled,
 		isAutoRevocationsEnabled, recoveryActive)
 }
@@ -741,7 +741,7 @@ func (view *UtxoViewpoint) disconnectBlock(block, parent *dcrutil.Block,
 	// Disconnect all of the transactions in both the regular and stake trees of
 	// the block.  Notice that the regular tree is disconnected before the stake
 	// tree since that is the reverse of how they are connected.
-	recoveryActive := mainNetInputRecoveryActive(params, block.Height())
+	recoveryActive := inputRecoveryActive(params, block.Height())
 	err = view.disconnectRegularTransactions(block, stxos, isTreasuryEnabled,
 		isAutoRevocationsEnabled, recoveryActive)
 	if err != nil {

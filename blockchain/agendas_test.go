@@ -1059,3 +1059,38 @@ func TestMainnetInputRecoveryBoundary(t *testing.T) {
 		}
 	}
 }
+
+// TestScheduledInputRecovery covers the optional non-mainnet height independently
+// of the voting deployment, including the journal for disapproval of its parent.
+func TestScheduledInputRecovery(t *testing.T) {
+	for _, params := range []*chaincfg.Params{chaincfg.TestNet3Params(), chaincfg.RegNetParams(), chaincfg.SimNetParams()} {
+		t.Run(params.Name, func(t *testing.T) {
+			b := &BlockChain{chainParams: params}
+			for _, tc := range []struct {
+				activation, height int64
+				active, journal    bool
+			}{
+				{0, 10, false, false},
+				{10, 8, false, false},
+				{10, 9, false, true},
+				{10, 10, true, true},
+				{10, 11, true, true},
+				{1, 0, false, false},
+				{1, 1, true, true},
+			} {
+				params.TxInputValidationHeight = tc.activation
+				active, err := b.isFixTxInputValidationAgendaActive(&blockNode{height: tc.height - 1})
+				journal := requiresRecoveryJournal(params, tc.height)
+				if err != nil || active != tc.active || journal != tc.journal {
+					t.Errorf("activation %d height %d: active %v, journal %v, err %v",
+						tc.activation, tc.height, active, journal, err)
+				}
+			}
+		})
+	}
+	params := chaincfg.MainNetParams()
+	params.TxInputValidationHeight = 1
+	if inputRecoveryActive(params, mainNetInputRecoveryHeight-1) {
+		t.Fatal("test network parameter overrode fixed mainnet activation")
+	}
+}
