@@ -28,6 +28,15 @@ const testScriptFlags = ScriptDiscourageUpgradableNops |
 	ScriptVerifySHA256 |
 	ScriptVerifyTreasury
 
+func TestUnknown192Policy(t *testing.T) {
+	for _, flags := range []ScriptFlags{0, ScriptDiscourageUpgradableNops} {
+		err := opcodeNop(&opcodeArray[OP_UNKNOWN192], nil, &Engine{flags: flags})
+		if flags == 0 && err != nil || flags != 0 && !errors.Is(err, ErrDiscourageUpgradableNOPs) {
+			t.Fatalf("flags %v: unexpected error %v", flags, err)
+		}
+	}
+}
+
 // TestOpcodeDisabled tests the opcodeDisabled function manually because all
 // disabled opcodes result in a script execution failure when executed normally,
 // so the function is not called under normal circumstances.
